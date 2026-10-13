@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Mob, Player, ItemStack, system } from './mock-server.mjs';
-import { STEP, getRecord, onDeath, onHurt, startPregnancy, tickMob } from '../../packs/behavior/scripts/mobs/system.js';
+import { STEP, accelerate, getRecord, onDeath, onHurt, startPregnancy, tickMob } from '../../packs/behavior/scripts/mobs/system.js';
 import { chooseAction } from '../../packs/behavior/scripts/mobs/interact.js';
 import { birthTicks, FAMILIES } from '../../packs/behavior/scripts/mobs/families.js';
 import { PHASES } from '../../packs/behavior/scripts/pregnancy/data.js';
@@ -173,4 +173,23 @@ test('every family in the scripts has an entity, and every item it names exists'
     const named = [...family.tamingItems, ...Object.keys(family.foods), ...Object.keys(family.cravings), family.babyItem, family.deadFetusItem, family.milkItem];
     for (const item of named) assert.ok(item.startsWith('minecraft:') || items.has(item), `${id}: ${item} is not an item`);
   }
+});
+
+test('an acceleration potion moves a mob pregnancy forward and can start labor', () => {
+  const mob = new Mob('minepreggo:zombie_girl', { tamed: true });
+  const owner = new Player('Potion');
+  const record = getRecord(/** @type {any} */ (mob));
+  record.data.owner = owner.id;
+  startPregnancy(record, 1);
+  const p = /** @type {any} */ (record.data.pregnancy);
+  const action = chooseAction(/** @type {any} */ (owner), /** @type {any} */ (mob), /** @type {any} */ (new ItemStack('minepreggo:pregnancy_acceleration_potion_4')));
+  assert.ok(action, 'the owner can give the potion');
+  action();
+  assert.equal(p.phase, 2, '17 days from P0 of [3, 10, 10, 13, 15] lands in P2');
+  assert.equal(p.daysPassed, 4);
+  assert.equal(mob.getProperty('minepreggo:phase'), 2);
+  p.phase = 4;
+  p.daysPassed = 15;
+  assert.ok(accelerate(record, 0));
+  assert.equal(p.pain?.type, 'WATER_BREAKING');
 });

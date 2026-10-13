@@ -116,6 +116,9 @@
     "minepreggo_french_fries": {
       "textures": "textures/minepreggo/item/french_fries"
     },
+    "minepreggo_gradual_pregnancy_acceleration_potion": {
+      "textures": "textures/port/gradual_pregnancy_acceleration_potion"
+    },
     "minepreggo_hostile_humanoid_creeper_girl_spawn_egg": {
       "textures": "textures/minepreggo/item/hostile_humanoid_creeper_girl_spawn_egg"
     },
@@ -163,6 +166,9 @@
     },
     "minepreggo_pickle": {
       "textures": "textures/minepreggo/item/pickle"
+    },
+    "minepreggo_pregnancy_acceleration_potion": {
+      "textures": "textures/port/pregnancy_acceleration_potion"
     },
     "minepreggo_refined_chorus_shards": {
       "textures": "textures/minepreggo/item/refined_chorus_shards"

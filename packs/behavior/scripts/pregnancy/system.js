@@ -17,7 +17,7 @@ import {
   SPRINT_FATIGUE_TICKS,
   TICKS,
 } from './data.js';
-import { babiesFromPotion, createCommonPain, randomCraving, symptomSeverity } from './math.js';
+import { accelerationDays, advancePhases, babiesFromPotion, createCommonPain, gradualAccelerationSpeed, randomCraving, symptomSeverity } from './math.js';
 import { PlayerRecord, clampLevel, newPregnancy } from './state.js';
 
 /** @typedef {import('@minecraft/server').Player} Player */
@@ -158,6 +158,32 @@ export function startPregnancy(record, babies, father = 'HUMAN') {
 /** Impregnation potion: Java starts the pregnancy when the 15 s Impregnation effect ends. */
 export function startPregnancyFromPotion(/** @type {PlayerRecord} */ record, /** @type {number} */ amplifier) {
   return startPregnancy(record, babiesFromPotion(amplifier), 'HUMAN');
+}
+
+/**
+ * Potion of Pregnancy Acceleration (world/effect/PregnancyAcceleration): skips 7 % of the
+ * pregnancy per level, phase by phase, then starts labor if the birth phase is complete.
+ * Nothing happens during labor or a miscarriage.
+ */
+export function accelerate(/** @type {PlayerRecord} */ record, /** @type {number} */ amplifier) {
+  const p = record.pregnancy;
+  if (!p || isLaborOrMisbirth(p)) return false;
+  const result = advancePhases(p.daysByPhase, p.phase, p.daysPassed, accelerationDays(amplifier, CONFIG.totalPregnancyDays), p.lastPhase);
+  if (result.phase !== p.phase) setPhase(record, result.phase);
+  p.daysPassed = result.daysPassed;
+  record.dirty = true;
+  if (!tryToStartLabor(record)) playSound(record.player, 'minepreggo.stomach_growls');
+  record.save();
+  return true;
+}
+
+/** Potion of Gradual Pregnancy Acceleration: the timer runs faster for `duration` ticks. */
+export function accelerateGradually(/** @type {PlayerRecord} */ record, /** @type {number} */ amplifier, duration = 3600) {
+  const p = record.pregnancy;
+  if (!p || isLaborOrMisbirth(p)) return false;
+  p.acceleration = { amplifier, endTime: world.getAbsoluteTime() + duration };
+  record.save();
+  return true;
 }
 
 /** PlayerHelper.forceEndPregnancy */
@@ -606,12 +632,16 @@ function tickPregnancy(/** @type {PlayerRecord} */ record) {
     evaluateCommonPain(record);
   }
 
-  // evaluatePregnancyTimer: the clock stops once the birth phase is complete.
+  // evaluatePregnancyTimer: the clock stops once the birth phase is complete. A Potion of
+  // Gradual Pregnancy Acceleration makes it run (1 + level) x 120 ticks per tick while it lasts.
   if (!(isAtLastPhase(p) && canAdvancePhase(p))) {
     if (p.timer > CONFIG.ticksPerPregnancyDay) {
       p.timer = 0;
       p.daysPassed++;
+    } else if (p.acceleration && world.getAbsoluteTime() < p.acceleration.endTime) {
+      p.timer += gradualAccelerationSpeed(p.acceleration.amplifier, CONFIG.ticksPerPregnancyDay);
     } else {
+      if (p.acceleration) p.acceleration = null;
       p.timer++;
     }
   }

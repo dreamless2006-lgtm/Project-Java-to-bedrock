@@ -6,7 +6,10 @@ import assert from 'node:assert/strict';
 import { Player, system } from './mock-server.mjs';
 import { CRAVING_TICKS, MILKING_TICKS, PHASES } from '../../packs/behavior/scripts/pregnancy/data.js';
 import {
+  accelerationDays,
+  advancePhases,
   babiesFromPotion,
+  gradualAccelerationSpeed,
   createCommonPain,
   daysByPhase,
   finalPhaseForBabies,
@@ -16,6 +19,8 @@ import {
 } from '../../packs/behavior/scripts/pregnancy/math.js';
 import { PlayerRecord } from '../../packs/behavior/scripts/pregnancy/state.js';
 import {
+  accelerate,
+  accelerateGradually,
   getRecord,
   onPush,
   setPhase,
@@ -212,4 +217,42 @@ test('a miscarriage in the last phase is not replaced by labor', () => {
   assert.ok(tryInitMiscarriage(record));
   run(player, 5);
   assert.equal(p.pain.type, 'MISCARRIAGE');
+});
+
+test('pregnancy acceleration skips 7 % of the pregnancy per level, phase by phase', () => {
+  // Java multiplies floats: 0.07f x 5 rounds down to 17.49..., so level V skips 17 days, not 18.
+  assert.deepEqual([0, 1, 2, 3, 4].map((a) => accelerationDays(a)), [4, 7, 11, 14, 17]);
+  assert.equal(gradualAccelerationSpeed(0), 120);
+  assert.equal(gradualAccelerationSpeed(4), 600);
+  // PregnancyPhaseMapHelper.calculateAdvancedPhase on the 50-day, one-baby map [3, 10, 10, 13, 15].
+  const map = daysByPhase(50, 4);
+  assert.deepEqual(advancePhases(map, 1, 2, 4, 4), { phase: 1, daysPassed: 6 });
+  assert.deepEqual(advancePhases(map, 1, 2, 8, 4), { phase: 2, daysPassed: 0 });
+  assert.deepEqual(advancePhases(map, 1, 2, 18, 4), { phase: 3, daysPassed: 0 });
+  assert.deepEqual(advancePhases(map, 1, 2, 19, 4), { phase: 3, daysPassed: 1 });
+  assert.deepEqual(advancePhases(map, 3, 10, 40, 4), { phase: 4, daysPassed: 15 }, 'never past the end of the birth phase');
+
+  const { player, record } = femalePlayer('Fast');
+  startPregnancy(record, 1);
+  const p = /** @type {any} */ (record.pregnancy);
+  setPhase(record, 1);
+  p.daysPassed = 2;
+  assert.ok(accelerate(record, 4));
+  assert.equal(p.phase, 2, '17 days from P1 day 2 of [3, 10, 10, 13, 15]');
+  assert.equal(p.daysPassed, 9);
+  // At the end of the birth phase the potion starts labor right away.
+  setPhase(record, 4);
+  p.daysPassed = 14;
+  assert.ok(accelerate(record, 0));
+  assert.equal(p.pain?.type, 'WATER_BREAKING');
+  assert.equal(accelerate(record, 0), false, 'nothing during labor');
+  assert.equal(accelerateGradually(record, 0), false);
+
+  const { player: slow, record: gradual } = femalePlayer('Gradual');
+  startPregnancy(gradual, 1);
+  const g = /** @type {any} */ (gradual.pregnancy);
+  assert.ok(accelerateGradually(gradual, 4, 3600));
+  run(slow, 10);
+  assert.ok(g.timer >= 10 * 600, `timer ${g.timer} should run 600x`);
+  void player;
 });

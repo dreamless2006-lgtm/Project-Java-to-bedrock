@@ -10,6 +10,7 @@ import { daysByPhase, finalPhaseForBabies } from './math.js';
 /** @typedef {import('./math.js').Symptom} Symptom */
 /** @typedef {CommonPain | 'MISCARRIAGE' | 'WATER_BREAKING' | 'PREBIRTH' | 'BIRTH' | 'POSTBIRTH'} Pain */
 /** @typedef {'female' | 'male'} Gender */
+/** @typedef {'custom' | 'alex' | 'steve'} Skin the player's own skin, or the mod's predefined Alex/Steve female skins (Java SkinType) */
 
 /**
  * @typedef {object} PainInstance
@@ -52,6 +53,7 @@ import { daysByPhase, finalPhaseForBabies } from './math.js';
  * @property {number} postBirthTicks
  * @property {number} sprintTimer
  * @property {number} sneakTimer
+ * @property {{ amplifier: number, endTime: number } | null} [acceleration] gradual pregnancy acceleration in effect
  */
 
 /**
@@ -67,6 +69,7 @@ const KEYS = {
   pregnancy: 'minepreggo:pregnancy',
   female: 'minepreggo:female',
   pending: 'minepreggo:pending_impregnation',
+  skin: 'minepreggo:skin',
 };
 
 /**
@@ -101,6 +104,11 @@ export class PlayerRecord {
     const gender = player.getDynamicProperty(KEYS.gender);
     /** @type {Gender | undefined} */
     this.gender = gender === 'female' || gender === 'male' ? gender : undefined;
+    const skin = player.getDynamicProperty(KEYS.skin);
+    /** @type {Skin} */
+    this.skin = skin === 'alex' || skin === 'steve' ? skin : 'custom';
+    /** @type {Record<string, unknown>} entity property values last sent to the client (player/body.js) */
+    this.sentVisuals = {};
     /** @type {Pregnancy | null} */
     this.pregnancy = readJson(player, KEYS.pregnancy);
     /** @type {FemaleData} */
@@ -127,6 +135,12 @@ export class PlayerRecord {
   setGender(gender) {
     this.gender = gender;
     this.player.setDynamicProperty(KEYS.gender, gender);
+  }
+
+  /** @param {Skin} skin */
+  setSkin(skin) {
+    this.skin = skin;
+    this.player.setDynamicProperty(KEYS.skin, skin);
   }
 
   save() {

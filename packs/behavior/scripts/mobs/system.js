@@ -10,7 +10,7 @@
 
 import { EntityDamageCause, ItemStack, system, world } from '@minecraft/server';
 import { BABIES_BY_FINAL_PHASE, BELLY_RUBS_TICKS, CONFIG, CRAVING_TICKS, MAX_LEVEL, MILKING_TICKS, PHASES, TICKS } from '../pregnancy/data.js';
-import { babiesFromPotion, createCommonPain, daysByPhase, pregnancyDamage, randomCraving, sigmoid, symptomSeverity } from '../pregnancy/math.js';
+import { accelerationDays, advancePhases, babiesFromPotion, createCommonPain, daysByPhase, gradualAccelerationSpeed, pregnancyDamage, randomCraving, sigmoid, symptomSeverity } from '../pregnancy/math.js';
 import { clampLevel, newPregnancy } from '../pregnancy/state.js';
 import { FAMILIES, FULLNESS, birthTicks, hungerTicks, postBirthTicks } from './families.js';
 import { MobRecord } from './state.js';
@@ -371,6 +371,28 @@ export function forceLabor(/** @type {MobRecord} */ record) {
   return true;
 }
 
+/** Potion of Pregnancy Acceleration on a mob (PregnancyAcceleration.applyEffectTick, mob branch). */
+export function accelerate(/** @type {MobRecord} */ record, /** @type {number} */ amplifier) {
+  const p = record.data.pregnancy;
+  if (!p || (p.pain && (LABOR_PAINS.has(p.pain.type) || p.pain.type === 'MISCARRIAGE'))) return false;
+  const result = advancePhases(p.daysByPhase, p.phase, p.daysPassed, accelerationDays(amplifier, CONFIG.totalPregnancyDays), p.lastPhase);
+  if (result.phase !== p.phase) setPhase(record, result.phase);
+  p.daysPassed = result.daysPassed;
+  if (p.phase === p.lastPhase && p.daysPassed >= p.daysByPhase[p.phase] && p.phase >= 4) breakWater(record);
+  else playSound(record.entity, 'minepreggo.stomach_growls');
+  record.save();
+  return true;
+}
+
+/** Potion of Gradual Pregnancy Acceleration on a mob: faster timer for `duration` ticks. */
+export function accelerateGradually(/** @type {MobRecord} */ record, /** @type {number} */ amplifier, duration = 3600) {
+  const p = record.data.pregnancy;
+  if (!p || (p.pain && (LABOR_PAINS.has(p.pain.type) || p.pain.type === 'MISCARRIAGE'))) return false;
+  p.acceleration = { amplifier, endTime: system.currentTick + duration };
+  record.save();
+  return true;
+}
+
 /** PreggoMobPregnancySystemP4.evaluateWaterBreaking / evaluateBirth: automatic, no pushing. */
 function evaluateLabor(/** @type {MobRecord} */ record) {
   const { entity } = record;
@@ -471,9 +493,10 @@ function tickPregnancy(/** @type {MobRecord} */ record) {
   else evaluateCommonPain(record);
   if (p.phase >= 3 && Math.random() < 0.01) playSound(entity, 'minepreggo.stomach_growls', 0.2);
 
-  // The clock stops once the birth phase is complete.
+  // The clock stops once the birth phase is complete; a gradual acceleration speeds it up.
   if (!(atLast && daysDone)) {
-    p.timer += STEP;
+    if (p.acceleration && system.currentTick >= p.acceleration.endTime) p.acceleration = null;
+    p.timer += STEP * (p.acceleration ? gradualAccelerationSpeed(p.acceleration.amplifier, CONFIG.ticksPerPregnancyDay) : 1);
     if (p.timer >= CONFIG.ticksPerPregnancyDay) {
       p.timer -= CONFIG.ticksPerPregnancyDay;
       p.daysPassed++;

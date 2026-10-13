@@ -101,6 +101,14 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
 - ✅ Mob foods and their craving variants (brains, activated gunpowder, ender slime jelly, chorus
   fruit, rotten flesh and spider eye variants) with recipes; brains drop from player-killed
   villagers, illagers and witches; baby, dead-fetus and milk items of every species.
+- ✅ Player visuals: the player entity is overridden with the same properties as the mobs
+  (plus gender and skin type); the mod's player body layers (CustomPregnantBodyModel on the
+  player's own skin, PredefinedPregnantBodyModel with the Alex textures, and the chest layers)
+  are converted like the mob models and rendered by extra render controllers with the mobs'
+  belly inflation, growth, fetal-movement and belly-rub animations.
+- ✅ Potions of Pregnancy Acceleration I–V and Gradual Pregnancy Acceleration I–V for players
+  and mobs (PregnancyPhaseMapHelper.calculateAdvancedPhase ported; Java's float rounding kept:
+  level V skips 17 days, not 18).
 - ⬜ Inventory/main menu, combat modes, wander mode, break-blocks and pick-up options (phase 7).
 - ⬜ Ill variants, scientific illager, reproduction witch (phase 5).
 
@@ -177,6 +185,9 @@ removed systems. (Custom mob effects are emulated since phase 2.)
 | Species milk bottles have effects on mobs and players | Plain items | Item effects are phase 4 |
 | Expression (face) layer, armour layers, jiggle physics | Not shown | Phases 6 and 8 |
 | Hostile humanoid slime girls are not spawned naturally (no biome modifier) | Same | — |
+| Steve predefined skin has only a base texture; the loader falls back to Alex for the phases | Same (Steve = Steve base skin + Alex pregnancy art) | — |
+| Pregnant body shows in first person too (arms only) | Third person only | First-person view has no body |
+| Custom skin type uses the player's own skin pixels for the belly | Same | — |
 
 ## Open questions
 

@@ -1,10 +1,12 @@
-// Gender choice (Java: PlayerJoinsWorldScreen, asked once when a player first joins). Only
-// female characters can become pregnant. The Java skin choice is part of the player visuals,
-// which aren't ported yet.
+// Gender and skin choice (Java: PlayerJoinsWorldScreen, asked once when a player first joins).
+// Only female characters can become pregnant. A female character either keeps her own skin
+// (Java SkinType DEFAULT: the belly uses the skin's pixels) or uses the mod's Alex/Steve
+// female skins (SkinType PREDEFINED, drawn by player/body.js through the player override).
 
 import { system, world } from '@minecraft/server';
 import { ActionFormData, FormCancelationReason } from '@minecraft/server-ui';
 import { getRecord } from '../pregnancy/system.js';
+import { syncBody } from './body.js';
 
 /** @typedef {import('@minecraft/server').Player} Player */
 
@@ -13,7 +15,9 @@ export function promptGender(player, attempt = 0) {
   const form = new ActionFormData()
     .title({ translate: 'gui.minepreggo.player_main_menu.label.title' })
     .body({ translate: 'minepreggo.gender.body' })
-    .button({ translate: 'gui.minepreggo.player_main_menu.checkbox.female' })
+    .button({ translate: 'minepreggo.gender.female_custom' })
+    .button({ translate: 'minepreggo.gender.female_alex' })
+    .button({ translate: 'minepreggo.gender.female_steve' })
     .button({ translate: 'gui.minepreggo.player_main_menu.checkbox.male' });
 
   form.show(player).then((response) => {
@@ -26,8 +30,11 @@ export function promptGender(player, attempt = 0) {
       }
       return;
     }
-    const gender = response.selection === 0 ? 'female' : 'male';
-    getRecord(player).setGender(gender);
+    const record = getRecord(player);
+    const choice = response.selection ?? 3;
+    record.setGender(choice === 3 ? 'male' : 'female');
+    record.setSkin(choice === 1 ? 'alex' : choice === 2 ? 'steve' : 'custom');
+    syncBody(record);
   });
 }
 

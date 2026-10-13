@@ -61,6 +61,7 @@ function updateHud(/** @type {PlayerRecord} */ record) {
   if (p.symptoms.MILKING !== undefined) parts.push({ text: ' §7|§r ' }, { translate: 'effect.minepreggo.lactation' });
   if (p.symptoms.BELLY_RUBS !== undefined) parts.push({ text: ' §7|§r ' }, { translate: 'effect.minepreggo.belly_rubs' });
   if (p.pain) parts.push({ text: ' §7|§c ' }, { translate: `effect.minepreggo.${p.pain.type.toLowerCase()}` });
+  if (p.acceleration) parts.push({ text: ' §7|§d ' }, { translate: 'effect.minepreggo.gradual_pregnancy_acceleration' });
   player.onScreenDisplay.setActionBar({ rawtext: parts });
 }
 

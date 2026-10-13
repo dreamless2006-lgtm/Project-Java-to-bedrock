@@ -20,3 +20,6 @@ entity.minepreggo:monster_slime_girl.name=Monster Slime Girl
 item.spawn_egg.entity.minepreggo:monster_slime_girl.name=Monster Slime Girl Spawn Egg
 entity.minepreggo:ender_woman.name=Ender Woman
 item.spawn_egg.entity.minepreggo:ender_woman.name=Ender Woman Spawn Egg
+minepreggo.gender.female_custom=Female (my own skin)
+minepreggo.gender.female_alex=Female (Alex, Minepreggo skin)
+minepreggo.gender.female_steve=Female (Steve, Minepreggo skin)

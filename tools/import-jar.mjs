@@ -143,9 +143,26 @@ const MODELS = [
   ...withPhases('humanoid_slime_girl', 'slime/AbstractHumanoidSlimeGirlModel', 'createNonPregBodyLayer'),
   ...withPhases('monster_slime_girl', 'slime/AbstractMonsterSlimeGirlModel', 'createNonPregBodyLayer'),
 ];
+// The player's pregnant body and female chest are layers drawn over the player model (Java
+// CustomPregnantBodyLayer: UVs on the player's own 64x64 skin; PredefinedPregnantBodyLayer: the
+// mod's Alex/Steve textures, 64x128). Their torso boxes are dropped (the player model draws the
+// torso) and the leg parts take Bedrock's player bone names so vanilla animations move them.
+const PLAYER_PACKAGE = 'dev/dixmk/minepreggo/client/model/entity/player/';
+const PLAYER_OPTIONS = { rename: { right_leg: 'rightLeg', left_leg: 'leftLeg' }, stripCubes: ['body'] };
+const PLAYER_MODELS = [
+  ['player_boobs_custom', 'CustomBoobsModel', 'createBodyLayer'],
+  ['player_boobs_predefined', 'PredefinedBoobsModel', 'createBodyLayer'],
+  ...Array.from({ length: 10 }, (_, p) => [`player_body_custom_p${p}`, 'CustomPregnantBodyModel', `createBodyP${p}Layer`]),
+  ...Array.from({ length: 10 }, (_, p) => [`player_body_predefined_p${p}`, 'PredefinedPregnantBodyModel', `createBodyP${p}Layer`]),
+];
 const modelOut = join(RP, 'models/entity', MOD_ID);
 rmSync(modelOut, { recursive: true, force: true });
 const models = createModelRunner(files, 'dev/dixmk/minepreggo/');
+for (const [id, javaClass, method] of PLAYER_MODELS) {
+  const layer = models.layer(PLAYER_PACKAGE + javaClass, method);
+  const geometry = toBedrockGeometry(layer, `geometry.${MOD_ID}.${id}`, PLAYER_OPTIONS);
+  writeFile(join(modelOut, `${id}.geo.json`), JSON.stringify(geometry, null, 2) + '\n');
+}
 for (const [id, javaClass, method] of MODELS) {
   const layer = models.layer(MODEL_PACKAGE + javaClass, method);
   const parts = new Set();
@@ -206,6 +223,6 @@ if (logo) {
 }
 
 console.log(
-  `Imported ${MOD_ID} ${modVersion} from ${jarPath}: ${textureCount} textures, ${soundCount} sounds, ${MODELS.length} models, ${animationCount} animations, ` +
+  `Imported ${MOD_ID} ${modVersion} from ${jarPath}: ${textureCount} textures, ${soundCount} sounds, ${MODELS.length + PLAYER_MODELS.length} models, ${animationCount} animations, ` +
     `${locales.length} languages (${locales.sort().join(', ')})${logo ? ', pack icons' : ''}`
 );

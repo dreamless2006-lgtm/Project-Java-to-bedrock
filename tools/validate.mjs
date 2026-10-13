@@ -225,7 +225,8 @@ for (const file of walk(join(BP, 'entities'), '.json')) {
   if (!entity) { fail(file, 'missing "minecraft:entity"'); continue; }
   check(SCHEMA.entity, entity, file, 'entity');
   const id = entity.description?.identifier;
-  if (!id?.startsWith(`${NS}:`)) fail(file, 'entity identifier must use the minepreggo namespace');
+  // The player override (player visuals) is the one vanilla entity the pack redefines.
+  if (!id?.startsWith(`${NS}:`) && id !== 'minecraft:player') fail(file, 'entity identifier must use the minepreggo namespace');
   entities.set(id, { file, entity });
 
   const properties = entity.description?.properties ?? {};
@@ -264,8 +265,10 @@ for (const file of walk(join(BP, 'entities'), '.json')) {
       stack.push(...Object.values(node));
     }
   }
-  checkLangKey(file, `entity.${id}.name`);
-  if (entity.description?.is_spawnable) checkLangKey(file, `item.spawn_egg.entity.${id}.name`);
+  if (id.startsWith(`${NS}:`)) {
+    checkLangKey(file, `entity.${id}.name`);
+    if (entity.description?.is_spawnable) checkLangKey(file, `item.spawn_egg.entity.${id}.name`);
+  }
 }
 
 // Mojang publishes no schema for the classic spawn rule format, so conditions are checked against the
@@ -308,16 +311,18 @@ for (const file of walk(join(RP, 'entity'), '.json')) {
   if (!description) { fail(file, 'missing "minecraft:client_entity"'); continue; }
   const server = entities.get(description.identifier);
   if (!server) { fail(file, `no behavior pack entity ${description.identifier}`); continue; }
+  // In the player override only our own additions are checked; vanilla ids come from the game.
+  const ours = (/** @type {string} */ ref) => description.identifier !== 'minecraft:player' || ref.includes(`.${NS}.`) || ref.includes(`/${NS}/`);
   for (const path of Object.values(description.textures ?? {})) {
-    if (imported && !existsSync(join(RP, `${path}.png`))) fail(file, `texture ${path}.png does not exist`);
+    if (imported && ours(path) && !existsSync(join(RP, `${path}.png`))) fail(file, `texture ${path}.png does not exist`);
   }
   for (const geo of Object.values(description.geometry ?? {})) {
-    if (!geometries.has(geo) && (imported || !geo.startsWith(`geometry.${NS}.`))) fail(file, `geometry "${geo}" not found in packs/resource/models`);
+    if (ours(geo) && !geometries.has(geo) && (imported || !geo.startsWith(`geometry.${NS}.`))) fail(file, `geometry "${geo}" not found in packs/resource/models`);
   }
   const shortNames = description.animations ?? {};
   for (const [name, id] of Object.entries(shortNames)) {
     const generated = id.startsWith(`animation.${NS}.`) && !rpIds.has(id) && !convertedImported;
-    if (!rpIds.has(id) && !generated) fail(file, `animation "${name}" refers to unknown ${id}`);
+    if (ours(id) && !rpIds.has(id) && !generated) fail(file, `animation "${name}" refers to unknown ${id}`);
     for (const state of Object.values(controllers.get(id)?.states ?? {})) {
       for (const ref of animationRefs(state.animations)) if (!shortNames[ref]) fail(file, `controller ${id} plays "${ref}", which this entity does not define`);
     }
@@ -325,7 +330,7 @@ for (const file of walk(join(RP, 'entity'), '.json')) {
   for (const ref of animationRefs(description.scripts?.animate)) if (!shortNames[ref]) fail(file, `animate uses undefined "${ref}"`);
   for (const id of description.render_controllers ?? []) {
     const rc = typeof id === 'string' ? id : Object.keys(id)[0];
-    if (!rpIds.has(rc)) fail(file, `unknown render controller ${rc}`);
+    if (ours(rc) && !rpIds.has(rc)) fail(file, `unknown render controller ${rc}`);
   }
   // Properties read by Molang here or in the shared controllers must exist and be synced to clients.
   const used = new Set(molangProperties(JSON.stringify(description)));

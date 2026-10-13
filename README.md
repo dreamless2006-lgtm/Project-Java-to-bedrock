@@ -15,7 +15,11 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
 
 ## Playing
 
-- New players choose a gender; only female characters can become pregnant.
+- New players choose a gender; only female characters can become pregnant. A female character
+  either keeps her own skin (the pregnant belly is drawn with the skin's own colours) or uses the
+  mod's Alex skin (`/scriptevent minepreggo:skin custom|alex|steve` changes it later). Her body
+  shows the pregnancy in third person: the belly grows through the phases, swells as she breathes,
+  and the babies kick when she feels them.
 - A Potion of Impregnation (creative inventory, *Items* tab) starts a pregnancy 15 seconds after
   drinking it. Stronger potions (II–VI) mean more babies and a later birth.
 - **Crouch** to see the pregnancy status on the action bar.
@@ -23,6 +27,10 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
 - **Use a glass bottle** while lactating to fill it.
 - Eat the food you crave; spicy food is risky late in the pregnancy.
 - During birth, **tap sneak quickly** to push. Each baby needs four bursts of quick taps.
+- A **Potion of Pregnancy Acceleration** (I–V) skips 7 % of the pregnancy per level at once and
+  starts labor when the birth phase is complete; a **Potion of Gradual Pregnancy Acceleration**
+  makes the pregnancy run 120–600 times faster for three minutes. Both also work on a pregnant
+  mob when used on her.
 
 ### Preggo mobs
 
@@ -52,6 +60,8 @@ Operator commands for testing (cheats on), acting on the player who runs them:
 /scriptevent minepreggo:pregnancy symptom craving|milking|belly_rubs
 /scriptevent minepreggo:pregnancy pain morning_sickness|fetal_movement|contraction|back_pain
 /scriptevent minepreggo:pregnancy labor | miscarry | end
+/scriptevent minepreggo:pregnancy accelerate <0-4> | gradual <0-4>
+/scriptevent minepreggo:skin custom|alex|steve
 ```
 
 The same for the nearest preggo mob within 16 blocks:
@@ -63,6 +73,11 @@ The same for the nearest preggo mob within 16 blocks:
 /scriptevent minepreggo:mob pain morning_sickness|fetal_movement|contraction|back_pain
 /scriptevent minepreggo:mob symptom craving|milking|belly_rubs
 ```
+
+The add-on overrides the player entity (`packs/behavior/entities/player.json`,
+`packs/resource/entity/player.entity.json`) to draw the pregnant body; another add-on that also
+overrides the player wins or loses depending on pack order, in which case the body visuals are off
+but everything else works.
 
 If the game says a pack failed to load, turn on **Settings → Creator → Content Log GUI** and
 reload the world: the log names the file and the problem. When the scripts are running, every

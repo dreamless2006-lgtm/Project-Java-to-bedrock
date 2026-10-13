@@ -8,6 +8,8 @@ import { system, Player } from '@minecraft/server';
 import { MAX_LEVEL } from './data.js';
 import { babiesFromPotion, clampBabies } from './math.js';
 import {
+  accelerate,
+  accelerateGradually,
   baseDurationOf,
   canExperience,
   endPregnancy,
@@ -22,10 +24,11 @@ import {
 
 const USAGE = [
   'minepreggo:pregnancy start [babies 1-10] | potion [level 0-5] | end | status',
-  '  phase <0-9> | days <n> | labor | miscarry',
+  '  phase <0-9> | days <n> | labor | miscarry | accelerate <0-4> | gradual <0-4>',
   '  pain <morning_sickness|fetal_movement|contraction|back_pain>',
   '  symptom <craving|milking|belly_rubs>',
   'minepreggo:gender <female|male>',
+  'minepreggo:skin <custom|alex|steve>',
 ].join('\n');
 
 const PAINS = ['MORNING_SICKNESS', 'FETAL_MOVEMENT', 'CONTRACTION', 'BACK_PAIN'];
@@ -45,6 +48,7 @@ function status(record) {
     `days per phase: ${p.daysByPhase.join(', ')}`,
     `babies: ${p.womb.length}, pregnancy health: ${p.health}`,
     `craving ${p.craving} (${p.cravingType ?? '-'}), milking ${p.milking}, belly rubs ${p.bellyRubs}`,
+    ...(p.acceleration ? [`gradual acceleration ${p.acceleration.amplifier + 1}x for ${p.acceleration.endTime} (absolute time)`] : []),
     `symptoms: ${JSON.stringify(p.symptoms)}, pain: ${p.pain ? `${p.pain.type} ${p.pain.elapsed}/${p.pain.duration} sev ${p.pain.severity}` : '-'}`,
   ].join('\n');
 }
@@ -87,6 +91,10 @@ function run(player, message) {
       return ok(tryToStartLabor(record, true), 'labor already started or another pain blocks it');
     case 'miscarry':
       return ok(tryInitMiscarriage(record), 'cannot miscarry now (P0, labor or already miscarrying)');
+    case 'accelerate':
+      return ok(accelerate(record, Math.min(4, Math.max(0, Number(arg) || 0))), 'not during labor or a miscarriage');
+    case 'gradual':
+      return ok(accelerateGradually(record, Math.min(4, Math.max(0, Number(arg) || 0))), 'not during labor or a miscarriage');
     case 'pain': {
       const pain = /** @type {import('./math.js').CommonPain} */ ((arg ?? '').toUpperCase());
       if (!PAINS.includes(pain)) return USAGE;
@@ -118,5 +126,13 @@ system.afterEvents.scriptEventReceive.subscribe(({ id, message, sourceEntity }) 
     if (gender === 'male' && record.pregnancy) endPregnancy(record);
     record.setGender(gender);
     sourceEntity.sendMessage(`gender: ${gender}`);
+  } else if (id === 'minepreggo:skin') {
+    const skin = message.trim().toLowerCase();
+    if (skin !== 'custom' && skin !== 'alex' && skin !== 'steve') {
+      sourceEntity.sendMessage(USAGE);
+      return;
+    }
+    getRecord(sourceEntity).setSkin(skin);
+    sourceEntity.sendMessage(`skin: ${skin}`);
   }
 });

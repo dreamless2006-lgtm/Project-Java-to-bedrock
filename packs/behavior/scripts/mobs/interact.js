@@ -7,13 +7,14 @@
 //   2. crouching with an empty hand -> belly touch (rubs relieve the P3+ need)
 //   3. her food -> satisfy a craving and/or feed her (fullness)
 // A Potion of Impregnation works on a mob that isn't pregnant or recovering: given by anyone to a
-// wild one (Java: splash potions), by the owner to a tamed one.
+// wild one (Java: splash potions), by the owner to a tamed one. The acceleration potions work the
+// same way on a pregnant mob.
 
 import { EquipmentSlot, GameMode, ItemStack, system, world } from '@minecraft/server';
 import { CRAVING_LANG } from '../pregnancy/data.js';
 import { clampLevel } from '../pregnancy/state.js';
 import { FULLNESS } from './families.js';
-import { calmDown, familyOf, getRecord, isIncapacitated, isTamed, nameOf, onEatSpicyFood, particles, playSound } from './system.js';
+import { accelerate, accelerateGradually, calmDown, familyOf, getRecord, isIncapacitated, isTamed, nameOf, onEatSpicyFood, particles, playSound } from './system.js';
 
 /** @typedef {import('@minecraft/server').Player} Player */
 /** @typedef {import('@minecraft/server').Entity} Entity */
@@ -21,6 +22,7 @@ import { calmDown, familyOf, getRecord, isIncapacitated, isTamed, nameOf, onEatS
 
 const IMPREGNATION_TICKS = 300;
 const POTION = /^minepreggo:impregnation_potion_(\d)$/;
+const ACCELERATION = /^minepreggo:(gradual_)?pregnancy_acceleration_potion_(\d)$/;
 
 /** Uses up one of the item in the player's main hand (not in creative), optionally leaving `remainder`. */
 function consumeHeld(/** @type {Player} */ player, /** @type {string | undefined} */ remainder = undefined) {
@@ -160,6 +162,17 @@ export function chooseAction(player, target, item) {
   if (potion) {
     if (data.pregnancy || data.wild || data.post || data.pending) return undefined;
     return () => givePotion(record, player, Number(potion[1]));
+  }
+  const acceleration = id?.match(ACCELERATION);
+  if (acceleration) {
+    if (!data.pregnancy) return undefined;
+    const amplifier = Number(acceleration[2]);
+    return () => {
+      const applied = acceleration[1] ? accelerateGradually(record, amplifier) : accelerate(record, amplifier);
+      if (!applied) return;
+      consumeHeld(player, 'minecraft:glass_bottle');
+      playSound(record.entity, 'random.drink', 0.8);
+    };
   }
   if (!tamed) return undefined;
   if (isIncapacitated(record)) return () => particles(target, 'minecraft:villager_angry', 2);

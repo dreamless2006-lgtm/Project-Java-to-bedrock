@@ -70,13 +70,13 @@
           "attack_controller",
           "pain_controller",
           {
-            "belly_low": "v.phase >= 0 && v.phase <= 2"
+            "belly_low": "(v.phase >= 0 && v.phase <= 2) || (v.phase == 3 && !q.is_tamed && !v.kicking)"
           },
           {
-            "belly_medium": "v.phase >= 3 && v.phase <= 6 && !v.kicking"
+            "belly_medium": "v.phase >= 3 && v.phase <= 6 && (q.is_tamed || !v.kicking) && (v.phase != 3 || q.is_tamed)"
           },
           {
-            "belly_high": "v.phase >= 7 && !v.kicking"
+            "belly_high": "v.phase >= 7 && (q.is_tamed || !v.kicking)"
           },
           {
             "belly_growth": "v.phase >= 0"

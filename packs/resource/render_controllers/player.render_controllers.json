@@ -1,0 +1,217 @@
+{
+  "format_version": "1.10.0",
+  "render_controllers": {
+    "controller.render.minepreggo.player_skin": {
+      "arrays": {
+        "textures": {
+          "Array.mp_skins": [
+            "Texture.minepreggo_alex",
+            "Texture.minepreggo_alex_p0",
+            "Texture.minepreggo_alex_p1",
+            "Texture.minepreggo_alex_p2",
+            "Texture.minepreggo_alex_p3",
+            "Texture.minepreggo_alex_p4",
+            "Texture.minepreggo_alex_p5",
+            "Texture.minepreggo_alex_p6",
+            "Texture.minepreggo_alex_p7",
+            "Texture.minepreggo_alex_p8",
+            "Texture.minepreggo_alex_p9",
+            "Texture.minepreggo_steve",
+            "Texture.minepreggo_steve_p0",
+            "Texture.minepreggo_steve_p1",
+            "Texture.minepreggo_steve_p2",
+            "Texture.minepreggo_steve_p3",
+            "Texture.minepreggo_steve_p4",
+            "Texture.minepreggo_steve_p5",
+            "Texture.minepreggo_steve_p6",
+            "Texture.minepreggo_steve_p7",
+            "Texture.minepreggo_steve_p8",
+            "Texture.minepreggo_steve_p9"
+          ]
+        }
+      },
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Array.mp_skins[(variable.mp_skin == 'steve' ? 11 : 0) + variable.mp_phase + 1]"
+      ],
+      "part_visibility": [
+        {
+          "*": true
+        },
+        {
+          "helmet": "variable.helmet_layer_visible"
+        },
+        {
+          "leftLegging": "variable.leg_layer_visible"
+        },
+        {
+          "rightLegging": "variable.leg_layer_visible"
+        },
+        {
+          "leftBoot": "variable.boot_layer_visible"
+        },
+        {
+          "rightBoot": "variable.boot_layer_visible"
+        },
+        {
+          "leftSock": "variable.boot_layer_visible && variable.leg_layer_visible"
+        },
+        {
+          "rightSock": "variable.boot_layer_visible && variable.leg_layer_visible"
+        },
+        {
+          "bodyArmor": "variable.chest_layer_visible"
+        },
+        {
+          "leftArmArmor": "variable.chest_layer_visible"
+        },
+        {
+          "rightArmArmor": "variable.chest_layer_visible"
+        },
+        {
+          "belt": "variable.chest_layer_visible && variable.leg_layer_visible"
+        }
+      ]
+    },
+    "controller.render.minepreggo.player_boobs": {
+      "arrays": {
+        "geometries": {
+          "Array.mp_boobs": [
+            "Geometry.minepreggo_boobs_custom",
+            "Geometry.minepreggo_boobs_predefined"
+          ]
+        },
+        "textures": {
+          "Array.mp_extras": [
+            "Texture.minepreggo_alex_extra",
+            "Texture.minepreggo_alex_p0_extra",
+            "Texture.minepreggo_alex_p1_extra",
+            "Texture.minepreggo_alex_p2_extra",
+            "Texture.minepreggo_alex_p3_extra",
+            "Texture.minepreggo_alex_p4_extra",
+            "Texture.minepreggo_alex_p5_extra",
+            "Texture.minepreggo_alex_p6_extra",
+            "Texture.minepreggo_alex_p7_extra",
+            "Texture.minepreggo_alex_p8_extra",
+            "Texture.minepreggo_alex_p9_extra",
+            "Texture.minepreggo_steve_extra",
+            "Texture.minepreggo_steve_p0_extra",
+            "Texture.minepreggo_steve_p1_extra",
+            "Texture.minepreggo_steve_p2_extra",
+            "Texture.minepreggo_steve_p3_extra",
+            "Texture.minepreggo_steve_p4_extra",
+            "Texture.minepreggo_steve_p5_extra",
+            "Texture.minepreggo_steve_p6_extra",
+            "Texture.minepreggo_steve_p7_extra",
+            "Texture.minepreggo_steve_p8_extra",
+            "Texture.minepreggo_steve_p9_extra"
+          ]
+        }
+      },
+      "geometry": "Array.mp_boobs[variable.mp_predefined ? 1 : 0]",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "variable.mp_predefined ? Array.mp_extras[variable.mp_skin == 'steve' ? 11 : 0] : Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom": {
+      "arrays": {
+        "geometries": {
+          "Array.mp_bodies": [
+            "Geometry.minepreggo_body_custom_p0",
+            "Geometry.minepreggo_body_custom_p1",
+            "Geometry.minepreggo_body_custom_p2",
+            "Geometry.minepreggo_body_custom_p3",
+            "Geometry.minepreggo_body_custom_p4",
+            "Geometry.minepreggo_body_custom_p5",
+            "Geometry.minepreggo_body_custom_p6",
+            "Geometry.minepreggo_body_custom_p7",
+            "Geometry.minepreggo_body_custom_p8",
+            "Geometry.minepreggo_body_custom_p9"
+          ]
+        }
+      },
+      "geometry": "Array.mp_bodies[variable.mp_phase]",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "part_visibility": [
+        {
+          "belly": "variable.mp_pose != 'postbirth'"
+        }
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined": {
+      "arrays": {
+        "geometries": {
+          "Array.mp_bodies": [
+            "Geometry.minepreggo_body_predefined_p0",
+            "Geometry.minepreggo_body_predefined_p1",
+            "Geometry.minepreggo_body_predefined_p2",
+            "Geometry.minepreggo_body_predefined_p3",
+            "Geometry.minepreggo_body_predefined_p4",
+            "Geometry.minepreggo_body_predefined_p5",
+            "Geometry.minepreggo_body_predefined_p6",
+            "Geometry.minepreggo_body_predefined_p7",
+            "Geometry.minepreggo_body_predefined_p8",
+            "Geometry.minepreggo_body_predefined_p9"
+          ]
+        },
+        "textures": {
+          "Array.mp_extras": [
+            "Texture.minepreggo_alex_extra",
+            "Texture.minepreggo_alex_p0_extra",
+            "Texture.minepreggo_alex_p1_extra",
+            "Texture.minepreggo_alex_p2_extra",
+            "Texture.minepreggo_alex_p3_extra",
+            "Texture.minepreggo_alex_p4_extra",
+            "Texture.minepreggo_alex_p5_extra",
+            "Texture.minepreggo_alex_p6_extra",
+            "Texture.minepreggo_alex_p7_extra",
+            "Texture.minepreggo_alex_p8_extra",
+            "Texture.minepreggo_alex_p9_extra",
+            "Texture.minepreggo_steve_extra",
+            "Texture.minepreggo_steve_p0_extra",
+            "Texture.minepreggo_steve_p1_extra",
+            "Texture.minepreggo_steve_p2_extra",
+            "Texture.minepreggo_steve_p3_extra",
+            "Texture.minepreggo_steve_p4_extra",
+            "Texture.minepreggo_steve_p5_extra",
+            "Texture.minepreggo_steve_p6_extra",
+            "Texture.minepreggo_steve_p7_extra",
+            "Texture.minepreggo_steve_p8_extra",
+            "Texture.minepreggo_steve_p9_extra"
+          ]
+        }
+      },
+      "geometry": "Array.mp_bodies[variable.mp_phase]",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Array.mp_extras[(variable.mp_skin == 'steve' ? 11 : 0) + variable.mp_phase + 1]"
+      ],
+      "part_visibility": [
+        {
+          "belly": "variable.mp_pose != 'postbirth'"
+        }
+      ]
+    }
+  }
+}

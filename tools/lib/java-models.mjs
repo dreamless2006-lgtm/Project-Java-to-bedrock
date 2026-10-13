@@ -193,6 +193,7 @@ const degrees = (/** @type {number} */ radians) => round((radians * 180) / Math.
  *   rename?: Record<string, string>,
  *   reparent?: Record<string, string>,
  *   extraBones?: { name: string, parent: string, pivot: number[] }[],
+ *   stripCubes?: string[],
  * }} ConvertOptions
  */
 
@@ -201,12 +202,13 @@ const degrees = (/** @type {number} */ radians) => round((radians * 180) / Math.
  * Bone names must be unique in Bedrock, so repeated Java names (common for Blockbench's
  * "cube_r1" helpers) get their parent's name prepended. `rename` maps Java part names to
  * Bedrock bone names, `reparent` moves bones under another bone without changing where they are
- * (Java's HumanoidModel copies the head pose onto the hat every frame; Bedrock parents it).
+ * (Java's HumanoidModel copies the head pose onto the hat every frame; Bedrock parents it);
+ * `stripCubes` drops the boxes of the named Java parts.
  * @param {Layer} layer
  * @param {string} identifier e.g. "geometry.minepreggo.zombie_girl"
  * @param {ConvertOptions} [options]
  */
-export function toBedrockGeometry(layer, identifier, { rename = {}, reparent = {}, extraBones = [] } = {}) {
+export function toBedrockGeometry(layer, identifier, { rename = {}, reparent = {}, extraBones = [], stripCubes = [] } = {}) {
   const bones = [];
   const used = new Set();
   let maxRadius = 0;
@@ -229,7 +231,9 @@ export function toBedrockGeometry(layer, identifier, { rename = {}, reparent = {
     if (part.pose.xRot || part.pose.yRot || part.pose.zRot) {
       bone.rotation = [degrees(part.pose.xRot), degrees(part.pose.yRot), degrees(part.pose.zRot)];
     }
-    if (part.cubes.length) {
+    // `stripCubes` keeps a Java part as a bone (its children need the pivot) but drops its boxes:
+    // the player layers re-draw the torso that the player model already shows.
+    if (part.cubes.length && !stripCubes.includes(javaName)) {
       bone.cubes = part.cubes.map((c) => {
         /** @type {Record<string, any>} */
         const cube = {

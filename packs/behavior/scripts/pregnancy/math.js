@@ -151,3 +151,42 @@ export function randomCraving(random = Math.random) {
   }
   return 'SALTY';
 }
+
+/**
+ * PregnancyPhaseMapHelper.calculateAdvancedPhase: moves `days` forward from `phase`/`daysPassed`,
+ * carrying what is left over into the following phases, never past the birth phase.
+ * @param {number[]} daysByPhase
+ * @param {number} phase
+ * @param {number} daysPassed
+ * @param {number} days
+ * @param {number} lastPhase
+ * @returns {{ phase: number, daysPassed: number }}
+ */
+export function advancePhases(daysByPhase, phase, daysPassed, days, lastPhase) {
+  let remaining = days;
+  let elapsed = daysPassed;
+  let i = phase;
+  while (i <= lastPhase && remaining > 0) {
+    const daysLeftInPhase = daysByPhase[i] - elapsed;
+    if (remaining >= daysLeftInPhase) {
+      remaining -= daysLeftInPhase;
+      elapsed = 0;
+      i++;
+    } else {
+      elapsed += remaining;
+      remaining = 0;
+    }
+  }
+  return i <= lastPhase ? { phase: i, daysPassed: elapsed } : { phase: lastPhase, daysPassed: daysByPhase[lastPhase] };
+}
+
+/** PregnancyAcceleration.getDaysByAmplifier: 7 % of the pregnancy per potion level (floats, as Java). */
+export function accelerationDays(/** @type {number} */ amplifier, totalDays = 50) {
+  const percentage = Math.fround(Math.fround(0.07) * (amplifier + 1));
+  return Math.min(totalDays, Math.max(1, Math.round(totalDays * percentage)));
+}
+
+/** GradualPregnancyAcceleration: ticks the pregnancy timer gains per game tick while it lasts. */
+export function gradualAccelerationSpeed(/** @type {number} */ amplifier, ticksPerDay = 24000) {
+  return (1 + amplifier) * Math.max(5, Math.floor(ticksPerDay / 200));
+}

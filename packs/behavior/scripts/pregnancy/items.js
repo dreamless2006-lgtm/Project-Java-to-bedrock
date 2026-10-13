@@ -4,13 +4,17 @@
 //   Java's Potion of Impregnation gives a 15 s Impregnation effect; when it ends the drinker
 //   becomes pregnant (world/effect/Impregnantion + PlayerHelper.tryToStartPregnancyThroughPotion).
 //   The amplifier picks the number of babies.
+// "minepreggo:pregnancy_acceleration": { "amplifier": 0-4 } and
+// "minepreggo:gradual_pregnancy_acceleration": { "amplifier": 0-4, "duration": ticks }
+//   Java's instant and timed acceleration effects (world/effect/PregnancyAcceleration and the
+//   gradual timer speed-up); drinking them as a pregnant player applies them to yourself.
 // "minepreggo:breast_milk": { "regeneration": ticks }
 //   AbstractBreastMilk clears the drinker's effects like milk does, then the human variant adds
 //   Regeneration.
 
 import { system, world, Player } from '@minecraft/server';
 import { promptGender } from '../player/gender.js';
-import { getRecord } from './system.js';
+import { accelerate, accelerateGradually, getRecord } from './system.js';
 
 const IMPREGNATION_TICKS = 300;
 
@@ -33,6 +37,18 @@ system.beforeEvents.startup.subscribe(({ itemComponentRegistry }) => {
       if (!record.isFemale() || record.pregnancy || record.female.post) return;
       record.pending = { amplifier: numberParam(params, 'amplifier'), father: 'HUMAN', endTime: world.getAbsoluteTime() + IMPREGNATION_TICKS };
       record.save();
+    },
+  });
+
+  itemComponentRegistry.registerCustomComponent('minepreggo:pregnancy_acceleration', {
+    onConsume: ({ source }, { params }) => {
+      if (source instanceof Player) accelerate(getRecord(source), numberParam(params, 'amplifier'));
+    },
+  });
+
+  itemComponentRegistry.registerCustomComponent('minepreggo:gradual_pregnancy_acceleration', {
+    onConsume: ({ source }, { params }) => {
+      if (source instanceof Player) accelerateGradually(getRecord(source), numberParam(params, 'amplifier'), numberParam(params, 'duration'));
     },
   });
 
