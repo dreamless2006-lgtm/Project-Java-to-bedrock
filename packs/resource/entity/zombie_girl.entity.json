@@ -7,17 +7,17 @@
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/minepreggo/entity/preggo/zombie/zombie_girl",
-        "p0": "textures/minepreggo/entity/preggo/zombie/zombie_girl_p0",
-        "p1": "textures/minepreggo/entity/preggo/zombie/zombie_girl_p1",
-        "p2": "textures/minepreggo/entity/preggo/zombie/zombie_girl_p2",
-        "p3": "textures/minepreggo/entity/preggo/zombie/zombie_girl_p3",
-        "p4": "textures/minepreggo/entity/preggo/zombie/zombie_girl_p4",
-        "p5": "textures/minepreggo/entity/preggo/zombie/zombie_girl_p5",
-        "p6": "textures/minepreggo/entity/preggo/zombie/zombie_girl_p6",
-        "p7": "textures/minepreggo/entity/preggo/zombie/zombie_girl_p7",
-        "p8": "textures/minepreggo/entity/preggo/zombie/zombie_girl_p8",
-        "p9": "textures/minepreggo/entity/preggo/zombie/zombie_girl_p9"
+        "default": "textures/minepreggo/mobs/zombie/zombie_girl",
+        "p0": "textures/minepreggo/mobs/zombie/zombie_girl_p0",
+        "p1": "textures/minepreggo/mobs/zombie/zombie_girl_p1",
+        "p2": "textures/minepreggo/mobs/zombie/zombie_girl_p2",
+        "p3": "textures/minepreggo/mobs/zombie/zombie_girl_p3",
+        "p4": "textures/minepreggo/mobs/zombie/zombie_girl_p4",
+        "p5": "textures/minepreggo/mobs/zombie/zombie_girl_p5",
+        "p6": "textures/minepreggo/mobs/zombie/zombie_girl_p6",
+        "p7": "textures/minepreggo/mobs/zombie/zombie_girl_p7",
+        "p8": "textures/minepreggo/mobs/zombie/zombie_girl_p8",
+        "p9": "textures/minepreggo/mobs/zombie/zombie_girl_p9"
       },
       "geometry": {
         "default": "geometry.minepreggo.zombie_girl",

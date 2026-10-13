@@ -576,10 +576,6 @@
       "minecraft:behavior.nearest_attackable_target": {
         "priority": 3,
         "must_see": true,
-        "attack_interval": {
-          "min": 0,
-          "max": 10
-        },
         "within_radius": 64,
         "entity_types": [
           {

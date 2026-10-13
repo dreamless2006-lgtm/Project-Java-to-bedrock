@@ -92,7 +92,8 @@ const texturePrefix = `assets/${MOD_ID}/textures/`;
 let textureCount = 0;
 for (const [name, data] of Object.entries(files)) {
   if (!name.startsWith(texturePrefix) || !name.endsWith('.png')) continue;
-  writeFile(join(textureOut, name.slice(texturePrefix.length)), data);
+  // Mob textures move from entity/preggo/ to mobs/ to keep paths short (some devices refuse long ones).
+  writeFile(join(textureOut, name.slice(texturePrefix.length).replace(/^entity\/preggo\//, 'mobs/')), data);
   textureCount++;
 }
 
