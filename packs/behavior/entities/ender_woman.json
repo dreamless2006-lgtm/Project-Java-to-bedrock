@@ -1,0 +1,1217 @@
+{
+  "format_version": "1.26.30",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "minepreggo:ender_woman",
+      "is_spawnable": true,
+      "is_summonable": true,
+      "properties": {
+        "minepreggo:phase": {
+          "type": "int",
+          "range": [
+            -1,
+            9
+          ],
+          "default": -1,
+          "client_sync": true
+        },
+        "minepreggo:pose": {
+          "type": "enum",
+          "values": [
+            "none",
+            "morning_sickness",
+            "fetal_movement",
+            "kicking_sit",
+            "contraction",
+            "back_pain",
+            "water_breaking",
+            "prebirth",
+            "birth",
+            "postbirth",
+            "miscarriage",
+            "belly_rubs",
+            "incapacitated"
+          ],
+          "default": "none",
+          "client_sync": true
+        },
+        "minepreggo:kick": {
+          "type": "int",
+          "range": [
+            0,
+            2
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "minepreggo:growth": {
+          "type": "float",
+          "range": [
+            0,
+            1
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "minepreggo:savage": {
+          "type": "bool",
+          "default": false,
+          "client_sync": true
+        }
+      }
+    },
+    "component_groups": {
+      "minepreggo:hostile": {
+        "minecraft:type_family": {
+          "family": [
+            "ender_woman",
+            "monster",
+            "mob",
+            "minepreggo_preggo_mob"
+          ]
+        },
+        "minecraft:despawn": {
+          "despawn_from_distance": {}
+        },
+        "minecraft:teleport": {
+          "random_teleports": true,
+          "max_random_teleport_time": 30,
+          "random_teleport_cube": [
+            32,
+            32,
+            32
+          ],
+          "target_distance": 16,
+          "target_teleport_chance": 0.05,
+          "light_teleport_chance": 0.05,
+          "teleports_on_projectile_hit": true
+        },
+        "minecraft:behavior.hurt_by_target": {
+          "priority": 2
+        },
+        "minecraft:behavior.random_stroll": {
+          "priority": 7,
+          "speed_multiplier": 1
+        },
+        "minecraft:behavior.random_look_around": {
+          "priority": 8
+        }
+      },
+      "minepreggo:tameable": {
+        "minecraft:tameable": {
+          "probability": 0.3333,
+          "tame_items": [
+            "minepreggo:refined_chorus_shards",
+            "minepreggo:ender_slime_jelly"
+          ],
+          "tame_event": {
+            "event": "minepreggo:on_tame",
+            "target": "self"
+          }
+        }
+      },
+      "minepreggo:tamed": {
+        "minecraft:type_family": {
+          "family": [
+            "ender_woman",
+            "mob",
+            "minepreggo_preggo_mob",
+            "minepreggo_tamed"
+          ]
+        },
+        "minecraft:is_tamed": {},
+        "minecraft:sittable": {},
+        "minecraft:leashable": {
+          "soft_distance": 4,
+          "hard_distance": 6,
+          "max_distance": 10
+        },
+        "minecraft:teleport": {
+          "random_teleports": false,
+          "light_teleport_chance": 0,
+          "dark_teleport_chance": 0,
+          "target_distance": 16,
+          "target_teleport_chance": 0.05,
+          "teleports_on_projectile_hit": true
+        },
+        "minecraft:behavior.stay_while_sitting": {
+          "priority": 1
+        },
+        "minecraft:behavior.follow_owner": {
+          "priority": 3,
+          "speed_multiplier": 1.2,
+          "start_distance": 6,
+          "stop_distance": 2
+        },
+        "minecraft:behavior.owner_hurt_by_target": {
+          "priority": 1
+        },
+        "minecraft:behavior.owner_hurt_target": {
+          "priority": 2
+        },
+        "minecraft:behavior.hurt_by_target": {
+          "priority": 3
+        },
+        "minecraft:behavior.melee_box_attack": {
+          "priority": 4,
+          "speed_multiplier": 1.8,
+          "track_target": true
+        },
+        "minecraft:behavior.look_at_player": {
+          "priority": 9,
+          "look_distance": 6
+        }
+      },
+      "minepreggo:savage": {
+        "minecraft:teleport": {
+          "random_teleports": true,
+          "max_random_teleport_time": 30,
+          "random_teleport_cube": [
+            32,
+            32,
+            32
+          ],
+          "target_distance": 16,
+          "target_teleport_chance": 0.05,
+          "light_teleport_chance": 0.05,
+          "teleports_on_projectile_hit": true
+        },
+        "minecraft:behavior.random_look_around": {
+          "priority": 10
+        }
+      },
+      "minepreggo:phase_0": {
+        "minecraft:collision_box": {
+          "width": 0.6,
+          "height": 2.9
+        },
+        "minecraft:movement": {
+          "value": 0.3
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0
+        },
+        "minecraft:experience_reward": {
+          "on_death": "query.last_hit_by_player ? 10 : 0"
+        }
+      },
+      "minepreggo:phase_1": {
+        "minecraft:collision_box": {
+          "width": 0.6,
+          "height": 2.9
+        },
+        "minecraft:movement": {
+          "value": 0.3
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0
+        },
+        "minecraft:experience_reward": {
+          "on_death": "query.last_hit_by_player ? 10 : 0"
+        }
+      },
+      "minepreggo:phase_2": {
+        "minecraft:collision_box": {
+          "width": 0.6,
+          "height": 2.9
+        },
+        "minecraft:movement": {
+          "value": 0.29
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0
+        },
+        "minecraft:experience_reward": {
+          "on_death": "query.last_hit_by_player ? 10 : 0"
+        }
+      },
+      "minepreggo:phase_3": {
+        "minecraft:collision_box": {
+          "width": 0.6,
+          "height": 2.9
+        },
+        "minecraft:movement": {
+          "value": 0.27
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0
+        },
+        "minecraft:experience_reward": {
+          "on_death": "query.last_hit_by_player ? 10 : 0"
+        }
+      },
+      "minepreggo:phase_4": {
+        "minecraft:collision_box": {
+          "width": 0.65,
+          "height": 2.9
+        },
+        "minecraft:movement": {
+          "value": 0.26
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0.05
+        },
+        "minecraft:experience_reward": {
+          "on_death": "query.last_hit_by_player ? 10 : 0"
+        }
+      },
+      "minepreggo:phase_5": {
+        "minecraft:collision_box": {
+          "width": 0.7,
+          "height": 2.9
+        },
+        "minecraft:movement": {
+          "value": 0.25
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0.1
+        },
+        "minecraft:experience_reward": {
+          "on_death": "query.last_hit_by_player ? 10 : 0"
+        }
+      },
+      "minepreggo:phase_6": {
+        "minecraft:collision_box": {
+          "width": 0.725,
+          "height": 2.9
+        },
+        "minecraft:movement": {
+          "value": 0.24
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0.15
+        },
+        "minecraft:experience_reward": {
+          "on_death": "query.last_hit_by_player ? 10 : 0"
+        }
+      },
+      "minepreggo:phase_7": {
+        "minecraft:collision_box": {
+          "width": 0.775,
+          "height": 2.9
+        },
+        "minecraft:movement": {
+          "value": 0.23
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0.2
+        },
+        "minecraft:experience_reward": {
+          "on_death": "query.last_hit_by_player ? 10 : 0"
+        }
+      },
+      "minepreggo:phase_8": {
+        "minecraft:collision_box": {
+          "width": 0.825,
+          "height": 2.9
+        },
+        "minecraft:movement": {
+          "value": 0.21
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0.25
+        },
+        "minecraft:experience_reward": {
+          "on_death": "query.last_hit_by_player ? 10 : 0"
+        }
+      },
+      "minepreggo:phase_9": {
+        "minecraft:collision_box": {
+          "width": 0.875,
+          "height": 2.9
+        },
+        "minecraft:movement": {
+          "value": 0.2
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0.3
+        },
+        "minecraft:experience_reward": {
+          "on_death": "query.last_hit_by_player ? 10 : 0"
+        }
+      },
+      "minepreggo:hostile_phase_3": {
+        "minecraft:collision_box": {
+          "width": 0.6,
+          "height": 2.9
+        },
+        "minecraft:movement": {
+          "value": 0.29
+        },
+        "minecraft:health": {
+          "value": 40,
+          "max": 40
+        }
+      },
+      "minepreggo:hostile_phase_5": {
+        "minecraft:collision_box": {
+          "width": 0.7,
+          "height": 2.9
+        },
+        "minecraft:movement": {
+          "value": 0.27
+        },
+        "minecraft:health": {
+          "value": 40,
+          "max": 40
+        }
+      },
+      "minepreggo:hostile_phase_7": {
+        "minecraft:collision_box": {
+          "width": 0.8,
+          "height": 2.9
+        },
+        "minecraft:movement": {
+          "value": 0.25
+        },
+        "minecraft:health": {
+          "value": 40,
+          "max": 40
+        }
+      }
+    },
+    "components": {
+      "minecraft:collision_box": {
+        "width": 0.6,
+        "height": 2.9
+      },
+      "minecraft:movement": {
+        "value": 0.3
+      },
+      "minecraft:health": {
+        "value": 46,
+        "max": 46
+      },
+      "minecraft:attack": {
+        "damage": 7
+      },
+      "minecraft:follow_range": {
+        "value": 64,
+        "max": 64
+      },
+      "minecraft:type_family": {
+        "family": [
+          "ender_woman",
+          "monster",
+          "mob",
+          "minepreggo_preggo_mob"
+        ]
+      },
+      "minecraft:experience_reward": {
+        "on_death": "query.last_hit_by_player ? 12 : 0"
+      },
+      "minecraft:loot": {
+        "table": "loot_tables/entities/ender_woman.json"
+      },
+      "minecraft:breathable": {
+        "total_supply": 15,
+        "suffocate_time": 0
+      },
+      "minecraft:nameable": {},
+      "minecraft:can_climb": {},
+      "minecraft:jump.static": {},
+      "minecraft:movement.basic": {},
+      "minecraft:navigation.walk": {
+        "can_path_over_water": false,
+        "can_pass_doors": true,
+        "can_open_doors": false,
+        "avoid_water": true
+      },
+      "minecraft:physics": {},
+      "minecraft:pushable_by_entity": {},
+      "minecraft:pushable_by_block": {},
+      "minecraft:conditional_bandwidth_optimization": {},
+      "minecraft:is_hidden_when_invisible": {},
+      "minecraft:ambient_sound_interval": {
+        "value": 4,
+        "range": 4,
+        "event_name": "ambient",
+        "event_names": [
+          {
+            "condition": "query.has_target",
+            "event_name": "scream"
+          }
+        ]
+      },
+      "minecraft:hurt_on_condition": {
+        "damage_conditions": [
+          {
+            "filters": {
+              "test": "in_lava",
+              "subject": "self"
+            },
+            "cause": "lava",
+            "damage_per_tick": 4
+          },
+          {
+            "filters": {
+              "test": "in_water",
+              "subject": "self"
+            },
+            "cause": "drowning",
+            "damage_per_tick": 1
+          },
+          {
+            "filters": {
+              "all_of": [
+                {
+                  "test": "in_contact_with_water",
+                  "subject": "self"
+                },
+                {
+                  "test": "in_water",
+                  "subject": "self",
+                  "value": false
+                },
+                {
+                  "none_of": [
+                    {
+                      "test": "has_equipment",
+                      "domain": "head",
+                      "subject": "self",
+                      "value": "leather_helmet"
+                    },
+                    {
+                      "test": "has_equipment",
+                      "domain": "head",
+                      "subject": "self",
+                      "value": "chainmail_helmet"
+                    },
+                    {
+                      "test": "has_equipment",
+                      "domain": "head",
+                      "subject": "self",
+                      "value": "iron_helmet"
+                    },
+                    {
+                      "test": "has_equipment",
+                      "domain": "head",
+                      "subject": "self",
+                      "value": "golden_helmet"
+                    },
+                    {
+                      "test": "has_equipment",
+                      "domain": "head",
+                      "subject": "self",
+                      "value": "diamond_helmet"
+                    },
+                    {
+                      "test": "has_equipment",
+                      "domain": "head",
+                      "subject": "self",
+                      "value": "netherite_helmet"
+                    },
+                    {
+                      "test": "has_equipment",
+                      "domain": "head",
+                      "subject": "self",
+                      "value": "turtle_helmet"
+                    },
+                    {
+                      "test": "has_equipment",
+                      "domain": "head",
+                      "subject": "self",
+                      "value": "copper_helmet"
+                    },
+                    {
+                      "test": "has_equipment",
+                      "domain": "head",
+                      "subject": "self",
+                      "value": "carved_pumpkin"
+                    }
+                  ]
+                }
+              ]
+            },
+            "cause": "drowning",
+            "damage_per_tick": 1
+          }
+        ]
+      },
+      "minecraft:damage_sensor": {
+        "triggers": [
+          {
+            "cause": "projectile",
+            "deals_damage": "no"
+          }
+        ]
+      },
+      "minecraft:looked_at": {
+        "search_radius": 64,
+        "set_target": "once_and_stop_scanning",
+        "find_players_only": true,
+        "min_looked_at_duration": 0.25,
+        "filters": {
+          "all_of": [
+            {
+              "test": "has_equipment",
+              "domain": "head",
+              "subject": "other",
+              "operator": "not",
+              "value": "carved_pumpkin"
+            },
+            {
+              "test": "is_owner",
+              "subject": "other",
+              "value": false
+            },
+            {
+              "test": "enum_property",
+              "subject": "self",
+              "domain": "minepreggo:pose",
+              "operator": "!=",
+              "value": "incapacitated"
+            }
+          ]
+        }
+      },
+      "minecraft:behavior.float": {
+        "priority": 0
+      },
+      "minecraft:behavior.melee_box_attack": {
+        "priority": 2,
+        "speed_multiplier": 1.5,
+        "track_target": true
+      },
+      "minecraft:behavior.nearest_attackable_target": {
+        "priority": 3,
+        "must_see": true,
+        "attack_interval": {
+          "min": 0,
+          "max": 10
+        },
+        "within_radius": 64,
+        "entity_types": [
+          {
+            "filters": {
+              "test": "is_family",
+              "subject": "other",
+              "value": "endermite"
+            },
+            "max_dist": 64
+          }
+        ]
+      },
+      "minecraft:behavior.look_at_player": {
+        "priority": 8,
+        "look_distance": 8
+      },
+      "minecraft:behavior.place_block": {
+        "priority": 10,
+        "xz_range": {
+          "min": -1,
+          "max": 1
+        },
+        "y_range": {
+          "min": 0,
+          "max": 2
+        },
+        "chance": 0.0005,
+        "can_place": {
+          "test": "enum_property",
+          "subject": "self",
+          "domain": "minepreggo:pose",
+          "operator": "!=",
+          "value": "incapacitated"
+        }
+      },
+      "minecraft:behavior.take_block": {
+        "priority": 11,
+        "xz_range": {
+          "min": -2,
+          "max": 2
+        },
+        "y_range": {
+          "min": 0,
+          "max": 3
+        },
+        "chance": 0.05,
+        "can_take": {
+          "test": "enum_property",
+          "subject": "self",
+          "domain": "minepreggo:pose",
+          "operator": "!=",
+          "value": "incapacitated"
+        },
+        "blocks": [
+          "minecraft:grass_block",
+          "minecraft:dirt",
+          "minecraft:coarse_dirt",
+          "minecraft:podzol",
+          "minecraft:mycelium",
+          "minecraft:dirt_with_roots",
+          "minecraft:moss_block",
+          "minecraft:mud",
+          "minecraft:muddy_mangrove_roots",
+          "minecraft:sand",
+          "minecraft:red_sand",
+          "minecraft:gravel",
+          "minecraft:brown_mushroom",
+          "minecraft:red_mushroom",
+          "minecraft:tnt",
+          "minecraft:cactus",
+          "minecraft:clay",
+          "minecraft:pumpkin",
+          "minecraft:carved_pumpkin",
+          "minecraft:melon_block",
+          "minecraft:crimson_fungus",
+          "minecraft:crimson_nylium",
+          "minecraft:crimson_roots",
+          "minecraft:warped_fungus",
+          "minecraft:warped_nylium",
+          "minecraft:warped_roots",
+          "minecraft:dandelion",
+          "minecraft:poppy",
+          "minecraft:blue_orchid",
+          "minecraft:allium",
+          "minecraft:azure_bluet",
+          "minecraft:red_tulip",
+          "minecraft:orange_tulip",
+          "minecraft:white_tulip",
+          "minecraft:pink_tulip",
+          "minecraft:oxeye_daisy",
+          "minecraft:cornflower",
+          "minecraft:lily_of_the_valley",
+          "minecraft:wither_rose",
+          "minecraft:torchflower"
+        ]
+      }
+    },
+    "events": {
+      "minecraft:entity_spawned": {
+        "add": {
+          "component_groups": [
+            "minepreggo:hostile",
+            "minepreggo:tameable"
+          ]
+        }
+      },
+      "minepreggo:spawn_natural": {
+        "randomize": [
+          {
+            "weight": 40,
+            "add": {
+              "component_groups": [
+                "minepreggo:hostile",
+                "minepreggo:tameable"
+              ]
+            }
+          },
+          {
+            "weight": 14,
+            "add": {
+              "component_groups": [
+                "minepreggo:hostile",
+                "minepreggo:phase_3",
+                "minepreggo:hostile_phase_3"
+              ]
+            },
+            "set_property": {
+              "minepreggo:phase": 3
+            },
+            "remove": {
+              "component_groups": [
+                "minepreggo:tameable"
+              ]
+            }
+          },
+          {
+            "weight": 14,
+            "add": {
+              "component_groups": [
+                "minepreggo:hostile",
+                "minepreggo:phase_5",
+                "minepreggo:hostile_phase_5"
+              ]
+            },
+            "set_property": {
+              "minepreggo:phase": 5
+            },
+            "remove": {
+              "component_groups": [
+                "minepreggo:tameable"
+              ]
+            }
+          },
+          {
+            "weight": 14,
+            "add": {
+              "component_groups": [
+                "minepreggo:hostile",
+                "minepreggo:phase_7",
+                "minepreggo:hostile_phase_7"
+              ]
+            },
+            "set_property": {
+              "minepreggo:phase": 7
+            },
+            "remove": {
+              "component_groups": [
+                "minepreggo:tameable"
+              ]
+            }
+          }
+        ]
+      },
+      "minepreggo:spawn_natural_nether": {
+        "randomize": [
+          {
+            "weight": 80,
+            "add": {
+              "component_groups": [
+                "minepreggo:hostile",
+                "minepreggo:tameable"
+              ]
+            }
+          },
+          {
+            "weight": 14,
+            "add": {
+              "component_groups": [
+                "minepreggo:hostile",
+                "minepreggo:phase_3",
+                "minepreggo:hostile_phase_3"
+              ]
+            },
+            "set_property": {
+              "minepreggo:phase": 3
+            },
+            "remove": {
+              "component_groups": [
+                "minepreggo:tameable"
+              ]
+            }
+          },
+          {
+            "weight": 14,
+            "add": {
+              "component_groups": [
+                "minepreggo:hostile",
+                "minepreggo:phase_5",
+                "minepreggo:hostile_phase_5"
+              ]
+            },
+            "set_property": {
+              "minepreggo:phase": 5
+            },
+            "remove": {
+              "component_groups": [
+                "minepreggo:tameable"
+              ]
+            }
+          },
+          {
+            "weight": 14,
+            "add": {
+              "component_groups": [
+                "minepreggo:hostile",
+                "minepreggo:phase_7",
+                "minepreggo:hostile_phase_7"
+              ]
+            },
+            "set_property": {
+              "minepreggo:phase": 7
+            },
+            "remove": {
+              "component_groups": [
+                "minepreggo:tameable"
+              ]
+            }
+          }
+        ]
+      },
+      "minepreggo:spawn_natural_end": {
+        "randomize": [
+          {
+            "weight": 300,
+            "add": {
+              "component_groups": [
+                "minepreggo:hostile",
+                "minepreggo:tameable"
+              ]
+            }
+          },
+          {
+            "weight": 21,
+            "add": {
+              "component_groups": [
+                "minepreggo:hostile",
+                "minepreggo:phase_3",
+                "minepreggo:hostile_phase_3"
+              ]
+            },
+            "set_property": {
+              "minepreggo:phase": 3
+            },
+            "remove": {
+              "component_groups": [
+                "minepreggo:tameable"
+              ]
+            }
+          },
+          {
+            "weight": 21,
+            "add": {
+              "component_groups": [
+                "minepreggo:hostile",
+                "minepreggo:phase_5",
+                "minepreggo:hostile_phase_5"
+              ]
+            },
+            "set_property": {
+              "minepreggo:phase": 5
+            },
+            "remove": {
+              "component_groups": [
+                "minepreggo:tameable"
+              ]
+            }
+          },
+          {
+            "weight": 21,
+            "add": {
+              "component_groups": [
+                "minepreggo:hostile",
+                "minepreggo:phase_7",
+                "minepreggo:hostile_phase_7"
+              ]
+            },
+            "set_property": {
+              "minepreggo:phase": 7
+            },
+            "remove": {
+              "component_groups": [
+                "minepreggo:tameable"
+              ]
+            }
+          }
+        ]
+      },
+      "minepreggo:on_tame": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:hostile",
+            "minepreggo:tameable",
+            "minepreggo:savage"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:tamed"
+          ]
+        }
+      },
+      "minepreggo:become_savage": {
+        "add": {
+          "component_groups": [
+            "minepreggo:savage"
+          ]
+        },
+        "set_property": {
+          "minepreggo:savage": true
+        }
+      },
+      "minepreggo:calm_down": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:savage"
+          ]
+        },
+        "set_property": {
+          "minepreggo:savage": false
+        }
+      },
+      "minepreggo:set_not_pregnant": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_0",
+            "minepreggo:phase_1",
+            "minepreggo:phase_2",
+            "minepreggo:phase_3",
+            "minepreggo:phase_4",
+            "minepreggo:phase_5",
+            "minepreggo:phase_6",
+            "minepreggo:phase_7",
+            "minepreggo:phase_8",
+            "minepreggo:phase_9",
+            "minepreggo:hostile_phase_3",
+            "minepreggo:hostile_phase_5",
+            "minepreggo:hostile_phase_7"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": -1,
+          "minepreggo:pose": "none",
+          "minepreggo:growth": 0
+        }
+      },
+      "minepreggo:set_phase_0": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_1",
+            "minepreggo:phase_2",
+            "minepreggo:phase_3",
+            "minepreggo:phase_4",
+            "minepreggo:phase_5",
+            "minepreggo:phase_6",
+            "minepreggo:phase_7",
+            "minepreggo:phase_8",
+            "minepreggo:phase_9",
+            "minepreggo:hostile_phase_3",
+            "minepreggo:hostile_phase_5",
+            "minepreggo:hostile_phase_7"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:phase_0"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 0
+        }
+      },
+      "minepreggo:set_phase_1": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_0",
+            "minepreggo:phase_2",
+            "minepreggo:phase_3",
+            "minepreggo:phase_4",
+            "minepreggo:phase_5",
+            "minepreggo:phase_6",
+            "minepreggo:phase_7",
+            "minepreggo:phase_8",
+            "minepreggo:phase_9",
+            "minepreggo:hostile_phase_3",
+            "minepreggo:hostile_phase_5",
+            "minepreggo:hostile_phase_7"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:phase_1"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 1
+        }
+      },
+      "minepreggo:set_phase_2": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_0",
+            "minepreggo:phase_1",
+            "minepreggo:phase_3",
+            "minepreggo:phase_4",
+            "minepreggo:phase_5",
+            "minepreggo:phase_6",
+            "minepreggo:phase_7",
+            "minepreggo:phase_8",
+            "minepreggo:phase_9",
+            "minepreggo:hostile_phase_3",
+            "minepreggo:hostile_phase_5",
+            "minepreggo:hostile_phase_7"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:phase_2"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 2
+        }
+      },
+      "minepreggo:set_phase_3": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_0",
+            "minepreggo:phase_1",
+            "minepreggo:phase_2",
+            "minepreggo:phase_4",
+            "minepreggo:phase_5",
+            "minepreggo:phase_6",
+            "minepreggo:phase_7",
+            "minepreggo:phase_8",
+            "minepreggo:phase_9",
+            "minepreggo:hostile_phase_3",
+            "minepreggo:hostile_phase_5",
+            "minepreggo:hostile_phase_7"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:phase_3"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 3
+        }
+      },
+      "minepreggo:set_phase_4": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_0",
+            "minepreggo:phase_1",
+            "minepreggo:phase_2",
+            "minepreggo:phase_3",
+            "minepreggo:phase_5",
+            "minepreggo:phase_6",
+            "minepreggo:phase_7",
+            "minepreggo:phase_8",
+            "minepreggo:phase_9",
+            "minepreggo:hostile_phase_3",
+            "minepreggo:hostile_phase_5",
+            "minepreggo:hostile_phase_7"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:phase_4"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 4
+        }
+      },
+      "minepreggo:set_phase_5": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_0",
+            "minepreggo:phase_1",
+            "minepreggo:phase_2",
+            "minepreggo:phase_3",
+            "minepreggo:phase_4",
+            "minepreggo:phase_6",
+            "minepreggo:phase_7",
+            "minepreggo:phase_8",
+            "minepreggo:phase_9",
+            "minepreggo:hostile_phase_3",
+            "minepreggo:hostile_phase_5",
+            "minepreggo:hostile_phase_7"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:phase_5"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 5
+        }
+      },
+      "minepreggo:set_phase_6": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_0",
+            "minepreggo:phase_1",
+            "minepreggo:phase_2",
+            "minepreggo:phase_3",
+            "minepreggo:phase_4",
+            "minepreggo:phase_5",
+            "minepreggo:phase_7",
+            "minepreggo:phase_8",
+            "minepreggo:phase_9",
+            "minepreggo:hostile_phase_3",
+            "minepreggo:hostile_phase_5",
+            "minepreggo:hostile_phase_7"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:phase_6"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 6
+        }
+      },
+      "minepreggo:set_phase_7": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_0",
+            "minepreggo:phase_1",
+            "minepreggo:phase_2",
+            "minepreggo:phase_3",
+            "minepreggo:phase_4",
+            "minepreggo:phase_5",
+            "minepreggo:phase_6",
+            "minepreggo:phase_8",
+            "minepreggo:phase_9",
+            "minepreggo:hostile_phase_3",
+            "minepreggo:hostile_phase_5",
+            "minepreggo:hostile_phase_7"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:phase_7"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 7
+        }
+      },
+      "minepreggo:set_phase_8": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_0",
+            "minepreggo:phase_1",
+            "minepreggo:phase_2",
+            "minepreggo:phase_3",
+            "minepreggo:phase_4",
+            "minepreggo:phase_5",
+            "minepreggo:phase_6",
+            "minepreggo:phase_7",
+            "minepreggo:phase_9",
+            "minepreggo:hostile_phase_3",
+            "minepreggo:hostile_phase_5",
+            "minepreggo:hostile_phase_7"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:phase_8"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 8
+        }
+      },
+      "minepreggo:set_phase_9": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_0",
+            "minepreggo:phase_1",
+            "minepreggo:phase_2",
+            "minepreggo:phase_3",
+            "minepreggo:phase_4",
+            "minepreggo:phase_5",
+            "minepreggo:phase_6",
+            "minepreggo:phase_7",
+            "minepreggo:phase_8",
+            "minepreggo:hostile_phase_3",
+            "minepreggo:hostile_phase_5",
+            "minepreggo:hostile_phase_7"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:phase_9"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 9
+        }
+      },
+      "minepreggo:hostile_pregnant_init": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:tameable"
+          ]
+        }
+      }
+    }
+  }
+}

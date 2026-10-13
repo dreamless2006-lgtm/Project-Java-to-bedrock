@@ -1,0 +1,75 @@
+{
+  "format_version": "1.10.0",
+  "render_controllers": {
+    "controller.render.minepreggo.ender_woman_eyes": {
+      "arrays": {
+        "geometries": {
+          "Array.geometries": [
+            "Geometry.default",
+            "Geometry.p0",
+            "Geometry.p1",
+            "Geometry.p2",
+            "Geometry.p3",
+            "Geometry.p4",
+            "Geometry.p5",
+            "Geometry.p6",
+            "Geometry.p7",
+            "Geometry.p8",
+            "Geometry.p9"
+          ]
+        },
+        "textures": {
+          "Array.eyes": [
+            "Texture.eyes",
+            "Texture.eyes_surprised",
+            "Texture.eyes_pain",
+            "Texture.eyes_sad1",
+            "Texture.eyes_angry1",
+            "Texture.eyes_sad2",
+            "Texture.eyes_empty"
+          ]
+        }
+      },
+      "geometry": "Array.geometries[q.property('minepreggo:phase') + 1]",
+      "materials": [
+        {
+          "*": "Material.eyes"
+        }
+      ],
+      "textures": [
+        "Array.eyes[v.eyes]"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "head": true
+        }
+      ],
+      "uv_anim": {
+        "offset": [
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0
+        ]
+      },
+      "is_hurt_color": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+      },
+      "on_fire_color": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+      },
+      "ignore_lighting": true
+    }
+  }
+}

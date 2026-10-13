@@ -33,10 +33,9 @@
         "p9": "geometry.minepreggo.humanoid_slime_girl_p9"
       },
       "scripts": {
-        "scale": "1.075",
-        "scaleX": "1.0 + 0.4 * (1.0 / (v.squish / 1.5 + 1.0) - 1.0)",
-        "scaleY": "v.squish / 1.5 + 1.0",
-        "scaleZ": "1.0 + 0.4 * (1.0 / (v.squish / 1.5 + 1.0) - 1.0)",
+        "scaleX": "1.075 * (1.0 + 0.4 * (1.0 / (v.squish / 1.5 + 1.0) - 1.0))",
+        "scaleY": "1.075 * (v.squish / 1.5 + 1.0)",
+        "scaleZ": "1.075 * (1.0 + 0.4 * (1.0 / (v.squish / 1.5 + 1.0) - 1.0))",
         "initialize": [
           "v.was_on_ground = 1.0;",
           "v.squish = 0.0;",
@@ -71,10 +70,10 @@
           "pain_controller",
           "squish_controller",
           {
-            "belly_low": "v.phase >= 0 && v.phase <= 2"
+            "belly_low": "(v.phase >= 0 && v.phase <= 2) || (v.phase == 3 && !q.is_tamed && !v.kicking)"
           },
           {
-            "belly_medium": "v.phase >= 3 && v.phase <= 6 && !v.kicking"
+            "belly_medium": "v.phase >= 3 && v.phase <= 6 && !v.kicking && (v.phase != 3 || q.is_tamed)"
           },
           {
             "belly_high": "v.phase >= 7 && !v.kicking"

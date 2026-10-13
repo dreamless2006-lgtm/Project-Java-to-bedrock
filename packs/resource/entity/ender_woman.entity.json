@@ -1,0 +1,221 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "minepreggo:ender_woman",
+      "materials": {
+        "default": "entity_alphatest",
+        "eyes": "charged_creeper"
+      },
+      "textures": {
+        "default": "textures/minepreggo/entity/preggo/ender/monster/ender_woman",
+        "p0": "textures/minepreggo/entity/preggo/ender/monster/ender_woman_p0",
+        "p1": "textures/minepreggo/entity/preggo/ender/monster/ender_woman_p1",
+        "p2": "textures/minepreggo/entity/preggo/ender/monster/ender_woman_p2",
+        "p3": "textures/minepreggo/entity/preggo/ender/monster/ender_woman_p3",
+        "p4": "textures/minepreggo/entity/preggo/ender/monster/ender_woman_p4",
+        "p5": "textures/minepreggo/entity/preggo/ender/monster/ender_woman_p5",
+        "p6": "textures/minepreggo/entity/preggo/ender/monster/ender_woman_p6",
+        "p7": "textures/minepreggo/entity/preggo/ender/monster/ender_woman_p7",
+        "p8": "textures/minepreggo/entity/preggo/ender/monster/ender_woman_p8",
+        "p9": "textures/minepreggo/entity/preggo/ender/monster/ender_woman_p9",
+        "eyes": "textures/minepreggo/entity/preggo/ender/monster/eye/ender_woman_eyes",
+        "eyes_surprised": "textures/minepreggo/entity/preggo/ender/monster/expressions/monster_ender_woman_eye_surprised",
+        "eyes_pain": "textures/minepreggo/entity/preggo/ender/monster/expressions/monster_ender_woman_eye_pain",
+        "eyes_sad1": "textures/minepreggo/entity/preggo/ender/monster/expressions/monster_ender_woman_eye_sad1",
+        "eyes_angry1": "textures/minepreggo/entity/preggo/ender/monster/expressions/monster_ender_woman_eye_angry1",
+        "eyes_sad2": "textures/minepreggo/entity/preggo/ender/monster/expressions/monster_ender_woman_eye_sad2",
+        "eyes_empty": "textures/minepreggo/entity/preggo/ender/monster/expressions/monster_ender_woman_eye_empty"
+      },
+      "geometry": {
+        "default": "geometry.minepreggo.ender_woman",
+        "p0": "geometry.minepreggo.ender_woman_p0",
+        "p1": "geometry.minepreggo.ender_woman_p1",
+        "p2": "geometry.minepreggo.ender_woman_p2",
+        "p3": "geometry.minepreggo.ender_woman_p3",
+        "p4": "geometry.minepreggo.ender_woman_p4",
+        "p5": "geometry.minepreggo.ender_woman_p5",
+        "p6": "geometry.minepreggo.ender_woman_p6",
+        "p7": "geometry.minepreggo.ender_woman_p7",
+        "p8": "geometry.minepreggo.ender_woman_p8",
+        "p9": "geometry.minepreggo.ender_woman_p9"
+      },
+      "scripts": {
+        "pre_animation": [
+          "v.phase = q.property('minepreggo:phase');",
+          "v.pose = q.property('minepreggo:pose');",
+          "v.kick = q.property('minepreggo:kick');",
+          "v.savage = q.property('minepreggo:savage');",
+          "v.aggressive = q.has_target;",
+          "v.kicking = v.pose == 'fetal_movement' || v.pose == 'kicking_sit' || v.pose == 'incapacitated';",
+          "v.kick = v.pose == 'incapacitated' ? 1 : v.kick;",
+          "v.belly_growth = (v.phase <= 2 ? 1.0 : (v.phase <= 4 ? 0.9 : (v.phase == 5 ? 0.8 : (v.phase <= 7 ? 0.7 : 0.6)))) * q.property('minepreggo:growth');",
+          "v.carrying = q.is_carrying_block;",
+          "v.shake_x = v.aggressive ? math.random(-0.32, 0.32) : 0.0;",
+          "v.shake_z = v.aggressive ? math.random(-0.32, 0.32) : 0.0;",
+          "v.eyes = (v.pose == 'incapacitated' || v.pose == 'miscarriage' || v.pose == 'water_breaking') ? 1 : (v.pose == 'contraction' ? 2 : (v.pose == 'postbirth' ? 6 : (v.pose != 'none' ? 3 : (v.savage ? 4 : (q.is_sitting ? 5 : 0)))));"
+        ],
+        "animate": [
+          {
+            "look_at_target": "!q.is_sitting && (v.pose == 'none' || v.pose == 'belly_rubs')"
+          },
+          "loop_controller",
+          {
+            "carrying": "v.carrying"
+          },
+          {
+            "walk": "(v.aggressive || v.carrying) ? 0.0 : math.min(q.modified_move_speed * 4.0, 1.0)"
+          },
+          {
+            "aggression": "(v.aggressive && !v.carrying) ? math.min(q.modified_move_speed * 4.0, 1.0) : 0.0"
+          },
+          {
+            "walk_carrying": "v.carrying ? math.min(q.modified_move_speed * 4.0, 1.0) : 0.0"
+          },
+          {
+            "attack_controller": "!v.carrying"
+          },
+          "pain_controller",
+          {
+            "creepy_face": "v.aggressive"
+          },
+          {
+            "belly_low": "v.phase >= 0 && v.phase <= 2"
+          },
+          {
+            "belly_medium": "v.phase >= 3 && v.phase <= 6 && !v.kicking"
+          },
+          {
+            "belly_high": "v.phase >= 7 && !v.kicking"
+          },
+          {
+            "belly_growth": "v.phase >= 0"
+          },
+          {
+            "fetal_p3_i": "v.kicking && v.phase == 3 && v.kick == 0"
+          },
+          {
+            "fetal_p3_ii": "v.kicking && v.phase == 3 && v.kick == 1"
+          },
+          {
+            "fetal_p3_iii": "v.kicking && v.phase == 3 && v.kick == 2"
+          },
+          {
+            "fetal_p4_i": "v.kicking && v.phase == 4 && v.kick == 0"
+          },
+          {
+            "fetal_p4_ii": "v.kicking && v.phase == 4 && v.kick == 1"
+          },
+          {
+            "fetal_p4_iii": "v.kicking && v.phase == 4 && v.kick == 2"
+          },
+          {
+            "fetal_p5_i": "v.kicking && v.phase == 5 && v.kick == 0"
+          },
+          {
+            "fetal_p5_ii": "v.kicking && v.phase == 5 && v.kick == 1"
+          },
+          {
+            "fetal_p5_iii": "v.kicking && v.phase == 5 && v.kick == 2"
+          },
+          {
+            "fetal_p6_i": "v.kicking && v.phase == 6 && v.kick == 0"
+          },
+          {
+            "fetal_p6_ii": "v.kicking && v.phase == 6 && v.kick == 1"
+          },
+          {
+            "fetal_p6_iii": "v.kicking && v.phase == 6 && v.kick == 2"
+          },
+          {
+            "fetal_p7_i": "v.kicking && v.phase == 7 && v.kick == 0"
+          },
+          {
+            "fetal_p7_ii": "v.kicking && v.phase == 7 && v.kick == 1"
+          },
+          {
+            "fetal_p7_iii": "v.kicking && v.phase == 7 && v.kick == 2"
+          },
+          {
+            "fetal_p8_i": "v.kicking && v.phase == 8 && v.kick == 0"
+          },
+          {
+            "fetal_p8_ii": "v.kicking && v.phase == 8 && v.kick == 1"
+          },
+          {
+            "fetal_p8_iii": "v.kicking && v.phase == 8 && v.kick == 2"
+          },
+          {
+            "fetal_p9_i": "v.kicking && v.phase == 9 && v.kick == 0"
+          },
+          {
+            "fetal_p9_ii": "v.kicking && v.phase == 9 && v.kick == 1"
+          },
+          {
+            "fetal_p9_iii": "v.kicking && v.phase == 9 && v.kick == 2"
+          }
+        ]
+      },
+      "animations": {
+        "look_at_target": "animation.common.look_at_target",
+        "idle": "animation.minepreggo.ender_woman.idle",
+        "walk": "animation.minepreggo.ender_woman.walk1",
+        "aggression": "animation.minepreggo.ender_woman.walk1",
+        "attack": "animation.minepreggo.ender_woman.attack",
+        "wait": "animation.minepreggo.ender_woman.wait",
+        "riding": "animation.minepreggo.ender_woman.idle",
+        "morning_sickness": "animation.minepreggo.ender_woman.morning_sickness",
+        "kicking_sit": "animation.minepreggo.ender_woman.kicking_sit",
+        "contraction": "animation.minepreggo.ender_woman.contraction",
+        "back_pain": "animation.minepreggo.ender_woman.back_pain",
+        "water_breaking": "animation.minepreggo.ender_woman.water_breaking",
+        "prebirth": "animation.minepreggo.ender_woman.prebirth",
+        "birth": "animation.minepreggo.ender_woman.birth",
+        "postbirth": "animation.minepreggo.ender_woman.postbirth",
+        "miscarriage": "animation.minepreggo.ender_woman.miscarriage",
+        "belly_low": "animation.minepreggo.belly.low_belly_inflation",
+        "belly_medium": "animation.minepreggo.belly.medium_belly_inflation",
+        "belly_high": "animation.minepreggo.belly.high_belly_inflation",
+        "belly_growth": "animation.minepreggo.belly_growth",
+        "belly_rubs_i": "animation.minepreggo.belly.belly_rubs_needs_i",
+        "belly_rubs_ii": "animation.minepreggo.belly.belly_rubs_needs_ii",
+        "belly_rubs_iii": "animation.minepreggo.belly.belly_rubs_needs_iii",
+        "loop_controller": "controller.animation.minepreggo.preggo_mob.loop",
+        "attack_controller": "controller.animation.minepreggo.preggo_mob.attack",
+        "pain_controller": "controller.animation.minepreggo.preggo_mob.pain",
+        "carrying": "animation.minepreggo.ender_woman.carring",
+        "walk_carrying": "animation.minepreggo.ender_woman.walk2",
+        "creepy_face": "animation.minepreggo.ender_woman.creepy_face",
+        "fetal_p3_i": "animation.minepreggo.belly.fetal_movement_p3_i",
+        "fetal_p3_ii": "animation.minepreggo.belly.fetal_movement_p3_ii",
+        "fetal_p3_iii": "animation.minepreggo.belly.fetal_movement_p3_iii",
+        "fetal_p4_i": "animation.minepreggo.belly.fetal_movement_p4_i",
+        "fetal_p4_ii": "animation.minepreggo.belly.fetal_movement_p4_ii",
+        "fetal_p4_iii": "animation.minepreggo.belly.fetal_movement_p4_iii",
+        "fetal_p5_i": "animation.minepreggo.belly.fetal_movement_p5_i",
+        "fetal_p5_ii": "animation.minepreggo.belly.fetal_movement_p5_ii",
+        "fetal_p5_iii": "animation.minepreggo.belly.fetal_movement_p5_iii",
+        "fetal_p6_i": "animation.minepreggo.belly.fetal_movement_p6_i",
+        "fetal_p6_ii": "animation.minepreggo.belly.fetal_movement_p6_ii",
+        "fetal_p6_iii": "animation.minepreggo.belly.fetal_movement_p6_iii",
+        "fetal_p7_i": "animation.minepreggo.belly.fetal_movement_p7_i",
+        "fetal_p7_ii": "animation.minepreggo.belly.fetal_movement_p7_ii",
+        "fetal_p7_iii": "animation.minepreggo.belly.fetal_movement_p7_iii",
+        "fetal_p8_i": "animation.minepreggo.belly.fetal_movement_p8_i",
+        "fetal_p8_ii": "animation.minepreggo.belly.fetal_movement_p8_ii",
+        "fetal_p8_iii": "animation.minepreggo.belly.fetal_movement_p8_iii",
+        "fetal_p9_i": "animation.minepreggo.belly.fetal_movement_p9_i",
+        "fetal_p9_ii": "animation.minepreggo.belly.fetal_movement_p9_ii",
+        "fetal_p9_iii": "animation.minepreggo.belly.fetal_movement_p9_iii"
+      },
+      "render_controllers": [
+        "controller.render.minepreggo.preggo_mob",
+        "controller.render.minepreggo.ender_woman_eyes"
+      ],
+      "spawn_egg": {
+        "texture": "minepreggo_monster_ender_woman_spawn_egg"
+      },
+      "enable_attachables": true
+    }
+  }
+}

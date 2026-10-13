@@ -155,6 +155,9 @@
     "minepreggo_lemon_ice_popsicles": {
       "textures": "textures/minepreggo/item/lemon_ice_popsicles"
     },
+    "minepreggo_monster_ender_woman_spawn_egg": {
+      "textures": "textures/minepreggo/item/monster_ender_woman_spawn_egg"
+    },
     "minepreggo_monster_slime_girl_spawn_egg": {
       "textures": "textures/minepreggo/item/monster_slime_girl_spawn_egg"
     },

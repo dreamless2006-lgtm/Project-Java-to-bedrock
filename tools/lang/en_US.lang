@@ -18,3 +18,5 @@ entity.minepreggo:humanoid_slime_girl.name=Humanoid Slime Girl
 item.spawn_egg.entity.minepreggo:humanoid_slime_girl.name=Humanoid Slime Girl Spawn Egg
 entity.minepreggo:monster_slime_girl.name=Monster Slime Girl
 item.spawn_egg.entity.minepreggo:monster_slime_girl.name=Monster Slime Girl Spawn Egg
+entity.minepreggo:ender_woman.name=Ender Woman
+item.spawn_egg.entity.minepreggo:ender_woman.name=Ender Woman Spawn Egg
