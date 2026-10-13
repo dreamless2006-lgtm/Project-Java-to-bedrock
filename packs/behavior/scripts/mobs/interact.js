@@ -6,7 +6,8 @@
 //   1. glass bottle -> milk (pregnant P2+ with milking >= 5, or post-partum lactation >= 5)
 //   2. crouching with an empty hand -> belly touch (rubs relieve the P3+ need)
 //   3. her food -> satisfy a craving and/or feed her (fullness)
-// Anyone can give a Potion of Impregnation to a mob that isn't pregnant or recovering.
+// A Potion of Impregnation works on a mob that isn't pregnant or recovering: given by anyone to a
+// wild one (Java: splash potions), by the owner to a tamed one.
 
 import { EquipmentSlot, GameMode, ItemStack, system, world } from '@minecraft/server';
 import { CRAVING_LANG } from '../pregnancy/data.js';
@@ -153,12 +154,14 @@ export function chooseAction(player, target, item) {
   const { data } = record;
   const id = item?.typeId;
 
+  const tamed = isTamed(target);
+  if (tamed && !isOwner(record, player)) return undefined;
   const potion = id?.match(POTION);
   if (potion) {
     if (data.pregnancy || data.wild || data.post || data.pending) return undefined;
     return () => givePotion(record, player, Number(potion[1]));
   }
-  if (!isTamed(target) || !isOwner(record, player)) return undefined;
+  if (!tamed) return undefined;
   if (isIncapacitated(record)) return () => particles(target, 'minecraft:villager_angry', 2);
 
   const p = data.pregnancy;
@@ -181,11 +184,16 @@ world.beforeEvents.playerInteractWithEntity.subscribe((event) => {
   system.run(action);
 });
 
-// Record who tamed her: the vanilla taming happens during the interaction itself.
-world.afterEvents.playerInteractWithEntity.subscribe(({ player, target }) => {
-  if (!familyOf(target) || !isTamed(target)) return;
+// Record who tamed her. Vanilla taming happens during the interaction, but the tamed component
+// group may only be applied a moment later, so the owner is confirmed a few ticks after.
+world.afterEvents.playerInteractWithEntity.subscribe(({ player, target, beforeItemStack }) => {
+  const family = familyOf(target);
+  if (!family || !beforeItemStack || !family.tamingItems.includes(beforeItemStack.typeId)) return;
   const record = getRecord(target);
   if (record.data.owner) return;
-  record.data.owner = player.id;
-  record.save();
+  system.runTimeout(() => {
+    if (!target.isValid || record.data.owner || !isTamed(target)) return;
+    record.data.owner = player.id;
+    record.save();
+  }, 2);
 });

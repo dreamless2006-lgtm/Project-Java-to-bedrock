@@ -1,0 +1,18 @@
+{
+  "format_version": "1.26.30",
+  "minecraft:item": {
+    "description": {
+      "identifier": "minepreggo:chorus_fruit_with_chocolate",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "minepreggo_chorus_fruit_with_chocolate",
+      "minecraft:display_name": {
+        "value": "item.minepreggo.chorus_fruit_with_chocolate"
+      },
+      "minecraft:max_stack_size": 64
+    }
+  }
+}

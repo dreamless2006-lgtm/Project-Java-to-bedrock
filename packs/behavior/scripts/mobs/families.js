@@ -11,12 +11,13 @@
  * @typedef {object} Family
  * @property {MobSpecies} species
  * @property {Creature} creature
- * @property {string} tamingItem
+ * @property {string[]} tamingItems
  * @property {Record<string, number>} foods food items the tamed mob eats, with their nutrition
  * @property {Record<string, { craving: Craving, gratification: number }>} cravings
  * @property {string} babyItem
  * @property {string} deadFetusItem
  * @property {string} milkItem
+ * @property {number} [hungerP0] ticks per fullness point in P0, when not the P1 value
  */
 
 /** PregnancySystemHelper.calculateBirthDuration / calculatePostBirthDuration, per baby. */
@@ -46,6 +47,57 @@ const BRAINS = {
   },
 };
 
+/** @param {Craving} craving @param {number} gratification */
+const crave = (craving, gratification) => ({ craving, gratification });
+
+const ENDER = {
+  foods: {
+    'minepreggo:ender_slime_jelly': 10,
+    'minepreggo:refined_chorus_shards': 8,
+    'minepreggo:ender_slime_jelly_with_chocolate': 14,
+    'minepreggo:ender_slime_jelly_with_hot_sauce': 13,
+    'minepreggo:ender_slime_jelly_with_salt': 11,
+    'minepreggo:sour_ender_slime_jelly': 12,
+    'minepreggo:chorus_fruit_with_chocolate': 8,
+    'minepreggo:chorus_fruit_with_hot_sauce': 7,
+    'minepreggo:sour_chorus_fruit': 6,
+    'minepreggo:chorus_fruit_with_salt': 5,
+    'minecraft:chorus_fruit': 4,
+  },
+  cravings: {
+    'minepreggo:ender_slime_jelly_with_salt': crave('SALTY', 8),
+    'minepreggo:ender_slime_jelly_with_chocolate': crave('SWEET', 14),
+    'minepreggo:sour_ender_slime_jelly': crave('SOUR', 8),
+    'minepreggo:ender_slime_jelly_with_hot_sauce': crave('SPICY', 12),
+  },
+};
+
+const SLIME = {
+  foods: {
+    'minepreggo:rotten_flesh_with_chocolate': 4,
+    'minepreggo:rotten_flesh_with_hot_sauce': 4,
+    'minepreggo:rotten_flesh_with_salt': 4,
+    'minepreggo:sour_rotten_flesh': 4,
+    'minepreggo:spider_eye_with_chocolate': 4,
+    'minepreggo:spider_eye_with_hot_sauce': 3,
+    'minepreggo:spider_eye_with_salt': 3,
+    'minepreggo:sour_spider_eye': 3,
+    'minepreggo:stuffed_mushroom': 4,
+    'minecraft:spider_eye': 2,
+    'minecraft:rotten_flesh': 4,
+  },
+  cravings: {
+    'minepreggo:rotten_flesh_with_salt': crave('SALTY', 8),
+    'minepreggo:spider_eye_with_salt': crave('SALTY', 6),
+    'minepreggo:rotten_flesh_with_chocolate': crave('SWEET', 12),
+    'minepreggo:spider_eye_with_chocolate': crave('SWEET', 12),
+    'minepreggo:sour_rotten_flesh': crave('SOUR', 8),
+    'minepreggo:sour_spider_eye': crave('SOUR', 6),
+    'minepreggo:rotten_flesh_with_hot_sauce': crave('SPICY', 10),
+    'minepreggo:spider_eye_with_hot_sauce': crave('SPICY', 8),
+  },
+};
+
 const GUNPOWDER = {
   foods: {
     'minepreggo:activated_gunpowder': 8,
@@ -67,7 +119,8 @@ export const FAMILIES = {
   'minepreggo:zombie_girl': {
     species: 'ZOMBIE',
     creature: 'HUMANOID',
-    tamingItem: 'minepreggo:villager_brain',
+    tamingItems: ['minepreggo:villager_brain'],
+    hungerP0: 8400,
     ...BRAINS,
     babyItem: 'minepreggo:baby_zombie',
     deadFetusItem: 'minepreggo:dead_zombie_fetus',
@@ -76,7 +129,7 @@ export const FAMILIES = {
   'minepreggo:humanoid_creeper_girl': {
     species: 'CREEPER',
     creature: 'HUMANOID',
-    tamingItem: 'minepreggo:activated_gunpowder',
+    tamingItems: ['minepreggo:activated_gunpowder'],
     ...GUNPOWDER,
     babyItem: 'minepreggo:baby_humanoid_creeper',
     deadFetusItem: 'minepreggo:dead_humanoid_creeper_fetus',
@@ -85,11 +138,38 @@ export const FAMILIES = {
   'minepreggo:monster_creeper_girl': {
     species: 'CREEPER',
     creature: 'MONSTER',
-    tamingItem: 'minepreggo:activated_gunpowder',
+    tamingItems: ['minepreggo:activated_gunpowder'],
     ...GUNPOWDER,
     babyItem: 'minepreggo:baby_creeper',
     deadFetusItem: 'minepreggo:dead_creeper_fetus',
     milkItem: 'minepreggo:creeper_breast_milk_bottle',
+  },
+  'minepreggo:ender_woman': {
+    species: 'ENDER',
+    creature: 'MONSTER',
+    tamingItems: ['minepreggo:refined_chorus_shards', 'minepreggo:ender_slime_jelly'],
+    ...ENDER,
+    babyItem: 'minepreggo:baby_ender',
+    deadFetusItem: 'minepreggo:dead_ender_fetus',
+    milkItem: 'minepreggo:ender_breast_milk_bottle',
+  },
+  'minepreggo:humanoid_slime_girl': {
+    species: 'SLIME',
+    creature: 'HUMANOID',
+    tamingItems: ['minepreggo:stuffed_mushroom'],
+    ...SLIME,
+    babyItem: 'minepreggo:baby_humanoid_slime',
+    deadFetusItem: 'minepreggo:dead_humanoid_slime_fetus',
+    milkItem: 'minepreggo:slime_breast_milk_bottle',
+  },
+  'minepreggo:monster_slime_girl': {
+    species: 'SLIME',
+    creature: 'MONSTER',
+    tamingItems: ['minepreggo:stuffed_mushroom'],
+    ...SLIME,
+    babyItem: 'minepreggo:baby_slime',
+    deadFetusItem: 'minepreggo:dead_slime_fetus',
+    milkItem: 'minepreggo:slime_breast_milk_bottle',
   },
 };
 
@@ -97,11 +177,12 @@ export const FAMILIES = {
 export const FULLNESS = { initial: 14, max: 30, eatBelow: 20, healAbove: 14, calmAt: 12, angryAt: 4 };
 
 /**
- * Ticks for one point of fullness to drain: non-pregnant 8400 (config totalTicksOfHungry), P0
- * like non-pregnant, then 8400 x {0.85 ... 0.45} for P1-P9 (MinepreggoConfig.calculateHungryValues).
+ * Ticks for one point of fullness to drain: non-pregnant 8400 (config totalTicksOfHungry), then
+ * 8400 x {0.85 ... 0.45} for P1-P9 (MinepreggoConfig.calculateHungryValues). P0 uses the P1 value
+ * except for zombie girls (Family.hungerP0).
  */
-export const HUNGER_TICKS = [8400, 8400, 7140, 6720, 6300, 5880, 5460, 5040, 4620, 4200, 3780];
-/** Index into HUNGER_TICKS for a phase (-1 = not pregnant). */
-export const hungerTicks = (/** @type {number} */ phase) => HUNGER_TICKS[phase + 1];
+export const HUNGER_TICKS = [8400, 7140, 7140, 6720, 6300, 5880, 5460, 5040, 4620, 4200, 3780];
+/** @param {Family} family @param {number} phase -1 = not pregnant */
+export const hungerTicks = (family, phase) => (phase === 0 && family.hungerP0 ? family.hungerP0 : HUNGER_TICKS[phase + 1]);
 
 /** Per-phase speed (movement) and size live in the entity JSON (component groups minepreggo:phase_N). */

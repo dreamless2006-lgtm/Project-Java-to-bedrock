@@ -517,7 +517,7 @@ function tickTamed(/** @type {MobRecord} */ record) {
   }
   if (data.fullness > 0) {
     data.hungerTimer += STEP * (record.moving ? (entity.isInWater ? 4 : 2) : 1);
-    if (data.hungerTimer >= hungerTicks(data.pregnancy ? data.pregnancy.phase : -1)) {
+    if (data.hungerTimer >= hungerTicks(/** @type {Family} */ (familyOf(entity)), data.pregnancy ? data.pregnancy.phase : -1)) {
       data.fullness--;
       data.hungerTimer = 0;
       record.dirty = true;
@@ -626,7 +626,8 @@ export function tickMob(/** @type {Entity} */ entity) {
   if (entity.isValid) {
     if (isIncapacitated(record)) incapacitate(entity);
     syncClient(record);
-    if (record.dirty) record.save();
+    // Timers are saved every 5 s; state changes save right away.
+    if (record.dirty && system.currentTick % 100 < STEP) record.save();
   }
   return record;
 }

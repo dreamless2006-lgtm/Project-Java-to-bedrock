@@ -1,0 +1,110 @@
+{
+  "format_version": "1.10.0",
+  "render_controllers": {
+    "controller.render.minepreggo.monster_creeper_girl": {
+      "arrays": {
+        "geometries": {
+          "Array.geometries": [
+            "Geometry.default",
+            "Geometry.p0",
+            "Geometry.p1",
+            "Geometry.p2",
+            "Geometry.p3",
+            "Geometry.p4",
+            "Geometry.p5",
+            "Geometry.p6",
+            "Geometry.p7",
+            "Geometry.p8",
+            "Geometry.p9"
+          ]
+        },
+        "textures": {
+          "Array.skins": [
+            "Texture.default",
+            "Texture.p0",
+            "Texture.p1",
+            "Texture.p2",
+            "Texture.p3",
+            "Texture.p4",
+            "Texture.p5",
+            "Texture.p6",
+            "Texture.p7",
+            "Texture.p8",
+            "Texture.p9"
+          ]
+        }
+      },
+      "geometry": "Array.geometries[q.property('minepreggo:phase') + 1]",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Array.skins[q.property('minepreggo:phase') + 1]"
+      ],
+      "part_visibility": [
+        {
+          "belly": "q.property('minepreggo:pose') != 'postbirth'"
+        }
+      ],
+      "overlay_color": {
+        "r": "v.flash > 0.0 ? 1.0 : this",
+        "g": "v.flash > 0.0 ? 1.0 : this",
+        "b": "v.flash > 0.0 ? 1.0 : this",
+        "a": "v.flash > 0.0 ? v.flash : this"
+      }
+    },
+    "controller.render.minepreggo.monster_creeper_girl_charged": {
+      "arrays": {
+        "geometries": {
+          "Array.geometries": [
+            "Geometry.default",
+            "Geometry.p0",
+            "Geometry.p1",
+            "Geometry.p2",
+            "Geometry.p3",
+            "Geometry.p4",
+            "Geometry.p5",
+            "Geometry.p6",
+            "Geometry.p7",
+            "Geometry.p8",
+            "Geometry.p9"
+          ]
+        }
+      },
+      "geometry": "Array.geometries[q.property('minepreggo:phase') + 1]",
+      "materials": [
+        {
+          "*": "Material.charged"
+        }
+      ],
+      "textures": [
+        "Texture.charged"
+      ],
+      "part_visibility": [
+        {
+          "belly": "q.property('minepreggo:pose') != 'postbirth'"
+        }
+      ],
+      "overlay_color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1
+      },
+      "uv_anim": {
+        "offset": [
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01",
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "light_color_multiplier": 0.5,
+      "ignore_lighting": true
+    }
+  }
+}

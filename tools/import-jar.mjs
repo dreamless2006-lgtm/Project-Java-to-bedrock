@@ -188,6 +188,9 @@ for (const [javaClass, id] of Object.entries(ANIMATIONS)) {
     // walked (limbSwing * 50 ms) instead of time; Bedrock's equivalent of limbSwing is
     // query.modified_distance_moved (vanilla's humanoid walk uses both with the same factor).
     if (/^(WALK\d*|AGGRESSION)$/.test(field)) bedrock.anim_time_update = 'query.modified_distance_moved * 0.05';
+    // Java copies the head's pose onto the hat after animating (hat.copyFrom(head)), overwriting
+    // any hat keyframes; the converted hat is a child of the head, so it follows on its own.
+    delete bedrock.bones.hat;
     animations[`animation.${MOD_ID}.${id}.${field.toLowerCase()}`] = bedrock;
     animationCount++;
   }

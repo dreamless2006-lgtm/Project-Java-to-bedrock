@@ -155,3 +155,22 @@ test('losing all pregnancy health makes her miscarry, dropping dead fetuses', ()
   assert.equal(record.data.post?.type, 'MISCARRIAGE');
   assert.deepEqual(mob.dropped, ['minepreggo:dead_zombie_fetus', 'minepreggo:dead_zombie_fetus']);
 });
+
+test('every family in the scripts has an entity, and every item it names exists', async () => {
+  const { readdirSync, readFileSync } = await import('node:fs');
+  const root = new URL('../../packs/behavior/', import.meta.url);
+  const entities = readdirSync(new URL('entities/', root)).map((f) => JSON.parse(readFileSync(new URL(`entities/${f}`, root), 'utf8'))['minecraft:entity'].description.identifier);
+  const items = new Set();
+  const walk = (/** @type {URL} */ dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory()) walk(new URL(`${entry.name}/`, dir));
+      else items.add(JSON.parse(readFileSync(new URL(entry.name, dir), 'utf8'))['minecraft:item'].description.identifier);
+    }
+  };
+  walk(new URL('items/', root));
+  for (const [id, family] of Object.entries(FAMILIES)) {
+    assert.ok(entities.includes(id), `${id} has no entity file`);
+    const named = [...family.tamingItems, ...Object.keys(family.foods), ...Object.keys(family.cravings), family.babyItem, family.deadFetusItem, family.milkItem];
+    for (const item of named) assert.ok(item.startsWith('minecraft:') || items.has(item), `${id}: ${item} is not an item`);
+  }
+});

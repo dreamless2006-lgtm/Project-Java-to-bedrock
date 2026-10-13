@@ -59,6 +59,15 @@
     "minepreggo_chocolate_bar": {
       "textures": "textures/minepreggo/item/chocolate_bar"
     },
+    "minepreggo_chorus_fruit_with_chocolate": {
+      "textures": "textures/minepreggo/item/chorus_fruit_with_chocolate"
+    },
+    "minepreggo_chorus_fruit_with_hot_sauce": {
+      "textures": "textures/minepreggo/item/chorus_fruit_with_hot_sauce"
+    },
+    "minepreggo_chorus_fruit_with_salt": {
+      "textures": "textures/minepreggo/item/chorus_fruit_with_salt"
+    },
     "minepreggo_creeper_breast_milk_bottle": {
       "textures": "textures/minepreggo/item/creeper_breast_milk_bottle"
     },
@@ -92,8 +101,26 @@
     "minepreggo_ender_breast_milk_bottle": {
       "textures": "textures/minepreggo/item/ender_breast_milk_bottle"
     },
+    "minepreggo_ender_slime_jelly": {
+      "textures": "textures/minepreggo/item/ender_slime_jelly"
+    },
+    "minepreggo_ender_slime_jelly_with_chocolate": {
+      "textures": "textures/minepreggo/item/ender_slime_jelly_with_chocolate"
+    },
+    "minepreggo_ender_slime_jelly_with_hot_sauce": {
+      "textures": "textures/minepreggo/item/ender_slime_jelly_with_hot_sauce"
+    },
+    "minepreggo_ender_slime_jelly_with_salt": {
+      "textures": "textures/minepreggo/item/ender_slime_jelly_with_salt"
+    },
     "minepreggo_french_fries": {
       "textures": "textures/minepreggo/item/french_fries"
+    },
+    "minepreggo_hostile_humanoid_creeper_girl_spawn_egg": {
+      "textures": "textures/minepreggo/item/hostile_humanoid_creeper_girl_spawn_egg"
+    },
+    "minepreggo_hostile_monster_creeper_girl_spawn_egg": {
+      "textures": "textures/minepreggo/item/hostile_monster_creeper_girl_spawn_egg"
     },
     "minepreggo_hostile_zombie_girl_spawn_egg": {
       "textures": "textures/minepreggo/item/hostile_zombie_girl_spawn_egg"
@@ -128,6 +155,18 @@
     "minepreggo_pickle": {
       "textures": "textures/minepreggo/item/pickle"
     },
+    "minepreggo_refined_chorus_shards": {
+      "textures": "textures/minepreggo/item/refined_chorus_shards"
+    },
+    "minepreggo_rotten_flesh_with_chocolate": {
+      "textures": "textures/minepreggo/item/rotten_flesh_with_chocolate"
+    },
+    "minepreggo_rotten_flesh_with_hot_sauce": {
+      "textures": "textures/minepreggo/item/rotten_flesh_with_hot_sauce"
+    },
+    "minepreggo_rotten_flesh_with_salt": {
+      "textures": "textures/minepreggo/item/rotten_flesh_with_salt"
+    },
     "minepreggo_salt": {
       "textures": "textures/minepreggo/item/salt"
     },
@@ -142,6 +181,27 @@
     },
     "minepreggo_sour_brain": {
       "textures": "textures/minepreggo/item/sour_brain"
+    },
+    "minepreggo_sour_chorus_fruit": {
+      "textures": "textures/minepreggo/item/sour_chorus_fruit"
+    },
+    "minepreggo_sour_ender_slime_jelly": {
+      "textures": "textures/minepreggo/item/sour_ender_slime_jelly"
+    },
+    "minepreggo_sour_rotten_flesh": {
+      "textures": "textures/minepreggo/item/sour_rotten_flesh"
+    },
+    "minepreggo_sour_spider_eye": {
+      "textures": "textures/minepreggo/item/sour_spider_eye"
+    },
+    "minepreggo_spider_eye_with_chocolate": {
+      "textures": "textures/minepreggo/item/spider_eye_with_chocolate"
+    },
+    "minepreggo_spider_eye_with_hot_sauce": {
+      "textures": "textures/minepreggo/item/spider_eye_with_hot_sauce"
+    },
+    "minepreggo_spider_eye_with_salt": {
+      "textures": "textures/minepreggo/item/spider_eye_with_salt"
     },
     "minepreggo_stuffed_mushroom": {
       "textures": "textures/minepreggo/item/stuffed_mushroom"

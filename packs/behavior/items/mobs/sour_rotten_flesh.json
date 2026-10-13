@@ -1,0 +1,18 @@
+{
+  "format_version": "1.26.30",
+  "minecraft:item": {
+    "description": {
+      "identifier": "minepreggo:sour_rotten_flesh",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "minepreggo_sour_rotten_flesh",
+      "minecraft:display_name": {
+        "value": "item.minepreggo.sour_rotten_flesh"
+      },
+      "minecraft:max_stack_size": 64
+    }
+  }
+}

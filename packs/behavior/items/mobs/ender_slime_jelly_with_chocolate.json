@@ -1,0 +1,18 @@
+{
+  "format_version": "1.26.30",
+  "minecraft:item": {
+    "description": {
+      "identifier": "minepreggo:ender_slime_jelly_with_chocolate",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "minepreggo_ender_slime_jelly_with_chocolate",
+      "minecraft:display_name": {
+        "value": "item.minepreggo.ender_slime_jelly_with_chocolate"
+      },
+      "minecraft:max_stack_size": 64
+    }
+  }
+}
