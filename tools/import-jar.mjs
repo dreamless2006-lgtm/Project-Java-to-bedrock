@@ -93,7 +93,7 @@ let textureCount = 0;
 for (const [name, data] of Object.entries(files)) {
   if (!name.startsWith(texturePrefix) || !name.endsWith('.png')) continue;
   // Mob textures move from entity/preggo/ to mobs/ to keep paths short (some devices refuse long ones).
-  writeFile(join(textureOut, name.slice(texturePrefix.length).replace(/^entity\/preggo\//, 'mobs/')), data);
+  writeFile(join(textureOut, name.slice(texturePrefix.length).replace(/^entity\/preggo\/ender\/monster\//, 'mobs/ender/').replace(/^entity\/preggo\//, 'mobs/')), data);
   textureCount++;
 }
 
