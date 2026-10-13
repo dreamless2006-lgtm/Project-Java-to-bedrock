@@ -1,18 +1,12 @@
-# Build and Release Folders
-bin-debug/
-bin-release/
-[Oo]bj/
-[Bb]in/
+# Dependencies and build output
+node_modules/
+dist/
 
-# Other files and folders
-.settings/
+# The original Forge jar lives here locally; it is All Rights Reserved, so it is never committed
+vendor/
 
-# Executables
-*.swf
-*.air
-*.ipa
-*.apk
-
-# Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
-# should NOT be excluded as they contain compiler settings and other important
-# information for Eclipse / Flash Builder.
+# Assets generated from the jar by `npm run import` (third-party art and text, see README)
+packs/resource/textures/minepreggo/
+packs/resource/texts/*.lang
+packs/resource/pack_icon.png
+packs/behavior/pack_icon.png

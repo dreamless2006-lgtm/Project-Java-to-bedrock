@@ -1,0 +1,22 @@
+{
+  "name": "minepreggo-bedrock",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bedrock Edition (.mcaddon) port of the Minepreggo Forge mod",
+  "type": "module",
+  "scripts": {
+    "import": "node tools/import-jar.mjs",
+    "check": "tsc -p jsconfig.json && node tools/validate.mjs",
+    "build": "node tools/build.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@minecraft/server": "2.8.0",
+    "@minecraft/vanilla-data": "1.26.52",
+    "ajv": "8.20.0",
+    "fflate": "0.8.3",
+    "typescript": "5.9.3"
+  }
+}

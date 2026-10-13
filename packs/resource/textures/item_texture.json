@@ -1,0 +1,54 @@
+{
+  "resource_pack_name": "minepreggo",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "minepreggo_candy_apple": {
+      "textures": "textures/minepreggo/item/candy_apple"
+    },
+    "minepreggo_chili_pepper": {
+      "textures": "textures/minepreggo/item/chili_pepper"
+    },
+    "minepreggo_chili_poppers": {
+      "textures": "textures/minepreggo/item/chili_poppers"
+    },
+    "minepreggo_chocolate_bar": {
+      "textures": "textures/minepreggo/item/chocolate_bar"
+    },
+    "minepreggo_cucumber": {
+      "textures": "textures/minepreggo/item/cucumber"
+    },
+    "minepreggo_french_fries": {
+      "textures": "textures/minepreggo/item/french_fries"
+    },
+    "minepreggo_hot_chicken": {
+      "textures": "textures/minepreggo/item/spicy_chicken"
+    },
+    "minepreggo_hot_sauce": {
+      "textures": "textures/minepreggo/item/hot_sauce"
+    },
+    "minepreggo_lemon": {
+      "textures": "textures/minepreggo/item/lemon"
+    },
+    "minepreggo_lemon_drop": {
+      "textures": "textures/minepreggo/item/lemon_drop"
+    },
+    "minepreggo_lemon_ice_cream": {
+      "textures": "textures/minepreggo/item/lemon_ice_cream"
+    },
+    "minepreggo_lemon_ice_popsicles": {
+      "textures": "textures/minepreggo/item/lemon_ice_popsicles"
+    },
+    "minepreggo_pickle": {
+      "textures": "textures/minepreggo/item/pickle"
+    },
+    "minepreggo_salt": {
+      "textures": "textures/minepreggo/item/salt"
+    },
+    "minepreggo_salty_water_bottle": {
+      "textures": "textures/minepreggo/item/salty_water_bottle"
+    },
+    "minepreggo_stuffed_mushroom": {
+      "textures": "textures/minepreggo/item/stuffed_mushroom"
+    }
+  }
+}
