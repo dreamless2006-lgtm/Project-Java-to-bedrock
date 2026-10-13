@@ -134,6 +134,9 @@
     "minepreggo_human_breast_milk_bottle": {
       "textures": "textures/minepreggo/item/human_breast_milk_bottle"
     },
+    "minepreggo_humanoid_slime_girl_spawn_egg": {
+      "textures": "textures/minepreggo/item/humanoid_slime_girl_spawn_egg"
+    },
     "minepreggo_illager_brain": {
       "textures": "textures/minepreggo/item/illager_brain"
     },
@@ -151,6 +154,9 @@
     },
     "minepreggo_lemon_ice_popsicles": {
       "textures": "textures/minepreggo/item/lemon_ice_popsicles"
+    },
+    "minepreggo_monster_slime_girl_spawn_egg": {
+      "textures": "textures/minepreggo/item/monster_slime_girl_spawn_egg"
     },
     "minepreggo_pickle": {
       "textures": "textures/minepreggo/item/pickle"

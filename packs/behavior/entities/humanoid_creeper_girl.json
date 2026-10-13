@@ -141,9 +141,6 @@
           "value": 22,
           "max": 22
         },
-        "minecraft:movement": {
-          "value": 0.26
-        },
         "minecraft:sittable": {},
         "minecraft:leashable": {
           "soft_distance": 4,
@@ -171,6 +168,11 @@
         "minecraft:behavior.random_stroll": {
           "priority": 6,
           "speed_multiplier": 1
+        }
+      },
+      "minepreggo:tamed_speed": {
+        "minecraft:movement": {
+          "value": 0.26
         }
       },
       "minepreggo:savage": {
@@ -395,26 +397,50 @@
           "triggers": [
             {
               "filters": {
-                "all_of": [
+                "any_of": [
                   {
-                    "test": "has_component",
-                    "value": "minecraft:explode"
+                    "test": "enum_property",
+                    "domain": "minepreggo:pose",
+                    "value": "morning_sickness"
                   },
                   {
                     "test": "enum_property",
                     "domain": "minepreggo:pose",
-                    "operator": "!=",
-                    "value": "none"
+                    "value": "kicking_sit"
                   },
                   {
                     "test": "enum_property",
                     "domain": "minepreggo:pose",
-                    "operator": "!=",
-                    "value": "belly_rubs"
+                    "value": "contraction"
+                  },
+                  {
+                    "test": "enum_property",
+                    "domain": "minepreggo:pose",
+                    "value": "prebirth"
+                  },
+                  {
+                    "test": "enum_property",
+                    "domain": "minepreggo:pose",
+                    "value": "birth"
+                  },
+                  {
+                    "test": "enum_property",
+                    "domain": "minepreggo:pose",
+                    "value": "postbirth"
+                  },
+                  {
+                    "test": "enum_property",
+                    "domain": "minepreggo:pose",
+                    "value": "miscarriage"
+                  },
+                  {
+                    "test": "enum_property",
+                    "domain": "minepreggo:pose",
+                    "value": "incapacitated"
                   }
                 ]
               },
-              "event": "minepreggo:stop_exploding"
+              "event": "minepreggo:block_swell"
             }
           ]
         }
@@ -517,31 +543,117 @@
             },
             {
               "filters": {
-                "all_of": [
+                "any_of": [
                   {
-                    "test": "has_component",
-                    "value": "minecraft:explode"
+                    "test": "enum_property",
+                    "domain": "minepreggo:pose",
+                    "value": "morning_sickness"
                   },
                   {
                     "test": "enum_property",
                     "domain": "minepreggo:pose",
-                    "operator": "!=",
-                    "value": "none"
+                    "value": "kicking_sit"
                   },
                   {
                     "test": "enum_property",
                     "domain": "minepreggo:pose",
-                    "operator": "!=",
-                    "value": "belly_rubs"
+                    "value": "contraction"
+                  },
+                  {
+                    "test": "enum_property",
+                    "domain": "minepreggo:pose",
+                    "value": "prebirth"
+                  },
+                  {
+                    "test": "enum_property",
+                    "domain": "minepreggo:pose",
+                    "value": "birth"
+                  },
+                  {
+                    "test": "enum_property",
+                    "domain": "minepreggo:pose",
+                    "value": "postbirth"
+                  },
+                  {
+                    "test": "enum_property",
+                    "domain": "minepreggo:pose",
+                    "value": "miscarriage"
+                  },
+                  {
+                    "test": "enum_property",
+                    "domain": "minepreggo:pose",
+                    "value": "incapacitated"
                   }
                 ]
               },
-              "event": "minepreggo:stop_exploding"
+              "event": "minepreggo:block_swell"
             }
           ]
         }
       },
       "minepreggo:combat_dont_explode": {},
+      "minepreggo:swell_blocked": {
+        "minecraft:target_nearby_sensor": {},
+        "minecraft:environment_sensor": {
+          "triggers": [
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "enum_property",
+                    "domain": "minepreggo:pose",
+                    "operator": "!=",
+                    "value": "morning_sickness"
+                  },
+                  {
+                    "test": "enum_property",
+                    "domain": "minepreggo:pose",
+                    "operator": "!=",
+                    "value": "kicking_sit"
+                  },
+                  {
+                    "test": "enum_property",
+                    "domain": "minepreggo:pose",
+                    "operator": "!=",
+                    "value": "contraction"
+                  },
+                  {
+                    "test": "enum_property",
+                    "domain": "minepreggo:pose",
+                    "operator": "!=",
+                    "value": "prebirth"
+                  },
+                  {
+                    "test": "enum_property",
+                    "domain": "minepreggo:pose",
+                    "operator": "!=",
+                    "value": "birth"
+                  },
+                  {
+                    "test": "enum_property",
+                    "domain": "minepreggo:pose",
+                    "operator": "!=",
+                    "value": "postbirth"
+                  },
+                  {
+                    "test": "enum_property",
+                    "domain": "minepreggo:pose",
+                    "operator": "!=",
+                    "value": "miscarriage"
+                  },
+                  {
+                    "test": "enum_property",
+                    "domain": "minepreggo:pose",
+                    "operator": "!=",
+                    "value": "incapacitated"
+                  }
+                ]
+              },
+              "event": "minepreggo:unblock_swell"
+            }
+          ]
+        }
+      },
       "minepreggo:exploding_0": {
         "minecraft:explode": {
           "fuse_length": 1.5,
@@ -1212,34 +1324,101 @@
         ]
       },
       "minepreggo:on_tame": {
-        "remove": {
-          "component_groups": [
-            "minepreggo:hostile",
-            "minepreggo:tameable",
-            "minepreggo:savage",
-            "minepreggo:charged",
-            "minepreggo:charged_timer",
-            "minepreggo:combat_explode",
-            "minepreggo:combat_fight_and_explode",
-            "minepreggo:combat_fight_and_explode_armed",
-            "minepreggo:combat_dont_explode",
-            "minepreggo:exploding_0",
-            "minepreggo:exploding_0_charged",
-            "minepreggo:exploding_1",
-            "minepreggo:exploding_1_charged",
-            "minepreggo:exploding_2",
-            "minepreggo:exploding_2_charged",
-            "minepreggo:exploding_3",
-            "minepreggo:exploding_3_charged"
-          ]
-        },
-        "add": {
-          "component_groups": [
-            "minepreggo:tamed",
-            "minepreggo:avoid_cats",
-            "minepreggo:combat_explode"
-          ]
-        }
+        "sequence": [
+          {
+            "remove": {
+              "component_groups": [
+                "minepreggo:hostile",
+                "minepreggo:tameable",
+                "minepreggo:savage",
+                "minepreggo:charged",
+                "minepreggo:charged_timer",
+                "minepreggo:exploding_0",
+                "minepreggo:exploding_0_charged",
+                "minepreggo:exploding_1",
+                "minepreggo:exploding_1_charged",
+                "minepreggo:exploding_2",
+                "minepreggo:exploding_2_charged",
+                "minepreggo:exploding_3",
+                "minepreggo:exploding_3_charged"
+              ]
+            },
+            "add": {
+              "component_groups": [
+                "minepreggo:tamed",
+                "minepreggo:avoid_cats"
+              ]
+            }
+          },
+          {
+            "filters": {
+              "test": "int_property",
+              "domain": "minepreggo:phase",
+              "value": -1
+            },
+            "sequence": [
+              {
+                "add": {
+                  "component_groups": [
+                    "minepreggo:tamed_speed"
+                  ]
+                }
+              },
+              {
+                "randomize": [
+                  {
+                    "weight": 20,
+                    "remove": {
+                      "component_groups": [
+                        "minepreggo:combat_explode",
+                        "minepreggo:combat_fight_and_explode",
+                        "minepreggo:combat_fight_and_explode_armed",
+                        "minepreggo:swell_blocked"
+                      ]
+                    },
+                    "add": {
+                      "component_groups": [
+                        "minepreggo:combat_dont_explode"
+                      ]
+                    }
+                  },
+                  {
+                    "weight": 30,
+                    "remove": {
+                      "component_groups": [
+                        "minepreggo:combat_explode",
+                        "minepreggo:combat_fight_and_explode_armed",
+                        "minepreggo:combat_dont_explode",
+                        "minepreggo:swell_blocked"
+                      ]
+                    },
+                    "add": {
+                      "component_groups": [
+                        "minepreggo:combat_fight_and_explode"
+                      ]
+                    }
+                  },
+                  {
+                    "weight": 50,
+                    "remove": {
+                      "component_groups": [
+                        "minepreggo:combat_fight_and_explode",
+                        "minepreggo:combat_fight_and_explode_armed",
+                        "minepreggo:combat_dont_explode",
+                        "minepreggo:swell_blocked"
+                      ]
+                    },
+                    "add": {
+                      "component_groups": [
+                        "minepreggo:combat_explode"
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       },
       "minepreggo:become_savage": {
         "add": {
@@ -1262,28 +1441,43 @@
         }
       },
       "minepreggo:set_not_pregnant": {
-        "remove": {
-          "component_groups": [
-            "minepreggo:phase_0",
-            "minepreggo:phase_1",
-            "minepreggo:phase_2",
-            "minepreggo:phase_3",
-            "minepreggo:phase_4",
-            "minepreggo:phase_5",
-            "minepreggo:phase_6",
-            "minepreggo:phase_7",
-            "minepreggo:phase_8",
-            "minepreggo:phase_9",
-            "minepreggo:hostile_phase_3",
-            "minepreggo:hostile_phase_5",
-            "minepreggo:hostile_phase_7"
-          ]
-        },
-        "set_property": {
-          "minepreggo:phase": -1,
-          "minepreggo:pose": "none",
-          "minepreggo:growth": 0
-        }
+        "sequence": [
+          {
+            "remove": {
+              "component_groups": [
+                "minepreggo:phase_0",
+                "minepreggo:phase_1",
+                "minepreggo:phase_2",
+                "minepreggo:phase_3",
+                "minepreggo:phase_4",
+                "minepreggo:phase_5",
+                "minepreggo:phase_6",
+                "minepreggo:phase_7",
+                "minepreggo:phase_8",
+                "minepreggo:phase_9",
+                "minepreggo:hostile_phase_3",
+                "minepreggo:hostile_phase_5",
+                "minepreggo:hostile_phase_7"
+              ]
+            },
+            "set_property": {
+              "minepreggo:phase": -1,
+              "minepreggo:pose": "none",
+              "minepreggo:growth": 0
+            }
+          },
+          {
+            "filters": {
+              "test": "has_component",
+              "value": "minecraft:is_tamed"
+            },
+            "add": {
+              "component_groups": [
+                "minepreggo:tamed_speed"
+              ]
+            }
+          }
+        ]
       },
       "minepreggo:set_phase_0": {
         "remove": {
@@ -1299,7 +1493,8 @@
             "minepreggo:phase_9",
             "minepreggo:hostile_phase_3",
             "minepreggo:hostile_phase_5",
-            "minepreggo:hostile_phase_7"
+            "minepreggo:hostile_phase_7",
+            "minepreggo:tamed_speed"
           ]
         },
         "add": {
@@ -1325,7 +1520,8 @@
             "minepreggo:phase_9",
             "minepreggo:hostile_phase_3",
             "minepreggo:hostile_phase_5",
-            "minepreggo:hostile_phase_7"
+            "minepreggo:hostile_phase_7",
+            "minepreggo:tamed_speed"
           ]
         },
         "add": {
@@ -1351,7 +1547,8 @@
             "minepreggo:phase_9",
             "minepreggo:hostile_phase_3",
             "minepreggo:hostile_phase_5",
-            "minepreggo:hostile_phase_7"
+            "minepreggo:hostile_phase_7",
+            "minepreggo:tamed_speed"
           ]
         },
         "add": {
@@ -1377,7 +1574,8 @@
             "minepreggo:phase_9",
             "minepreggo:hostile_phase_3",
             "minepreggo:hostile_phase_5",
-            "minepreggo:hostile_phase_7"
+            "minepreggo:hostile_phase_7",
+            "minepreggo:tamed_speed"
           ]
         },
         "add": {
@@ -1403,7 +1601,8 @@
             "minepreggo:phase_9",
             "minepreggo:hostile_phase_3",
             "minepreggo:hostile_phase_5",
-            "minepreggo:hostile_phase_7"
+            "minepreggo:hostile_phase_7",
+            "minepreggo:tamed_speed"
           ]
         },
         "add": {
@@ -1429,7 +1628,8 @@
             "minepreggo:phase_9",
             "minepreggo:hostile_phase_3",
             "minepreggo:hostile_phase_5",
-            "minepreggo:hostile_phase_7"
+            "minepreggo:hostile_phase_7",
+            "minepreggo:tamed_speed"
           ]
         },
         "add": {
@@ -1455,7 +1655,8 @@
             "minepreggo:phase_9",
             "minepreggo:hostile_phase_3",
             "minepreggo:hostile_phase_5",
-            "minepreggo:hostile_phase_7"
+            "minepreggo:hostile_phase_7",
+            "minepreggo:tamed_speed"
           ]
         },
         "add": {
@@ -1481,7 +1682,8 @@
             "minepreggo:phase_9",
             "minepreggo:hostile_phase_3",
             "minepreggo:hostile_phase_5",
-            "minepreggo:hostile_phase_7"
+            "minepreggo:hostile_phase_7",
+            "minepreggo:tamed_speed"
           ]
         },
         "add": {
@@ -1507,7 +1709,8 @@
             "minepreggo:phase_9",
             "minepreggo:hostile_phase_3",
             "minepreggo:hostile_phase_5",
-            "minepreggo:hostile_phase_7"
+            "minepreggo:hostile_phase_7",
+            "minepreggo:tamed_speed"
           ]
         },
         "add": {
@@ -1533,7 +1736,8 @@
             "minepreggo:phase_8",
             "minepreggo:hostile_phase_3",
             "minepreggo:hostile_phase_5",
-            "minepreggo:hostile_phase_7"
+            "minepreggo:hostile_phase_7",
+            "minepreggo:tamed_speed"
           ]
         },
         "add": {
@@ -1563,16 +1767,54 @@
                   "value": "minecraft:explode"
                 },
                 {
-                  "any_of": [
+                  "all_of": [
                     {
                       "test": "enum_property",
                       "domain": "minepreggo:pose",
-                      "value": "none"
+                      "operator": "!=",
+                      "value": "morning_sickness"
                     },
                     {
                       "test": "enum_property",
                       "domain": "minepreggo:pose",
-                      "value": "belly_rubs"
+                      "operator": "!=",
+                      "value": "kicking_sit"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "contraction"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "prebirth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "birth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "postbirth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "miscarriage"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "incapacitated"
                     }
                   ]
                 },
@@ -1604,16 +1846,54 @@
                   "value": "minecraft:explode"
                 },
                 {
-                  "any_of": [
+                  "all_of": [
                     {
                       "test": "enum_property",
                       "domain": "minepreggo:pose",
-                      "value": "none"
+                      "operator": "!=",
+                      "value": "morning_sickness"
                     },
                     {
                       "test": "enum_property",
                       "domain": "minepreggo:pose",
-                      "value": "belly_rubs"
+                      "operator": "!=",
+                      "value": "kicking_sit"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "contraction"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "prebirth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "birth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "postbirth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "miscarriage"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "incapacitated"
                     }
                   ]
                 },
@@ -1644,16 +1924,54 @@
                   "value": "minecraft:explode"
                 },
                 {
-                  "any_of": [
+                  "all_of": [
                     {
                       "test": "enum_property",
                       "domain": "minepreggo:pose",
-                      "value": "none"
+                      "operator": "!=",
+                      "value": "morning_sickness"
                     },
                     {
                       "test": "enum_property",
                       "domain": "minepreggo:pose",
-                      "value": "belly_rubs"
+                      "operator": "!=",
+                      "value": "kicking_sit"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "contraction"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "prebirth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "birth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "postbirth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "miscarriage"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "incapacitated"
                     }
                   ]
                 },
@@ -1691,16 +2009,54 @@
                   "value": "minecraft:explode"
                 },
                 {
-                  "any_of": [
+                  "all_of": [
                     {
                       "test": "enum_property",
                       "domain": "minepreggo:pose",
-                      "value": "none"
+                      "operator": "!=",
+                      "value": "morning_sickness"
                     },
                     {
                       "test": "enum_property",
                       "domain": "minepreggo:pose",
-                      "value": "belly_rubs"
+                      "operator": "!=",
+                      "value": "kicking_sit"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "contraction"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "prebirth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "birth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "postbirth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "miscarriage"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "incapacitated"
                     }
                   ]
                 },
@@ -1737,16 +2093,54 @@
                   "value": "minecraft:explode"
                 },
                 {
-                  "any_of": [
+                  "all_of": [
                     {
                       "test": "enum_property",
                       "domain": "minepreggo:pose",
-                      "value": "none"
+                      "operator": "!=",
+                      "value": "morning_sickness"
                     },
                     {
                       "test": "enum_property",
                       "domain": "minepreggo:pose",
-                      "value": "belly_rubs"
+                      "operator": "!=",
+                      "value": "kicking_sit"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "contraction"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "prebirth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "birth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "postbirth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "miscarriage"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "incapacitated"
                     }
                   ]
                 },
@@ -1784,16 +2178,54 @@
                   "value": "minecraft:explode"
                 },
                 {
-                  "any_of": [
+                  "all_of": [
                     {
                       "test": "enum_property",
                       "domain": "minepreggo:pose",
-                      "value": "none"
+                      "operator": "!=",
+                      "value": "morning_sickness"
                     },
                     {
                       "test": "enum_property",
                       "domain": "minepreggo:pose",
-                      "value": "belly_rubs"
+                      "operator": "!=",
+                      "value": "kicking_sit"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "contraction"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "prebirth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "birth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "postbirth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "miscarriage"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "incapacitated"
                     }
                   ]
                 },
@@ -1830,16 +2262,54 @@
                   "value": "minecraft:explode"
                 },
                 {
-                  "any_of": [
+                  "all_of": [
                     {
                       "test": "enum_property",
                       "domain": "minepreggo:pose",
-                      "value": "none"
+                      "operator": "!=",
+                      "value": "morning_sickness"
                     },
                     {
                       "test": "enum_property",
                       "domain": "minepreggo:pose",
-                      "value": "belly_rubs"
+                      "operator": "!=",
+                      "value": "kicking_sit"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "contraction"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "prebirth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "birth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "postbirth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "miscarriage"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "incapacitated"
                     }
                   ]
                 },
@@ -1871,16 +2341,54 @@
                   "value": "minecraft:explode"
                 },
                 {
-                  "any_of": [
+                  "all_of": [
                     {
                       "test": "enum_property",
                       "domain": "minepreggo:pose",
-                      "value": "none"
+                      "operator": "!=",
+                      "value": "morning_sickness"
                     },
                     {
                       "test": "enum_property",
                       "domain": "minepreggo:pose",
-                      "value": "belly_rubs"
+                      "operator": "!=",
+                      "value": "kicking_sit"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "contraction"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "prebirth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "birth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "postbirth"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "miscarriage"
+                    },
+                    {
+                      "test": "enum_property",
+                      "domain": "minepreggo:pose",
+                      "operator": "!=",
+                      "value": "incapacitated"
                     }
                   ]
                 },
@@ -2177,7 +2685,8 @@
       "minepreggo:arm_swell": {
         "remove": {
           "component_groups": [
-            "minepreggo:combat_fight_and_explode"
+            "minepreggo:combat_fight_and_explode",
+            "minepreggo:swell_blocked"
           ]
         },
         "add": {
@@ -2190,14 +2699,7 @@
         "remove": {
           "component_groups": [
             "minepreggo:combat_fight_and_explode_armed",
-            "minepreggo:exploding_0",
-            "minepreggo:exploding_0_charged",
-            "minepreggo:exploding_1",
-            "minepreggo:exploding_1_charged",
-            "minepreggo:exploding_2",
-            "minepreggo:exploding_2_charged",
-            "minepreggo:exploding_3",
-            "minepreggo:exploding_3_charged"
+            "minepreggo:swell_blocked"
           ]
         },
         "add": {
@@ -2206,13 +2708,27 @@
           ]
         }
       },
+      "minepreggo:block_swell": {
+        "add": {
+          "component_groups": [
+            "minepreggo:swell_blocked"
+          ]
+        }
+      },
+      "minepreggo:unblock_swell": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:swell_blocked"
+          ]
+        }
+      },
       "minepreggo:set_combat_explode": {
         "remove": {
           "component_groups": [
-            "minepreggo:combat_explode",
             "minepreggo:combat_fight_and_explode",
             "minepreggo:combat_fight_and_explode_armed",
             "minepreggo:combat_dont_explode",
+            "minepreggo:swell_blocked",
             "minepreggo:exploding_0",
             "minepreggo:exploding_0_charged",
             "minepreggo:exploding_1",
@@ -2233,9 +2749,9 @@
         "remove": {
           "component_groups": [
             "minepreggo:combat_explode",
-            "minepreggo:combat_fight_and_explode",
             "minepreggo:combat_fight_and_explode_armed",
             "minepreggo:combat_dont_explode",
+            "minepreggo:swell_blocked",
             "minepreggo:exploding_0",
             "minepreggo:exploding_0_charged",
             "minepreggo:exploding_1",
@@ -2258,7 +2774,7 @@
             "minepreggo:combat_explode",
             "minepreggo:combat_fight_and_explode",
             "minepreggo:combat_fight_and_explode_armed",
-            "minepreggo:combat_dont_explode",
+            "minepreggo:swell_blocked",
             "minepreggo:exploding_0",
             "minepreggo:exploding_0_charged",
             "minepreggo:exploding_1",

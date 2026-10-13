@@ -14,3 +14,7 @@ entity.minepreggo:humanoid_creeper_girl.name=Humanoid Creeper Girl
 item.spawn_egg.entity.minepreggo:humanoid_creeper_girl.name=Humanoid Creeper Girl Spawn Egg
 entity.minepreggo:monster_creeper_girl.name=Monster Creeper Girl
 item.spawn_egg.entity.minepreggo:monster_creeper_girl.name=Monster Creeper Girl Spawn Egg
+entity.minepreggo:humanoid_slime_girl.name=Humanoid Slime Girl
+item.spawn_egg.entity.minepreggo:humanoid_slime_girl.name=Humanoid Slime Girl Spawn Egg
+entity.minepreggo:monster_slime_girl.name=Monster Slime Girl
+item.spawn_egg.entity.minepreggo:monster_slime_girl.name=Monster Slime Girl Spawn Egg

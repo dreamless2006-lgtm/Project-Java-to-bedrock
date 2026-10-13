@@ -1,0 +1,212 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "minepreggo:humanoid_slime_girl",
+      "materials": {
+        "default": "entity_alphablend"
+      },
+      "textures": {
+        "default": "textures/minepreggo/entity/preggo/slime/humanoid/humanoid_slime_girl",
+        "p0": "textures/minepreggo/entity/preggo/slime/humanoid/humanoid_slime_girl_p0",
+        "p1": "textures/minepreggo/entity/preggo/slime/humanoid/humanoid_slime_girl_p1",
+        "p2": "textures/minepreggo/entity/preggo/slime/humanoid/humanoid_slime_girl_p2",
+        "p3": "textures/minepreggo/entity/preggo/slime/humanoid/humanoid_slime_girl_p3",
+        "p4": "textures/minepreggo/entity/preggo/slime/humanoid/humanoid_slime_girl_p4",
+        "p5": "textures/minepreggo/entity/preggo/slime/humanoid/humanoid_slime_girl_p5",
+        "p6": "textures/minepreggo/entity/preggo/slime/humanoid/humanoid_slime_girl_p6",
+        "p7": "textures/minepreggo/entity/preggo/slime/humanoid/humanoid_slime_girl_p7",
+        "p8": "textures/minepreggo/entity/preggo/slime/humanoid/humanoid_slime_girl_p8",
+        "p9": "textures/minepreggo/entity/preggo/slime/humanoid/humanoid_slime_girl_p9"
+      },
+      "geometry": {
+        "default": "geometry.minepreggo.humanoid_slime_girl",
+        "p0": "geometry.minepreggo.humanoid_slime_girl_p0",
+        "p1": "geometry.minepreggo.humanoid_slime_girl_p1",
+        "p2": "geometry.minepreggo.humanoid_slime_girl_p2",
+        "p3": "geometry.minepreggo.humanoid_slime_girl_p3",
+        "p4": "geometry.minepreggo.humanoid_slime_girl_p4",
+        "p5": "geometry.minepreggo.humanoid_slime_girl_p5",
+        "p6": "geometry.minepreggo.humanoid_slime_girl_p6",
+        "p7": "geometry.minepreggo.humanoid_slime_girl_p7",
+        "p8": "geometry.minepreggo.humanoid_slime_girl_p8",
+        "p9": "geometry.minepreggo.humanoid_slime_girl_p9"
+      },
+      "scripts": {
+        "scale": "1.075",
+        "scaleX": "1.0 + 0.4 * (1.0 / (v.squish / 1.5 + 1.0) - 1.0)",
+        "scaleY": "v.squish / 1.5 + 1.0",
+        "scaleZ": "1.0 + 0.4 * (1.0 / (v.squish / 1.5 + 1.0) - 1.0)",
+        "initialize": [
+          "v.was_on_ground = 1.0;",
+          "v.squish = 0.0;",
+          "v.squish_target = 0.0;"
+        ],
+        "pre_animation": [
+          "v.phase = q.property('minepreggo:phase');",
+          "v.pose = q.property('minepreggo:pose');",
+          "v.kick = q.property('minepreggo:kick');",
+          "v.savage = q.property('minepreggo:savage');",
+          "v.aggressive = q.has_target;",
+          "v.kicking = v.pose == 'fetal_movement' || v.pose == 'kicking_sit' || v.pose == 'incapacitated';",
+          "v.kick = v.pose == 'incapacitated' ? 1 : v.kick;",
+          "v.belly_growth = (v.phase <= 2 ? 1.0 : (v.phase <= 4 ? 0.9 : (v.phase == 5 ? 0.8 : (v.phase <= 7 ? 0.7 : 0.6)))) * q.property('minepreggo:growth');",
+          "v.squish_target = (q.is_on_ground && !v.was_on_ground) ? -0.5 : ((!q.is_on_ground && v.was_on_ground) ? 1.0 : v.squish_target);",
+          "v.was_on_ground = q.is_on_ground;",
+          "v.squish = v.squish + (v.squish_target - v.squish) * (1.0 - math.pow(0.5, 20.0 * q.delta_time));",
+          "v.squish_target = v.squish_target * math.pow(0.6, 20.0 * q.delta_time);"
+        ],
+        "animate": [
+          {
+            "look_at_target": "!q.is_sitting && (v.pose == 'none' || v.pose == 'belly_rubs')"
+          },
+          "loop_controller",
+          {
+            "walk": "v.aggressive ? 0.0 : math.min(q.modified_move_speed * 4.5, 1.0)"
+          },
+          {
+            "aggression": "v.aggressive ? math.min(q.modified_move_speed * 4.5, 1.0) : 0.0"
+          },
+          "attack_controller",
+          "pain_controller",
+          "squish_controller",
+          {
+            "belly_low": "v.phase >= 0 && v.phase <= 2"
+          },
+          {
+            "belly_medium": "v.phase >= 3 && v.phase <= 6 && !v.kicking"
+          },
+          {
+            "belly_high": "v.phase >= 7 && !v.kicking"
+          },
+          {
+            "belly_growth": "v.phase >= 0"
+          },
+          {
+            "fetal_p3_i": "v.kicking && v.phase == 3 && v.kick == 0"
+          },
+          {
+            "fetal_p3_ii": "v.kicking && v.phase == 3 && v.kick == 1"
+          },
+          {
+            "fetal_p3_iii": "v.kicking && v.phase == 3 && v.kick == 2"
+          },
+          {
+            "fetal_p4_i": "v.kicking && v.phase == 4 && v.kick == 0"
+          },
+          {
+            "fetal_p4_ii": "v.kicking && v.phase == 4 && v.kick == 1"
+          },
+          {
+            "fetal_p4_iii": "v.kicking && v.phase == 4 && v.kick == 2"
+          },
+          {
+            "fetal_p5_i": "v.kicking && v.phase == 5 && v.kick == 0"
+          },
+          {
+            "fetal_p5_ii": "v.kicking && v.phase == 5 && v.kick == 1"
+          },
+          {
+            "fetal_p5_iii": "v.kicking && v.phase == 5 && v.kick == 2"
+          },
+          {
+            "fetal_p6_i": "v.kicking && v.phase == 6 && v.kick == 0"
+          },
+          {
+            "fetal_p6_ii": "v.kicking && v.phase == 6 && v.kick == 1"
+          },
+          {
+            "fetal_p6_iii": "v.kicking && v.phase == 6 && v.kick == 2"
+          },
+          {
+            "fetal_p7_i": "v.kicking && v.phase == 7 && v.kick == 0"
+          },
+          {
+            "fetal_p7_ii": "v.kicking && v.phase == 7 && v.kick == 1"
+          },
+          {
+            "fetal_p7_iii": "v.kicking && v.phase == 7 && v.kick == 2"
+          },
+          {
+            "fetal_p8_i": "v.kicking && v.phase == 8 && v.kick == 0"
+          },
+          {
+            "fetal_p8_ii": "v.kicking && v.phase == 8 && v.kick == 1"
+          },
+          {
+            "fetal_p8_iii": "v.kicking && v.phase == 8 && v.kick == 2"
+          },
+          {
+            "fetal_p9_i": "v.kicking && v.phase == 9 && v.kick == 0"
+          },
+          {
+            "fetal_p9_ii": "v.kicking && v.phase == 9 && v.kick == 1"
+          },
+          {
+            "fetal_p9_iii": "v.kicking && v.phase == 9 && v.kick == 2"
+          }
+        ]
+      },
+      "animations": {
+        "look_at_target": "animation.common.look_at_target",
+        "idle": "animation.minepreggo.humanoid_slime_girl.idle",
+        "walk": "animation.minepreggo.humanoid_slime_girl.walk",
+        "aggression": "animation.minepreggo.humanoid_slime_girl.aggression",
+        "attack": "animation.minepreggo.humanoid_slime_girl.attack",
+        "wait": "animation.minepreggo.humanoid_slime_girl.wait",
+        "riding": "animation.minepreggo.humanoid_slime_girl.riding",
+        "morning_sickness": "animation.minepreggo.humanoid_slime_girl.morning_sickness",
+        "kicking_sit": "animation.minepreggo.humanoid_slime_girl.kicking_sit",
+        "contraction": "animation.minepreggo.humanoid_slime_girl.contraction",
+        "back_pain": "animation.minepreggo.humanoid_slime_girl.back_pain",
+        "water_breaking": "animation.minepreggo.humanoid_slime_girl.water_breaking",
+        "prebirth": "animation.minepreggo.humanoid_slime_girl.prebirth",
+        "birth": "animation.minepreggo.humanoid_slime_girl.birth",
+        "postbirth": "animation.minepreggo.humanoid_slime_girl.postbirth",
+        "miscarriage": "animation.minepreggo.humanoid_slime_girl.miscarriage",
+        "belly_low": "animation.minepreggo.belly.low_belly_inflation",
+        "belly_medium": "animation.minepreggo.belly.medium_belly_inflation",
+        "belly_high": "animation.minepreggo.belly.high_belly_inflation",
+        "belly_growth": "animation.minepreggo.belly_growth",
+        "belly_rubs_i": "animation.minepreggo.belly.belly_rubs_needs_i",
+        "belly_rubs_ii": "animation.minepreggo.belly.belly_rubs_needs_ii",
+        "belly_rubs_iii": "animation.minepreggo.belly.belly_rubs_needs_iii",
+        "loop_controller": "controller.animation.minepreggo.preggo_mob.loop",
+        "attack_controller": "controller.animation.minepreggo.preggo_mob.attack",
+        "pain_controller": "controller.animation.minepreggo.preggo_mob.pain",
+        "squish_controller": "controller.animation.minepreggo.humanoid_slime_girl.squish",
+        "fetal_p3_i": "animation.minepreggo.belly.fetal_movement_p3_i",
+        "fetal_p3_ii": "animation.minepreggo.belly.fetal_movement_p3_ii",
+        "fetal_p3_iii": "animation.minepreggo.belly.fetal_movement_p3_iii",
+        "fetal_p4_i": "animation.minepreggo.belly.fetal_movement_p4_i",
+        "fetal_p4_ii": "animation.minepreggo.belly.fetal_movement_p4_ii",
+        "fetal_p4_iii": "animation.minepreggo.belly.fetal_movement_p4_iii",
+        "fetal_p5_i": "animation.minepreggo.belly.fetal_movement_p5_i",
+        "fetal_p5_ii": "animation.minepreggo.belly.fetal_movement_p5_ii",
+        "fetal_p5_iii": "animation.minepreggo.belly.fetal_movement_p5_iii",
+        "fetal_p6_i": "animation.minepreggo.belly.fetal_movement_p6_i",
+        "fetal_p6_ii": "animation.minepreggo.belly.fetal_movement_p6_ii",
+        "fetal_p6_iii": "animation.minepreggo.belly.fetal_movement_p6_iii",
+        "fetal_p7_i": "animation.minepreggo.belly.fetal_movement_p7_i",
+        "fetal_p7_ii": "animation.minepreggo.belly.fetal_movement_p7_ii",
+        "fetal_p7_iii": "animation.minepreggo.belly.fetal_movement_p7_iii",
+        "fetal_p8_i": "animation.minepreggo.belly.fetal_movement_p8_i",
+        "fetal_p8_ii": "animation.minepreggo.belly.fetal_movement_p8_ii",
+        "fetal_p8_iii": "animation.minepreggo.belly.fetal_movement_p8_iii",
+        "fetal_p9_i": "animation.minepreggo.belly.fetal_movement_p9_i",
+        "fetal_p9_ii": "animation.minepreggo.belly.fetal_movement_p9_ii",
+        "fetal_p9_iii": "animation.minepreggo.belly.fetal_movement_p9_iii"
+      },
+      "sound_effects": {
+        "slime_squish": "mob.slime.big"
+      },
+      "render_controllers": [
+        "controller.render.minepreggo.preggo_mob"
+      ],
+      "spawn_egg": {
+        "texture": "minepreggo_humanoid_slime_girl_spawn_egg"
+      },
+      "enable_attachables": true
+    }
+  }
+}
