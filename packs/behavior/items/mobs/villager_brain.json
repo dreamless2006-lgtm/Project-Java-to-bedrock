@@ -1,0 +1,23 @@
+{
+  "format_version": "1.26.30",
+  "minecraft:item": {
+    "description": {
+      "identifier": "minepreggo:villager_brain",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "minepreggo_villager_brain",
+      "minecraft:display_name": {
+        "value": "item.minepreggo.villager_brain"
+      },
+      "minecraft:max_stack_size": 64,
+      "minecraft:tags": {
+        "tags": [
+          "minepreggo:brain"
+        ]
+      }
+    }
+  }
+}

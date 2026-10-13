@@ -1,6 +1,7 @@
-// Pulls the third-party assets (textures, sounds, translations, pack icon) out of the original
-// Minepreggo Forge jar and converts them into the Bedrock resource pack layout. Strings the port
-// adds itself live in tools/lang/ and are merged into the generated .lang files.
+// Pulls the third-party assets (textures, sounds, translations, entity models and animations, pack
+// icon) out of the original Minepreggo Forge jar and converts them into the Bedrock resource pack
+// layout. Strings the port adds itself live in tools/lang/ and are merged into the generated .lang
+// files.
 //
 // The jar is "All Rights Reserved", so nothing produced here is committed: every output
 // path is listed in .gitignore. Re-run this whenever the jar is updated.
@@ -12,6 +13,7 @@ import { readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync, existsSync
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { unzipSync, strFromU8 } from 'fflate';
+import { createModelRunner, toBedrockAnimation, toBedrockGeometry } from './lib/java-models.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const RP = join(ROOT, 'packs/resource');
@@ -125,6 +127,73 @@ const declared = JSON.parse(readFileSync(join(RP, 'texts/languages.json'), 'utf8
 const undeclared = locales.filter((l) => !declared.includes(l));
 if (undeclared.length) console.warn(`warning: add ${undeclared.join(', ')} to packs/resource/texts/languages.json`);
 
+// Entity models: the mod builds them in code, so they are converted by running the jar's model
+// factories (tools/lib/java-models.mjs) instead of being copied.
+const MODEL_PACKAGE = 'dev/dixmk/minepreggo/client/model/entity/preggo/';
+const withPhases = (id, javaClass, baseMethod) => [
+  [id, javaClass, baseMethod],
+  ...Array.from({ length: 10 }, (_, p) => [`${id}_p${p}`, javaClass, `createP${p}BodyLayer`]),
+];
+const MODELS = [
+  ...withPhases('zombie_girl', 'zombie/AbstractZombieGirlModel', 'createBodyLayer'),
+  ...withPhases('humanoid_creeper_girl', 'creeper/AbstractHumanoidCreeperGirlModel', 'createBodyLayer'),
+  ...withPhases('monster_creeper_girl', 'creeper/AbstractMonsterCreeperGirlModel', 'createBasicBodyLayer'),
+  ...withPhases('ender_woman', 'ender/AbstractMonsterEnderWomanModel', 'createBodyLayer'),
+  ...withPhases('humanoid_slime_girl', 'slime/AbstractHumanoidSlimeGirlModel', 'createNonPregBodyLayer'),
+  ...withPhases('monster_slime_girl', 'slime/AbstractMonsterSlimeGirlModel', 'createNonPregBodyLayer'),
+];
+const modelOut = join(RP, 'models/entity', MOD_ID);
+rmSync(modelOut, { recursive: true, force: true });
+const models = createModelRunner(files, 'dev/dixmk/minepreggo/');
+for (const [id, javaClass, method] of MODELS) {
+  const layer = models.layer(MODEL_PACKAGE + javaClass, method);
+  const parts = new Set();
+  const collect = (part) => part.children.forEach((child, name) => { parts.add(name); collect(child); });
+  collect(layer.root);
+  const geometry = toBedrockGeometry(layer, `geometry.${MOD_ID}.${id}`, {
+    // Java copies the head pose onto the hat every frame; in Bedrock the hat simply follows the head.
+    reparent: parts.has('hat') && parts.has('head') ? { hat: 'head' } : {},
+    // Bedrock draws held items at these bones (same placement as vanilla's humanoid geometry).
+    extraBones: parts.has('right_arm') && parts.has('left_arm')
+      ? [
+          { name: 'rightItem', parent: 'right_arm', pivot: [-6, 15, 1] },
+          { name: 'leftItem', parent: 'left_arm', pivot: [6, 15, 1] },
+        ]
+      : [],
+  });
+  writeFile(join(modelOut, `${id}.geo.json`), JSON.stringify(geometry, null, 2) + '\n');
+}
+
+// Keyframe animations, one file per Java animation class: e.g. ZombieGirlAnimations.IDLE becomes
+// "animation.minepreggo.zombie_girl.idle". They animate the Java part names, which the converted
+// geometry keeps.
+const ANIMATION_PACKAGE = 'dev/dixmk/minepreggo/client/animation/preggo/';
+const ANIMATIONS = {
+  ZombieGirlAnimations: 'zombie_girl',
+  HumanoidCreeperGirlAnimations: 'humanoid_creeper_girl',
+  MonsterCreeperGirlAnimations: 'monster_creeper_girl',
+  MonsterEnderWomanAnimations: 'ender_woman',
+  HumanoidSlimeGirlAnimations: 'humanoid_slime_girl',
+  MonsterSlimeGirlAnimations: 'monster_slime_girl',
+  BellyAnimation: 'belly',
+};
+const animationOut = join(RP, 'animations', MOD_ID);
+rmSync(animationOut, { recursive: true, force: true });
+let animationCount = 0;
+for (const [javaClass, id] of Object.entries(ANIMATIONS)) {
+  const animations = {};
+  for (const [field, animation] of Object.entries(models.animations(ANIMATION_PACKAGE + javaClass))) {
+    const bedrock = toBedrockAnimation(animation);
+    // Java plays walk cycles with HierarchicalModel.animateWalk, which advances them by distance
+    // walked (limbSwing * 50 ms) instead of time; Bedrock's equivalent of limbSwing is
+    // query.modified_distance_moved (vanilla's humanoid walk uses both with the same factor).
+    if (/^(WALK\d*|AGGRESSION)$/.test(field)) bedrock.anim_time_update = 'query.modified_distance_moved * 0.05';
+    animations[`animation.${MOD_ID}.${id}.${field.toLowerCase()}`] = bedrock;
+    animationCount++;
+  }
+  writeFile(join(animationOut, `${id}.animation.json`), JSON.stringify({ format_version: '1.8.0', animations }, null, 2) + '\n');
+}
+
 // Pack icons.
 const logo = files['logo.png'];
 if (logo) {
@@ -133,6 +202,6 @@ if (logo) {
 }
 
 console.log(
-  `Imported ${MOD_ID} ${modVersion} from ${jarPath}: ${textureCount} textures, ${soundCount} sounds, ` +
+  `Imported ${MOD_ID} ${modVersion} from ${jarPath}: ${textureCount} textures, ${soundCount} sounds, ${MODELS.length} models, ${animationCount} animations, ` +
     `${locales.length} languages (${locales.sort().join(', ')})${logo ? ', pack icons' : ''}`
 );

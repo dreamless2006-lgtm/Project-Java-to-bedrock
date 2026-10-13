@@ -8,6 +8,7 @@ import { CRAVING_ITEMS, CRAVING_LANG, TICKS } from './data.js';
 import { applyEffects } from './effects.js';
 import { pregnancyDamage } from './math.js';
 import { clampLevel } from './state.js';
+import { onNightSkipped as onMobsNightSkipped } from '../mobs/system.js';
 import {
   actionbar,
   chestItem,
@@ -95,7 +96,10 @@ function detectNightSkip() {
   const sleeping = world.getPlayers().some((p) => p.isSleeping);
   if (lastTimeOfDay >= 0) {
     const elapsed = (time - lastTimeOfDay + 24000) % 24000;
-    if (elapsed > 40 && (sleptRecently || sleeping)) onNightSkipped(elapsed - 20);
+    if (elapsed > 40 && (sleptRecently || sleeping)) {
+      onNightSkipped(elapsed - 20);
+      onMobsNightSkipped(elapsed - 20);
+    }
   }
   lastTimeOfDay = time;
   sleptRecently = sleeping;

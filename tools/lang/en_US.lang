@@ -7,3 +7,6 @@ minepreggo.birth.push_hint=Keep tapping sneak to push!
 minepreggo.hud.day=Day %s/%s
 minepreggo.hud.health=Pregnancy health %s
 minepreggo.hud.push=Tap %s to push: %s
+minepreggo.loaded=§7[Minepreggo %s] Add-on loaded.
+entity.minepreggo:zombie_girl.name=Zombie Girl
+item.spawn_egg.entity.minepreggo:zombie_girl.name=Zombie Girl Spawn Egg

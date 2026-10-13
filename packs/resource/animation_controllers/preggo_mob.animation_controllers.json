@@ -1,0 +1,240 @@
+{
+  "format_version": "1.10.0",
+  "animation_controllers": {
+    "controller.animation.minepreggo.preggo_mob.loop": {
+      "initial_state": "idle",
+      "states": {
+        "idle": {
+          "animations": [
+            "idle"
+          ],
+          "transitions": [
+            {
+              "riding": "q.is_riding"
+            },
+            {
+              "waiting": "q.is_sitting && !v.savage"
+            }
+          ],
+          "blend_transition": 0.2
+        },
+        "riding": {
+          "animations": [
+            "riding"
+          ],
+          "transitions": [
+            {
+              "idle": "!q.is_riding"
+            }
+          ],
+          "blend_transition": 0.2
+        },
+        "waiting": {
+          "animations": [
+            "wait"
+          ],
+          "transitions": [
+            {
+              "idle": "!q.is_sitting || v.savage || q.is_riding"
+            }
+          ],
+          "blend_transition": 0.2
+        }
+      }
+    },
+    "controller.animation.minepreggo.preggo_mob.attack": {
+      "initial_state": "default",
+      "states": {
+        "default": {
+          "transitions": [
+            {
+              "attacking": "v.attack_time > 0.0"
+            }
+          ]
+        },
+        "attacking": {
+          "animations": [
+            "attack"
+          ],
+          "transitions": [
+            {
+              "default": "q.all_animations_finished"
+            }
+          ]
+        }
+      }
+    },
+    "controller.animation.minepreggo.preggo_mob.pain": {
+      "initial_state": "default",
+      "states": {
+        "default": {
+          "transitions": [
+            {
+              "morning_sickness": "v.pose == 'morning_sickness'"
+            },
+            {
+              "kicking_sit": "v.pose == 'kicking_sit'"
+            },
+            {
+              "contraction": "v.pose == 'contraction'"
+            },
+            {
+              "back_pain": "v.pose == 'back_pain'"
+            },
+            {
+              "water_breaking": "v.pose == 'water_breaking'"
+            },
+            {
+              "prebirth": "v.pose == 'prebirth'"
+            },
+            {
+              "birth": "v.pose == 'birth'"
+            },
+            {
+              "postbirth": "v.pose == 'postbirth'"
+            },
+            {
+              "miscarriage": "v.pose == 'miscarriage'"
+            },
+            {
+              "belly_rubs": "v.pose == 'belly_rubs'"
+            },
+            {
+              "incapacitated": "v.pose == 'incapacitated'"
+            }
+          ]
+        },
+        "morning_sickness": {
+          "animations": [
+            "morning_sickness"
+          ],
+          "transitions": [
+            {
+              "default": "v.pose != 'morning_sickness'"
+            }
+          ],
+          "blend_transition": 0.2
+        },
+        "kicking_sit": {
+          "animations": [
+            "kicking_sit"
+          ],
+          "transitions": [
+            {
+              "default": "v.pose != 'kicking_sit'"
+            }
+          ],
+          "blend_transition": 0.2
+        },
+        "contraction": {
+          "animations": [
+            "contraction"
+          ],
+          "transitions": [
+            {
+              "default": "v.pose != 'contraction'"
+            }
+          ],
+          "blend_transition": 0.2
+        },
+        "back_pain": {
+          "animations": [
+            "back_pain",
+            "morning_sickness"
+          ],
+          "transitions": [
+            {
+              "default": "v.pose != 'back_pain'"
+            }
+          ],
+          "blend_transition": 0.2
+        },
+        "water_breaking": {
+          "animations": [
+            "water_breaking"
+          ],
+          "transitions": [
+            {
+              "default": "v.pose != 'water_breaking'"
+            }
+          ],
+          "blend_transition": 0.2
+        },
+        "prebirth": {
+          "animations": [
+            "prebirth"
+          ],
+          "transitions": [
+            {
+              "default": "v.pose != 'prebirth'"
+            }
+          ],
+          "blend_transition": 0.2
+        },
+        "birth": {
+          "animations": [
+            "birth"
+          ],
+          "transitions": [
+            {
+              "default": "v.pose != 'birth'"
+            }
+          ],
+          "blend_transition": 0.2
+        },
+        "postbirth": {
+          "animations": [
+            "postbirth"
+          ],
+          "transitions": [
+            {
+              "default": "v.pose != 'postbirth'"
+            }
+          ],
+          "blend_transition": 0.2
+        },
+        "miscarriage": {
+          "animations": [
+            "miscarriage"
+          ],
+          "transitions": [
+            {
+              "default": "v.pose != 'miscarriage'"
+            }
+          ],
+          "blend_transition": 0.2
+        },
+        "belly_rubs": {
+          "animations": [
+            {
+              "belly_rubs_i": "v.phase <= 2"
+            },
+            {
+              "belly_rubs_ii": "v.phase >= 3 && v.phase <= 6"
+            },
+            {
+              "belly_rubs_iii": "v.phase >= 7"
+            }
+          ],
+          "transitions": [
+            {
+              "default": "v.pose != 'belly_rubs'"
+            }
+          ],
+          "blend_transition": 0.2
+        },
+        "incapacitated": {
+          "animations": [
+            "contraction"
+          ],
+          "transitions": [
+            {
+              "default": "v.pose != 'incapacitated'"
+            }
+          ],
+          "blend_transition": 0.2
+        }
+      }
+    }
+  }
+}

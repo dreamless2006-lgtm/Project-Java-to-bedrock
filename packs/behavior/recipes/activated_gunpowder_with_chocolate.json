@@ -1,0 +1,29 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "minepreggo:activated_gunpowder_with_chocolate"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "item": "minepreggo:activated_gunpowder",
+        "count": 3
+      },
+      {
+        "item": "minepreggo:chocolate_bar"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "minepreggo:activated_gunpowder"
+      }
+    ],
+    "result": {
+      "item": "minepreggo:activated_gunpowder_with_chocolate",
+      "count": 3
+    }
+  }
+}

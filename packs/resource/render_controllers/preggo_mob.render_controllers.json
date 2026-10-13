@@ -1,0 +1,53 @@
+{
+  "format_version": "1.10.0",
+  "render_controllers": {
+    "controller.render.minepreggo.preggo_mob": {
+      "arrays": {
+        "geometries": {
+          "Array.geometries": [
+            "Geometry.default",
+            "Geometry.p0",
+            "Geometry.p1",
+            "Geometry.p2",
+            "Geometry.p3",
+            "Geometry.p4",
+            "Geometry.p5",
+            "Geometry.p6",
+            "Geometry.p7",
+            "Geometry.p8",
+            "Geometry.p9"
+          ]
+        },
+        "textures": {
+          "Array.skins": [
+            "Texture.default",
+            "Texture.p0",
+            "Texture.p1",
+            "Texture.p2",
+            "Texture.p3",
+            "Texture.p4",
+            "Texture.p5",
+            "Texture.p6",
+            "Texture.p7",
+            "Texture.p8",
+            "Texture.p9"
+          ]
+        }
+      },
+      "geometry": "Array.geometries[q.property('minepreggo:phase') + 1]",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Array.skins[q.property('minepreggo:phase') + 1]"
+      ],
+      "part_visibility": [
+        {
+          "belly": "q.property('minepreggo:pose') != 'postbirth'"
+        }
+      ]
+    }
+  }
+}

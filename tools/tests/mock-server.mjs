@@ -123,3 +123,77 @@ export class Player {
     return { x: 0, y: 0, z: 1 };
   }
 }
+
+let nextEntityId = 1;
+const dimensions = new Map();
+world.getDimension = (id) => {
+  if (!dimensions.has(id)) dimensions.set(id, { entities: [], getEntities: () => dimensions.get(id).entities.filter((e) => e.isValid) });
+  return dimensions.get(id);
+};
+world.getEntity = (id) => [...world.players, ...[...dimensions.values()].flatMap((d) => d.entities)].find((e) => e.id === id);
+
+/**
+ * A preggo mob: entity properties, dynamic properties, the components the scripts read, and the
+ * events of DESIGN.md (only their effect on properties and tamed state is modelled).
+ */
+export class Mob {
+  constructor(typeId = 'minepreggo:zombie_girl', { tamed = false, phase = -1 } = {}) {
+    this.typeId = typeId;
+    this.id = `mob-${nextEntityId++}`;
+    this.isValid = true;
+    this.isOnGround = true;
+    this.isInWater = false;
+    this.nameTag = '';
+    this.location = { x: 0, y: 64, z: 0 };
+    this.properties = new Map([['minepreggo:phase', phase], ['minepreggo:pose', 'none'], ['minepreggo:kick', 0], ['minepreggo:growth', 0], ['minepreggo:savage', false]]);
+    this.dynamic = new Map();
+    this.events = [];
+    this.effects = new Map();
+    this.dropped = [];
+    this.tamed = tamed;
+    const self = this;
+    this.components = { 'minecraft:health': attribute(26, 26) };
+    this.dimension = {
+      playSound: () => {},
+      spawnParticle: () => {},
+      spawnItem: (stack) => self.dropped.push(stack.typeId),
+    };
+  }
+  getComponent(id) {
+    if (id === 'minecraft:is_tamed') return this.tamed ? {} : undefined;
+    return this.components[id];
+  }
+  getProperty(id) {
+    return this.properties.get(id);
+  }
+  setProperty(id, value) {
+    this.properties.set(id, value);
+  }
+  getDynamicProperty(key) {
+    return this.dynamic.get(key);
+  }
+  setDynamicProperty(key, value) {
+    if (value === undefined) this.dynamic.delete(key);
+    else this.dynamic.set(key, value);
+  }
+  triggerEvent(name) {
+    this.events.push(name);
+    const phase = name.match(/^minepreggo:set_phase_(\d)$/);
+    if (phase) this.properties.set('minepreggo:phase', Number(phase[1]));
+    if (name === 'minepreggo:set_not_pregnant') this.properties.set('minepreggo:phase', -1);
+    if (name === 'minepreggo:on_tame') this.tamed = true;
+    if (name === 'minepreggo:become_savage') this.properties.set('minepreggo:savage', true);
+    if (name === 'minepreggo:calm_down') this.properties.set('minepreggo:savage', false);
+  }
+  applyDamage(amount) {
+    const health = this.components['minecraft:health'];
+    health.currentValue = Math.max(0, health.currentValue - amount);
+    return true;
+  }
+  addEffect(id, duration, options = {}) {
+    this.effects.set(id, { typeId: id, duration, amplifier: options.amplifier ?? 0 });
+  }
+  getViewDirection() {
+    return { x: 0, y: 0, z: 1 };
+  }
+}

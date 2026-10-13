@@ -4,60 +4,106 @@
     "minepreggo.belly_touch": {
       "category": "player",
       "sounds": [
-        "sounds/minepreggo/belly_touch"
+        {
+          "name": "sounds/minepreggo/belly_touch"
+        }
       ]
     },
     "minepreggo.pregnancy_pain": {
       "category": "player",
       "sounds": [
-        "sounds/minepreggo/pregnancy_pain1",
-        "sounds/minepreggo/pregnancy_pain2",
-        "sounds/minepreggo/pregnancy_pain3",
-        "sounds/minepreggo/pregnancy_pain4"
+        {
+          "name": "sounds/minepreggo/pregnancy_pain1"
+        },
+        {
+          "name": "sounds/minepreggo/pregnancy_pain2"
+        },
+        {
+          "name": "sounds/minepreggo/pregnancy_pain3"
+        },
+        {
+          "name": "sounds/minepreggo/pregnancy_pain4"
+        }
       ]
     },
     "minepreggo.player_birth": {
       "category": "player",
       "sounds": [
-        "sounds/minepreggo/player_birth_1",
-        "sounds/minepreggo/player_birth_2"
+        {
+          "name": "sounds/minepreggo/player_birth_1"
+        },
+        {
+          "name": "sounds/minepreggo/player_birth_2"
+        }
       ]
     },
     "minepreggo.player_contraction": {
       "category": "player",
       "sounds": [
-        "sounds/minepreggo/player_contraction"
+        {
+          "name": "sounds/minepreggo/player_contraction"
+        }
       ]
     },
     "minepreggo.player_miscarriage": {
       "category": "player",
       "sounds": [
-        "sounds/minepreggo/player_miscarriage"
+        {
+          "name": "sounds/minepreggo/player_miscarriage"
+        }
       ]
     },
     "minepreggo.player_push": {
       "category": "player",
       "sounds": [
-        "sounds/minepreggo/player_push_1",
-        "sounds/minepreggo/player_push_2",
-        "sounds/minepreggo/player_push_3"
+        {
+          "name": "sounds/minepreggo/player_push_1"
+        },
+        {
+          "name": "sounds/minepreggo/player_push_2"
+        },
+        {
+          "name": "sounds/minepreggo/player_push_3"
+        }
       ]
     },
     "minepreggo.stomach_growls": {
       "category": "player",
       "sounds": [
-        "sounds/minepreggo/stomach_growls_1",
-        "sounds/minepreggo/stomach_growls_2",
-        "sounds/minepreggo/stomach_growls_3",
-        "sounds/minepreggo/stomach_growls_4",
-        "sounds/minepreggo/stomach_growls_5",
-        "sounds/minepreggo/stomach_growls_6"
+        {
+          "name": "sounds/minepreggo/stomach_growls_1"
+        },
+        {
+          "name": "sounds/minepreggo/stomach_growls_2"
+        },
+        {
+          "name": "sounds/minepreggo/stomach_growls_3"
+        },
+        {
+          "name": "sounds/minepreggo/stomach_growls_4"
+        },
+        {
+          "name": "sounds/minepreggo/stomach_growls_5"
+        },
+        {
+          "name": "sounds/minepreggo/stomach_growls_6"
+        }
       ]
     },
     "minepreggo.splash": {
       "category": "player",
       "sounds": [
-        "sounds/minepreggo/splash"
+        {
+          "name": "sounds/minepreggo/splash"
+        }
+      ]
+    },
+    "minepreggo.pregnant_preggo_mob_death": {
+      "category": "hostile",
+      "sounds": [
+        {
+          "name": "sounds/minepreggo/pregnant_preggo_mob_death"
+        }
       ]
     }
   }

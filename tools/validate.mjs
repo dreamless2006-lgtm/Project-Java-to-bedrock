@@ -1,8 +1,10 @@
 // Static checks for the packs, since most mistakes in Bedrock JSON only show up as
 // content-log errors in game:
-//   * manifests, items, blocks and trade tables against Mojang's official schemas
+//   * manifests, items, blocks, entities, spawn rules and trade tables against Mojang's official schemas
 //   * cross references: icons/textures, sounds, loot tables, geometry, lang keys (including
-//     those used by scripts), recipe and loot ingredients, and script-registered custom components
+//     those used by scripts), recipe and loot ingredients, script-registered custom components,
+//     entity events/component groups/properties, and client entity animations, controllers and
+//     the properties their Molang reads
 // Texture and lang checks are skipped (with a notice) until `npm run import` has run.
 
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
@@ -39,9 +41,11 @@ function readJson(file) {
 }
 
 // --- schemas ---------------------------------------------------------------------------
-// Mojang's patterns are ECMAScript regexes that are invalid under the 'u' flag (e.g. \-).
+// Mojang's patterns are ECMAScript regexes that are invalid under the 'u' flag (e.g. \-), and many
+// of their "oneOf"s have overlapping branches (a filter test matches two of them), so they are read
+// as "anyOf".
 const ajv = new Ajv({ strict: false, allErrors: true, unicodeRegExp: false });
-for (const file of walk(SCHEMAS, '.json')) ajv.addSchema(JSON.parse(readFileSync(file, 'utf8')));
+for (const file of walk(SCHEMAS, '.json')) ajv.addSchema(JSON.parse(readFileSync(file, 'utf8').replaceAll('"oneOf"', '"anyOf"')));
 const schema = (id) => {
   const validate = ajv.getSchema(id);
   if (!validate) throw new Error(`schema ${id} missing from tools/bedrock-schemas`);
@@ -52,12 +56,15 @@ const SCHEMA = {
   item: schema('/server/item/1.26.30/ItemDocument.json'),
   block: schema('/server/block/1.26.20/Blocks.json'),
   trades: schema('/client_server/entity/1.21.30/Trade%20Table.json'),
+  entity: schema('/server/entity/1.26.50/ActorDocument.json'),
 };
 
 // Mojang's component schemas accept unknown keys, so typos like "minecraft:fod" would pass silently.
 const knownComponents = (id) => new Set(Object.keys(/** @type {any} */ (ajv.getSchema(id)?.schema)?.properties ?? {}));
 const ITEM_COMPONENTS = knownComponents('/server/item/1.26.30/Item%20Components.json');
 const BLOCK_COMPONENTS = knownComponents('/server/block/1.26.20/Components.json');
+// Mojang's entity schema lacks a few components the game still accepts (vanilla slime uses "minecraft:pushable").
+const ENTITY_COMPONENTS = new Set([...knownComponents('/server/entity/1.26.50/Entity%20component%20definitions.json'), 'minecraft:pushable']);
 
 function check(validate, data, file, what) {
   if (validate(data)) return;
@@ -123,9 +130,20 @@ function checkItemRef(file, id, { vanilla = true } = {}) {
 }
 
 // --- manifests ---------------------------------------------------------------------------
-for (const pack of [BP, RP]) {
-  const file = join(pack, 'manifest.json');
-  check(SCHEMA.manifest, readJson(file), file, 'manifest');
+// Bedrock skips a pack whose uuid and version it has already imported, so every release must carry
+// a new version: all of our own versions have to match package.json, which build.mjs names the file after.
+const { version: VERSION } = readJson(join(ROOT, 'package.json'));
+const manifests = [BP, RP].map((pack) => [join(pack, 'manifest.json'), readJson(join(pack, 'manifest.json'))]);
+const ownUuids = new Set(manifests.map(([, m]) => m?.header?.uuid));
+if (!readFileSync(join(BP, 'scripts/version.js'), 'utf8').includes(`'${VERSION}'`)) {
+  fail(join(BP, 'scripts/version.js'), `VERSION should be package.json's ${VERSION}`);
+}
+for (const [file, manifest] of manifests) {
+  check(SCHEMA.manifest, manifest, file, 'manifest');
+  const own = [manifest?.header, ...(manifest?.modules ?? []), ...(manifest?.dependencies ?? []).filter((d) => ownUuids.has(d.uuid))];
+  for (const entry of own) {
+    if (entry?.version !== VERSION) fail(file, `version ${JSON.stringify(entry?.version)} of ${entry?.uuid} should be package.json's ${VERSION}`);
+  }
 }
 
 // --- items -------------------------------------------------------------------------------
@@ -200,6 +218,134 @@ for (const file of walk(join(BP, 'loot_tables'), '.json')) {
   }
 }
 
+// --- entities ----------------------------------------------------------------------------
+const entities = new Map(); // identifier -> { file, entity }
+for (const file of walk(join(BP, 'entities'), '.json')) {
+  const entity = readJson(file)?.['minecraft:entity'];
+  if (!entity) { fail(file, 'missing "minecraft:entity"'); continue; }
+  check(SCHEMA.entity, entity, file, 'entity');
+  const id = entity.description?.identifier;
+  if (!id?.startsWith(`${NS}:`)) fail(file, 'entity identifier must use the minepreggo namespace');
+  entities.set(id, { file, entity });
+
+  const properties = entity.description?.properties ?? {};
+  const groups = entity.component_groups ?? {};
+  const events = entity.events ?? {};
+  for (const components of [entity.components, ...Object.values(groups)]) {
+    for (const name of Object.keys(components ?? {})) if (!ENTITY_COMPONENTS.has(name)) fail(file, `unknown component "${name}"`);
+    const loot = components?.['minecraft:loot']?.table;
+    if (loot && !existsSync(join(BP, loot))) fail(file, `loot table ${loot} does not exist`);
+    for (const tame of [components?.['minecraft:tameable']?.tame_items ?? []].flat()) checkItemRef(file, typeof tame === 'string' ? tame : tame.item);
+  }
+  // Event responses: groups they add or remove, properties they set, events they trigger.
+  const checkResponse = (/** @type {any} */ response, /** @type {string} */ where) => {
+    if (!response || typeof response !== 'object') return;
+    for (const verb of ['add', 'remove']) {
+      for (const group of response[verb]?.component_groups ?? []) if (!groups[group]) fail(file, `${where}: unknown component group "${group}"`);
+    }
+    for (const [name, value] of Object.entries(response.set_property ?? {})) {
+      const def = properties[name];
+      if (!def) { fail(file, `${where}: sets undefined property "${name}"`); continue; }
+      if (def.type === 'enum' && typeof value === 'string' && !value.includes('.') && !def.values.includes(value)) fail(file, `${where}: "${value}" is not a value of ${name}`);
+      if (def.type === 'int' && typeof value === 'number' && (value < def.range[0] || value > def.range[1])) fail(file, `${where}: ${name} = ${value} is out of range`);
+    }
+    const trigger = typeof response.trigger === 'string' ? response.trigger : response.trigger?.event;
+    if (trigger && !events[trigger]) fail(file, `${where}: triggers unknown event "${trigger}"`);
+    for (const list of ['sequence', 'randomize']) for (const entry of response[list] ?? []) checkResponse(entry, where);
+  };
+  for (const [name, event] of Object.entries(events)) checkResponse(event, `event ${name}`);
+  // Events named by components (tame_event, environment sensors, ...).
+  const stack = [entity.components, groups];
+  while (stack.length) {
+    const node = stack.pop();
+    if (Array.isArray(node)) stack.push(...node);
+    else if (node && typeof node === 'object') {
+      if (typeof node.event === 'string' && !node.event.startsWith('minecraft:') && !events[node.event]) fail(file, `component triggers unknown event "${node.event}"`);
+      stack.push(...Object.values(node));
+    }
+  }
+  checkLangKey(file, `entity.${id}.name`);
+  if (entity.description?.is_spawnable) checkLangKey(file, `item.spawn_egg.entity.${id}.name`);
+}
+
+// Mojang publishes no schema for the classic spawn rule format, so conditions are checked against the
+// keys vanilla's own spawn rules use.
+const SPAWN_CONDITIONS = new Set(['minecraft:biome_filter', 'minecraft:brightness_filter', 'minecraft:delay_filter',
+  'minecraft:density_limit', 'minecraft:difficulty_filter', 'minecraft:disallow_spawns_in_bubble', 'minecraft:distance_filter',
+  'minecraft:height_filter', 'minecraft:herd', 'minecraft:mob_event_filter', 'minecraft:permute_type',
+  'minecraft:player_in_village_filter', 'minecraft:spawn_event', 'minecraft:spawns_lava', 'minecraft:spawns_on_block_filter',
+  'minecraft:spawns_on_block_prevented_filter', 'minecraft:spawns_on_surface', 'minecraft:spawns_underground',
+  'minecraft:spawns_underwater', 'minecraft:weight', 'minecraft:world_age_filter']);
+for (const file of walk(join(BP, 'spawn_rules'), '.json')) {
+  const rules = readJson(file)?.['minecraft:spawn_rules'];
+  const target = entities.get(rules?.description?.identifier);
+  if (!target) fail(file, `spawn rules for unknown entity ${rules?.description?.identifier}`);
+  for (const condition of rules?.conditions ?? []) {
+    for (const key of Object.keys(condition)) if (!SPAWN_CONDITIONS.has(key)) fail(file, `unknown spawn condition "${key}"`);
+    if (!condition['minecraft:weight']) fail(file, 'condition without minecraft:weight');
+    const event = condition['minecraft:spawn_event']?.event;
+    if (event && target && !target.entity.events?.[event]) fail(file, `spawn event "${event}" is not defined by the entity`);
+  }
+}
+
+// --- client entities, render controllers, animations ---------------------------------------
+// Definitions from the game itself that client entities may use.
+const VANILLA_RP_IDS = new Set(['animation.common.look_at_target', 'controller.render.default']);
+const rpIds = new Set(VANILLA_RP_IDS);
+const controllers = new Map(); // animation controller id -> definition
+for (const file of walk(join(RP, 'animations'), '.json')) Object.keys(readJson(file)?.animations ?? {}).forEach((id) => rpIds.add(id));
+for (const file of walk(join(RP, 'animation_controllers'), '.json')) {
+  for (const [id, def] of Object.entries(readJson(file)?.animation_controllers ?? {})) { rpIds.add(id); controllers.set(id, def); }
+}
+for (const file of walk(join(RP, 'render_controllers'), '.json')) Object.keys(readJson(file)?.render_controllers ?? {}).forEach((id) => rpIds.add(id));
+const convertedImported = existsSync(join(RP, 'animations', NS));
+const molangProperties = (/** @type {string} */ text) => [...text.matchAll(/q(?:uery)?\.property\(\s*'([^']+)'\s*\)/g)].map((m) => m[1]);
+/** Names an animate list, controller state or animation list refers to. */
+const animationRefs = (/** @type {any[]} */ list) => (list ?? []).flatMap((a) => (typeof a === 'string' ? [a] : Object.keys(a)));
+
+for (const file of walk(join(RP, 'entity'), '.json')) {
+  const description = readJson(file)?.['minecraft:client_entity']?.description;
+  if (!description) { fail(file, 'missing "minecraft:client_entity"'); continue; }
+  const server = entities.get(description.identifier);
+  if (!server) { fail(file, `no behavior pack entity ${description.identifier}`); continue; }
+  for (const path of Object.values(description.textures ?? {})) {
+    if (imported && !existsSync(join(RP, `${path}.png`))) fail(file, `texture ${path}.png does not exist`);
+  }
+  for (const geo of Object.values(description.geometry ?? {})) {
+    if (!geometries.has(geo) && (imported || !geo.startsWith(`geometry.${NS}.`))) fail(file, `geometry "${geo}" not found in packs/resource/models`);
+  }
+  const shortNames = description.animations ?? {};
+  for (const [name, id] of Object.entries(shortNames)) {
+    const generated = id.startsWith(`animation.${NS}.`) && !rpIds.has(id) && !convertedImported;
+    if (!rpIds.has(id) && !generated) fail(file, `animation "${name}" refers to unknown ${id}`);
+    for (const state of Object.values(controllers.get(id)?.states ?? {})) {
+      for (const ref of animationRefs(state.animations)) if (!shortNames[ref]) fail(file, `controller ${id} plays "${ref}", which this entity does not define`);
+    }
+  }
+  for (const ref of animationRefs(description.scripts?.animate)) if (!shortNames[ref]) fail(file, `animate uses undefined "${ref}"`);
+  for (const id of description.render_controllers ?? []) {
+    const rc = typeof id === 'string' ? id : Object.keys(id)[0];
+    if (!rpIds.has(rc)) fail(file, `unknown render controller ${rc}`);
+  }
+  // Properties read by Molang here or in the shared controllers must exist and be synced to clients.
+  const used = new Set(molangProperties(JSON.stringify(description)));
+  for (const id of [...Object.values(shortNames), ...(description.render_controllers ?? [])]) {
+    if (typeof id !== 'string') continue;
+    for (const f of [...walk(join(RP, 'animation_controllers'), '.json'), ...walk(join(RP, 'render_controllers'), '.json'), ...walk(join(RP, 'animations'), '.json')]) {
+      const json = readJson(f);
+      const def = json?.animation_controllers?.[id] ?? json?.render_controllers?.[id] ?? json?.animations?.[id];
+      if (def) molangProperties(JSON.stringify(def)).forEach((p) => used.add(p));
+    }
+  }
+  for (const name of used) {
+    const def = server.entity.description?.properties?.[name];
+    if (!def) fail(file, `Molang reads undefined property "${name}"`);
+    else if (!def.client_sync) fail(file, `property "${name}" is read by the client but not client_sync`);
+  }
+  const egg = description.spawn_egg?.texture;
+  if (egg) checkTexture(file, itemTextures, egg, 'spawn egg');
+}
+
 // --- trades ------------------------------------------------------------------------------
 for (const file of walk(join(BP, 'trading'), '.json')) {
   const doc = readJson(file);
@@ -229,7 +375,7 @@ for (const file of walk(join(BP, 'scripts'), '.js')) {
   for (const [, sound] of source.matchAll(/playSound\([^,]+,\s*'(minepreggo\.[^']+)'/g)) {
     if (!soundDefs[sound]) fail(file, `sound "${sound}" is not in sound_definitions.json`);
   }
-  for (const [, key] of source.matchAll(/(?:translate:\s*|message\([^,]+,\s*|actionbar\([^,]+,\s*)'([^'$]+)'/g)) {
+  for (const [, key] of source.matchAll(/(?:translate:\s*|(?:message|actionbar|tellOwner)\([^,]+,\s*)'([^'$]+)'/g)) {
     checkLangKey(file, key);
   }
 }
@@ -240,4 +386,4 @@ if (errors.length) {
   console.error(`\n${errors.length} problem(s) found`);
   process.exit(1);
 }
-console.log(`OK: ${items.length} items, ${blocks.length} blocks validated`);
+console.log(`OK: ${items.length} items, ${blocks.length} blocks, ${entities.size} entities validated`);

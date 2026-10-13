@@ -1,0 +1,17 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.minepreggo.belly_growth": {
+      "loop": true,
+      "bones": {
+        "belly": {
+          "scale": [
+            "1.0 + 0.15 * v.belly_growth",
+            "1.0 + 0.05 * v.belly_growth",
+            "1.0 + 0.4 * v.belly_growth"
+          ]
+        }
+      }
+    }
+  }
+}
