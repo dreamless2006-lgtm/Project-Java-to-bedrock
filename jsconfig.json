@@ -3,12 +3,17 @@
     "module": "es2020",
     "target": "es2022",
     "moduleResolution": "bundler",
-    "lib": ["es2022"],
+    "lib": [
+      "es2022"
+    ],
     "allowJs": true,
     "checkJs": true,
     "noEmit": true,
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["packs/behavior/scripts/**/*.js"]
+  "include": [
+    "packs/behavior/scripts/**/*.js",
+    "tools/types/*.d.ts"
+  ]
 }

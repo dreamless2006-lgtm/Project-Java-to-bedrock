@@ -1,0 +1,9 @@
+## Strings added by the Bedrock port, merged into every language by tools/import-jar.mjs.
+## Add <locale>.lang next to this file to translate them; locales without one use English.
+minepreggo.gender.body=Choose your character's gender. Only female characters can become pregnant.
+minepreggo.gender.later=You can choose later with /scriptevent minepreggo:gender female (or male).
+minepreggo.pregnancy.controls=You're pregnant! Crouch to check on your pregnancy, crouch and look down to rub your belly, and use a glass bottle when lactating.
+minepreggo.birth.push_hint=Keep tapping sneak to push!
+minepreggo.hud.day=Day %s/%s
+minepreggo.hud.health=Pregnancy health %s
+minepreggo.hud.push=Tap %s to push: %s

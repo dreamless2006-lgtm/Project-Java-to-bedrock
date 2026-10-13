@@ -2,6 +2,9 @@
   "resource_pack_name": "minepreggo",
   "texture_name": "atlas.items",
   "texture_data": {
+    "minepreggo_baby_human": {
+      "textures": "textures/minepreggo/item/baby_human"
+    },
     "minepreggo_candy_apple": {
       "textures": "textures/minepreggo/item/candy_apple"
     },
@@ -17,6 +20,9 @@
     "minepreggo_cucumber": {
       "textures": "textures/minepreggo/item/cucumber"
     },
+    "minepreggo_dead_human_fetus": {
+      "textures": "textures/minepreggo/item/dead_human_fetus"
+    },
     "minepreggo_french_fries": {
       "textures": "textures/minepreggo/item/french_fries"
     },
@@ -25,6 +31,12 @@
     },
     "minepreggo_hot_sauce": {
       "textures": "textures/minepreggo/item/hot_sauce"
+    },
+    "minepreggo_human_breast_milk_bottle": {
+      "textures": "textures/minepreggo/item/human_breast_milk_bottle"
+    },
+    "minepreggo_impregnation_potion": {
+      "textures": "textures/port/impregnation_potion"
     },
     "minepreggo_lemon": {
       "textures": "textures/minepreggo/item/lemon"

@@ -1,5 +1,6 @@
-// Pulls the third-party assets (textures, translations, pack icon) out of the original
-// Minepreggo Forge jar and converts them into the Bedrock resource pack layout.
+// Pulls the third-party assets (textures, sounds, translations, pack icon) out of the original
+// Minepreggo Forge jar and converts them into the Bedrock resource pack layout. Strings the port
+// adds itself live in tools/lang/ and are merged into the generated .lang files.
 //
 // The jar is "All Rights Reserved", so nothing produced here is committed: every output
 // path is listed in .gitignore. Re-run this whenever the jar is updated.
@@ -36,15 +37,30 @@ function bedrockLocale(javaLocale) {
   return `${lang}_${region.toUpperCase()}`;
 }
 
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+
 // Java keys are kept verbatim so item/block JSON can point `minecraft:display_name` at them.
 // Entities and spawn eggs get their names from fixed Bedrock keys, so those are aliased too.
+// Java potions are vanilla potions with NBT; in Bedrock each strength is its own item, so
+// "item.minecraft.potion.effect.<name>_<n>" also becomes "item.minepreggo.<name>_potion_<n>"
+// with the strength appended, since Bedrock shows no effect tooltip for custom items.
 function bedrockAliases(key, value) {
   const aliases = [[key, value]];
   const entity = key.match(/^entity\.minepreggo\.([a-z0-9_]+)$/);
   if (entity) aliases.push([`entity.${MOD_ID}:${entity[1]}.name`, value]);
   const egg = key.match(/^item\.minepreggo\.([a-z0-9_]+)_spawn_egg$/);
   if (egg) aliases.push([`item.spawn_egg.entity.${MOD_ID}:${egg[1]}.name`, value]);
+  const potion = key.match(/^item\.minecraft\.potion\.effect\.([a-z_]+)_(\d)$/);
+  if (potion) aliases.push([`item.${MOD_ID}.${potion[1]}_potion_${potion[2]}`, `${value} ${ROMAN[Number(potion[2])]}`]);
   return aliases;
+}
+
+/** Port-specific strings from tools/lang/<locale>.lang; locales without a file get English. */
+function extraLines(locale) {
+  const dir = join(ROOT, 'tools/lang');
+  const file = [join(dir, `${locale}.lang`), join(dir, 'en_US.lang')].find(existsSync);
+  if (!file) return [];
+  return readFileSync(file, 'utf8').split(/\r?\n/).filter((line) => line && !line.startsWith('##'));
 }
 
 function toLangLine(key, value) {
@@ -78,6 +94,17 @@ for (const [name, data] of Object.entries(files)) {
   textureCount++;
 }
 
+// Sounds: copied 1:1 under sounds/minepreggo/; packs/resource/sounds/sound_definitions.json maps them.
+const soundOut = join(RP, 'sounds', MOD_ID);
+rmSync(soundOut, { recursive: true, force: true });
+const soundPrefix = `assets/${MOD_ID}/sounds/`;
+let soundCount = 0;
+for (const [name, data] of Object.entries(files)) {
+  if (!name.startsWith(soundPrefix) || !name.endsWith('.ogg')) continue;
+  writeFile(join(soundOut, name.slice(soundPrefix.length)), data);
+  soundCount++;
+}
+
 // Translations.
 const langPrefix = `assets/${MOD_ID}/lang/`;
 const locales = [];
@@ -89,6 +116,7 @@ for (const [name, data] of Object.entries(files)) {
   for (const [key, value] of Object.entries(entries)) {
     for (const [k, v] of bedrockAliases(key, value)) lines.push(toLangLine(k, v));
   }
+  lines.push('## Strings added by the Bedrock port (tools/lang)', ...extraLines(locale));
   writeFile(join(RP, 'texts', `${locale}.lang`), lines.join('\n') + '\n');
   locales.push(locale);
 }
@@ -105,6 +133,6 @@ if (logo) {
 }
 
 console.log(
-  `Imported ${MOD_ID} ${modVersion} from ${jarPath}: ${textureCount} textures, ` +
+  `Imported ${MOD_ID} ${modVersion} from ${jarPath}: ${textureCount} textures, ${soundCount} sounds, ` +
     `${locales.length} languages (${locales.sort().join(', ')})${logo ? ', pack icons' : ''}`
 );

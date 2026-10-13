@@ -1,8 +1,8 @@
 // Static checks for the packs, since most mistakes in Bedrock JSON only show up as
 // content-log errors in game:
 //   * manifests, items, blocks and trade tables against Mojang's official schemas
-//   * cross references: icons/textures, loot tables, geometry, lang keys, recipe and loot
-//     ingredients, and script-registered custom components
+//   * cross references: icons/textures, sounds, loot tables, geometry, lang keys (including
+//     those used by scripts), recipe and loot ingredients, and script-registered custom components
 // Texture and lang checks are skipped (with a notice) until `npm run import` has run.
 
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
@@ -95,8 +95,11 @@ function checkTexture(file, map, key, kind) {
   for (const path of paths) if (!existsSync(join(RP, `${path}.png`))) fail(file, `texture ${path}.png does not exist`);
 }
 
+// Keys from the game's own language files that the port reuses.
+const VANILLA_LANG_KEYS = new Set(['key.sneak']);
+
 function checkLangKey(file, key) {
-  if (langKeys && !langKeys.has(key)) fail(file, `lang key "${key}" is missing from en_US.lang`);
+  if (langKeys && !langKeys.has(key) && !VANILLA_LANG_KEYS.has(key)) fail(file, `lang key "${key}" is missing from en_US.lang`);
 }
 
 function checkComponentNames(file, components, known) {
@@ -209,6 +212,25 @@ for (const file of walk(join(BP, 'trading'), '.json')) {
       if (typeof node.item === 'string') checkItemRef(file, node.item, { vanilla: false });
       stack.push(...Object.values(node));
     }
+  }
+}
+
+// --- sounds and script references ------------------------------------------------------------
+const soundFile = join(RP, 'sounds/sound_definitions.json');
+const soundDefs = existsSync(soundFile) ? readJson(soundFile)?.sound_definitions ?? {} : {};
+for (const [event, def] of Object.entries(soundDefs)) {
+  for (const sound of def.sounds ?? []) {
+    const path = typeof sound === 'string' ? sound : sound.name;
+    if (imported && !existsSync(join(RP, `${path}.ogg`))) fail(soundFile, `${event}: ${path}.ogg does not exist`);
+  }
+}
+for (const file of walk(join(BP, 'scripts'), '.js')) {
+  const source = readFileSync(file, 'utf8');
+  for (const [, sound] of source.matchAll(/playSound\([^,]+,\s*'(minepreggo\.[^']+)'/g)) {
+    if (!soundDefs[sound]) fail(file, `sound "${sound}" is not in sound_definitions.json`);
+  }
+  for (const [, key] of source.matchAll(/(?:translate:\s*|message\([^,]+,\s*|actionbar\([^,]+,\s*)'([^'$]+)'/g)) {
+    checkLangKey(file, key);
   }
 }
 

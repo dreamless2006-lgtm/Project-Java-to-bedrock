@@ -1,0 +1,64 @@
+{
+  "format_version": "1.20.20",
+  "sound_definitions": {
+    "minepreggo.belly_touch": {
+      "category": "player",
+      "sounds": [
+        "sounds/minepreggo/belly_touch"
+      ]
+    },
+    "minepreggo.pregnancy_pain": {
+      "category": "player",
+      "sounds": [
+        "sounds/minepreggo/pregnancy_pain1",
+        "sounds/minepreggo/pregnancy_pain2",
+        "sounds/minepreggo/pregnancy_pain3",
+        "sounds/minepreggo/pregnancy_pain4"
+      ]
+    },
+    "minepreggo.player_birth": {
+      "category": "player",
+      "sounds": [
+        "sounds/minepreggo/player_birth_1",
+        "sounds/minepreggo/player_birth_2"
+      ]
+    },
+    "minepreggo.player_contraction": {
+      "category": "player",
+      "sounds": [
+        "sounds/minepreggo/player_contraction"
+      ]
+    },
+    "minepreggo.player_miscarriage": {
+      "category": "player",
+      "sounds": [
+        "sounds/minepreggo/player_miscarriage"
+      ]
+    },
+    "minepreggo.player_push": {
+      "category": "player",
+      "sounds": [
+        "sounds/minepreggo/player_push_1",
+        "sounds/minepreggo/player_push_2",
+        "sounds/minepreggo/player_push_3"
+      ]
+    },
+    "minepreggo.stomach_growls": {
+      "category": "player",
+      "sounds": [
+        "sounds/minepreggo/stomach_growls_1",
+        "sounds/minepreggo/stomach_growls_2",
+        "sounds/minepreggo/stomach_growls_3",
+        "sounds/minepreggo/stomach_growls_4",
+        "sounds/minepreggo/stomach_growls_5",
+        "sounds/minepreggo/stomach_growls_6"
+      ]
+    },
+    "minepreggo.splash": {
+      "category": "player",
+      "sounds": [
+        "sounds/minepreggo/splash"
+      ]
+    }
+  }
+}

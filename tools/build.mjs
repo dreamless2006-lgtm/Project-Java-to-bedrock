@@ -1,7 +1,7 @@
 // Packages packs/behavior and packs/resource into dist/minepreggo-<version>.mcaddon.
 // Run `npm run import` first: the resource pack is unusable without the jar's assets.
-// Of the imported textures, only those referenced from a resource pack JSON file are shipped,
-// so each release carries just the art for features that have actually been ported.
+// Of the imported textures and sounds, only those referenced from a resource pack JSON file are
+// shipped, so each release carries just the assets of features that have actually been ported.
 
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
@@ -28,14 +28,15 @@ if (!existsSync(join(ROOT, 'packs/resource/textures/minepreggo'))) {
   process.exit(1);
 }
 
-const IMPORTED = 'textures/minepreggo/';
+const IMPORTED = ['textures/minepreggo/', 'sounds/minepreggo/'];
+const isImported = (path) => IMPORTED.some((prefix) => path.startsWith(prefix));
 
-/** Every "textures/minepreggo/..." string in the resource pack's JSON files. */
-function referencedTextures(rpDir) {
+/** Every "textures/minepreggo/..." or "sounds/minepreggo/..." path in the resource pack's JSON files. */
+function referencedAssets(rpDir) {
   const refs = new Set();
   const visit = (node) => {
     if (typeof node === 'string') {
-      if (node.startsWith(IMPORTED)) refs.add(node);
+      if (isImported(node)) refs.add(node);
     } else if (node && typeof node === 'object') {
       Object.values(node).forEach(visit);
     }
@@ -45,13 +46,13 @@ function referencedTextures(rpDir) {
 }
 
 const { version } = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
-const used = referencedTextures(join(ROOT, 'packs/resource'));
+const used = referencedAssets(join(ROOT, 'packs/resource'));
 const entries = {};
 for (const pack of PACKS) {
   const base = join(ROOT, pack.dir);
   for (const file of walk(base)) {
     const inner = relative(base, file).split(sep).join('/');
-    if (inner.startsWith(IMPORTED) && !used.has(inner.replace(/\.(png|tga)$/, ''))) continue;
+    if (isImported(inner) && !used.has(inner.replace(/\.(png|tga|ogg|wav)$/, ''))) continue;
     entries[`${pack.name}/${inner}`] = new Uint8Array(readFileSync(file));
   }
 }

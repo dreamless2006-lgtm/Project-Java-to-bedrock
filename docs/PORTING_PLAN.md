@@ -48,7 +48,7 @@ and each phase only ships the textures it actually uses (see `tools/build.mjs`).
 
 Legend: ✅ ported · 🟡 partial · ⬜ not started · ⛔ no Bedrock equivalent (needs a design decision)
 
-### Phase 1 – foundation, farming and food ✅ (this release)
+### Phase 1 – foundation, farming and food ✅
 - ✅ Tooling: importer, schema validator, `.mcaddon` packager
 - ✅ Foods: lemon, chili pepper, cucumber, lemon ice cream, chocolate bar, lemon popsicle, hot chicken,
   pickle, salty water bottle, lemon drop, chili poppers, french fries, candy apple, stuffed mushroom
@@ -59,18 +59,37 @@ Legend: ✅ ported · 🟡 partial · ⬜ not started · ⛔ no Bedrock equivale
 - 🟡 Farmer and butcher trades (one Minepreggo trade per level instead of being mixed into the pool;
   the farmer's `Items.f_42533_` trades are missing until that obfuscated field is identified)
 
-### Phase 2 – player data and pregnancy core ⬜
-Player gender/skin choice, fertility and menstrual cycle, pregnancy phases P0–P9, symptoms
-(cravings, morning sickness, back pain, belly pressure, fetal movement…), birth and post-birth,
-miscarriage, lactation. Java sources: `world/entity/player`, `world/pregnancy`, `world/fertility`,
-`world/effect`, `network/capability`. Needs a HUD (actionbar/title) and test commands
-(`/scriptevent minepreggo:…`). Craving data lives in the `ICravingItem` implementations.
+### Phase 2 – player pregnancy ✅ (this release)
+Port of `world/entity/player` (P0–P9 systems, FemalePlayerSystem), `world/pregnancy` and the player
+side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
+- ✅ Gender choice when a player first joins (only female players can become pregnant)
+- ✅ Potion of Impregnation I–VI: 15 s after drinking, a pregnancy with 1, 2–3, 4–5, 6–7, 8–9 or 10
+  babies starts; more babies means birth in a later phase (P4–P9)
+- ✅ Phases P0–P9 over 50 in-game days (24 000 ticks each, Java defaults) split per `PregnancyPhaseMap`;
+  sleeping through the night moves the pregnancy forward like in Java
+- ✅ Symptoms: cravings (satisfied by the phase 1 foods, other food feeds less), lactation (use a glass
+  bottle to get a Human Breast Milk Bottle), belly rubs (crouch and look down, or another player
+  crouch-interacts with an empty hand)
+- ✅ Pains: morning sickness, fetal movement, contractions, back pain after long walks, with Java's
+  severity/duration formulas; spicy food can trigger pains from P4
+- ✅ Pregnancy health: hits while below 60 % health (or explosions) harm the pregnancy; at 0 a
+  miscarriage starts. It slowly heals over time.
+- ✅ Labor: water breaking → pre-birth → birth (tap sneak quickly to push each baby out) →
+  post-birth → recovery period and post-partum lactation
+- ✅ Extra hunger, random weakness, nausea after long sprinting/sneaking, stomach growls, sounds
+- ✅ Items: Potion of Impregnation I–VI, Baby Human, Dead Human Fetus, Human Breast Milk Bottle,
+  dead fetus → rotten flesh recipe
+- ✅ Operator test commands (`/scriptevent minepreggo:pregnancy …`, see README)
+- ⬜ Fertility and menstrual cycle (only matters for the interaction systems of phase 7)
+- ⬜ Interspecies pregnancies (zombie, creeper, ender, slime, villager potions) — need phase 3 items
 
 ### Phase 3 – species-specific items and medicine ⬜
 Craving variants (rotten flesh / spider eye / brain / activated gunpowder / ender slime jelly /
-chorus fruit with chocolate, salt, hot sauce, and sour versions), brains, breast-milk bottles,
-specimen tubes, baby items, dead fetus items, impregnation/pregnancy potions (as custom items),
-medical table block and checkup flow.
+chorus fruit with chocolate, salt, hot sauce, and sour versions), brains, the other breast-milk
+bottles, baby and dead fetus items of the other species, interspecies impregnation potions,
+pregnancy potions (healing, harming, resistance, acceleration, delay, baby duplication, metabolism
+control, zero gravity belly), specimen tubes, medical table block and checkup flow, and ways to get
+potions in survival (brewing replacement, witch drops, illager trades).
 
 ### Phase 4 – first mob: zombie girl ⬜
 Hostile, tamable and pregnant (P0–P9) zombie girl as **one** entity with properties; taming, follow /
@@ -92,8 +111,8 @@ Main/inventory screens for tamed mobs, requests between players and mobs, medica
 trading services — rebuilt as `@minecraft/server-ui` forms.
 
 ### Phase 8 – everything without a direct equivalent ⛔
-Custom mob effects (emulated in phase 2), enchantments, banner patterns, advancements, shaders,
-jiggle physics, sounds/particles that depend on removed systems.
+Enchantments, banner patterns, advancements, shaders, jiggle physics, sounds/particles that depend on
+removed systems. (Custom mob effects are emulated since phase 2.)
 
 ## Known differences in phase 1
 
@@ -103,14 +122,49 @@ jiggle physics, sounds/particles that depend on removed systems.
 | Leaves dropping by decay can give lemons | Only player-broken leaves can | Bedrock leaves have no editable loot table |
 | Fortune increases mature crop drops | No fortune bonus on crops | Block loot tables can't read fortune |
 | Crop model sits 1 px into the farmland | Crop sits on top of the block space | Block geometry can't go below y = 0 |
-| Stuffed mushroom effects skip players with *Full Of Slimes* | Always applied | That effect is ported in phase 2 |
+| Stuffed mushroom effects skip players with *Full Of Slimes* | Always applied | Slime pregnancies come in phase 3 |
 | Salty water bottle returns a glass bottle when crafted into pickles | Same, as an extra recipe result | — |
 | Crops can be bone-mealed by dispensers | Only by players | Custom components only see player interaction |
+
+## Known differences in phase 2
+
+| Java behaviour | Bedrock port | Why |
+|---|---|---|
+| 61 custom mob effects with icons and attribute modifiers | Status on the action bar while crouching; slowness / weakness / nausea for their effect on the player | Add-ons can't register mob effects |
+| Phase slowness plus extra -15 % speed modifiers | One slowness level per phase that matches the combined Java speed | No attribute modifier API |
+| Attack-speed penalties, gravity and knockback-resistance modifiers per phase | Not applied | No attribute modifier API; Bedrock has no attack cooldown |
+| Morning sickness screen overlay | Nausea | No custom screen overlays |
+| Keys: R rubs the belly, K pushes during birth, J opens the player menu | Crouch + look down rubs, tapping sneak pushes; gender via form/command | Add-ons can't add key bindings |
+| Impregnation potions are brewed and come as splash/lingering potions and arrows | Drinkable items from the creative inventory or commands | Brewing stands only accept vanilla potions; survival sources arrive in phase 3/5 |
+| Labor makes the player immobile (-100 % speed) | Slowness VII (speed 0) | No attribute API; also wears off on its own if the add-on is removed |
+| Armor and held items are dropped at birth and when a chestplate no longer fits | Nothing is dropped | Maternity armor isn't ported yet (phase 6); avoids losing items |
+| Pregnant player body, jiggle physics, body state during birth | Not shown | Player visuals are phase 6 |
+| Riding, elytra and jump limits per phase | Not enforced yet | — |
+| The P9 effect runs the P8 system (uses P8 timings) | P9 uses its own P9 timings | Java bug |
+| A miscarriage in the last phase can be replaced by labor | The miscarriage runs its course | Java bug |
+| Father notifications and advancements | None | Potion pregnancies have no father; no custom advancements |
+| HORNY symptom | Not ported | Belongs to the interaction systems |
+| Medical tables make pushing easier | Not yet | Medical table is phase 3 |
+| Pregnancy-pain damage has its own damage type | Magic damage | No custom damage types |
+| After birth: Luck (`MobEffects.f_19621_`); after a miscarriage: `MobEffects.f_19590_`, Trauma | Left out | Bedrock has no Luck; the other id is obfuscated; Trauma has no effect of its own |
 
 ## Open questions
 
 - `Items.f_42533_` (farmer trades at levels 2–4: 10 emeralds → 5, 15 → 10, 17 → 20) is an
   obfuscated SRG field; it needs a 1.20.1 SRG→Mojang mapping lookup before it can be ported.
+
+## In-game checklist for phase 2
+
+1. A new player is asked for a gender; `/scriptevent minepreggo:gender female` changes it.
+2. Drinking a Potion of Impregnation as a female player starts a pregnancy 15 s later (chat tip),
+   crouching shows phase, day, pregnancy health and symptoms on the action bar.
+3. `/scriptevent minepreggo:pregnancy phase 3` then `symptom craving`: eating the craved food
+   (e.g. chocolate bar for Sweet) ends the craving; other food gives less hunger.
+4. `symptom milking` (P2+): using a glass bottle gives a Human Breast Milk Bottle.
+5. `labor`: water breaks, then the player can't move, then tapping sneak quickly pushes; each baby
+   needs four bursts of 28 taps; Baby Human items drop, then the player recovers.
+6. `miscarry` (P1+): Dead Human Fetus items are given and the pregnancy ends.
+7. Sounds play (pains, contractions, birth, stomach growls) and the content log stays clean.
 
 ## In-game checklist for phase 1
 

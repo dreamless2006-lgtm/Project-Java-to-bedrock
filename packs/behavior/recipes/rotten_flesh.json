@@ -1,0 +1,24 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "minepreggo:rotten_flesh"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "tag": "minepreggo:dead_fetus"
+      }
+    ],
+    "unlock": [
+      {
+        "tag": "minepreggo:dead_fetus"
+      }
+    ],
+    "result": {
+      "item": "minecraft:rotten_flesh"
+    }
+  }
+}
