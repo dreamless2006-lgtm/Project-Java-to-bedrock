@@ -122,7 +122,9 @@ is told what is missing).
 
 The checked-in manifest is the standard one; the builder rewrites the
 dependency versions for the other two and swaps `net_impl.js` for the
-server variant. The resource pack declares no dependencies (a resource pack
+server variant. The `.mcaddon` carries the two packs as nested `.mcpack`
+entries, resource pack first, so the game imports them one at a time
+(`--layout folders` writes the loose-folder layout instead). The resource pack declares no dependencies (a resource pack
 cannot depend on a behavior pack; the behavior pack depends on the resource
 pack so it is activated with it). Beta module versions do not auto-upgrade across game
 releases, so `BETA_SERVER_VERSION` in the builder must be bumped when a new

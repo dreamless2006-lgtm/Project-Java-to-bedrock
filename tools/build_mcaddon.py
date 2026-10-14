@@ -15,7 +15,7 @@ Variants:
                        scripts/brain/net_impl.js swapped for direct HTTP: Bedrock Dedicated
                        Server admins who do not want a bridge account
 
-Usage: python3 tools/build_mcaddon.py [--variant standard|beta|server|all] [--name Real-AI]
+Usage: python3 tools/build_mcaddon.py [--variant standard|beta|server|all] [--layout mcpacks|folders] [--name Real-AI]
 """
 import argparse, json, os, sys, zipfile
 
@@ -112,11 +112,21 @@ def add_tree(zf, pack_dir, prefix, variant):
             zf.writestr(os.path.join(prefix, rel), transform(pack_dir, rel, data, variant))
 
 
+def build_pack_bytes(pack_dir, prefix, variant):
+    """Zip one pack (with its folder as the top level) and return the bytes."""
+    import io
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        add_tree(zf, pack_dir, prefix, variant)
+    return buf.getvalue()
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--name", default="Real-AI")
     ap.add_argument("--variant", default="standard", choices=["standard", "beta", "server", "all"])
-    ap.add_argument("--mcpacks", action="store_true", help="also write one .mcpack per pack")
+    ap.add_argument("--layout", default="mcpacks", choices=["mcpacks", "folders"], help="how the .mcaddon carries its packs: one .mcpack per pack inside it (default), or loose folders")
+    ap.add_argument("--mcpacks", action="store_true", help="also write one .mcpack per pack next to the .mcaddon")
     args = ap.parse_args()
     variants = ["standard", "beta", "server"] if args.variant == "all" else [args.variant]
     packs = sorted(d for d in os.listdir(PACKS) if os.path.isdir(os.path.join(PACKS, d)) and os.path.exists(os.path.join(PACKS, d, "manifest.json")))
@@ -126,17 +136,24 @@ def main():
     for variant in variants:
         ver = pack_version(os.path.join(PACKS, packs[0]))[0]
         suffix = "" if variant == "standard" else "-" + variant
+        # resource pack first: when the game imports the packs one by one the dependency exists
+        # by the time the behavior pack is registered
+        ordered = sorted(packs, key=lambda p: 0 if p.endswith("_RP") else 1)
+        blobs = {p: build_pack_bytes(os.path.join(PACKS, p), p, variant) for p in ordered}
         if args.mcpacks or variant == "standard":
-            for p in packs:
+            for p in ordered:
                 out = os.path.join(DIST, f"{p}-{ver}{suffix}.mcpack")
-                with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zf:
-                    add_tree(zf, os.path.join(PACKS, p), p, variant)
+                with open(out, "wb") as f:
+                    f.write(blobs[p])
                 print("wrote", os.path.relpath(out, ROOT), f"({os.path.getsize(out)//1024} KiB)")
         out = os.path.join(DIST, f"{args.name}-{ver}{suffix}.mcaddon")
         with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zf:
-            for p in packs:
-                add_tree(zf, os.path.join(PACKS, p), p, variant)
-        print("wrote", os.path.relpath(out, ROOT), f"({os.path.getsize(out)//1024} KiB)")
+            for p in ordered:
+                if args.layout == "mcpacks":
+                    zf.writestr(f"{p}.mcpack", blobs[p], compress_type=zipfile.ZIP_STORED)
+                else:
+                    add_tree(zf, os.path.join(PACKS, p), p, variant)
+        print("wrote", os.path.relpath(out, ROOT), f"({os.path.getsize(out)//1024} KiB, {args.layout})")
 
 
 if __name__ == "__main__":
