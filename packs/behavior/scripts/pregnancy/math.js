@@ -180,6 +180,41 @@ export function advancePhases(daysByPhase, phase, daysPassed, days, lastPhase) {
   return i <= lastPhase ? { phase: i, daysPassed: elapsed } : { phase: lastPhase, daysPassed: daysByPhase[lastPhase] };
 }
 
+/**
+ * PregnancyPhaseMapHelper.distributeExtraDays (Potion of Pregnancy Delay): `days` more days spread
+ * evenly over the current and the remaining phases, the remainder on the current one.
+ * @param {{ phase: number, lastPhase: number, daysByPhase: number[] }} p
+ * @param {number} days
+ */
+export function distributeExtraDays(p, days) {
+  const count = p.lastPhase - p.phase + 1;
+  const each = Math.floor(days / count);
+  const rest = days % count;
+  for (let i = p.phase; i <= p.lastPhase; i++) p.daysByPhase[i] += each + (i === p.phase ? rest : 0);
+}
+
+/**
+ * BabyDuplication.apply: duplicates up to level + 1 random babies (never above MAX_BABIES), moves
+ * the birth phase and the day map to the new litter, and returns the phase the pregnancy lands in:
+ * the same days into the new map, plus the mod's growth jump of about a third of the phases left
+ * (its sigmoid curve is approximated). -1 when the womb is full.
+ * @param {{ phase: number, lastPhase: number, daysByPhase: number[], daysPassed: number, womb: string[] }} p
+ * @param {number} amplifier
+ * @param {number} totalDays
+ * @param {() => number} [random]
+ */
+export function duplicateBabies(p, amplifier, totalDays = 50, random = Math.random) {
+  const added = Math.min(amplifier + 1, MAX_BABIES - p.womb.length);
+  if (added <= 0) return -1;
+  const elapsed = p.daysByPhase.slice(0, p.phase).reduce((a, b) => a + b, 0) + p.daysPassed;
+  for (let i = 0; i < added; i++) p.womb.push(p.womb[Math.floor(random() * p.womb.length)]);
+  p.lastPhase = finalPhaseForBabies(p.womb.length);
+  p.daysByPhase = daysByPhase(totalDays, p.lastPhase);
+  const at = advancePhases(p.daysByPhase, 0, 0, elapsed, p.lastPhase);
+  const jump = Math.round(0.35 * (p.lastPhase - at.phase));
+  return Math.min(p.lastPhase, Math.max(p.phase, at.phase + jump));
+}
+
 /** PregnancyAcceleration.getDaysByAmplifier: 7 % of the pregnancy per potion level (floats, as Java). */
 export function accelerationDays(/** @type {number} */ amplifier, totalDays = 50) {
   const percentage = Math.fround(Math.fround(0.07) * (amplifier + 1));

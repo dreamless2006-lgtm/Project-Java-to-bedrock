@@ -143,6 +143,16 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   when hers is small). The client falls back to `q.variant` and to the pose when the phase
   property is unknown, and the mob system rewrites the phase property every tick (records from
   versions that only set it through entity events, wild mobs that only kept the variant).
+- ✅ **Every non-sexual potion of the mod, with feedback (0.3.3).** `pregnancy/potions.js` ports
+  PregnancyDelay (distributeExtraDays), BabyDuplication (duplicateRandomBaby, the new birth phase
+  and day map; the sigmoid growth jump is approximated by a third of the phases left),
+  PregnancyHealing, PregnancyHarming, PregnancyResistance (PregnancyDamageHelper returns 0),
+  ZeroGravityBelly (no phase slowness, no extra fall damage), MetabolismControl (saturation
+  refill) and Eternal Pregnancy (canGiveBirth false); the timed ones live in the player record
+  and milk clears them. Mobs get the instant ones through interaction and commands. Every potion
+  reports its outcome; the Impregnation effect counts game ticks (shown on the action bar) instead
+  of the world's absolute time. The guide book's Debug tools give every item and need no operator.
+  Icons are the port's own bottle tinted with the mod's effect colours (`tools/gen/potion-icons.mjs`).
 - ✅ **Debug tools in the guide book (0.3.2).** The book's last chapter is a button menu for
   operators (`commandPermissionLevel` >= 1) that runs the debug and test commands on the player
   and the nearest mob: belly sizes and forced kicks/birth for 30 s, pregnancy start, phase jumps,

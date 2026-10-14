@@ -14,7 +14,7 @@ import { EquipmentSlot, GameMode, ItemStack, system, world } from '@minecraft/se
 import { CRAVING_LANG } from '../pregnancy/data.js';
 import { clampLevel } from '../pregnancy/state.js';
 import { FULLNESS } from './families.js';
-import { accelerate, accelerateGradually, calmDown, familyOf, getRecord, induceFetalMovement, isIncapacitated, isTamed, nameOf, onEatSpicyFood, particles, playSound } from './system.js';
+import { accelerate, accelerateGradually, calmDown, delayPregnancy, duplicateBabies, familyOf, getRecord, harmPregnancy, healPregnancy, induceFetalMovement, isIncapacitated, isTamed, nameOf, onEatSpicyFood, particles, playSound } from './system.js';
 
 /** @typedef {import('@minecraft/server').Player} Player */
 /** @typedef {import('@minecraft/server').Entity} Entity */
@@ -26,6 +26,12 @@ const POTION = /^minepreggo:(?:(zombie|creeper|ender|slime|villager)_)?impregnat
 const POTION_SPECIES = { ZOMBIE: 'zombie', CREEPER: 'creeper', ENDER: 'ender', SLIME: 'slime' };
 const ACCELERATION = /^minepreggo:(gradual_)?pregnancy_acceleration_potion_(\d)$/;
 const INDUCER = /^minepreggo:fetal_movement_inducer_potion_(\d)$/;
+const DELAY = /^minepreggo:pregnancy_delay_potion_(\d)$/;
+const DUPLICATION = /^minepreggo:baby_duplication_potion_(\d)$/;
+const HEALING = 'minepreggo:pregnancy_healing_potion';
+const HARMING = 'minepreggo:pregnancy_harming_potion';
+/** Any of the mod's potions (so a potion tapped onto a mob is never also drunk). */
+const OUR_POTION = /^minepreggo:[a-z_]*potion(_\d)?$/;
 
 /** Uses up one of the item in the player's main hand (not in creative), optionally leaving `remainder`. */
 function consumeHeld(/** @type {Player} */ player, /** @type {string | undefined} */ remainder = undefined) {
@@ -161,9 +167,16 @@ export function chooseAction(player, target, item) {
 
   const tamed = isTamed(target);
   if (tamed && !isOwner(record, player)) return undefined;
+  /** A potion that cannot act on her says why instead of being drunk by the same tap. */
+  const explain = (/** @type {string} */ key) => () => player.onScreenDisplay.setActionBar({ translate: key, with: { rawtext: [nameOf(target)] } });
+  const drink = () => {
+    consumeHeld(player, 'minecraft:glass_bottle');
+    playSound(record.entity, 'random.drink', 0.8);
+  };
   const potion = id?.match(POTION);
   if (potion) {
-    if (data.pregnancy || data.wild || data.post || data.pending) return undefined;
+    if (data.pregnancy || data.wild || data.pending) return explain('minepreggo.mob.potion.already_pregnant');
+    if (data.post) return explain('minepreggo.mob.potion.recovering');
     if (potion[1] && potion[1] !== POTION_SPECIES[family.species]) {
       return () => {
         consumeHeld(player, 'minecraft:glass_bottle');
@@ -175,25 +188,46 @@ export function chooseAction(player, target, item) {
   }
   const acceleration = id?.match(ACCELERATION);
   if (acceleration) {
-    if (!data.pregnancy) return undefined;
+    if (!data.pregnancy) return explain('minepreggo.mob.potion.not_pregnant');
     const amplifier = Number(acceleration[2]);
     return () => {
       const applied = acceleration[1] ? accelerateGradually(record, amplifier) : accelerate(record, amplifier);
-      if (!applied) return;
-      consumeHeld(player, 'minecraft:glass_bottle');
-      playSound(record.entity, 'random.drink', 0.8);
+      if (applied) drink();
+      else explain('minepreggo.mob.potion.blocked_labor')();
+    };
+  }
+  const delay = id?.match(DELAY);
+  if (delay) {
+    if (!data.pregnancy) return explain('minepreggo.mob.potion.not_pregnant');
+    return () => {
+      if (delayPregnancy(record, Number(delay[1])) > 0) drink();
+      else explain('minepreggo.mob.potion.blocked_labor')();
+    };
+  }
+  const duplication = id?.match(DUPLICATION);
+  if (duplication) {
+    if (!data.pregnancy && !data.wild) return explain('minepreggo.mob.potion.not_pregnant');
+    return () => {
+      if (duplicateBabies(record, Number(duplication[1])) > 0) drink();
+      else explain('minepreggo.mob.potion.womb_full')();
+    };
+  }
+  if (id === HEALING || id === HARMING) {
+    if (!data.pregnancy) return explain('minepreggo.mob.potion.not_pregnant');
+    return () => {
+      if (id === HEALING ? healPregnancy(record) : harmPregnancy(record)) drink();
+      else explain('minepreggo.mob.potion.blocked_labor')();
     };
   }
   const inducer = id?.match(INDUCER);
   if (inducer) {
-    if (!data.pregnancy && !data.wild) return undefined;
+    if (!data.pregnancy && !data.wild) return explain('minepreggo.mob.potion.not_pregnant');
     return () => {
       if (!induceFetalMovement(record, Number(inducer[1]) * 2)) {
         player.onScreenDisplay.setActionBar({ translate: 'minepreggo.fetal_movement_inducer.too_early' });
         return;
       }
-      consumeHeld(player, 'minecraft:glass_bottle');
-      playSound(record.entity, 'random.drink', 0.8);
+      drink();
     };
   }
   if (!tamed) return undefined;
@@ -214,7 +248,6 @@ export function chooseAction(player, target, item) {
 
 /** Tick of the last potion a player used on a mob, so the same tap doesn't also drink it. */
 const potionOnMob = new Map();
-const OUR_POTION = /^minepreggo:[a-z_]*potion_\d$/;
 
 world.beforeEvents.playerInteractWithEntity.subscribe((event) => {
   const action = chooseAction(event.player, event.target, event.itemStack);

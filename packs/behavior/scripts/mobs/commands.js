@@ -7,25 +7,12 @@
 import { system, Player } from '@minecraft/server';
 import { MAX_LEVEL, PHASES } from '../pregnancy/data.js';
 import { babiesFromPotion, clampBabies } from '../pregnancy/math.js';
-import {
-  FAMILY_TAG,
-  accelerate,
-  accelerateGradually,
-  becomeSavage,
-  endPregnancy,
-  forceLabor,
-  getRecord,
-  induceFetalMovement,
-  isTamed,
-  setPhase,
-  startCommonPain,
-  startMiscarriage,
-  startPregnancy,
-} from './system.js';
+import { accelerate, accelerateGradually, becomeSavage, delayPregnancy, duplicateBabies, endPregnancy, FAMILY_TAG, forceLabor, getRecord, harmPregnancy, healPregnancy, induceFetalMovement, isTamed, setPhase, startCommonPain, startMiscarriage, startPregnancy } from './system.js';
 
 const USAGE = [
   'minepreggo:mob status | start [babies 1-10] | potion [level 0-5] | end',
   '  phase <0-9> | days <n> | labor | miscarry | feed | starve | accelerate <0-4> | gradual <0-4> | induce <0-4>',
+  '  delay <0-4> | duplicate <0-4> | heal | harm',
   '  pain <morning_sickness|fetal_movement|contraction|back_pain>',
   '  symptom <craving|milking|belly_rubs>',
 ].join('\n');
@@ -84,6 +71,10 @@ function run(player, message) {
       data.fullness = 0;
       becomeSavage(record);
       return 'She is savage now.';
+    case 'duplicate': {
+      const added = duplicateBabies(record, Math.min(4, Math.max(0, n || 0)));
+      return added > 0 ? `${added} more babies.` : 'Cannot: not pregnant, the womb is full (10) or labor has begun.';
+    }
   }
   if (!p) return 'Not pregnant.';
   switch (command) {
@@ -95,6 +86,14 @@ function run(player, message) {
       return `Day ${p.daysPassed} of P${p.phase}.`;
     case 'labor':
       return forceLabor(record) ? 'Water broke.' : 'Cannot start labor now.';
+    case 'delay': {
+      const days = delayPregnancy(record, Math.min(4, Math.max(0, n || 0)));
+      return days > 0 ? `Delayed by ${days} days.` : 'Not during labor or a miscarriage.';
+    }
+    case 'heal':
+      return healPregnancy(record) ? 'Pregnancy health 100.' : 'Not pregnant.';
+    case 'harm':
+      return harmPregnancy(record) ? `Pregnancy health ${p.health}.` : 'Not during labor or a miscarriage.';
     case 'miscarry':
       return startMiscarriage(record) ? 'Miscarriage started.' : 'No miscarriage in P0 or during labor.';
     case 'accelerate':

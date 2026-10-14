@@ -17,6 +17,8 @@ import { getRecord } from '../../packs/behavior/scripts/pregnancy/system.js';
 import * as mobs from '../../packs/behavior/scripts/mobs/system.js';
 import { getRecord as getMobRecord, STEP } from '../../packs/behavior/scripts/mobs/system.js';
 import { VERSION } from '../../packs/behavior/scripts/version.js';
+import { finalPhaseForBabies } from '../../packs/behavior/scripts/pregnancy/math.js';
+import { PHASE_SLOWNESS } from '../../packs/behavior/scripts/pregnancy/data.js';
 
 const ROOT = new URL('../../', import.meta.url).pathname;
 const BP = join(ROOT, 'packs/behavior');
@@ -137,8 +139,7 @@ test('a Potion of Impregnation starts a pregnancy that the player model shows an
   assert.equal(record.pending?.amplifier, 2);
   assert.equal(record.pregnancy, null, 'the effect takes 15 seconds, like Java');
 
-  world.setAbsoluteTime(world.getAbsoluteTime() + 300);
-  system.tick(20);
+  system.tick(305); // the Impregnation effect counts game ticks, then the body sync runs
   const p = record.pregnancy;
   assert.ok(p, 'pregnant after the impregnation effect');
   assert.equal(p.phase, 0);
@@ -280,7 +281,7 @@ test('every entity, item and block the scripts name exists in the pack', () => {
   const named = new Set(scripts.match(/minepreggo:[a-z0-9_]+/g));
   const known = new Set([...ItemTypes.getAll(), ...BlockTypes.getAll(), ...EntityTypes.getAll()].map((t) => t.id));
   // Properties, dynamic properties, events, components, sounds and command ids are not game objects.
-  const notObjects = /^minepreggo:(phase|pose|kick|growth|gender|skin|savage|age|mob|crop|food_effects|impregnation_potion|pregnancy_acceleration|gradual_pregnancy_acceleration|breast_milk|pregnancy|female|pending|set_|on_tame|become_savage|calm_down|spawn_natural|hostile|tamed|tameable|fetal_movement_inducer|guide_given|guide$|forced|debug|attack_impregnation|mob_courted|belly_touch|stomach_growls|pregnant_preggo_mob_death|player_|preggo_mob|loaded|selfcheck|hud|gender_)/;
+  const notObjects = /^minepreggo:(phase|pose|kick|growth|gender|skin|savage|age|mob|crop|food_effects|impregnation_potion|pregnancy_acceleration|gradual_pregnancy_acceleration|breast_milk|pregnancy|female|pending|set_|on_tame|become_savage|calm_down|spawn_natural|hostile|tamed|tameable|fetal_movement_inducer|guide_given|guide$|forced|zero_gravity_belly$|metabolism_control$|eternal_pregnancy$|potion_effects$|debug|attack_impregnation|mob_courted|belly_touch|stomach_growls|pregnant_preggo_mob_death|player_|preggo_mob|loaded|selfcheck|hud|gender_)/;
   const missing = [...named].filter((id) => !notObjects.test(id) && !known.has(id) && !id.startsWith('minepreggo:baby_'));
   assert.deepEqual(missing, [], 'ids used by the scripts that no JSON defines');
 });
@@ -294,8 +295,7 @@ test('a zombie pregnancy burns in daylight, a creeper one explodes on death, sli
   assert.equal(params.species, 'ZOMBIE');
   customComponents.items.get('minepreggo:impregnation_potion').onConsume({ source: mother, itemStack: new ItemStack('minepreggo:zombie_impregnation_potion_0') }, { params });
   assert.equal(record.pending?.father, 'ZOMBIE');
-  world.setAbsoluteTime(world.getAbsoluteTime() + 300);
-  system.tick(20);
+  system.tick(305); // the Impregnation effect counts game ticks, then the body sync runs
   assert.equal(record.pregnancy?.father, 'ZOMBIE');
   const random = Math.random;
   Math.random = () => 0;
@@ -491,8 +491,7 @@ test('vanilla attackers impregnate a female player after enough hits, and a coun
   for (let i = 1; i < HITS_NEEDED.ZOMBIE; i++) assert.equal(onAttacked(record, /** @type {any} */ (zombie), () => 0), false);
   assert.equal(onAttacked(record, /** @type {any} */ (zombie), () => 0), true, 'the eighth zombie hit');
   assert.equal(record.pending?.father, 'ZOMBIE');
-  world.setAbsoluteTime(world.getAbsoluteTime() + 300);
-  system.tick(20);
+  system.tick(305); // the Impregnation effect counts game ticks, then the body sync runs
   assert.equal(record.pregnancy?.father, 'ZOMBIE');
   world.players.pop();
 
@@ -598,7 +597,7 @@ test('the client renders a belly even when the phase property never arrives', ()
   }
 });
 
-test('the guide book has working debug tools: belly sizes, phase jumps and the real state, for operators', async () => {
+test('the guide book has working debug tools: belly sizes, phase jumps and the real state', async () => {
   const { CHAPTERS, DEBUG_MENU } = await import('../../packs/behavior/scripts/world/guide.js');
   const debugChapter = CHAPTERS.findIndex((chapter) => chapter.debug);
   assert.ok(debugChapter > 0, 'the last chapter is the debug tools');
@@ -652,17 +651,217 @@ test('the guide book has working debug tools: belly sizes, phase jumps and the r
   assert.ok(reader.forms.some((form) => form.body.includes(`[Minepreggo ${VERSION}] you:`)));
   for (const form of reader.forms) if (form.title !== 'Minepreggo guide') assert.equal(form.buttons.at(-1), 'Back', form.title);
 
-  // Without operator rights the chapter only explains how to get them.
+  // The tools need no operator: a player without cheats gets the same menu.
   reader.commandPermissionLevel = 0;
   await open([debugChapter]);
-  const denial = reader.forms.find((form) => /need an operator/.test(form.body));
-  assert.ok(denial, 'the chapter explains how to become an operator');
-  assert.deepEqual(denial.buttons, ['Back to chapters']);
-  assert.ok(!reader.forms.some((form) => form.body === 'Choose an action.'), 'no debug menu for a non-operator');
+  assert.equal(reader.forms.at(-1)?.body, 'Choose an action.', 'the debug menu opens for everyone');
 
   // The book again on request.
   const books = reader.inventory.filter((item) => item === 'minepreggo:guide_book').length;
   assert.match(command(reader, 'minepreggo:guide', ''), /Guide book given/);
   assert.equal(reader.inventory.filter((item) => item === 'minepreggo:guide_book').length, books + 1);
+  world.players.pop();
+});
+
+/** Drinks one of the add-on's potions as `player` and returns what it said. */
+function drinkPotion(player, id) {
+  const [[component, params]] = customComponentsOf(id);
+  const before = player.messages.length;
+  customComponents.items.get(component).onConsume({ source: player, itemStack: new ItemStack(id) }, { params });
+  return player.messages.slice(before).map(text).join('\n');
+}
+
+test('every potion reports what it did or why not: impregnation countdown, delay, duplication, healing, harming', () => {
+  const drinker = new Player('Drinker');
+  drinker.location = { x: 500, y: 64, z: 500 };
+  world.players.push(drinker);
+  const record = getRecord(drinker);
+  const drink = (/** @type {string} */ id) => drinkPotion(drinker, id);
+  assert.match(drink('minepreggo:impregnation_potion_0'), /minepreggo\.potion\.choose_gender/);
+  record.setGender('male');
+  assert.match(drink('minepreggo:impregnation_potion_0'), /minepreggo\.potion\.male/);
+  record.setGender('female');
+  assert.match(drink('minepreggo:pregnancy_acceleration_potion_0'), /minepreggo\.potion\.not_pregnant/);
+  assert.match(drink('minepreggo:pregnancy_healing_potion'), /minepreggo\.potion\.not_pregnant/);
+  assert.match(drink('minepreggo:impregnation_potion_0'), /minepreggo\.potion\.impregnation"/);
+  assert.equal(record.pending?.ticksLeft, 300);
+  assert.match(drink('minepreggo:impregnation_potion_0'), /minepreggo\.potion\.already_pregnant/);
+  const before = drinker.messages.length;
+  system.tick(20);
+  assert.ok(drinker.messages.slice(before).some((m) => text(m).includes('minepreggo.potion.impregnation.countdown')), 'the action bar counts down');
+  assert.equal(record.pregnancy, null);
+  system.tick(285);
+  const p = record.pregnancy;
+  assert.ok(p, 'pregnant when the countdown ends');
+  p.pain = null;
+
+  // Pregnancy Delay I: 7 % of 50 days = 4 more days, spread over the phases to come.
+  const total = () => p.daysByPhase.reduce((a, b) => a + b, 0);
+  const days = total();
+  assert.match(drink('minepreggo:pregnancy_delay_potion_0'), /minepreggo\.potion\.delayed/);
+  assert.equal(total(), days + 4);
+
+  // Baby Duplication I: one more baby and a birth phase for the new litter; never beyond 10.
+  const babies = p.womb.length;
+  assert.match(drink('minepreggo:baby_duplication_potion_0'), /minepreggo\.potion\.duplicated"/);
+  assert.equal(p.womb.length, babies + 1);
+  assert.equal(p.lastPhase, finalPhaseForBabies(p.womb.length));
+  assert.equal(p.daysByPhase.length, p.lastPhase + 1, "one day count per phase up to the birth phase");
+  p.pain = null;
+  const said = [drink('minepreggo:baby_duplication_potion_4')];
+  p.pain = null;
+  said.push(drink('minepreggo:baby_duplication_potion_4'));
+  assert.equal(p.womb.length, 10, `two Baby Duplication V: ${said.join(' / ')} (phase ${p.phase}, pain ${p.pain?.type})`);
+  p.pain = null;
+  assert.match(drink('minepreggo:baby_duplication_potion_0'), /duplicated_full/);
+  assert.equal(p.lastPhase, 9);
+
+  // Harming takes 30 pregnancy health and a heart; healing restores it; at 0 she miscarries.
+  p.pain = null;
+  assert.match(drink('minepreggo:pregnancy_harming_potion'), /minepreggo\.potion\.harmed/);
+  assert.equal(p.health, 70);
+  assert.match(drink('minepreggo:pregnancy_healing_potion'), /minepreggo\.potion\.healed/);
+  assert.equal(p.health, 100);
+  for (let i = 0; i < 3; i++) drink('minepreggo:pregnancy_harming_potion');
+  assert.equal(p.health, 10);
+  drink('minepreggo:pregnancy_harming_potion');
+  assert.equal(p.health, 0);
+  assert.equal(p.pain?.type, 'MISCARRIAGE', 'at 0 the pregnancy miscarries');
+  assert.match(drink('minepreggo:pregnancy_harming_potion'), /blocked_labor/);
+  command(drinker, 'minepreggo:pregnancy', 'end');
+  world.players.pop();
+});
+
+test('timed potion effects: resistance stops pregnancy damage, zero gravity lifts the weight, metabolism refills saturation, eternal blocks birth, milk cures', async () => {
+  const { desiredEffects } = await import('../../packs/behavior/scripts/pregnancy/effects.js');
+  const mother = new Player('Timed');
+  mother.location = { x: 600, y: 64, z: 600 };
+  world.players.push(mother);
+  const record = getRecord(mother);
+  record.setGender('female');
+  command(mother, 'minepreggo:pregnancy', 'start 1');
+  command(mother, 'minepreggo:pregnancy', 'phase 4');
+  const p = record.pregnancy;
+  assert.ok(p);
+  const drink = (/** @type {string} */ id) => drinkPotion(mother, id);
+
+  assert.equal(desiredEffects(record).slowness, PHASE_SLOWNESS[4]);
+  assert.match(drink('minepreggo:zero_gravity_belly_potion'), /minepreggo\.potion\.zero_gravity/);
+  assert.equal(record.effects.zeroGravity, 9600);
+  assert.equal(desiredEffects(record).slowness, -1, 'Zero Gravity Belly: no phase slowdown');
+
+  assert.match(drink('minepreggo:long_pregnancy_resistance_potion'), /minepreggo\.potion\.resistance/);
+  assert.equal(record.effects.resistance, 19200);
+  const explosion = () => emit(world.afterEvents.entityHurt, { hurtEntity: mother, damage: 8, damageSource: { cause: EntityDamageCause.entityExplosion } });
+  explosion();
+  assert.equal(p.health, 100, 'Pregnancy Resistance: the explosion did no pregnancy damage');
+
+  const saturation = mother.getComponent('minecraft:player.saturation');
+  saturation.setCurrentValue(1);
+  assert.match(drink('minepreggo:strong_metabolism_control_potion'), /minepreggo\.potion\.metabolism/);
+  assert.deepEqual(record.effects.metabolism, { ticks: 6000, amplifier: 1 });
+  drink('minepreggo:metabolism_control_potion');
+  assert.equal(record.effects.metabolism.amplifier, 1, 'a weaker potion does not replace a stronger one');
+  system.tick(20);
+  assert.ok(saturation.currentValue > 1 && saturation.currentValue <= 20, 'saturation climbs');
+
+  assert.match(drink('minepreggo:eternal_pregnancy_potion'), /minepreggo\.potion\.eternal/);
+  assert.equal(record.effects.eternal, true);
+  assert.match(command(mother, 'minepreggo:pregnancy', 'labor'), /another pain blocks it/);
+  assert.equal(p.pain, null, 'Eternal Pregnancy: birth never comes');
+  assert.match(command(mother, 'minepreggo:pregnancy', 'status'), /potion effects: .*eternal/);
+
+  system.tick(100);
+  assert.ok(record.effects.zeroGravity < 9600 && record.effects.resistance < 19200, 'the effects run down');
+  emit(world.afterEvents.itemCompleteUse, { source: mother, itemStack: new ItemStack('minecraft:milk_bucket') });
+  assert.deepEqual(record.effects, {});
+  assert.ok(mother.messages.some((m) => text(m).includes('minepreggo.potion.cured')));
+  assert.equal(desiredEffects(record).slowness, PHASE_SLOWNESS[4], 'the weight is back');
+  explosion();
+  assert.ok(p.health < 100, 'without resistance the explosion harms the pregnancy');
+  assert.match(command(mother, 'minepreggo:pregnancy', 'labor'), /phase P4/);
+  assert.equal(p.pain?.type, 'WATER_BREAKING', 'birth comes again once the effect is gone');
+  command(mother, 'minepreggo:pregnancy', 'end');
+  world.players.pop();
+});
+
+test('the mod potions work on mobs through interaction and say why when they cannot', () => {
+  const owner = new Player('PotionOwner');
+  owner.location = { x: 700, y: 64, z: 700 };
+  world.players.push(owner);
+  const mob = new Mob('minepreggo:zombie_girl', { tamed: true });
+  mob.location = { x: 701, y: 64, z: 700 };
+  overworld.entities.push(mob);
+  const record = getMobRecord(mob);
+  record.data.owner = owner.id;
+  const use = (/** @type {string} */ id, target = mob) => {
+    const event = { player: owner, target, itemStack: new ItemStack(id), cancel: false };
+    const before = owner.messages.length;
+    emit(world.beforeEvents.playerInteractWithEntity, event);
+    system.tick(1);
+    return { cancelled: event.cancel, said: owner.messages.slice(before).map(text).join('\n') };
+  };
+  let result = use('minepreggo:pregnancy_healing_potion');
+  assert.equal(result.cancelled, true, 'a potion tapped onto her is never drunk');
+  assert.match(result.said, /minepreggo\.mob\.potion\.not_pregnant/);
+  assert.equal(use('minepreggo:impregnation_potion_0').cancelled, true);
+  assert.match(use('minepreggo:impregnation_potion_0').said, /already_pregnant/);
+  system.tick(300 + STEP);
+  const p = record.data.pregnancy;
+  assert.ok(p, 'pregnant 15 s after the potion');
+  const total = () => p.daysByPhase.reduce((a, b) => a + b, 0);
+  const days = total();
+  use('minepreggo:pregnancy_delay_potion_1');
+  assert.equal(total(), days + 7, 'Delay II: 14 % of 50 days');
+  use('minepreggo:baby_duplication_potion_0');
+  assert.equal(p.womb.length, 2);
+  assert.equal(p.lastPhase, 5);
+  use('minepreggo:pregnancy_harming_potion');
+  assert.equal(p.health, 70);
+  use('minepreggo:pregnancy_healing_potion');
+  assert.equal(p.health, 100);
+  assert.match(command(owner, 'minepreggo:mob', 'harm'), /Pregnancy health 70/);
+  assert.match(command(owner, 'minepreggo:mob', 'heal'), /Pregnancy health 100/);
+  assert.match(command(owner, 'minepreggo:mob', 'delay 0'), /Delayed by 4 days/);
+  assert.match(command(owner, 'minepreggo:mob', 'duplicate 0'), /1 more babies/);
+
+  // A wild pregnant mob carries more babies after a duplication potion from anyone.
+  const wild = new Mob('minepreggo:humanoid_creeper_girl', { variant: 6 });
+  wild.location = { x: 704, y: 64, z: 700 };
+  overworld.entities.push(wild);
+  system.tick(STEP + 1);
+  const wildRecord = getMobRecord(wild);
+  const babies = wildRecord.data.wild.babies;
+  use('minepreggo:baby_duplication_potion_1', wild);
+  assert.equal(wildRecord.data.wild.babies, Math.min(10, babies + 2));
+  world.players.pop();
+});
+
+test('the guide book gives every potion and the book itself', async () => {
+  const { CHAPTERS, GIVE_MENU } = await import('../../packs/behavior/scripts/world/guide.js');
+  const reader = new Player('Giver');
+  reader.location = { x: 800, y: 64, z: 800 };
+  world.players.push(reader);
+  const ids = new Set(ItemTypes.getAll().map((t) => t.id));
+  const flat = (/** @type {any[]} */ items) => items.flatMap((i) => (i.menu ? flat(i.menu) : [i]));
+  const leaves = flat(GIVE_MENU);
+  assert.ok(leaves.length >= 40, `${leaves.length} items to give`);
+  for (const leaf of leaves) {
+    const before = reader.inventory.length;
+    assert.match(String(leaf.run(reader)), /^Given: /);
+    const id = reader.inventory[before];
+    assert.ok(id && ids.has(id), `${leaf.label} gives an existing item (${id})`);
+  }
+  for (const potion of readdirSync(join(BP, 'items/potions'))) {
+    const id = `minepreggo:${potion.replace('.json', '')}`;
+    assert.ok(leaves.some((leaf) => reader.inventory.includes(id)), `${id} can be given from the book`);
+  }
+  // Through the book: Debug tools -> Give items -> Potion of Impregnation -> I.
+  reader.forms.length = 0;
+  reader.inventory.length = 0;
+  reader.formSelections = [CHAPTERS.findIndex((chapter) => chapter.debug), 0, 0, 0];
+  emit(world.beforeEvents.itemUse, { itemStack: new ItemStack('minepreggo:guide_book'), source: reader, cancel: false });
+  for (let i = 0; i < 8; i++) await flush();
+  assert.deepEqual(reader.inventory, ['minepreggo:impregnation_potion_0']);
   world.players.pop();
 });

@@ -29,7 +29,7 @@ export function desiredEffects(record) {
     return wanted;
   }
   const pain = p.pain?.type;
-  wanted.slowness = PHASE_SLOWNESS[p.phase];
+  wanted.slowness = record.effects.zeroGravity ? -1 : PHASE_SLOWNESS[p.phase]; // Zero Gravity Belly: no weight
   if (pain && pain in PAIN_SLOWNESS) {
     const extra = PAIN_SLOWNESS[/** @type {keyof typeof PAIN_SLOWNESS} */ (pain)];
     wanted.slowness = wanted.slowness < 0 ? extra - 1 : wanted.slowness + extra;

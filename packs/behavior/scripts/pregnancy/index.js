@@ -3,6 +3,7 @@
 // the Java mod). Java's keys become gestures: crouch to see the status, crouch and look down to
 // rub the belly, tap sneak to push during birth.
 
+import { tickPotionEffects } from './potions.js';
 import { system, world, ButtonState, EntityDamageCause, EquipmentSlot, InputButton, ItemStack } from '@minecraft/server';
 import { CRAVING_ITEMS, CRAVING_LANG, SPECIES, TICKS } from './data.js';
 import { SPECIES_CRAVINGS, SPECIES_FOODS } from '../mobs/families.js';
@@ -112,6 +113,7 @@ system.runInterval(() => {
   for (const player of world.getPlayers()) {
     const record = tickPlayer(player);
     if (!record.isFemale()) continue;
+    tickPotionEffects(record);
     tickBellyRub(record);
     if (tick % 20 === 0) applyEffects(record);
     if (tick % 5 === 0) updateHud(record);
@@ -246,6 +248,7 @@ world.afterEvents.entityHurt.subscribe(
     const record = getRecord(player);
     const p = record.pregnancy;
     if (!p || isLaborOrMisbirth(p) || isInvincible(player)) return;
+    if (record.effects.resistance) return; // Pregnancy Resistance: PregnancyDamageHelper returns 0
     if (damageSource.cause === EntityDamageCause.magic && system.currentTick - record.selfHurtTick <= 1) return;
     const healthComponent = player.getComponent('minecraft:health');
     if (!healthComponent) return;

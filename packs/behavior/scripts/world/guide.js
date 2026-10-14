@@ -59,6 +59,18 @@ export const CHAPTERS = [
       'The babies also decide the diet: zombie babies crave brains (villager, illager and witch brains, and brain with chocolate, salt, hot sauce or sour brain), creeper babies activated gunpowder, ender babies ender slime jelly and chorus fruit, slime babies rotten flesh and spider eyes, each in the sweet, salty, sour and spicy variants. Those foods only agree with a mother carrying that species. Her milk is that species\' milk too.',
   },
   {
+    title: 'Potions',
+    body:
+      'All potions are in the creative inventory (Items tab) and in Debug tools > Give items. Drink one, or use it on a female mob (her owner if she is tamed; anyone on a wild pregnant one).\n\n' +
+      'Impregnation I-VI: pregnant 15 seconds later (the action bar counts down); more babies per level. Zombie, Creeper, Ender, Slime and Villager Impregnation: a litter of that species; on a mob only her own species works, another species\' potion hurts her.\n' +
+      'Pregnancy Acceleration I-V: skips 7 % of the pregnancy per level at once. Gradual Pregnancy Acceleration I-V: the pregnancy runs 120-600x faster for 3 minutes.\n' +
+      'Pregnancy Delay I-V: 7 % per level longer. Baby Duplication I-V: one more baby per level (10 at most), a later birth and a jump forward.\n' +
+      'Pregnancy Healing: pregnancy health back to 100. Pregnancy Harming: -30 pregnancy health and a heart; at 0 the pregnancy ends in a miscarriage.\n' +
+      'Pregnancy Resistance (8 or 16 min): hits no longer harm the pregnancy. Zero Gravity Belly (8 or 16 min): no slowdown and no extra fall damage. Metabolism Control (5 or 10 min, Strong = II): your saturation keeps refilling. Eternal Pregnancy: birth never comes until you drink milk.\n' +
+      'Fetal Movement Inducement I-III: a kick of that strength (from P3).\n\n' +
+      'A potion that cannot act says why instead of being wasted.',
+  },
+  {
     title: 'Preggo mobs',
     body:
       'Zombie girls, creeper girls, slime girls and ender women spawn like their vanilla cousins; some are already pregnant and cannot be tamed.\n\n' +
@@ -79,7 +91,7 @@ export const CHAPTERS = [
   {
     title: 'Debug tools',
     body:
-      'Buttons that run the test commands on you and on the nearest female mob (within 16 blocks): show any belly size, force the kicks or a birth, start a pregnancy, jump to a phase, start labor, see what the game renders from. Operators only (cheats on).',
+      'Buttons that give every potion and run the test commands on you and on the nearest female mob (within 16 blocks): show any belly size, force the kicks or a birth, start a pregnancy, jump to a phase, use any potion effect, start labor, see what the game renders from.',
     debug: true,
   },
 ];
@@ -95,8 +107,51 @@ const PHASES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 /** @param {(player: Player, phase: number) => string} action */
 const phaseMenu = (action) => PHASES.map((n) => ({ label: `P${n}${n <= 1 ? ' (flat)' : n >= 7 ? ' (big)' : ''}`, run: (/** @type {Player} */ player) => action(player, n) }));
 
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI'];
+const SPECIES = [['zombie', 'Zombie'], ['creeper', 'Creeper'], ['ender', 'Ender'], ['slime', 'Slime'], ['villager', 'Villager']];
+
+/** Puts one `item` in the player's inventory (or drops it at her feet when it is full). */
+export function giveItem(/** @type {Player} */ player, /** @type {string} */ item) {
+  const leftover = player.getComponent('minecraft:inventory')?.container.addItem(new ItemStack(item, 1));
+  if (leftover) player.dimension.spawnItem(leftover, player.location);
+}
+
+/** A button that gives one item. */
+const giver = (/** @type {string} */ label, /** @type {string} */ item) => ({ label, run: (/** @type {Player} */ player) => (giveItem(player, item), `Given: ${label}.`) });
+/** Buttons for a potion in strengths I..count. */
+const strengths = (/** @type {string} */ label, /** @type {string} */ base, /** @type {number} */ count) =>
+  Array.from({ length: count }, (_, n) => giver(`${label} ${ROMAN[n]}`, `minepreggo:${base}_${n}`));
+
+/** @type {DebugItem[]} Every item of the add-on worth testing with. */
+export const GIVE_MENU = [
+  { label: 'Potion of Impregnation I-VI', menu: strengths('Potion of Impregnation', 'impregnation_potion', 6) },
+  { label: 'Species impregnation potions I-VI', menu: SPECIES.map(([id, name]) => ({ label: `${name} Impregnation I-VI`, menu: strengths(`Potion of ${name} Impregnation`, `${id}_impregnation_potion`, 6) })) },
+  { label: 'Pregnancy Acceleration I-V', menu: strengths('Pregnancy Acceleration', 'pregnancy_acceleration_potion', 5) },
+  { label: 'Gradual Pregnancy Acceleration I-V', menu: strengths('Gradual Pregnancy Acceleration', 'gradual_pregnancy_acceleration_potion', 5) },
+  { label: 'Fetal Movement Inducement I-III', menu: strengths('Fetal Movement Inducement', 'fetal_movement_inducer_potion', 3) },
+  { label: 'Pregnancy Delay I-V', menu: strengths('Pregnancy Delay', 'pregnancy_delay_potion', 5) },
+  { label: 'Baby Duplication I-V', menu: strengths('Baby Duplication', 'baby_duplication_potion', 5) },
+  {
+    label: 'Healing, Harming, Resistance, Zero Gravity, Metabolism, Eternal',
+    menu: [
+      giver('Pregnancy Healing', 'minepreggo:pregnancy_healing_potion'),
+      giver('Pregnancy Harming', 'minepreggo:pregnancy_harming_potion'),
+      giver('Pregnancy Resistance (8 min)', 'minepreggo:pregnancy_resistance_potion'),
+      giver('Long Pregnancy Resistance (16 min)', 'minepreggo:long_pregnancy_resistance_potion'),
+      giver('Zero Gravity Belly (8 min)', 'minepreggo:zero_gravity_belly_potion'),
+      giver('Long Zero Gravity Belly (16 min)', 'minepreggo:long_zero_gravity_belly_potion'),
+      giver('Metabolism Control (5 min)', 'minepreggo:metabolism_control_potion'),
+      giver('Long Metabolism Control (10 min)', 'minepreggo:long_metabolism_control_potion'),
+      giver('Strong Metabolism Control II', 'minepreggo:strong_metabolism_control_potion'),
+      giver('Eternal Pregnancy', 'minepreggo:eternal_pregnancy_potion'),
+    ],
+  },
+  giver('Guide book', GUIDE),
+];
+
 /** @type {DebugItem[]} The Debug tools chapter. */
 export const DEBUG_MENU = [
+  { label: 'Give items (potions, this book)', menu: GIVE_MENU },
   { label: 'Show a belly size for 30 s (me + nearest mob)', menu: phaseMenu((player, n) => forceBelly(player, n, BOOK_TICKS)) },
   { label: 'Force fetal movement for 30 s', run: (player) => forcePose(player, 'kick', BOOK_TICKS) },
   { label: 'Force a birth push for 30 s', run: (player) => forcePose(player, 'birth', BOOK_TICKS) },
@@ -110,8 +165,13 @@ export const DEBUG_MENU = [
       { label: 'Jump to a phase', menu: phaseMenu((player, n) => runPregnancyCommand(player, `phase ${n}`)) },
       { label: 'Induce kicks (III)', run: (player) => runPregnancyCommand(player, 'induce 2') },
       { label: 'Accelerate (potion IV)', run: (player) => runPregnancyCommand(player, 'accelerate 3') },
+      { label: 'Delay (potion III)', run: (player) => runPregnancyCommand(player, 'delay 2') },
+      { label: 'Duplicate babies (potion I)', run: (player) => runPregnancyCommand(player, 'duplicate 0') },
+      { label: 'Heal the pregnancy', run: (player) => runPregnancyCommand(player, 'heal') },
+      { label: 'Harm the pregnancy (-30)', run: (player) => runPregnancyCommand(player, 'harm') },
       { label: 'Start labor', run: (player) => runPregnancyCommand(player, 'labor') },
       { label: 'End the pregnancy', run: (player) => runPregnancyCommand(player, 'end') },
+      { label: 'Cure potion effects', run: (player) => runPregnancyCommand(player, 'cure') },
       { label: 'Status', run: (player) => runPregnancyCommand(player, 'status') },
     ],
   },
@@ -123,6 +183,10 @@ export const DEBUG_MENU = [
       { label: 'Jump to a phase', menu: phaseMenu((player, n) => runMobCommand(player, `phase ${n}`)) },
       { label: 'Induce kicks (III)', run: (player) => runMobCommand(player, 'induce 2') },
       { label: 'Accelerate (potion IV)', run: (player) => runMobCommand(player, 'accelerate 3') },
+      { label: 'Delay (potion III)', run: (player) => runMobCommand(player, 'delay 2') },
+      { label: 'Duplicate babies (potion I)', run: (player) => runMobCommand(player, 'duplicate 0') },
+      { label: 'Heal the pregnancy', run: (player) => runMobCommand(player, 'heal') },
+      { label: 'Harm the pregnancy (-30)', run: (player) => runMobCommand(player, 'harm') },
       { label: 'Start labor', run: (player) => runMobCommand(player, 'labor') },
       { label: 'Feed her', run: (player) => runMobCommand(player, 'feed') },
       { label: 'End the pregnancy', run: (player) => runMobCommand(player, 'end') },
@@ -132,15 +196,6 @@ export const DEBUG_MENU = [
   { label: 'What the game renders from (me + nearest mob)', run: (player) => report(player).join('\n') },
 ];
 
-/** The debug tools need an operator, like /scriptevent; an API without the level lets everyone in. */
-export function canDebug(/** @type {Player} */ player) {
-  try {
-    const level = Number(player.commandPermissionLevel);
-    return Number.isNaN(level) || level >= 1;
-  } catch {
-    return true;
-  }
-}
 
 /**
  * Shows a debug menu; a button runs its action and shows the result, or opens its sub-menu.
@@ -175,24 +230,13 @@ function openDebugMenu(player, title, items, back) {
   });
 }
 
-/** The Debug tools chapter: the menu for operators, an explanation for everyone else. */
+/** The Debug tools chapter. */
 export function openDebugTools(/** @type {Player} */ player, /** @type {() => void} */ back) {
-  if (canDebug(player)) return openDebugMenu(player, 'Debug tools', DEBUG_MENU, back);
-  new ActionFormData()
-    .title('Debug tools')
-    .body('The debug tools need an operator: turn cheats on in the world settings (or ask the host to make you an operator), then open this chapter again.')
-    .button('Back to chapters')
-    .show(player)
-    .then((page) => {
-      if (!page.canceled && player.isValid) back();
-    });
+  openDebugMenu(player, 'Debug tools', DEBUG_MENU, back);
 }
 
-/** Puts a guide book in the player's inventory (or drops it at her feet when it is full). */
-export function giveGuide(/** @type {Player} */ player) {
-  const leftover = player.getComponent('minecraft:inventory')?.container.addItem(new ItemStack(GUIDE, 1));
-  if (leftover) player.dimension.spawnItem(leftover, player.location);
-}
+/** Puts a guide book in the player's inventory. */
+export const giveGuide = (/** @type {Player} */ player) => giveItem(player, GUIDE);
 
 /** @param {Player} player */
 export function openGuide(player) {

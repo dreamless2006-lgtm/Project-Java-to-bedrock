@@ -10,7 +10,7 @@
 
 import { EntityDamageCause, ItemStack, system, world } from '@minecraft/server';
 import { BABIES_BY_FINAL_PHASE, BELLY_RUBS_TICKS, CONFIG, CRAVING_TICKS, MAX_LEVEL, MILKING_TICKS, PHASES, TICKS } from '../pregnancy/data.js';
-import { accelerationDays, advancePhases, babiesFromPotion, createCommonPain, daysByPhase, gradualAccelerationSpeed, pregnancyDamage, randomCraving, sigmoid, symptomSeverity } from '../pregnancy/math.js';
+import { accelerationDays, advancePhases, babiesFromPotion, clampBabies, createCommonPain, daysByPhase, distributeExtraDays, duplicateBabies as planDuplication, gradualAccelerationSpeed, pregnancyDamage, randomCraving, sigmoid, symptomSeverity } from '../pregnancy/math.js';
 import { clampLevel, newPregnancy } from '../pregnancy/state.js';
 import { COURTERS, COURTING_RANGE, COURTING_TICKS, FAMILIES, FULLNESS, birthTicks, hungerTicks, postBirthTicks } from './families.js';
 import { MobRecord } from './state.js';
@@ -455,6 +455,63 @@ export function accelerateGradually(/** @type {MobRecord} */ record, /** @type {
   return true;
 }
 
+const inLaborOrMiscarriage = (/** @type {Pregnancy} */ p) => !!p.pain && (LABOR_PAINS.has(p.pain.type) || p.pain.type === 'MISCARRIAGE');
+
+/** Potion of Pregnancy Delay on a pregnant mob (PregnancyDelay, mob branch): 7 % x level more days. Returns the days. */
+export function delayPregnancy(/** @type {MobRecord} */ record, /** @type {number} */ amplifier) {
+  const p = record.data.pregnancy;
+  if (!p || inLaborOrMiscarriage(p)) return 0;
+  const days = accelerationDays(amplifier, CONFIG.totalPregnancyDays);
+  distributeExtraDays(p, days);
+  playSound(record.entity, 'minepreggo.stomach_growls');
+  record.save();
+  return days;
+}
+
+/** Potion of Baby Duplication on a mob (BabyDuplication, mob branches): level + 1 more babies, 10 at most. Returns the babies added. */
+export function duplicateBabies(/** @type {MobRecord} */ record, /** @type {number} */ amplifier) {
+  const { data } = record;
+  if (data.wild) {
+    const before = data.wild.babies;
+    data.wild.babies = clampBabies(before + amplifier + 1);
+    if (data.wild.babies === before) return 0;
+    record.save();
+    return data.wild.babies - before;
+  }
+  const p = data.pregnancy;
+  if (!p || inLaborOrMiscarriage(p)) return 0;
+  const before = p.womb.length;
+  const phase = planDuplication(p, amplifier, CONFIG.totalPregnancyDays);
+  if (phase < 0) return 0;
+  if (phase !== p.phase) setPhase(record, phase);
+  playSound(record.entity, 'minepreggo.stomach_growls');
+  record.save();
+  return p.womb.length - before;
+}
+
+/** Potion of Pregnancy Healing on a mob: pregnancy health 100. */
+export function healPregnancy(/** @type {MobRecord} */ record) {
+  const p = record.data.pregnancy;
+  if (!p) return false;
+  p.health = 100;
+  p.healthTimer = 0;
+  particles(record.entity, 'minecraft:heart_particle', 12);
+  record.save();
+  return true;
+}
+
+/** Potion of Pregnancy Harming on a mob: -30 pregnancy health and a heart; at 0 she miscarries. */
+export function harmPregnancy(/** @type {MobRecord} */ record) {
+  const p = record.data.pregnancy;
+  if (!p || inLaborOrMiscarriage(p)) return false;
+  p.health = Math.max(0, p.health - 30);
+  hurt(record, 1);
+  playSound(record.entity, 'minepreggo.pregnancy_pain');
+  if (p.health <= 0) startMiscarriage(record);
+  else record.save();
+  return true;
+}
+
 /** PreggoMobPregnancySystemP4.evaluateWaterBreaking / evaluateBirth: automatic, no pushing. */
 function evaluateLabor(/** @type {MobRecord} */ record) {
   const { entity } = record;
@@ -674,6 +731,7 @@ function clientState(/** @type {MobRecord} */ record) {
 
 /** Forces the client state for `ticks` (the debug command), e.g. a strong fetal movement. */
 export function debugPose(/** @type {MobRecord} */ record, /** @type {string} */ pose, /** @type {number} */ kick, ticks = 200, phase = -1) {
+  expectedPhase(record); // an old wild record learns its phase from the real property before it is overwritten
   record.debugUntil = system.currentTick + ticks;
   record.entity.setProperty('minepreggo:pose', pose);
   record.entity.setProperty('minepreggo:kick', kick);
@@ -693,11 +751,11 @@ const FORCED = 'minepreggo:forced';
 /** Ends a forced client state: the real phase comes back at once (the wild-spawn detection reads it). */
 export function clearDebug(/** @type {MobRecord} */ record) {
   record.debugUntil = 0;
+  record.sent = {};
   if (record.entity.isValid) {
     record.entity.setDynamicProperty(FORCED, undefined);
-    setPhaseProperty(record.entity, expectedPhase(record));
+    syncClient(record); // phase, pose, kick and growth come back at once
   }
-  record.sent = {};
 }
 
 /** The phase the client must render the belly from: the pregnancy's, a wild mob's spawn phase, or -1. */

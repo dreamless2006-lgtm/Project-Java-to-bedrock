@@ -23,7 +23,8 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
   steps, jumps and landings), and in first person the chest and belly come into view when you
   look down.
 - A Potion of Impregnation (creative inventory, *Items* tab) starts a pregnancy 15 seconds after
-  drinking it. Stronger potions (II–VI) mean more babies and a later birth.
+  drinking it; the action bar counts the seconds down. Stronger potions (II–VI) mean more babies
+  and a later birth. All the mod's other potions are ported too (see **Potions** below).
 - **Crouch** to see the pregnancy status on the action bar.
 - **Crouch and look down** to rub your belly when the belly-rub need shows up (from P3).
 - **Use a glass bottle** while lactating to fill it.
@@ -52,6 +53,30 @@ A world pins the pack version it was created with. After importing a newer `.mca
 world's settings → **Behavior Packs**, remove Minepreggo from the active packs and add it again,
 so the world picks up the new version (the join message shows which version is running). Without
 this step, new items such as the fetal movement and species potions stay missing.
+
+### Potions
+
+Every potion of the mod that does not belong to its sexual systems is in the creative *Items* tab
+and in the guide book's **Debug tools → Give items**. Each one reports what it did, or why it could
+not act, so a potion never fails silently. Drink them, or use them on a female mob (her owner if she
+is tamed, anyone on a wild pregnant one).
+
+| Potion | Effect (as in the mod) |
+| --- | --- |
+| Impregnation I–VI, Zombie/Creeper/Ender/Slime/Villager Impregnation | pregnant 15 s later (the action bar counts down); more babies per level; a litter of that species |
+| Pregnancy Acceleration I–V | skips 7 % of the pregnancy per level at once |
+| Gradual Pregnancy Acceleration I–V | the timer runs 120–600x faster for 3 minutes |
+| Pregnancy Delay I–V | 7 % per level longer, spread over the phases to come |
+| Baby Duplication I–V | one more baby per level (10 at most), a later birth and a jump forward |
+| Pregnancy Healing / Harming | pregnancy health to 100 / −30 and a heart (a miscarriage at 0) |
+| Pregnancy Resistance (8 min, Long 16 min) | hits do no pregnancy damage |
+| Zero Gravity Belly (8 min, Long 16 min) | no phase slowdown, no extra fall damage |
+| Metabolism Control (5 min, Long 10 min, Strong II) | saturation refills by 0.25 × level every 10 ticks |
+| Eternal Pregnancy | birth never comes; milk ends it (like every Minepreggo effect) |
+| Fetal Movement Inducement I–III (Bedrock addition) | a kick of that strength from P3 |
+
+The mod's brewing recipes use ingredients of its fertility systems, which are not ported, so the
+potions are creative-only (Bedrock cannot add brewing recipes either).
 
 ### Debug tools in the guide book
 

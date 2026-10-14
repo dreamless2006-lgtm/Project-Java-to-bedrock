@@ -209,6 +209,7 @@ export function setPhase(/** @type {PlayerRecord} */ record, /** @type {number} 
 /** AbstractPregnancySystem.tryToStartLabor(forceElapsedDays) */
 export function tryToStartLabor(/** @type {PlayerRecord} */ record, force = false) {
   const p = record.pregnancy;
+  if (record.effects.eternal) return false; // Eternal Pregnancy: canGiveBirth() is false
   if (!p || (!canAdvancePhase(p) && !force) || !isAtLastPhase(p)) return false;
   if (p.pain && !COMMON_PAINS.has(p.pain.type)) return false;
   p.daysPassed = p.daysByPhase[p.phase] + 1;
@@ -773,11 +774,20 @@ function updateMovement(record) {
 /** @param {Player} player */
 export function tickPlayer(player) {
   const record = getRecord(player);
-  if (record.pending && world.getAbsoluteTime() >= record.pending.endTime) {
-    const { amplifier, father } = record.pending;
-    record.pending = null;
-    startPregnancyFromPotion(record, amplifier, father ?? 'HUMAN');
-    record.dirty = true;
+  if (record.pending) {
+    // The Impregnation effect counts game ticks (the world's absolute time can stand still); it
+    // shows on the action bar every second and starts the pregnancy when it runs out.
+    const pending = record.pending;
+    pending.ticksLeft = (pending.ticksLeft ?? Math.max(0, pending.endTime - world.getAbsoluteTime())) - 1;
+    if (pending.ticksLeft <= 0) {
+      const { amplifier, father } = pending;
+      record.pending = null;
+      startPregnancyFromPotion(record, amplifier, father ?? 'HUMAN');
+      record.dirty = true;
+    } else if (pending.ticksLeft % 20 === 0) {
+      actionbar(player, 'minepreggo.potion.impregnation.countdown', [pending.ticksLeft / 20]);
+      record.save();
+    }
   }
   if (!record.isFemale()) return record;
 

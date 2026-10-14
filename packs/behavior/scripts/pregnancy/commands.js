@@ -7,6 +7,7 @@
 import { system, Player } from '@minecraft/server';
 import { MAX_LEVEL, POTION_SPECIES } from './data.js';
 import { babiesFromPotion, clampBabies } from './math.js';
+import { DURATIONS, applyPotionEffect, curePotionEffects, delayPregnancy, duplicateBabies, harmPregnancy, healPregnancy } from './potions.js';
 import {
   accelerate,
   accelerateGradually,
@@ -26,6 +27,8 @@ import {
 const USAGE = [
   'minepreggo:pregnancy start [babies 1-10] | potion [level 0-5] [human|zombie|creeper|ender|slime|villager] | end | status',
   '  phase <0-9> | days <n> | labor | miscarry | accelerate <0-4> | gradual <0-4> | induce <0-4>',
+  '  delay <0-4> | duplicate <0-4> | heal | harm',
+  '  resist [long] | zerogravity [long] | metabolism [long|strong] | eternal | cure',
   '  pain <morning_sickness|fetal_movement|contraction|back_pain>',
   '  symptom <craving|milking|belly_rubs>',
   'minepreggo:gender <female|male>',
@@ -43,6 +46,8 @@ function status(record) {
   if (record.pending) lines.push(`impregnation pending (potion level ${record.pending.amplifier})`);
   if (record.female.post) lines.push(`recovering after ${record.female.post.type.toLowerCase()}: ${record.female.post.timer} ticks`);
   if (record.female.lactation) lines.push(`post-partum lactation level ${record.female.lactation.level}/20`);
+  const effects = Object.entries(record.effects).map(([name, value]) => (typeof value === 'object' ? `${name} ${value.amplifier + 1} (${value.ticks} ticks)` : typeof value === 'number' ? `${name} (${value} ticks)` : name));
+  if (effects.length) lines.push(`potion effects: ${effects.join(', ')}`);
   if (!p) return [...lines, 'not pregnant'].join('\n');
   return [
     ...lines,
@@ -78,6 +83,20 @@ function run(player, message) {
       return ok(endPregnancy(record), 'not pregnant');
     case 'status':
       return status(record);
+    case 'resist':
+      applyPotionEffect(record, 'resistance', arg === 'long' ? DURATIONS.longResistance : DURATIONS.resistance);
+      return status(record);
+    case 'zerogravity':
+      applyPotionEffect(record, 'zeroGravity', arg === 'long' ? DURATIONS.longZeroGravity : DURATIONS.zeroGravity);
+      return status(record);
+    case 'metabolism':
+      applyPotionEffect(record, 'metabolism', arg === 'long' ? DURATIONS.longMetabolism : DURATIONS.metabolism, arg === 'strong' ? 1 : 0);
+      return status(record);
+    case 'eternal':
+      applyPotionEffect(record, 'eternal', -1);
+      return status(record);
+    case 'cure':
+      return ok(curePotionEffects(record), 'no potion effect active');
   }
   if (!p) return 'not pregnant';
 
@@ -97,6 +116,14 @@ function run(player, message) {
       return ok(tryInitMiscarriage(record), 'cannot miscarry now (P0, labor or already miscarrying)');
     case 'accelerate':
       return ok(accelerate(record, Math.min(4, Math.max(0, Number(arg) || 0))), 'not during labor or a miscarriage');
+    case 'delay':
+      return ok(delayPregnancy(record, Math.min(4, Math.max(0, Number(arg) || 0))) > 0, 'not during labor or a miscarriage');
+    case 'duplicate':
+      return ok(duplicateBabies(record, Math.min(4, Math.max(0, Number(arg) || 0))) > 0, 'the womb is full (10) or labor has begun');
+    case 'heal':
+      return ok(healPregnancy(record), 'not pregnant');
+    case 'harm':
+      return ok(harmPregnancy(record), 'not during labor or a miscarriage');
     case 'gradual':
       return ok(accelerateGradually(record, Math.min(4, Math.max(0, Number(arg) || 0))), 'not during labor or a miscarriage');
     case 'induce':

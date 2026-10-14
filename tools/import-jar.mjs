@@ -56,6 +56,8 @@ function bedrockAliases(key, value) {
   if (egg) aliases.push([`item.spawn_egg.entity.${MOD_ID}:${egg[1]}.name`, value]);
   const potion = key.match(/^item\.minecraft\.potion\.effect\.([a-z_]+)_(\d)$/);
   if (potion) aliases.push([`item.${MOD_ID}.${potion[1]}_potion_${potion[2]}`, `${value} ${ROMAN[Number(potion[2])]}`]);
+  const plainPotion = key.match(/^item\.minecraft\.potion\.effect\.([a-z_]*[a-z])$/);
+  if (plainPotion) aliases.push([`item.${MOD_ID}.${plainPotion[1]}_potion`, value]);
   return aliases;
 }
 

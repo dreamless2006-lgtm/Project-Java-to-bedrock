@@ -264,6 +264,7 @@ world.getDimension = (id) => {
       getEntities(options = {}) {
         let found = dimension.entities.filter((e) => e.isValid);
         if (options.type) found = found.filter((e) => e.typeId === options.type);
+        if (options.families) found = found.filter((e) => e.typeId.startsWith('minepreggo:'));
         if (options.location && options.maxDistance !== undefined) {
           const d = (e) => Math.hypot(e.location.x - options.location.x, e.location.y - options.location.y, e.location.z - options.location.z);
           found = found.filter((e) => d(e) <= options.maxDistance).sort((a, b) => d(a) - d(b));

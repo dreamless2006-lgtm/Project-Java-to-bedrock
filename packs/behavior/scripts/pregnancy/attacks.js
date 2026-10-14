@@ -39,7 +39,7 @@ export function onAttacked(record, attacker, random = Math.random) {
   attacks[species] = (attacks[species] ?? 0) + 1;
   if (attacks[species] < (HITS_NEEDED[species] ?? Infinity)) return false;
   attacks[species] = 0;
-  record.pending = { amplifier: random() < 0.5 ? 0 : 1, father: species, endTime: world.getAbsoluteTime() + IMPREGNATION_TICKS };
+  record.pending = { amplifier: random() < 0.5 ? 0 : 1, father: species, endTime: world.getAbsoluteTime() + IMPREGNATION_TICKS, ticksLeft: IMPREGNATION_TICKS };
   record.save();
   message(record.player, 'minepreggo.attack_impregnation', [{ translate: `entity.${attacker.typeId}.name` }]);
   return true;

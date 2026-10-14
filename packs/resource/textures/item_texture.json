@@ -256,6 +256,30 @@
     },
     "minepreggo_zombie_impregnation_potion": {
       "textures": "textures/port/zombie_impregnation_potion"
+    },
+    "minepreggo_pregnancy_delay_potion": {
+      "textures": "textures/port/pregnancy_delay_potion"
+    },
+    "minepreggo_baby_duplication_potion": {
+      "textures": "textures/port/baby_duplication_potion"
+    },
+    "minepreggo_pregnancy_healing_potion": {
+      "textures": "textures/port/pregnancy_healing_potion"
+    },
+    "minepreggo_pregnancy_harming_potion": {
+      "textures": "textures/port/pregnancy_harming_potion"
+    },
+    "minepreggo_pregnancy_resistance_potion": {
+      "textures": "textures/port/pregnancy_resistance_potion"
+    },
+    "minepreggo_zero_gravity_belly_potion": {
+      "textures": "textures/port/zero_gravity_belly_potion"
+    },
+    "minepreggo_metabolism_control_potion": {
+      "textures": "textures/port/metabolism_control_potion"
+    },
+    "minepreggo_eternal_pregnancy_potion": {
+      "textures": "textures/port/eternal_pregnancy_potion"
     }
   }
 }

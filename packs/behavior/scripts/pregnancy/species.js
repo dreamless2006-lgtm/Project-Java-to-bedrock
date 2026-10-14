@@ -101,6 +101,7 @@ world.afterEvents.entityHurt.subscribe(
     const record = getRecord(player);
     const p = record.pregnancy;
     if (!p || p.phase < 3 || isInvincible(player)) return;
+    if (record.effects.zeroGravity) return; // Zero Gravity Belly: the belly weighs nothing
     let factor = sigmoid(1.0, 1.6, 1.0, p.phase, 5);
     const slimes = count(record, 'SLIME');
     if (slimes > 0) {
