@@ -27,7 +27,14 @@ Invite that account to the Realm and make it an **operator** (Realm settings
 run `/scriptevent`, which is how it answers the addon. Cheats must be
 allowed on the world.
 
-## 3. Configure and run the bridge
+## 3. Run the bridge
+
+Install Node.js 20 or newer from nodejs.org, then run `start.bat`
+(Windows) or `start.sh` (Mac/Linux) in the `bridge` folder. The first run
+is a short wizard: which AI (the free Player2 app, or a Claude / ChatGPT /
+Grok / Gemini key), which Realm or server, and the gamertag for the bridge
+account. It writes `config.json` and starts; `node index.mjs --setup` runs
+the wizard again. Advanced users can edit `config.json` by hand:
 
 ```bash
 cd bridge
@@ -77,7 +84,7 @@ slash commands instead:
 ```
 /realai:menu                       open the Real AI menu
 /realai:talk Ellie "come help me"  whisper to a bot
-/realai:summon Ellie "a brave builder"
+/realai:companion Ellie "a brave builder"
 /realai:ai "status"
 ```
 

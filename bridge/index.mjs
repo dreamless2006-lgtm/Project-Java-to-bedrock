@@ -270,6 +270,10 @@ export class Bridge {
 // ----------------------------------------------------------------- main ---
 async function main() {
     const argv = process.argv.slice(2);
+    if (argv.includes("--setup") || (!argAfter(argv, "--config") && !existsSync(join(HERE, "config.json")))) {
+        const { runSetup } = await import("./setup.mjs");
+        await runSetup();
+    }
     const cfg = loadConfig(argv);
     logLevel = LEVELS[argAfter(argv, "--log") || cfg.log || "info"] ?? 1;
     if (argv.includes("--test-provider")) {
@@ -280,7 +284,7 @@ async function main() {
         process.exit(res.ok ? 0 : 1);
     }
     if (argv.includes("--help")) {
-        console.log(`Real AI bridge ${VERSION}\n  node index.mjs [--config path] [--log debug|info|warn] [--test-provider <id>]\nProviders: ${Object.keys(PROVIDERS).join(", ")}`);
+        console.log(`Real AI bridge ${VERSION}\n  node index.mjs [--setup] [--config path] [--log debug|info|warn] [--test-provider <id>]\nProviders: ${Object.keys(PROVIDERS).join(", ")}`);
         process.exit(0);
     }
     const bridge = new Bridge(cfg);

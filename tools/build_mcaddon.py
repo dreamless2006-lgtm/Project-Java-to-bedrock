@@ -126,7 +126,7 @@ def main():
     for variant in variants:
         ver = pack_version(os.path.join(PACKS, packs[0]))[0]
         suffix = "" if variant == "standard" else "-" + variant
-        if args.mcpacks:
+        if args.mcpacks or variant == "standard":
             for p in packs:
                 out = os.path.join(DIST, f"{p}-{ver}{suffix}.mcpack")
                 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zf:

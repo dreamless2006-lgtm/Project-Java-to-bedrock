@@ -8,6 +8,7 @@
   "bin": { "real-ai-bridge": "./index.mjs" },
   "scripts": {
     "start": "node index.mjs",
+    "setup": "node index.mjs --setup",
     "test-provider": "node index.mjs --test-provider"
   },
   "engines": { "node": ">=20" },

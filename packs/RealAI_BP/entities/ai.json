@@ -3682,9 +3682,6 @@
         "close_door_after": true
       },
       "minecraft:jump.static": {},
-      "minecraft:jump_strength": {
-        "value": 0.5
-      },
       "minecraft:attack": {
         "damage": 1
       },

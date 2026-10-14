@@ -64,6 +64,34 @@ travel between dimensions (uses a known portal or builds a Nether portal),
 trade, duel, send friend requests, emote, and wait. It also knows every
 modded block, item and creature from any other addon in the world.
 
+## What you need (plain language)
+
+Minecraft Bedrock on a phone, console or PC cannot talk to the internet from
+an addon, so the thinking happens through a small helper program, the
+**bridge**, that runs on a Windows, Mac or Linux computer and joins your
+world as an extra player. You need:
+
+1. **A computer that stays on while you play.** Install Node.js from
+   nodejs.org, download this repository (green "Code" button, "Download
+   ZIP"), open the `bridge` folder and run `start.bat` (Windows) or
+   `start.sh` (Mac/Linux). The first run asks three questions and sets
+   everything up.
+2. **An AI for the players to think with.** Either the free **Player2 app**
+   from player2.game (install it, log in, leave it open; no key needed), or
+   an API key from one of the AI companies: Claude (console.anthropic.com),
+   ChatGPT (platform.openai.com), Grok (console.x.ai) or Gemini
+   (aistudio.google.com). A key is a long password-like text you paste into
+   the setup once; the companies charge a few cents per hour of play. With
+   several keys the residents are spread across Claude, ChatGPT, Grok and
+   Gemini.
+3. **A second Microsoft account for the bridge.** It joins as a player, so it
+   cannot be the account you play with. Invite it to your Realm and make it
+   an operator. On first start the bridge shows a sign-in code.
+
+Then import `Real-AI-<version>.mcaddon` on your device, activate the Real AI
+behavior pack on the world, join, and the eight residents walk in a few
+seconds after the bridge connects.
+
 ## Quick start
 
 ```bash

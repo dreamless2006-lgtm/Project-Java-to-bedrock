@@ -173,7 +173,7 @@ export function registerSlashCommands() {
                 system.run(() => showHub(p));
                 return ok("");
             });
-            reg.registerCommand({ name: "realai:summon", description: "Summon an AI companion bound to you", permissionLevel: CommandPermissionLevel.Any, cheatsRequired: false, mandatoryParameters: [{ name: "name", type: CustomCommandParamType.String }], optionalParameters: [{ name: "description", type: CustomCommandParamType.String }] }, (origin, name, description) => {
+            reg.registerCommand({ name: "realai:companion", description: "Summon an AI companion bound to you", permissionLevel: CommandPermissionLevel.Any, cheatsRequired: false, mandatoryParameters: [{ name: "name", type: CustomCommandParamType.String }], optionalParameters: [{ name: "description", type: CustomCommandParamType.String }] }, (origin, name, description) => {
                 const p = player(origin); if (!p) return fail("players only");
                 system.run(() => handleCommand(p, `!ai summon ${name} ${description || ""}`));
                 return ok("");
