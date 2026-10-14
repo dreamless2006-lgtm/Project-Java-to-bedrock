@@ -337,3 +337,43 @@ test('the guide book opens a chapter menu and is given on the first join', async
   await flush();
   world.players.pop();
 });
+
+test('a potion used on a mob is not also drunk, and species foods only agree with the matching pregnancy', () => {
+  const mob = new Mob('minepreggo:zombie_girl', { tamed: true });
+  overworld.entities.push(mob);
+  const owner = new Player('Owner2');
+  world.players.push(owner);
+  getMobRecord(mob).data.owner = owner.id;
+  const potion = new ItemStack('minepreggo:impregnation_potion_0');
+  const interact = { player: owner, target: mob, itemStack: potion, cancel: false };
+  emit(world.beforeEvents.playerInteractWithEntity, interact);
+  assert.equal(interact.cancel, true);
+  const use = { source: owner, itemStack: potion, cancel: false };
+  emit(world.beforeEvents.itemUse, use);
+  assert.equal(use.cancel, true, 'the same tap does not start drinking the potion');
+  system.tick(5);
+  const later = { source: owner, itemStack: potion, cancel: false };
+  emit(world.beforeEvents.itemUse, later);
+  assert.equal(later.cancel, false, 'drinking it later is fine');
+
+  // Brains are zombie food: a human pregnancy (or no pregnancy) cannot stomach them.
+  const record = getRecord(owner);
+  record.setGender('female');
+  const hunger = owner.getComponent('minecraft:player.hunger');
+  hunger.currentValue = 20;
+  emit(world.afterEvents.itemCompleteUse, { itemStack: new ItemStack('minepreggo:villager_brain'), source: owner });
+  assert.ok(owner.getEffect('nausea'), 'brains make a non-zombie mother sick');
+  assert.equal(hunger.currentValue, 20 - 12, 'and feed nothing');
+  owner.removeEffect('nausea');
+  assert.match(command(owner, 'minepreggo:pregnancy', 'potion 0 zombie'), /father species: ZOMBIE/);
+  assert.match(command(owner, 'minepreggo:pregnancy', 'phase 3'), /phase P3/);
+  const p = record.pregnancy;
+  p.symptoms.CRAVING = 2;
+  p.cravingType = 'SWEET';
+  p.craving = 10;
+  hunger.currentValue = 20;
+  emit(world.afterEvents.itemCompleteUse, { itemStack: new ItemStack('minepreggo:brain_with_chocolate'), source: owner });
+  assert.equal(owner.getEffect('nausea'), undefined, 'a zombie mother eats brains');
+  assert.ok(p.craving < 10, 'brain with chocolate satisfies her sweet craving');
+  world.players.pop();
+});

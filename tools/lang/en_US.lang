@@ -37,3 +37,7 @@ minepreggo.fetal_movement_inducer.not_pregnant=Only a pregnant woman can feel he
 minepreggo.fetal_movement_inducer.too_early=Nothing happens: the baby is too small to feel yet (from P3), or labor has begun.
 item.minepreggo.guide_book=Minepreggo Guide
 minepreggo.fetal_movement.felt=You feel the baby move.
+minepreggo.species_food.zombie=Only a woman carrying zombie babies can stomach this.
+minepreggo.species_food.creeper=Only a woman carrying creeper babies can stomach this.
+minepreggo.species_food.ender=Only a woman carrying ender babies can stomach this.
+minepreggo.species_food.slime=Only a woman carrying slime babies can stomach this.

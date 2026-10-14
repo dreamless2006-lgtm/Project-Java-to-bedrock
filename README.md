@@ -40,8 +40,10 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
   minute or two in P3-P4, more often later). The action bar says "You feel the baby move". While one lasts, the
   belly plays the mod's kick animation for the phase and intensity (I, II or III); late in the
   pregnancy the kicks bulge out of the belly. A **Potion of Fetal Movement Inducement** (I–III, a
-  Bedrock addition) brings one on at that intensity, for you or, used on her, for a pregnant mob.
-  From P5 a strong kick can make a mob sit down for a moment, as in the mod.
+  Bedrock addition) brings one on at that intensity, for you or, used on her, for a pregnant mob:
+  a tamed one from P3 (her owner only), a wild pregnant one at any time (she doubles over with the
+  kick for her pain cooldown). From P5 a strong kick can make a tamed mob sit down for a moment, as
+  in the mod. A potion used on a mob is never drunk by the same tap.
 
 ### Updating the add-on in an existing world
 
@@ -71,6 +73,14 @@ Creeper: dying from P3 on explodes. Ender: now and then the babies teleport you 
 Slime: the babies cushion your falls. Every pregnancy makes falls hurt more from P3, and dying from
 P3 on leaves a dead fetus per baby. Used on a mob, only her own species' potion (or the human one)
 works; another species' potion just hurts her, as in the mod.
+
+The babies also decide the mother's diet, as in the mod: zombie babies crave brains (villager,
+illager and witch brains plus brain with chocolate, salt, hot sauce and sour brain), creeper
+babies activated gunpowder, ender babies ender slime jelly and chorus fruit, slime babies rotten
+flesh and spider eyes, each in sweet, salty, sour and spicy variants that satisfy the matching
+craving. Those foods only agree with a mother carrying that species; anyone else gets nausea and
+no food from them. While pregnant with another species, a glass bottle fills with that species'
+breast milk.
 
 ### Guide book
 

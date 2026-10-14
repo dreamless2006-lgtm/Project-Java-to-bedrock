@@ -216,3 +216,20 @@ test('the fetal movement inducer works on a pregnant mob through the interaction
   assert.equal(mob.getProperty('minepreggo:pose'), 'fetal_movement');
   assert.equal(chooseAction(/** @type {any} */ (player), /** @type {any} */ (mob), new ItemStack('minepreggo:fetal_movement_inducer_potion_0')) !== undefined, true);
 });
+
+test('the inducer makes a wild pregnant mob double over with a kick of the potion\'s strength', () => {
+  const mob = new Mob('minepreggo:humanoid_slime_girl', { phase: 5 });
+  run(mob, 1); // initWild
+  const record = getRecord(/** @type {any} */ (mob));
+  assert.ok(record.data.wild);
+  const player = new Player('Passerby');
+  const action = chooseAction(/** @type {any} */ (player), /** @type {any} */ (mob), new ItemStack('minepreggo:fetal_movement_inducer_potion_2'));
+  assert.ok(action, 'works on hostile pregnant mobs too');
+  action();
+  assert.equal(record.data.wild.incapacitated, true);
+  assert.equal(mob.getProperty('minepreggo:pose'), 'incapacitated');
+  assert.equal(mob.getProperty('minepreggo:kick'), 2, 'level III is the strongest kick');
+  run(mob, record.data.wild.cooldown / STEP + 2);
+  assert.equal(record.data.wild.incapacitated, false, 'she gets up after her pain cooldown');
+  assert.equal(mob.getProperty('minepreggo:pose'), 'none');
+});

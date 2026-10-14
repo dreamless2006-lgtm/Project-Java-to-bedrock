@@ -15,6 +15,7 @@ import { FULLNESS } from './families.js';
  * @property {number} cooldown ticks an incapacitation lasts
  * @property {number} painTimer
  * @property {boolean} incapacitated
+ * @property {number} [kick] fetal movement intensity (0-2) shown while incapacitated by an inducement potion
  */
 
 /**

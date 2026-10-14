@@ -4,7 +4,8 @@
 // rub the belly, tap sneak to push during birth.
 
 import { system, world, ButtonState, EntityDamageCause, EquipmentSlot, InputButton, ItemStack } from '@minecraft/server';
-import { CRAVING_ITEMS, CRAVING_LANG, TICKS } from './data.js';
+import { CRAVING_ITEMS, CRAVING_LANG, SPECIES, TICKS } from './data.js';
+import { SPECIES_CRAVINGS, SPECIES_FOODS } from '../mobs/families.js';
 import { applyEffects } from './effects.js';
 import { pregnancyDamage } from './math.js';
 import { clampLevel } from './state.js';
@@ -129,9 +130,24 @@ world.afterEvents.itemCompleteUse.subscribe(({ itemStack, source: player }) => {
   const record = getRecord(player);
   const p = record.pregnancy;
   const food = itemStack.getComponent('minecraft:food');
-  if (!p || p.phase < 1 || !food) return;
+  if (!food) return;
 
-  const cravingItem = CRAVING_ITEMS[itemStack.typeId];
+  // Species foods (brains, activated gunpowder, ender slime jelly, rotten flesh...) only agree
+  // with a mother carrying that species (Java: edible only with the Full Of effect).
+  const foodSpecies = SPECIES_FOODS[itemStack.typeId];
+  if (foodSpecies && p?.father !== foodSpecies) {
+    const hunger = player.getComponent('minecraft:player.hunger');
+    const saturation = player.getComponent('minecraft:player.saturation');
+    hunger?.setCurrentValue(Math.max(0, hunger.currentValue - food.nutrition));
+    saturation?.setCurrentValue(Math.max(0, saturation.currentValue - food.nutrition * food.saturationModifier * 2));
+    player.addEffect('nausea', 200, { amplifier: 0 });
+    actionbar(player, `minepreggo.species_food.${foodSpecies.toLowerCase()}`);
+    return;
+  }
+  if (!p || p.phase < 1) return;
+
+  // PregnancySystemHelper.CRAVING_ITEM: the father's species decides which foods satisfy a craving.
+  const cravingItem = (SPECIES_CRAVINGS[p.father] ?? CRAVING_ITEMS)[itemStack.typeId];
   const severity = p.symptoms.CRAVING;
   const satisfies = cravingItem !== undefined && cravingItem.craving === p.cravingType;
 
@@ -177,7 +193,8 @@ function milk(/** @type {PlayerRecord} */ record) {
   } else {
     equipment?.setEquipment(EquipmentSlot.Mainhand, undefined);
   }
-  const bottle = new ItemStack('minepreggo:human_breast_milk_bottle', 1);
+  // PregnancySystemHelper.MILK_ITEM: a mother carrying another species gives that species' milk.
+  const bottle = new ItemStack(p ? SPECIES[p.father].milkItem : 'minepreggo:human_breast_milk_bottle', 1);
   const leftover = player.getComponent('minecraft:inventory')?.container.addItem(bottle);
   if (leftover) player.dimension.spawnItem(leftover, player.location);
   playSound(player, 'bottle.fill', 0.7);

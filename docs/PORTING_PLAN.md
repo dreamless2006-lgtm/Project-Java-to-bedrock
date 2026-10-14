@@ -126,8 +126,11 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
 - ✅ Species pregnancies (phase 4 item): Zombie/Creeper/Ender/Slime/Villager Impregnation I–VI,
   species babies and fetuses, and the Full Of Zombies (daylight burn), Creepers (death explosion
   `calculateExplosionLevelByPregnancyPhase`), Enders (random teleport every 2400 ticks),
-  Slimes (fall cushioning) effects plus `calculateExtraFallDamageMultiplier`. Not ported: the
-  species diets (brains, chorus shards, mob foods becoming edible for the mother).
+  Slimes (fall cushioning) effects plus `calculateExtraFallDamageMultiplier`, the species diets
+  (`CRAVING_ITEM`: the species' foods are edible only for a mother carrying that species and
+  satisfy her cravings) and species milk (`MILK_ITEM`). Baby mobs are still not spawned.
+- ✅ Fetal Movement Inducement on mobs: tamed from P3 (owner), wild pregnant at any time
+  (incapacitated with the potion's kick strength); a potion used on a mob is not also drunk.
 - ✅ Guide book item with the add-on's manual (Bedrock addition).
 - ⬜ **Zombie girl follow-up (requested):** the Ill Zombie Girl variant (`IllZombieGirl`, P0 model)
   and the zombie girl GUI/inventory are not ported yet; the hostile, tamable and pregnant zombie

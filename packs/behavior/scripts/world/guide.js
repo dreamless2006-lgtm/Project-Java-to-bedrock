@@ -49,7 +49,8 @@ export const CHAPTERS = [
     body:
       'Potions of Zombie, Creeper, Ender, Slime and Villager Impregnation give a litter of that species.\n\n' +
       'Zombie: you burn in daylight without a helmet. Creeper: dying from P3 on explodes. Ender: now and then the babies teleport you. Slime: the babies cushion your falls. Villager: nothing special.\n\n' +
-      'Any pregnancy makes falls hurt more from P3, and dying from P3 on leaves a dead fetus per baby.',
+      'Any pregnancy makes falls hurt more from P3, and dying from P3 on leaves a dead fetus per baby.\n\n' +
+      'The babies also decide the diet: zombie babies crave brains (villager, illager and witch brains, and brain with chocolate, salt, hot sauce or sour brain), creeper babies activated gunpowder, ender babies ender slime jelly and chorus fruit, slime babies rotten flesh and spider eyes, each in the sweet, salty, sour and spicy variants. Those foods only agree with a mother carrying that species. Her milk is that species\' milk too.',
   },
   {
     title: 'Preggo mobs',

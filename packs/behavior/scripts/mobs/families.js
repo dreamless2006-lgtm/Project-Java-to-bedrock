@@ -114,6 +114,19 @@ const GUNPOWDER = {
   },
 };
 
+/**
+ * PregnancySystemHelper.CRAVING_ITEM: what satisfies a player's craving when she carries another
+ * species (zombie babies want brains, creeper babies gunpowder, ender babies ender slime jelly,
+ * slime babies rotten flesh and spider eyes). Humans and villagers use the human foods.
+ * @type {Record<string, Record<string, { craving: Craving, gratification: number }>>}
+ */
+export const SPECIES_CRAVINGS = { ZOMBIE: BRAINS.cravings, CREEPER: GUNPOWDER.cravings, ENDER: ENDER.cravings, SLIME: SLIME.cravings };
+/** Species foods and who can stomach them (Java: the items are only edible with the matching Full Of effect). */
+export const SPECIES_FOODS = /** @type {Record<string, string>} */ ({});
+for (const [species, table] of /** @type {[string, { foods: Record<string, number> }][]} */ ([['ZOMBIE', BRAINS], ['CREEPER', GUNPOWDER], ['ENDER', ENDER], ['SLIME', SLIME]])) {
+  for (const item of Object.keys(table.foods)) if (item.startsWith('minepreggo:')) SPECIES_FOODS[item] = species;
+}
+
 /** @type {Record<string, Family>} */
 export const FAMILIES = {
   'minepreggo:zombie_girl': {

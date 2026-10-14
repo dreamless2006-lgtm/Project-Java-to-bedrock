@@ -232,6 +232,18 @@ export function startCommonPain(/** @type {MobRecord} */ record, /** @type {Comm
  * @param {number} severity 0-4
  */
 export function induceFetalMovement(record, severity) {
+  const { wild } = record.data;
+  if (wild) {
+    // A hostile pregnant mob doubles over for her pain cooldown, the kick as strong as the potion.
+    const level = Math.min(4, Math.max(0, Math.round(severity)));
+    wild.incapacitated = true;
+    wild.painTimer = 0;
+    wild.kick = level <= 0 ? 0 : level < 3 ? 1 : 2;
+    playSound(record.entity, 'minepreggo.stomach_growls');
+    syncClient(record);
+    record.save();
+    return true;
+  }
   const p = record.data.pregnancy;
   if (!p || p.phase < 3) return false;
   if (p.pain && !COMMON_PAINS.has(p.pain.type)) return false;
@@ -602,6 +614,7 @@ function tickWild(/** @type {MobRecord} */ record) {
   if (wild.painTimer > wild.cooldown) {
     wild.incapacitated = false;
     wild.painTimer = 0;
+    delete wild.kick;
   }
   record.dirty = true;
 }
@@ -609,7 +622,7 @@ function tickWild(/** @type {MobRecord} */ record) {
 /** What the client should show: the animation pose, fetal movement intensity and belly growth. */
 function clientState(/** @type {MobRecord} */ record) {
   const { pregnancy: p, wild } = record.data;
-  if (wild) return { pose: wild.incapacitated ? 'incapacitated' : 'none', kick: 1, growth: 0 };
+  if (wild) return { pose: wild.incapacitated ? 'incapacitated' : 'none', kick: wild.incapacitated ? wild.kick ?? 1 : 1, growth: 0 };
   if (!p) return { pose: 'none', kick: 0, growth: 0 };
   const pain = /** @type {(PainInstance & { incapacitating?: boolean }) | null} */ (p.pain);
   let pose = pain ? POSE_OF_PAIN[pain.type] : p.symptoms.BELLY_RUBS !== undefined ? 'belly_rubs' : 'none';

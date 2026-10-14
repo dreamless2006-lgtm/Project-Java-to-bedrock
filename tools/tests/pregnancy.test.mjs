@@ -295,3 +295,10 @@ test('species potions: the father species picks the babies, the fetuses and the 
     assert.ok(data.deadBabyItem.includes('fetus'));
   }
 });
+
+test('a mother carrying another species gives that species\' milk', async () => {
+  const { SPECIES } = await import('../../packs/behavior/scripts/pregnancy/data.js');
+  assert.equal(SPECIES.ZOMBIE.milkItem, 'minepreggo:zombie_breast_milk_bottle');
+  assert.equal(SPECIES.ENDER.milkItem, 'minepreggo:ender_breast_milk_bottle');
+  assert.equal(SPECIES.VILLAGER.milkItem, 'minepreggo:human_breast_milk_bottle');
+});

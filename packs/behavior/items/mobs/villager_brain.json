@@ -17,7 +17,16 @@
         "tags": [
           "minepreggo:brain"
         ]
-      }
+      },
+      "minecraft:food": {
+        "nutrition": 12,
+        "saturation_modifier": 0.2
+      },
+      "minecraft:use_modifiers": {
+        "use_duration": 2.0,
+        "movement_modifier": 0.35
+      },
+      "minecraft:use_animation": "eat"
     }
   }
 }

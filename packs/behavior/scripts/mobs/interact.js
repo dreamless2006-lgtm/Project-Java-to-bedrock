@@ -186,9 +186,12 @@ export function chooseAction(player, target, item) {
   }
   const inducer = id?.match(INDUCER);
   if (inducer) {
-    if (!data.pregnancy) return undefined;
+    if (!data.pregnancy && !data.wild) return undefined;
     return () => {
-      if (!induceFetalMovement(record, Number(inducer[1]) * 2)) return;
+      if (!induceFetalMovement(record, Number(inducer[1]) * 2)) {
+        player.onScreenDisplay.setActionBar({ translate: 'minepreggo.fetal_movement_inducer.too_early' });
+        return;
+      }
       consumeHeld(player, 'minecraft:glass_bottle');
       playSound(record.entity, 'random.drink', 0.8);
     };
@@ -209,11 +212,22 @@ export function chooseAction(player, target, item) {
   return undefined;
 }
 
+/** Tick of the last potion a player used on a mob, so the same tap doesn't also drink it. */
+const potionOnMob = new Map();
+const OUR_POTION = /^minepreggo:[a-z_]*potion_\d$/;
+
 world.beforeEvents.playerInteractWithEntity.subscribe((event) => {
   const action = chooseAction(event.player, event.target, event.itemStack);
   if (!action) return;
   event.cancel = true;
+  if (event.itemStack && OUR_POTION.test(event.itemStack.typeId)) potionOnMob.set(event.player.id, system.currentTick);
   system.run(action);
+});
+
+world.beforeEvents.itemUse.subscribe((event) => {
+  if (!OUR_POTION.test(event.itemStack.typeId)) return;
+  const last = potionOnMob.get(event.source.id);
+  if (last !== undefined && system.currentTick - last <= 2) event.cancel = true;
 });
 
 // Record who tamed her. Vanilla taming happens during the interaction, but the tamed component
