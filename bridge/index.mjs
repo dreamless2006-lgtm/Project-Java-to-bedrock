@@ -138,6 +138,8 @@ export class Bridge {
         client.on("spawn", () => {
             log("info", "spawned in the world; announcing to the addon");
             this.spawned = true;
+            this.addonHello = false;
+            this.helloSentAt = Date.now();
             this.outQueue.length = 0;
             this.reconnectDelay = 5000;
             this.sendToAddon({ t: "hello", v: 1, name: opts.username, version: VERSION, providers: Object.keys(PROVIDERS).filter(id => !PROVIDERS[id].needsKey || this.cfg.providers[id]?.apiKey) });
@@ -158,7 +160,23 @@ export class Bridge {
         });
         client.on("kick", p => log("warn", "kicked:", p?.message || JSON.stringify(p)));
         this.pumpTimer = setInterval(() => this.pump(), 60);
-        this.pingTimer = setInterval(() => { if (this.spawned) this.sendToAddon({ t: "ping" }); }, 30_000);
+        this.pingTimer = setInterval(() => {
+            if (!this.spawned) return;
+            if (this.addonHello) { this.sendToAddon({ t: "ping" }); return; }
+            // Not acknowledged yet: say hello again, and after a minute explain the usual causes.
+            this.sendToAddon({ t: "hello", v: 1, name: opts.username, version: VERSION, providers: Object.keys(PROVIDERS).filter(id => !PROVIDERS[id].needsKey || this.cfg.providers[id]?.apiKey) });
+            if (Date.now() - (this.helloSentAt || 0) > 60_000) log("warn", "the addon has not answered yet. On the Realm: (1) make this account an Operator (Realm settings > Members), (2) turn on 'Activate Cheats' in the Realm's game settings, (3) make sure the Real AI behavior pack is active on this world. The hello is retried every 30 s.");
+        }, 30_000);
+        // The server tells us when a command was refused: that is how a missing operator permission shows up.
+        client.on("command_output", p => {
+            try {
+                const out = (p.output || []).map(o => o.message_id || o.message || "").join(" ");
+                if (p.success_count === 0 || /permission|unknown|cheat|not allowed/i.test(out)) {
+                    const key = out.slice(0, 80);
+                    if (this._lastCmdErr !== key) { this._lastCmdErr = key; log("warn", `the world refused a command (${out || "no details"}). The bridge account must be an Operator and cheats must be on.`); }
+                }
+            } catch (e) { /* ignore */ }
+        });
         this.anchorTimer = setInterval(() => this.anchor(), 5000);
     }
 
@@ -244,6 +262,7 @@ export class Bridge {
     async handle(msg) {
         switch (msg.t) {
             case "hello":
+                if (!this.addonHello) { this.addonHello = true; log("info", "the addon answered; residents will join the players now"); }
                 log("info", "addon says hello (tick " + msg.tick + ")");
                 break;
             case "pong":
