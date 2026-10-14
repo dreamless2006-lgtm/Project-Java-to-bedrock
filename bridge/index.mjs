@@ -147,7 +147,16 @@ export class Bridge {
         client.on("text", p => this.onText(p));
         client.on("disconnect", p => { this.spawned = false; log("warn", "disconnected:", p?.message || p?.reason || ""); this.scheduleReconnect(); });
         client.on("close", () => { this.spawned = false; log("warn", "connection closed"); this.scheduleReconnect(); });
-        client.on("error", e => log("error", "client error:", e?.message || e));
+        client.on("error", e => {
+            const msg = String(e?.message || e);
+            log("error", "client error:", msg.length > 400 ? msg.slice(0, 400) + " ..." : msg);
+            // Auth services rate-limit fast retries; back off hard and say what usually fixes it.
+            if (/429|Too Many Requests/i.test(msg)) { this.reconnectDelay = Math.max(this.reconnectDelay, 300_000); log("warn", "the sign-in service is rate limiting us; waiting 5 minutes before the next try"); }
+            else if (/401|Unauthorized|not have an Xbox profile/i.test(msg)) {
+                this.reconnectDelay = Math.max(this.reconnectDelay, 120_000);
+                log("warn", "Minecraft's sign-in service refused this account. Usual fixes: (1) create an Xbox profile for it at xbox.com, (2) sign in to the Minecraft game itself once with this account (on any device), so Minecraft sets the account up, then sign back out, (3) if it is a child account, allow multiplayer in the Xbox family settings. The bridge will retry every 2 minutes.");
+            }
+        });
         client.on("kick", p => log("warn", "kicked:", p?.message || JSON.stringify(p)));
         this.pumpTimer = setInterval(() => this.pump(), 60);
         this.pingTimer = setInterval(() => { if (this.spawned) this.sendToAddon({ t: "ping" }); }, 30_000);
