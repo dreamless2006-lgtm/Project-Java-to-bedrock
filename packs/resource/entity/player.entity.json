@@ -105,6 +105,7 @@
           "variable.riding_y_offset = query.is_riding_any_entity_of_type('minecraft:minecart', 'minecraft:boat', 'minecraft:chest_boat', 'minecraft:strider') ? -3.0 : 0.0;",
           "variable.mp_phase = query.property('minepreggo:phase');",
           "variable.mp_pose = query.property('minepreggo:pose');",
+          "variable.mp_belly_visible = variable.mp_pose != 'postbirth';",
           "variable.mp_kick = query.property('minepreggo:kick');",
           "variable.mp_female = query.property('minepreggo:gender') == 'female';",
           "variable.mp_skin = query.property('minepreggo:skin');",

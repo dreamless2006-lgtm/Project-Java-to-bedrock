@@ -44,6 +44,7 @@
         "pre_animation": [
           "v.phase = q.property('minepreggo:phase');",
           "v.pose = q.property('minepreggo:pose');",
+          "v.belly_visible = v.pose != 'postbirth';",
           "v.kick = q.property('minepreggo:kick');",
           "v.savage = q.property('minepreggo:savage');",
           "v.aggressive = q.has_target;",

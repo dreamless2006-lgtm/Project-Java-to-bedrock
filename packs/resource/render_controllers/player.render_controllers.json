@@ -151,7 +151,7 @@
       ],
       "part_visibility": [
         {
-          "belly": "variable.mp_pose != 'postbirth'"
+          "belly": "variable.mp_belly_visible"
         }
       ]
     },
@@ -209,7 +209,7 @@
       ],
       "part_visibility": [
         {
-          "belly": "variable.mp_pose != 'postbirth'"
+          "belly": "variable.mp_belly_visible"
         }
       ]
     }

@@ -377,3 +377,18 @@ test('a potion used on a mob is not also drunk, and species foods only agree wit
   assert.ok(p.craving < 10, 'brain with chocolate satisfies her sweet craving');
   world.players.pop();
 });
+
+test('every phase component group carries the variant the render controller selects the belly with', () => {
+  for (const path of files(join(BP, 'entities'))) {
+    const entity = json(join(BP, 'entities', path))['minecraft:entity'];
+    if (entity.description.identifier === 'minecraft:player') continue;
+    assert.equal(entity.components['minecraft:variant']?.value, 0, `${path}: not pregnant is variant 0`);
+    for (const [group, components] of Object.entries(entity.component_groups)) {
+      const phase = group.match(/^minepreggo:(?:hostile_)?phase_(\d)$/);
+      if (phase) assert.equal(components['minecraft:variant']?.value, Number(phase[1]) + 1, `${path} ${group}`);
+    }
+  }
+  const controller = json(join(RP, 'render_controllers/preggo_mob.render_controllers.json')).render_controllers['controller.render.minepreggo.preggo_mob'];
+  assert.equal(controller.geometry, 'Array.geometries[q.variant]');
+  assert.deepEqual(controller.textures, ['Array.skins[q.variant]']);
+});

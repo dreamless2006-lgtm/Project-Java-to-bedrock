@@ -129,6 +129,10 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   Slimes (fall cushioning) effects plus `calculateExtraFallDamageMultiplier`, the species diets
   (`CRAVING_ITEM`: the species' foods are edible only for a mother carrying that species and
   satisfy her cravings) and species milk (`MILK_ITEM`). Baby mobs are still not spawned.
+- ✅ Mob belly geometry is selected with `query.variant` (the `minepreggo:phase_N` component
+  groups carry `minecraft:variant` N+1), the vanilla mechanism, instead of `query.property`
+  inside the render controller; belly visibility comes from a pre_animation variable. The pose
+  property still drives the animations (confirmed in game by the water-breaking animation).
 - ✅ Fetal Movement Inducement on mobs: tamed from P3 (owner), wild pregnant at any time
   (incapacitated with the potion's kick strength); a potion used on a mob is not also drunk.
 - ✅ Guide book item with the add-on's manual (Bedrock addition).

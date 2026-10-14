@@ -34,18 +34,18 @@
           ]
         }
       },
-      "geometry": "Array.geometries[q.property('minepreggo:phase') + 1]",
+      "geometry": "Array.geometries[q.variant]",
       "materials": [
         {
           "*": "Material.default"
         }
       ],
       "textures": [
-        "Array.skins[q.property('minepreggo:phase') + 1]"
+        "Array.skins[q.variant]"
       ],
       "part_visibility": [
         {
-          "belly": "q.property('minepreggo:pose') != 'postbirth'"
+          "belly": "v.belly_visible"
         }
       ]
     }
