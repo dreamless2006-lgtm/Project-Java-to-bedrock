@@ -5,7 +5,7 @@ import { getBrain, allBrains } from "./gate.js";
 import { getWorldConfig, updateWorldConfig, patchBotSettings, configuredProviders, serverConfigSummary } from "./config.js";
 import { PROVIDERS, PROVIDER_IDS } from "./providers/index.js";
 import { formatUsd } from "./budget.js";
-import { findPlayer, findEntityByName } from "./actuator.js";
+import { findPlayer, findEntityByName, walkerInfo, bridgeWalks } from "./actuator.js";
 import { renderMemory } from "./memory.js";
 import { worldContent } from "./world_content.js";
 import { showHub, playerAllowed } from "./ui.js";
@@ -18,6 +18,8 @@ const HELP = [
     "§b!ai talk <Name> <message>§r - whisper to a bot (works without the beta chat API)",
     "§b!ai memory <Name>§r | §b!ai forget <Name>§r - read or wipe a bot's memory",
     "§b!ai pause|resume [Name]§r - pause thinking (all bots or one)",
+    "§b!ai where [Name]§r - where the server keeps a bot's body and what its walker is doing",
+    "§b!ai walk <Name> <dx> <dz>§r - make a bot walk that far from where it stands (a movement test)",
     "§7operator: §b!ai provider <id>§r, §b!ai model <name>§r, §b!ai transport auto|direct|bridge§r, §b!ai volume 0-3§r, §b!ai budget soft|hard <tokens>|reset§r, §b!ai rules <text>§r, §b!ai callbyname on|off§r, §b!ai freebuild on|off§r, §b!ai debug on|off§r, §b!ai fakechat on|off§r, §b!ai players 0-16§r, §b!ai thoughts on|off§r, §b!ai mix on|off§r, §b!ai bridgeplays on|off§r, §b!ai mission beat|free§r, §b!ai wildspawns on|off§r, §b!ai companiondeath respawn|permadeath§r, §b!ai jointeleport on|off§r, §b!ai content§r",
 ];
 
@@ -131,6 +133,30 @@ export function handleCommand(player, message) {
         case "freebuild": updateWorldConfig({ freeBuild: rest[0] !== "off" }); return reply(player, `§afree building ${rest[0] !== "off" ? "on" : "off"}`);
         case "fakechat": updateWorldConfig({ legacyFakeChat: rest[0] === "on" }); return reply(player, `§afake player chat ${rest[0] === "on" ? "on" : "off"}`);
         case "debug": manager.debug = rest[0] === "on"; return reply(player, `§adebug ${manager.debug ? "on (see server log)" : "off"}`);
+        case "where": {
+            const b = rest[0] ? botByName(player, rest[0]) : [...allBrains().values()].find(x => { try { return x.settings.mode === "bridge"; } catch (e) { return false; } }) || [...allBrains().values()][0];
+            if (!b) return reply(player, "§cno such bot");
+            let line = `§b${b.name}§r`;
+            try { const l = b.bot.location; line += ` at ${l.x.toFixed(1)} ${l.y.toFixed(1)} ${l.z.toFixed(1)} in ${b.bot.dimension.id.replace("minecraft:", "")}`; } catch (e) { /* ignore */ }
+            try { const v = b.bot.getVelocity(); line += `, moving ${Math.hypot(v.x, v.z).toFixed(2)}/tick`; } catch (e) { /* ignore */ }
+            try { line += b.bot.isOnGround ? ", on the ground" : ", in the air"; } catch (e) { /* ignore */ }
+            try { if (b.bot.typeId === "minecraft:player") line += `, ${b.bot.getGameMode()}`; } catch (e) { /* ignore */ }
+            const w = walkerInfo(b.bot);
+            line += bridgeWalks(b.bot) ? " §7(the bridge walks this body)" : (b.bot.typeId === "minecraft:player" ? " §7(walked by teleport: the bridge has no body)" : "");
+            line += w ? `; walking ${w.mode} to ${w.target.x} ${w.target.y} ${w.target.z}${w.blocked ? ` (blocked ${w.blocked})` : ""}` : "; not walking";
+            const cur = b.actuator.describeCurrent();
+            return reply(player, [line, cur ? `§7doing: ${cur}` : "§7idle"]);
+        }
+        case "walk": {
+            if (!isOperator(player)) return reply(player, "§conly operators");
+            const b = botByName(player, rest[0]);
+            const dx = Number(rest[1]), dz = Number(rest[2]);
+            if (!b || !Number.isFinite(dx) || !Number.isFinite(dz)) return reply(player, "§cusage: !ai walk <Name> <dx> <dz>");
+            const l = b.bot.location;
+            b.actuator.stopAll();
+            b.actuator.enqueue([{ type: "move_to", x: Math.floor(l.x + dx), y: Math.floor(l.y), z: Math.floor(l.z + dz) }]);
+            return reply(player, `§a${b.name} walks ${dx} ${dz} from ${Math.floor(l.x)} ${Math.floor(l.y)} ${Math.floor(l.z)}; watch it and use !ai where ${b.name}`);
+        }
         case "rules": { const text = rest.join(" "); updateWorldConfig({ serverRules: text }); for (const [, b] of allBrains()) b.systemCache = null; return reply(player, text ? "§aserver rules set" : "§aserver rules cleared"); }
         case "bridgename": updateWorldConfig({ bridgeName: rest[0] || "" }); return reply(player, rest[0] ? `§aonly ${rest[0]} may act as the bridge` : "§aany operator account may act as the bridge");
         case "players": { const n = Number(rest[0]); if (!(n >= 0 && n <= 16)) return reply(player, "§cusage: !ai players 0-16 (named AI players living in this world)"); updateWorldConfig({ worldPlayers: n }); manager.populate("command", player); return reply(player, `§a${n} AI players will live in this world`); }

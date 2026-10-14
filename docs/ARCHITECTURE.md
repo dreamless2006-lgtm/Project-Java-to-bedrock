@@ -72,6 +72,26 @@ and fills the 3x3 interior with `end_portal` when twelve are set.
 
 ## The bridge account plays
 
+Bedrock movement is server-authoritative: a player only moves when its own
+client sends `player_auth_input` every tick with the inputs it holds and the
+position it predicts; the server simulates the same inputs and corrects the
+client when they diverge. A client that never sends input is never
+simulated, and a client that never closes its initial loading screen is not
+treated as a spawned player (unhittable, frozen). So `bridge/body.mjs` is
+the bridge account's body: at join it runs the vanilla handshake
+(`request_chunk_radius` + loading screen start after `start_game`; `interact`
++ loading screen end + `set_local_player_as_initialized` on the first
+`play_status player_spawn`), then sends one `player_auth_input` every 50 ms.
+It keeps the feet position from the server's packets (`start_game`,
+`move_player`, `correct_player_move_prediction`, `respawn`,
+`change_dimension`), walks towards the footing points the addon sends with
+the vanilla model (impulse 0.98 x speed, friction 0.91 x 0.6 on the ground,
+gravity 0.08 x 0.98, jump 0.42 with a 10-tick cooldown, step height
+0.5625), acknowledges teleports with `handled_teleport`, answers the
+respawn and dimension-change handshakes, and resyncs when the addon reports
+the server keeps the body elsewhere. Messages: `walk{x,y,z,mode,jump,fx,fy,fz}`,
+`stop`, `look`, `body_status`, and `probe`/`probe_hurt` while `!ai debug` is on.
+
 With `bridgePlays` (default on) the manager finds the bridge's player
 (`transportInfo().bridgePlayer`) and gives it a `BotBrain` with mode
 `bridge`. Scripts cannot push a real player, so `actuator.js` moves a player

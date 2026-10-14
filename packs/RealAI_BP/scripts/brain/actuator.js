@@ -59,11 +59,11 @@ function stopMoving(bot) { if (isPlayerBody(bot)) { const w = walkers.get(bot.id
 export function stepPlayerBody(bot, now) {
     const w = walkers.get(bot.id);
     if (!w) return;
-    if (now > w.until) { walkers.delete(bot.id); return; }
+    if (now > w.until) { walkers.delete(bot.id); if (w.sent) bridgeSend({ t: "stop" }); return; }
     const loc = bot.location;
     const dx = w.target.x - loc.x, dz = w.target.z - loc.z;
     const flat = Math.hypot(dx, dz);
-    if (flat < 0.3) { walkers.delete(bot.id); return; }
+    if (flat < 0.3) { walkers.delete(bot.id); if (w.sent) bridgeSend({ t: "stop" }); return; }
     const step = Math.min(w.mode === "walk" ? 0.2 : 0.28, flat);
     const ux = dx / flat, uz = dz / flat;
     let move = null, slid = false;
@@ -78,7 +78,7 @@ export function stepPlayerBody(bot, now) {
         const ny = footing(bot.dimension, nx, loc.y, nz, w.enterWater);
         if (ny !== null) { move = { x: nx, y: ny, z: nz }; slid = a !== 0; break; }
     }
-    if (!move) { w.blocked = (w.blocked || 0) + 1; return; }
+    if (!move) { w.blocked = (w.blocked || 0) + 1; if (w.blocked === 1 && w.sent) { bridgeSend({ t: "stop" }); w.sent = false; } return; }
     w.blocked = 0;
     w.slide = slid ? (w.slide || 0) + 1 : 0;
     const yaw = Math.atan2(-dx, dz) * 180 / Math.PI;
@@ -87,7 +87,7 @@ export function stepPlayerBody(bot, now) {
         if (now - (w.sentAt || -100) >= 4 || Math.abs(move.y - (w.sentY ?? move.y)) > 0.01) {
             const ahead = Math.min(1.5, flat);
             const px = loc.x + (move.x - loc.x) / step * ahead, pz = loc.z + (move.z - loc.z) / step * ahead;
-            bridgeSend({ t: "walk", x: +px.toFixed(2), y: +move.y.toFixed(2), z: +pz.toFixed(2), mode: w.mode === "walk" ? "walk" : "sprint", jump: move.y > loc.y + 0.5 ? 1 : 0 });
+            bridgeSend({ t: "walk", x: +px.toFixed(2), y: +move.y.toFixed(2), z: +pz.toFixed(2), mode: w.mode === "walk" ? "walk" : "sprint", jump: move.y > loc.y + 0.5 ? 1 : 0, fx: +loc.x.toFixed(2), fy: +loc.y.toFixed(2), fz: +loc.z.toFixed(2) });
             w.sentAt = now; w.sentY = move.y; w.sent = true;
         }
         return;
@@ -110,6 +110,8 @@ function footing(dim, x, y, z, enterWater) {
     return null;
 }
 export function walkerBlocked(bot) { const w = walkers.get(bot.id); return w ? (w.blocked || 0) : 0; }
+/** For !ai where: what the walker is doing with this body. */
+export function walkerInfo(bot) { const w = walkers.get(bot.id); return w ? { target: { x: +w.target.x.toFixed(1), y: +w.target.y.toFixed(1), z: +w.target.z.toFixed(1) }, mode: w.mode, blocked: w.blocked || 0, viaBridge: !!w.sent } : null; }
 function lookAt(bot, target) {
     if (bridgeWalks(bot)) { bridgeSend({ t: "look", x: target.x + 0.5, y: (typeof target.y === "number" ? target.y : bot.location.y) + 0.5, z: target.z + 0.5 }); return; }
     try { faceBlock(bot, target); } catch (e) { /* ignore */ }

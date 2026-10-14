@@ -12,7 +12,7 @@ if command -v pkg >/dev/null 2>&1; then
 fi
 command -v node >/dev/null 2>&1 || { echo "Node.js is missing. In Termux run: pkg install nodejs-lts git"; exit 1; }
 if [ -d "$DIR/.git" ]; then
-    git -C "$DIR" pull --ff-only origin "$BRANCH" || true
+    git -C "$DIR" pull --ff-only origin "$BRANCH" || echo "WARNING: could not update Real AI (no network, or local changes); starting the version already installed"
 else
     git clone --depth 1 -b "$BRANCH" "$REPO" "$DIR"
 fi

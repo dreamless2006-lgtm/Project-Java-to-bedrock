@@ -19,6 +19,14 @@ or newer). Then upload or "Replace World" on your Realm. If an older
 "Real AI" or "AI Sandbox" pack is still installed on the device, remove it
 first in Settings > Storage so only one copy exists.
 
+**Updating:** the game ignores an import whose version is the same as or
+lower than the copy it already has, and a Realm keeps its own copy of the
+pack. To update, remove the old Real AI packs from the device (Settings >
+Storage), import the new `.mcaddon`, activate it on the world, and have
+everyone leave and rejoin the Realm. The bridge's log says which build the
+world runs (`addon says hello (build 2.5.0, walks yes)`); a `walks no` line
+means the Realm still serves an older pack that cannot move the body.
+
 ## 2. Prepare a second Microsoft account for the bridge
 
 The bridge logs in with its own Xbox account (it takes one player slot).
@@ -73,7 +81,15 @@ player; a few seconds later that player starts moving and talking: it is
 the AI, playing in person (the bridge also turns off `sendcommandfeedback`
 so its script events do not show up as chat lines). If it stands still,
 read the chat: a failed decision is reported there with its cause, usually
-a free-tier rate limit. `!ai status` shows `bridge (<gamertag>)` as the
+a free-tier rate limit. To test the body without waiting for the model, an
+operator can type `!ai walk <gamertag> 5 0` and watch it walk five blocks;
+`!ai where <gamertag>` shows where the server keeps it and what its walker
+is doing. With `!ai debug on` the bridge's log prints a `probe:` line every
+second comparing the server's position with its own, and reports every hit
+the body takes. The bridge puts its account into survival on join (set
+`connect.gamemode` to `null` in `config.json` to leave the game mode alone);
+if "Friendly Fire" is off in the Realm's settings nobody can hit any player,
+and the log says so. `!ai status` shows `bridge (<gamertag>)` as the
 transport and lists every thinking player with its provider and model. For
 more AI players, `!ai players <n>` spawns named residents that join next to
 you. Put several keys in `config.json` and the residents are spread

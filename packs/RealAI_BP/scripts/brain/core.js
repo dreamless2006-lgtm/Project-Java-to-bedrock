@@ -14,7 +14,7 @@ import { timeLabel } from "./perception.js";
 import { buildSystemStable, buildTurn, promptHash } from "./prompt.js";
 import { createSchedulerState, noteEvent, shouldThink, beginThink, endThink, CADENCE } from "./scheduler.js";
 import { observe, dist, fmtPos } from "./perception.js";
-import { Actuator, findPlayer, findSafeSpot, isPlayerBody } from "./actuator.js";
+import { Actuator, findPlayer, findSafeSpot, isPlayerBody, bridgeWalks } from "./actuator.js";
 import { think as transportThink, bridge, transportInfo } from "./transport.js";
 import { hasDirectHttp, EDITION } from "./net_impl.js";
 import { BudgetLedger } from "./budget.js";
@@ -426,6 +426,7 @@ class BrainManager {
         system.runTimeout(() => this.populate("start"), 100);
         system.runInterval(() => this.populate("periodic"), POPULATE_GAP);
         system.runInterval(() => this.dayWatch(), 100);
+        system.runInterval(() => this.probe(), 20);
         console.warn(`[RealAI] brain system started (build ${EDITION}, direct http: ${hasDirectHttp})`);
     }
 
@@ -532,6 +533,7 @@ class BrainManager {
                     try { if (src?.damagingEntity?.isValid) who = src.damagingEntity.nameTag || src.damagingEntity.typeId.replace("minecraft:", ""); } catch (e) { /* ignore */ }
                     if (ev.damage >= 2) b.noteEvent("hurt", `took ${Math.round(ev.damage)} damage from ${who}`);
                     try { if (src?.damagingEntity?.typeId === "minecraft:player") notePerson(b.memory, src.damagingEntity.name, { note: "attacked me" }, Date.now()); } catch (e) { /* ignore */ }
+                    try { if (this.debug && b.settings.mode === "bridge") bridge.send({ t: "probe_hurt", damage: ev.damage, cause: src?.cause || "?", by: who }); } catch (e) { /* ignore */ }
                 } catch (e) { /* ignore */ }
             });
             world.afterEvents.entityDie.subscribe(ev => {
@@ -904,6 +906,19 @@ class BrainManager {
             }
             this.lastTimeLabel = label;
             this.bedtimeWatch();
+        } catch (e) { /* ignore */ }
+    }
+
+    // While !ai debug is on, the bridge gets the server's view of its body once a second, so the
+    // phone's log shows whether the server really moves it (and whether it can be hurt).
+    probe() {
+        if (!this.debug) return;
+        const bp = this.bridgePlayer();
+        if (!bp) return;
+        try {
+            const l = bp.location;
+            let gm = null; try { gm = String(bp.getGameMode()); } catch (e) { /* ignore */ }
+            bridge.send({ t: "probe", x: +l.x.toFixed(2), y: +l.y.toFixed(2), z: +l.z.toFixed(2), ground: !!bp.isOnGround, gm, walks: bridgeWalks(bp), brain: allBrains().has(bp.id) });
         } catch (e) { /* ignore */ }
     }
 

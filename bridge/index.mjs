@@ -20,7 +20,8 @@ import { REPLY_SCHEMA } from "../packs/RealAI_BP/scripts/brain/action_schema.js"
 import { Body } from "./body.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
+const EXPECT_ADDON = "2.5.0";          // the pack build whose addon walks this bridge's body
 const SCRIPT_EVENT = "realai:in";
 const ENV_KEYS = {
     anthropic: "ANTHROPIC_API_KEY", openai: "OPENAI_API_KEY", xai: "XAI_API_KEY", gemini: "GEMINI_API_KEY",
@@ -134,28 +135,41 @@ export class Bridge {
             catch (e) { opts.raknetBackend = "jsp-raknet"; log("info", "raknet-native not available, using the JavaScript RakNet"); }
         }
         opts.useNativeRaknet = opts.raknetBackend === "raknet-native";
+        // The library would send set_local_player_as_initialized on its own, before the loading
+        // screen is closed; a real client closes it first. We run that handshake ourselves.
+        opts.autoInitPlayer = false;
+        if (c.deviceOS !== undefined && c.deviceOS !== null) opts.skinData = { ...(opts.skinData || {}), DeviceOS: Number(c.deviceOS) };
         const client = bedrock.createClient(opts);
         this.client = client;
-        client.on("start_game", p => { try { this.entityId = BigInt(p.runtime_entity_id ?? p.entity_id ?? 0); } catch (e) { this.entityId = 0n; } try { this.body.onStartGame(p); log("debug", "body starts at", JSON.stringify(this.body.status().pos)); } catch (e) { log("warn", "start_game body:", e?.message || e); } });
+        // ---- the body: spawn handshake and movement, in the order a real client does it ----
+        this.spawned = false;
+        this._spawnWanted = false;
+        client.on("start_game", p => {
+            try { this.entityId = BigInt(p.runtime_entity_id ?? p.entity_id ?? 0); } catch (e) { this.entityId = 0n; }
+            try { this.body.onStartGame(p); } catch (e) { log("warn", "start_game body:", e?.message || e); }
+            let pvp = null;
+            try { const r = (p.gamerules || []).find(g => String(g.name).toLowerCase() === "pvp"); if (r) pvp = r.value; } catch (e) { /* ignore */ }
+            log("info", `start_game: game mode ${p.player_gamemode} (world ${p.world_gamemode}), pvp ${pvp === null ? "?" : pvp}, position ${JSON.stringify(this.body.status().pos)}, rewind ${p.rewind_history_size}`);
+            if (pvp === false) log("warn", "Friendly Fire is OFF in the Realm's settings (gamerule pvp): nobody can hit this body. Turn it on under World settings > Game.");
+            // what the vanilla client sends right after start_game
+            try { client.queue("request_chunk_radius", { chunk_radius: 8, max_radius: 28 }); client.queue("serverbound_loading_screen", { type: 1 }); } catch (e) { log("warn", "spawn handshake (start):", e?.message || e); }
+            if (this._spawnWanted) this.finishSpawn(opts.username);
+        });
+        client.on("play_status", p => { if (p?.status === "player_spawn") { if (this.entityId) this.finishSpawn(opts.username); else this._spawnWanted = true; } });
         // Movement is server-authoritative: the body only exists where our own input packets say it is.
         client.on("move_player", p => { try { if (this.body.onMovePlayer(p)) log("debug", `server moved us (${p.mode}) to`, JSON.stringify(this.body.status().pos)); } catch (e) { /* ignore */ } });
-        client.on("correct_player_move_prediction", p => { try { if (this.body.onCorrection(p) && this.body.corrections % 50 === 1) log("debug", "movement corrected by the server to", JSON.stringify(this.body.status().pos)); } catch (e) { /* ignore */ } });
-        client.on("respawn", p => { try { for (const pk of this.body.onRespawn(p)) this.client.queue(pk.name, pk.params); if (Number(p.state) === 1) log("info", "respawning at", JSON.stringify(this.body.status().pos)); } catch (e) { log("warn", "respawn:", e?.message || e); } });
-        this.spawned = false;
-        client.on("spawn", () => {
-            log("info", "spawned in the world; announcing to the addon");
-            this.spawned = true;
-            this.addonHello = false;
-            this.helloSentAt = Date.now();
-            this.outQueue.length = 0;
-            this.reconnectDelay = 5000;
-            // every frame is a /scriptevent command; without this the server tells every operator about each one
-            this.outQueue.push("/gamerule sendcommandfeedback false");
-            this.sendToAddon(this.helloMessage(opts.username));
-        });
+        client.on("correct_player_move_prediction", p => { try { if (this.body.onCorrection(p) && this.body.corrections % 20 === 1) log("debug", `movement corrected by the server (${this.body.corrections} so far) to`, JSON.stringify(this.body.status().pos)); } catch (e) { /* ignore */ } });
+        client.on("set_entity_motion", p => { try { this.body.onMotion(p); } catch (e) { /* ignore */ } });
+        client.on("respawn", p => { try { for (const pk of this.body.onRespawn(p)) this.client.queue(pk.name, pk.params); if (Number(p.state) === 1 && this.body.isMe(p.runtime_entity_id)) log("info", "respawning at", JSON.stringify(this.body.status().pos)); } catch (e) { log("warn", "respawn:", e?.message || e); } });
+        client.on("change_dimension", p => { try { for (const pk of this.body.onChangeDimension(p)) this.client.queue(pk.name, pk.params); log("info", `changing dimension (${p.dimension}) to`, JSON.stringify(this.body.status().pos)); } catch (e) { log("warn", "change_dimension:", e?.message || e); } });
+        client.on("player_action", p => { try { for (const pk of this.body.onPlayerAction(p)) this.client.queue(pk.name, pk.params); } catch (e) { /* ignore */ } });
+        client.on("set_player_game_type", p => { this.body.gameMode = p.gamemode; log("info", "game mode is now", p.gamemode); });
+        client.on("set_health", p => log("debug", "health", p.health));
+        client.on("entity_event", p => { try { if (p.event_id === "hurt_animation" && this.body.isMe(p.runtime_entity_id)) log("info", "ouch: this body was hit"); } catch (e) { /* ignore */ } });
+        client.on("update_abilities", p => { try { const layers = (p.abilities || []).map(l => `${l.type}${l.enabled?.invulnerable ? "(invulnerable)" : ""}`); log("debug", "abilities:", layers.join(", ")); if ((p.abilities || []).some(l => l.type === "loading_screen")) log("debug", "a loading-screen ability layer is active on this body"); } catch (e) { /* ignore */ } });
         client.on("text", p => this.onText(p));
-        client.on("disconnect", p => { this.spawned = false; log("warn", "disconnected:", p?.message || p?.reason || ""); this.scheduleReconnect(); });
-        client.on("close", () => { this.spawned = false; log("warn", "connection closed"); this.scheduleReconnect(); });
+        client.on("disconnect", p => { this.spawned = false; this._spawnWanted = false; log("warn", "disconnected:", p?.message || p?.reason || ""); this.scheduleReconnect(); });
+        client.on("close", () => { this.spawned = false; this._spawnWanted = false; log("warn", "connection closed"); this.scheduleReconnect(); });
         client.on("error", e => {
             const msg = String(e?.message || e);
             log("error", "client error:", msg.length > 400 ? msg.slice(0, 400) + " ..." : msg);
@@ -205,7 +219,31 @@ export class Bridge {
     }
 
     helloMessage(username) {
-        return { t: "hello", v: 2, name: username, version: VERSION, body: 1, providers: Object.keys(PROVIDERS).filter(id => !PROVIDERS[id].needsKey || this.cfg.providers[id]?.apiKey) };
+        return { t: "hello", v: 2, name: username, version: VERSION, body: 1, expectAddon: EXPECT_ADDON, providers: Object.keys(PROVIDERS).filter(id => !PROVIDERS[id].needsKey || this.cfg.providers[id]?.apiKey) };
+    }
+
+    // The first play_status player_spawn: close the loading screen like a real client, then tell the
+    // server the player is initialised. Only after this does the server simulate (and let others hit) the body.
+    finishSpawn(username) {
+        if (this.spawned || !this.client) return;
+        this._spawnWanted = false;
+        try {
+            this.client.queue("interact", { action_id: "mouse_over_entity", target_entity_id: 0n, has_position: false });
+            this.client.queue("serverbound_loading_screen", { type: 2 });
+            this.client.queue("set_local_player_as_initialized", { runtime_entity_id: this.entityId });
+            try { this.client.status = 4; } catch (e) { /* the library keeps its own status; harmless */ }
+        } catch (e) { log("warn", "spawn handshake (end):", e?.message || e); }
+        log("info", "spawned in the world; announcing to the addon");
+        this.spawned = true;
+        this.addonHello = false;
+        this.helloSentAt = Date.now();
+        this.outQueue.length = 0;
+        this.reconnectDelay = 5000;
+        // every frame is a /scriptevent command; without this the server tells every operator about each one
+        this.outQueue.push("/gamerule sendcommandfeedback false");
+        const wantMode = this.cfg.connect?.gamemode === undefined ? "survival" : this.cfg.connect.gamemode;
+        if (wantMode && String(this.body.gameMode) !== String(wantMode)) { log("info", `switching this account to ${wantMode} (set connect.gamemode to null in config.json to leave it alone)`); this.outQueue.push(`/gamemode ${wantMode} @s`); }
+        this.sendToAddon(this.helloMessage(username));
     }
 
     bodyTick() {
@@ -216,7 +254,7 @@ export class Bridge {
         try { this.client.queue("player_auth_input", params); this.inputFailures = 0; }
         catch (e) { if (this.inputFailures++ === 0) log("warn", "could not send movement input:", e?.message || e); }
         const st = this.body;
-        if (st.target && (Number(st.tick) % 40 === 0)) log("debug", "walking", JSON.stringify(st.status().pos), "->", JSON.stringify(st.target));
+        if (Number(st.tick) % 100 === 0) { const b = st.status(); log("debug", `input tick=${b.tick} feet=${b.pos ? [b.pos.x, b.pos.y, b.pos.z].join(" ") : "?"} ${b.walking ? "-> " + [b.target.x, b.target.y, b.target.z].join(" ") : "idle"} corrections=${b.corrections} teleports=${b.teleports}`); }
     }
 
     // Resolve the Realm ourselves (what bedrock-protocol's realmAuthenticate does) so we can log
@@ -303,7 +341,23 @@ export class Bridge {
         switch (msg.t) {
             case "hello":
                 if (!this.addonHello) { this.addonHello = true; log("info", "the addon answered; residents will join the players now"); }
-                log("info", "addon says hello (tick " + msg.tick + ")");
+                log("info", `addon says hello (build ${msg.version || "older than 2.5.0"}, walks ${msg.walks ? "yes" : "no"}, tick ${msg.tick})`);
+                if (!msg.walks) log("warn", `the Real AI pack on this world is older than ${EXPECT_ADDON}: it tries to teleport this body itself, which a Realm ignores. Import dist/Real-AI-${EXPECT_ADDON}.mcaddon, activate it on the world, and rejoin.`);
+                if (msg.pos && this.body.pos) { const gap = msg.pos.y - this.body.pos.y; log("info", `the addon sees this body at ${JSON.stringify(msg.pos)} (our feet ${JSON.stringify(this.body.status().pos)}, height gap ${gap.toFixed(2)})`); this.body.anchorFrom(msg.pos); this.body.anchorFrom(msg.pos); }
+                if (msg.gamemode) this.body.gameMode = msg.gamemode;
+                break;
+            case "probe": {
+                // the addon's server-side view of the body once a second while !ai debug is on
+                const st = this.body.status();
+                const gap = st.pos ? Math.hypot(msg.x - st.pos.x, msg.y - st.pos.y, msg.z - st.pos.z) : -1;
+                log("info", `probe: server ${[msg.x, msg.y, msg.z].map(n => Number(n).toFixed(1)).join(" ")} ground=${msg.ground} gm=${msg.gm} walks=${msg.walks} | ours ${st.pos ? [st.pos.x, st.pos.y, st.pos.z].join(" ") : "?"} gap=${gap.toFixed(2)} walking=${st.walking} corrections=${st.corrections}`);
+                if (gap > 1) { this._ghost = (this._ghost || 0) + 1; if (this._ghost === 5) log("warn", "ghost body: the server keeps this player somewhere else than our packets say; the addon will resync us"); }
+                else this._ghost = 0;
+                this.body.anchorFrom({ x: Number(msg.x), y: Number(msg.y), z: Number(msg.z) });
+                break;
+            }
+            case "probe_hurt":
+                log("info", `the addon saw this body take ${msg.damage} damage (${msg.cause}${msg.by ? " by " + msg.by : ""})`);
                 break;
             case "pong":
                 break;
@@ -330,6 +384,7 @@ export class Bridge {
                 break;
             // The addon walks our body: it knows the terrain and sends the next footing point.
             case "walk":
+                if (typeof msg.fx === "number") this.body.anchorFrom({ x: msg.fx, y: msg.fy, z: msg.fz });
                 if (this.body.walkTo({ x: Number(msg.x), y: Number(msg.y), z: Number(msg.z) }, msg.mode)) { if (msg.jump) this.body.jump(); }
                 break;
             case "stop":

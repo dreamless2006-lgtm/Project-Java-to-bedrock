@@ -79,7 +79,9 @@ drives and memory persist across reloads. `!ai memory <Name>` shows a bot's
 self and plans; `!ai thoughts on` shows the decisions as they happen.
 
 The bridge account's player is that AI. It stands in the world as a real
-player, so it gets a brain of its own: it walks by stepping its real body,
+player, so it gets a brain of its own: it walks like a real client (the
+bridge sends the game's own per-tick movement input, so the Realm moves
+it, animates it, and lets others hit it),
 slips around trees and digs through hills that block its way, chops and
 mines by the survival rules (the right tool, the real break time, the real
 drops, wear on the tool), fills its real hunger bar when it eats, sleeps in

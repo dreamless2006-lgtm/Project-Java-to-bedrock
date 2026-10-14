@@ -16,6 +16,7 @@ import { normalizeReply } from "./action_schema.js";
 import { getWorldConfig } from "./config.js";
 
 export const SCRIPT_EVENT_ID = "realai:in";
+export const ADDON_BUILD = "2.5.0";     // keep in step with packs/RealAI_BP/manifest.json
 export const BRIDGE_TAG = "realai_bridge";
 const OUT_CHUNK = 900;              // server->client chat lines can be longer than 512
 const HELLO_TIMEOUT_TICKS = 20 * 90;
@@ -72,6 +73,9 @@ export class BridgeChannel {
         return system.currentTick - this.lastSeen < HELLO_TIMEOUT_TICKS;
     }
 
+    feetOf(player) { try { const l = player.location; return { x: +l.x.toFixed(2), y: +l.y.toFixed(2), z: +l.z.toFixed(2) }; } catch (e) { return null; } }
+    gameModeOf(player) { try { return String(player.getGameMode()); } catch (e) { return null; } }
+
     playerName() {
         try { return this.player && this.player.isValid ? this.player.name : null; } catch (e) { return null; }
     }
@@ -94,10 +98,13 @@ export class BridgeChannel {
                 this.info = msg;
                 this.sysSent.clear();
                 for (const fn of this.listeners.hello) { try { fn(msg); } catch (e) { console.warn(e, e.stack); } }
-                this.send({ t: "hello", v: 1, edition: "addon", tick: system.currentTick });
+                this.send({ t: "hello", v: 2, edition: "addon", version: ADDON_BUILD, walks: true, body: !!msg.body, tick: system.currentTick, pos: this.feetOf(sender), gamemode: this.gameModeOf(sender) });
                 break;
             case "ping":
                 this.send({ t: "pong", tick: system.currentTick });
+                break;
+            case "body":
+                this.bodyStatus = msg;
                 break;
             case "locate_result":
                 for (const fn of this.listeners.locate) { try { fn(msg); } catch (e) { console.warn(e, e.stack); } }

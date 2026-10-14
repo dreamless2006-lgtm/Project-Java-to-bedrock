@@ -1,28 +1,72 @@
 {
   "connect": {
     "mode": "realm",
-    "realm": { "invite": "", "id": "", "pickFirst": true },
+    "realm": {
+      "invite": "",
+      "id": "",
+      "pickFirst": true
+    },
     "host": "127.0.0.1",
     "port": 19132,
     "username": "RealAIBridge",
     "offline": false,
-    "profilesFolder": "./.auth-cache"
+    "profilesFolder": "./.auth-cache",
+    "gamemode": "survival"
   },
-  "defaults": { "provider": "anthropic", "model": "" },
+  "defaults": {
+    "provider": "anthropic",
+    "model": ""
+  },
   "providers": {
-    "anthropic":  { "apiKey": "", "model": "claude-haiku-5-5" },
-    "openai":     { "apiKey": "", "model": "gpt-5.4-mini" },
-    "xai":        { "apiKey": "", "model": "grok-4.3" },
-    "gemini":     { "apiKey": "", "model": "gemini-flash-lite-latest" },
-    "openrouter": { "apiKey": "", "model": "" },
-    "player2":    { "apiKey": "", "baseUrl": "http://127.0.0.1:4315/v1", "model": "" },
-    "player2cloud": { "apiKey": "", "baseUrl": "https://api.player2.game/v1", "model": "" },
-    "ollama":     { "baseUrl": "http://127.0.0.1:11434/v1", "model": "llama3.1" },
-    "lmstudio":   { "baseUrl": "http://127.0.0.1:1234/v1", "model": "" },
-    "custom":     { "baseUrl": "", "apiKey": "", "model": "" }
+    "anthropic": {
+      "apiKey": "",
+      "model": "claude-haiku-5-5"
+    },
+    "openai": {
+      "apiKey": "",
+      "model": "gpt-5.4-mini"
+    },
+    "xai": {
+      "apiKey": "",
+      "model": "grok-4.3"
+    },
+    "gemini": {
+      "apiKey": "",
+      "model": "gemini-flash-lite-latest"
+    },
+    "openrouter": {
+      "apiKey": "",
+      "model": ""
+    },
+    "player2": {
+      "apiKey": "",
+      "baseUrl": "http://127.0.0.1:4315/v1",
+      "model": ""
+    },
+    "player2cloud": {
+      "apiKey": "",
+      "baseUrl": "https://api.player2.game/v1",
+      "model": ""
+    },
+    "ollama": {
+      "baseUrl": "http://127.0.0.1:11434/v1",
+      "model": "llama3.1"
+    },
+    "lmstudio": {
+      "baseUrl": "http://127.0.0.1:1234/v1",
+      "model": ""
+    },
+    "custom": {
+      "baseUrl": "",
+      "apiKey": "",
+      "model": ""
+    }
   },
   "chatRelay": true,
-  "anchor": { "enabled": true, "intervalSeconds": 120 },
+  "anchor": {
+    "enabled": true,
+    "intervalSeconds": 120
+  },
   "maxConcurrentThinks": 4,
   "requestTimeoutSeconds": 40,
   "log": "info"
