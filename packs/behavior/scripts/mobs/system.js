@@ -72,8 +72,17 @@ const variantOf = (/** @type {Entity} */ entity) => /** @type {{ value: number }
 function setPhaseProperty(/** @type {Entity} */ entity, /** @type {number} */ phase) {
   try {
     entity.setProperty('minepreggo:phase', phase);
-  } catch {
-    // an entity without the property (never for ours)
+  } catch (error) {
+    console.warn(`[minepreggo] cannot set the phase of ${entity.typeId}: ${error}`);
+  }
+}
+
+/** Entity events change component groups (speed, size, variant); a failure must never stop the pregnancy. */
+function fireEvent(/** @type {Entity} */ entity, /** @type {string} */ name) {
+  try {
+    entity.triggerEvent(name);
+  } catch (error) {
+    console.warn(`[minepreggo] event ${name} failed on ${entity.typeId}: ${error}`);
   }
 }
 
@@ -171,8 +180,8 @@ export function startPregnancy(record, babies) {
   setWomb(p, family, babies);
   data.pregnancy = p;
   data.lactation = null;
-  entity.triggerEvent('minepreggo:set_phase_0');
   setPhaseProperty(entity, 0);
+  fireEvent(entity, 'minepreggo:set_phase_0');
   particles(entity, 'minecraft:heart_particle', 5);
   record.save();
   return true;
@@ -185,8 +194,8 @@ export function setPhase(/** @type {MobRecord} */ record, /** @type {number} */ 
   p.phase = phase;
   p.daysPassed = 0;
   p.timer = 0;
-  record.entity.triggerEvent(`minepreggo:set_phase_${phase}`);
   setPhaseProperty(record.entity, phase);
+  fireEvent(record.entity, `minepreggo:set_phase_${phase}`);
   record.dirty = true;
   return true;
 }
@@ -197,8 +206,8 @@ export function endPregnancy(/** @type {MobRecord} */ record, /** @type {'PARTUM
   data.pregnancy = null;
   data.post = post ? { type: post, timer: 0 } : null;
   data.lactation = post === 'PARTUM' ? { level: 0, timer: 0, elapsed: 0 } : null;
-  entity.triggerEvent('minepreggo:set_not_pregnant');
   setPhaseProperty(entity, -1);
+  fireEvent(entity, 'minepreggo:set_not_pregnant');
   record.save();
 }
 
@@ -220,8 +229,8 @@ export function initWild(/** @type {MobRecord} */ record, /** @type {number} */ 
     painTimer: 0,
     incapacitated: false,
   };
-  record.entity.triggerEvent('minepreggo:hostile_pregnant_init');
   setPhaseProperty(record.entity, phase);
+  fireEvent(record.entity, 'minepreggo:hostile_pregnant_init');
   record.save();
 }
 
@@ -612,7 +621,7 @@ function tickTamed(/** @type {MobRecord} */ record) {
 
 export function becomeSavage(/** @type {MobRecord} */ record) {
   record.data.savage = true;
-  record.entity.triggerEvent('minepreggo:become_savage');
+  fireEvent(record.entity, 'minepreggo:become_savage');
   record.entity.getComponent('minecraft:rideable')?.ejectRiders();
   tellOwner(record, 'chat.minepreggo.preggo_mob.message.is_savage');
   record.save();
@@ -620,7 +629,7 @@ export function becomeSavage(/** @type {MobRecord} */ record) {
 
 export function calmDown(/** @type {MobRecord} */ record) {
   record.data.savage = false;
-  record.entity.triggerEvent('minepreggo:calm_down');
+  fireEvent(record.entity, 'minepreggo:calm_down');
   tellOwner(record, 'chat.minepreggo.preggo_mob.message.is_no_longer_savage');
   record.save();
 }

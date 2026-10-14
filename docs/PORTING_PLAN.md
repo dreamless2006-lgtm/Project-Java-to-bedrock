@@ -129,6 +129,13 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   Slimes (fall cushioning) effects plus `calculateExtraFallDamageMultiplier`, the species diets
   (`CRAVING_ITEM`: the species' foods are edible only for a mother carrying that species and
   satisfy her cravings) and species milk (`MILK_ITEM`). Baby mobs are still not spawned.
+- ✅ The non-pregnant models have no belly cubes at all, so a pregnant model that is never
+  selected shows nothing to animate. The model index is now `max(phase property + 1, variant)`
+  computed in pre_animation (the vanilla ghast pattern with a variable); the phase property is
+  written by the script before any entity event, and every event call is wrapped so a rejected
+  event can no longer stop a pregnancy. Humanoid females share the player's fetal movement and
+  birth push; monsters (monster creeper girl, monster slime girl, ender woman) have their own
+  rolling belly versions; the monster creeper girl and the ender woman give navel births.
 - ✅ Impregnation by vanilla mobs: `PlayerHelper.tryImpregnateByMobAttack` ported (hits counted per
   species, 65 % roll, fertility cycle not ported) and, as a Bedrock addition, a vanilla
   counterpart next to a free female mob for 3 s impregnates her.

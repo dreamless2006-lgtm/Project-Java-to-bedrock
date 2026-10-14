@@ -230,6 +230,106 @@
           ]
         }
       }
+    },
+    "animation.minepreggo.fetal_push_monster": {
+      "loop": true,
+      "bones": {
+        "belly": {
+          "scale": [
+            "1.0 + 0.08 * v.kl * math.max(0.0, math.sin(q.anim_time * 360 + 0))",
+            "1.0 + 0.10 * v.kl * math.max(0.0, math.sin(q.anim_time * 360 + 90))",
+            "1.0 + 0.06 * v.kl * math.max(0.0, math.sin(q.anim_time * 360 + 180))"
+          ],
+          "rotation": [
+            "6.0 * v.kl * math.sin(q.anim_time * 240)",
+            "4.0 * v.kl * math.sin(q.anim_time * 180)",
+            "6.0 * v.kl * math.cos(q.anim_time * 240)"
+          ]
+        },
+        "front_kick": {
+          "position": [
+            "1.5 * v.kl * math.sin(q.anim_time * 300)",
+            "1.0 * v.kl * math.cos(q.anim_time * 300)",
+            "-(0.8 + 1.5 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 0))"
+          ],
+          "scale": [
+            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 300 + 0))",
+            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 300 + 0))",
+            "1.0 + 0.8 * math.max(0.0, math.sin(q.anim_time * 300 + 0))"
+          ]
+        },
+        "left_kick": {
+          "position": [
+            "-(1.0 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 120))",
+            "0.8 * v.kl * math.sin(q.anim_time * 300 + 120)",
+            "-(0.8 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 120))"
+          ]
+        },
+        "right_kick": {
+          "position": [
+            "(1.0 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 240))",
+            "0.8 * v.kl * math.sin(q.anim_time * 300 + 240)",
+            "-(0.8 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 240))"
+          ]
+        },
+        "top_kick": {
+          "position": [
+            0.0,
+            "(0.6 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 60))",
+            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 60))"
+          ]
+        },
+        "bottom_kick": {
+          "position": [
+            0.0,
+            "-(0.6 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 180))",
+            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 180))"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.birth_push_monster": {
+      "loop": true,
+      "bones": {
+        "belly": {
+          "scale": [
+            "1.0 + 0.08 * v.push",
+            "1.0 - 0.06 * v.push",
+            "1.0 + 0.16 * v.push + 0.06 * math.max(0.0, math.sin(q.anim_time * 480 + 0))"
+          ],
+          "rotation": [
+            "8.0 * v.push * math.sin(q.anim_time * 480)",
+            0.0,
+            "6.0 * v.push * math.cos(q.anim_time * 480)"
+          ]
+        },
+        "front_kick": {
+          "position": [
+            0.0,
+            "-1.5 * v.push",
+            "-(1.5 + 3.0 * v.push) * (0.5 + 0.5 * math.max(0.0, math.sin(q.anim_time * 480 + 0)))"
+          ],
+          "scale": [
+            "1.0 + 0.6 * v.push",
+            "1.0 + 0.6 * v.push",
+            "1.0 + 1.0 * v.push"
+          ]
+        },
+        "left_kick": {
+          "position": [
+            "-1.5 * v.push",
+            "-0.8 * v.push",
+            "-(0.5 + 2.0 * v.push) * math.max(0.0, math.sin(q.anim_time * 480 + 120))"
+          ]
+        },
+        "right_kick": {
+          "position": [
+            "1.5 * v.push",
+            "-0.8 * v.push",
+            "-(0.5 + 2.0 * v.push) * math.max(0.0, math.sin(q.anim_time * 480 + 240))"
+          ]
+        }
+      }
     }
   }
 }

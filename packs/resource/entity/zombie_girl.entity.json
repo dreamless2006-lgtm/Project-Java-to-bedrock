@@ -36,6 +36,7 @@
         "scale": "0.9375",
         "pre_animation": [
           "v.phase = q.property('minepreggo:phase');",
+          "v.geo = math.max(v.phase + 1, q.variant);",
           "v.pose = q.property('minepreggo:pose');",
           "v.push = v.pose == 'birth' ? q.property('minepreggo:growth') : 0.0;",
           "v.kick = q.property('minepreggo:kick');",

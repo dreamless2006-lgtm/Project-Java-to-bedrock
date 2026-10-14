@@ -261,3 +261,15 @@ test('the phase property is written by the script, wild spawns are read from the
   run(tamed, 5);
   assert.ok(tamed.getProperty('minepreggo:growth') > before, 'the growth property carries the birth progress');
 });
+
+test('a failing entity event never stops the pregnancy or the client-facing phase', () => {
+  const mob = new Mob('minepreggo:humanoid_slime_girl', { tamed: true });
+  mob.triggerEvent = () => {
+    throw new Error('event rejected by the game');
+  };
+  const record = getRecord(/** @type {any} */ (mob));
+  assert.ok(startPregnancy(record, 1));
+  assert.equal(mob.getProperty('minepreggo:phase'), 0, 'the phase reaches the client through the script');
+  assert.ok(setPhase(record, 4));
+  assert.equal(mob.getProperty('minepreggo:phase'), 4);
+});

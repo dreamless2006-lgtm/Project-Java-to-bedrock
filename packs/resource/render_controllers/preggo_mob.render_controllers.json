@@ -34,14 +34,14 @@
           ]
         }
       },
-      "geometry": "Array.geometries[q.variant]",
+      "geometry": "Array.geometries[v.geo]",
       "materials": [
         {
           "*": "Material.default"
         }
       ],
       "textures": [
-        "Array.skins[q.variant]"
+        "Array.skins[v.geo]"
       ]
     }
   }

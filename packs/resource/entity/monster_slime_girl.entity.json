@@ -35,6 +35,7 @@
       "scripts": {
         "pre_animation": [
           "v.phase = q.property('minepreggo:phase');",
+          "v.geo = math.max(v.phase + 1, q.variant);",
           "v.pose = q.property('minepreggo:pose');",
           "v.push = v.pose == 'birth' ? q.property('minepreggo:growth') : 0.0;",
           "v.kick = q.property('minepreggo:kick');",
@@ -275,8 +276,8 @@
         "fetal_p9_iii": "animation.minepreggo.belly.fetal_movement_p9_iii",
         "jiggle": "animation.minepreggo.jiggle",
         "belly_hidden": "animation.minepreggo.belly_hidden",
-        "fetal_push": "animation.minepreggo.fetal_push",
-        "birth_push": "animation.minepreggo.birth_push"
+        "fetal_push": "animation.minepreggo.fetal_push_monster",
+        "birth_push": "animation.minepreggo.birth_push_monster"
       },
       "sound_effects": {
         "jump": "mob.slime.jump",

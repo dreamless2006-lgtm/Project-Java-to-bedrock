@@ -395,7 +395,7 @@ test('every phase component group carries the variant the render controller sele
       const text = JSON.stringify(controller);
       assert.doesNotMatch(text, /q(uery)?\.property/, `${name} reads a property`);
       assert.doesNotMatch(text, /!= '/, `${name} compares strings`);
-      if (typeof controller.geometry === 'string' && controller.geometry.startsWith('Array.')) assert.match(controller.geometry, /\[q\.variant\]$/, name);
+      if (typeof controller.geometry === 'string' && controller.geometry.startsWith('Array.')) assert.match(controller.geometry, /\[v\.geo\]$/, name);
     }
   }
   // The player's labor poses are the mod's humanoid animations on the flat labor geometry.
@@ -431,8 +431,10 @@ test('the debug command forces a kick the client renders from and reports the pr
   assert.equal(tester.getProperty('minepreggo:pose'), 'none', 'back to the real state after 10 s');
   for (const file of readdirSync(join(RP, 'entity'))) {
     const entity = json(join(RP, 'entity', file))['minecraft:client_entity'].description;
-    assert.ok(Object.values(entity.animations).includes('animation.minepreggo.fetal_push'), `${file} plays the strong fetal movement`);
-    assert.ok(Object.values(entity.animations).includes('animation.minepreggo.birth_push'), `${file} plays the birth push`);
+    const monster = /^(monster_|ender_woman)/.test(file);
+    assert.ok(Object.values(entity.animations).includes(monster ? 'animation.minepreggo.fetal_push_monster' : 'animation.minepreggo.fetal_push'), `${file} plays its kind's fetal movement`);
+    assert.ok(Object.values(entity.animations).includes(monster ? 'animation.minepreggo.birth_push_monster' : 'animation.minepreggo.birth_push'), `${file} plays its kind's birth push`);
+    if (file !== 'player.entity.json') assert.ok(entity.scripts.pre_animation.some((l) => l.startsWith('v.geo = math.max(v.phase + 1, q.variant)')), `${file} picks the model from the phase property`);
   }
   world.players.pop();
 });

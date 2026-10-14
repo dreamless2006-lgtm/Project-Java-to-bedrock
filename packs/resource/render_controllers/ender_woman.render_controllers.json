@@ -30,7 +30,7 @@
           ]
         }
       },
-      "geometry": "Array.geometries[q.variant]",
+      "geometry": "Array.geometries[v.geo]",
       "materials": [
         {
           "*": "Material.eyes"

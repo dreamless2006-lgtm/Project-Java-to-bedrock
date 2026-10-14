@@ -34,14 +34,14 @@
           ]
         }
       },
-      "geometry": "Array.geometries[q.variant]",
+      "geometry": "Array.geometries[v.geo]",
       "materials": [
         {
           "*": "Material.default"
         }
       ],
       "textures": [
-        "Array.skins[q.variant]"
+        "Array.skins[v.geo]"
       ],
       "overlay_color": {
         "r": "v.flash > 0.0 ? 1.0 : this",
@@ -68,7 +68,7 @@
           ]
         }
       },
-      "geometry": "Array.geometries[q.variant]",
+      "geometry": "Array.geometries[v.geo]",
       "materials": [
         {
           "*": "Material.charged"
