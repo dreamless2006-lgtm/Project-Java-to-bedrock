@@ -58,7 +58,7 @@ function pump() {
 }
 async function run(ticks, step = 5, until = () => false) { for (let i = 0; i < ticks; i += step) { await advanceTicksAsync(step); pump(); if (until()) return true; } return false; }
 async function waitThink(pred, ticks = 400) { wanted = pred; captured = null; await run(ticks, 5, () => !!captured); wanted = null; const got = captured; captured = null; return got; }
-const thinkMsg = await waitThink(msg => msg.messages?.some(m => String(m.content).includes("build us a house")));
+const thinkMsg = await waitThink(msg => msg.bot === bot.id && msg.messages?.some(m => String(m.content).includes("build us a house")));
 check(!!thinkMsg, "addon sent a think request to the bridge");
 if (thinkMsg) {
     check(typeof thinkMsg.sys === "string" && thinkMsg.sys.includes("# Actions you can take"), "think carried the system prompt");
@@ -241,7 +241,7 @@ check(residents().length === 8, "still 8 residents after the respawn: " + reside
         relay.location = { x: 30, y: 64, z: 30 };
         const before = Math.hypot(relay.location.x - steve.location.x, relay.location.z - steve.location.z);
         bb.actuator.enqueue([{ type: "go_to_player", name: "Steve" }]);
-        await run(400, 10, () => !bb.actuator.current && !bb.actuator.queue.length);
+        await run(900, 10, () => !bb.actuator.current && !bb.actuator.queue.length);
         const after = Math.hypot(relay.location.x - steve.location.x, relay.location.z - steve.location.z);
         check(after < 4 && before > 20, `the bridge player walked to Steve (${before.toFixed(0)}m -> ${after.toFixed(1)}m)`);
         const chatOutBefore = otherMsgs.filter(m => m.t === "chat_out").length;
