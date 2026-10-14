@@ -36,6 +36,21 @@ residents think with each. `!ai status` shows who runs on what, and
 `!ai thoughts on` prints every bot's reasoning and chosen actions to nearby
 players so you can watch the decisions being made.
 
+## The mission: beat the game
+
+The AI player is free to do anything the game allows, and its long-term
+purpose is to beat Minecraft: reach the End and kill the Ender Dragon. Every
+observation tells it how far it is (wood, stone pickaxe, iron, diamonds,
+Nether, blaze rods, ender pearls, twelve eyes, stronghold, lit portal, the
+End, dragon) and the usual next step, and it chooses its own route. It plays
+honest survival: blocks come from its inventory, recipes need real
+ingredients, obsidian needs a diamond pickaxe. Two things only a real
+account can do are wired through the bridge: `locate` runs the game's own
+`/locate structure` to find strongholds and fortresses, and placing eyes of
+ender into the frames lights the End portal. Killing the dragon is
+recognised and announced. `!ai mission free` removes the purpose and
+`!ai freebuild on` restores creative-style building.
+
 ## An inner life, not a script
 
 Each AI player carries slow-moving drives (company, rest, curiosity, safety,

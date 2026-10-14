@@ -55,6 +55,7 @@ export function renderObservation(obs) {
     if (obs.equipment) L.push(`Wearing/holding: ${obs.equipment}.`);
     L.push(`Inventory: ${obs.inventory && obs.inventory.length ? obs.inventory.join(", ") : "empty"}.`);
     if (obs.feelings) L.push(obs.feelings);
+    if (obs.progress) L.push(obs.progress);
     if (obs.home) L.push(`Home: ${obs.home}.`);
     if (obs.goal) L.push(`Current goal: ${obs.goal}.`);
     if (obs.job) L.push(`Running: ${obs.job}.`);

@@ -9,6 +9,7 @@ import { setAITarget, clearAITarget } from "../ai_combat_tactics.js";
 import { challengeToDuel } from "../ai_duels.js";
 import { dist, dirName, fmtPos, inventoryMap, containerOf, healthOf, virtualFood } from "./perception.js";
 import { nameOf, isModdedId } from "./world_content.js";
+import { addFact } from "./memory.js";
 import { craftPlan, smeltPlan, isLog, isPlanks } from "./crafting.js";
 import { getWorldConfig } from "./config.js";
 import { presetBlueprint } from "./blueprints.js";
@@ -589,6 +590,27 @@ H.use_item = {
         const fwd = (() => { try { const v = bot.getViewDirection(); return { x: v.x, y: v.y, z: v.z }; } catch (e) { return { x: 0, y: 0, z: 1 }; } })();
         const ahead = { x: bot.location.x + fwd.x * 2, y: bot.location.y, z: bot.location.z + fwd.z * 2 };
         try {
+            if (id === "minecraft:ender_eye") {
+                const frames = findBlocks(bot, b => b.typeId === "minecraft:end_portal_frame", 6, 3, 12);
+                if (!frames.length) { takeItems(c, id, 1); return { done: true, result: "threw an eye of ender: follow the direction it flew (use locate stronghold to get coordinates)" }; }
+                const filled = ctx.brain.filledFrames = ctx.brain.filledFrames || new Set();
+                const hasEye = (b) => { try { const v = b.permutation?.getState?.("end_portal_eye_bit"); if (typeof v === "boolean") return v; } catch (e) { /* ignore */ } return filled.has(`${b.x},${b.y},${b.z}`); };
+                const empty = frames.find(b => !hasEye(b));
+                if (!empty) return { done: true, result: "every frame here already has an eye" };
+                takeItems(c, id, 1);
+                try { dim.runCommand(`setblock ${empty.x} ${empty.y} ${empty.z} minecraft:end_portal_frame ["end_portal_eye_bit"=true,"minecraft:cardinal_direction"="${(() => { try { return empty.permutation?.getState?.("minecraft:cardinal_direction") || "south"; } catch (e) { return "south"; } })()}"]`); } catch (e) { /* ignore */ }
+                filled.add(`${empty.x},${empty.y},${empty.z}`);
+                const ring = findBlocks(bot, b => b.typeId === "minecraft:end_portal_frame", 8, 3, 16).filter(b => b.y === empty.y);
+                const withEye = ring.filter(hasEye);
+                if (ring.length >= 12 && withEye.length >= 12) {
+                    const cx = Math.round(ring.reduce((a, b) => a + b.x, 0) / ring.length), cz = Math.round(ring.reduce((a, b) => a + b.z, 0) / ring.length);
+                    for (let x = cx - 1; x <= cx + 1; x++) for (let z = cz - 1; z <= cz + 1; z++) { try { dim.runCommand(`setblock ${x} ${empty.y} ${z} minecraft:end_portal`); } catch (e) { /* ignore */ } }
+                    ctx.brain.memory.mission = ctx.brain.memory.mission || {}; ctx.brain.memory.mission.portalLit = true;
+                    addFact(ctx.brain.memory, `the end portal is lit at ${cx} ${empty.y} ${cz}`, Date.now());
+                    return { done: true, result: `placed the last eye: the END PORTAL IS LIT at ${cx} ${empty.y} ${cz}. Walk into it (travel end) when you are ready` };
+                }
+                return { done: true, result: `filled a frame (${withEye.length}/${Math.max(12, ring.length)} eyes placed)` };
+            }
             if (id === "minecraft:ender_pearl") { takeItems(c, id, 1); const t = { x: bot.location.x + fwd.x * 10, y: bot.location.y + 1, z: bot.location.z + fwd.z * 10 }; const spot = findSafeSpot(dim, t.x, t.z, t.y) || t; bot.teleport(spot); bot.applyDamage(2); return { done: true, result: "threw an ender pearl and teleported" }; }
             if (id === "minecraft:water_bucket" || id === "minecraft:lava_bucket") { const r = placeBlock(bot, ahead, id.replace("_bucket", "")); if (r.ok) { takeItems(c, id, 1); giveItems(c, "minecraft:bucket", 1); } return { done: true, result: r.ok ? `poured ${nameOf(id)} ahead` : r.reason }; }
             if (id === "minecraft:bucket") { const w = findBlocks(bot, b => b.typeId === "minecraft:water", 4, 2, 1)[0]; if (!w) return { done: true, result: "no water nearby to fill the bucket" }; w.setType("minecraft:air"); takeItems(c, id, 1); giveItems(c, "minecraft:water_bucket", 1); return { done: true, result: "filled a water bucket" }; }
@@ -825,6 +847,29 @@ H.go_home = {
         return H.move_to.start({ x: home.x, y: home.y, z: home.z }, ctx);
     },
     step: H.move_to.step,
+};
+
+H.locate = {
+    start: (a, ctx) => {
+        const structure = String(a.structure || "").toLowerCase().replace(/[^a-z_]/g, "").slice(0, 32);
+        if (!structure) return { done: true, result: "locate needs a structure name" };
+        const r = ctx.brain.startLocate(structure);
+        if (!r.ok) return { done: true, result: r.error };
+        return { structure, started: ctx.now };
+    },
+    step: (s, ctx) => {
+        const res = ctx.brain.takeLocateResult(s.structure);
+        if (res) {
+            if (!res.ok) return { done: true, result: `could not find a ${s.structure}${res.error ? " (" + res.error + ")" : ""}` };
+            const where = `${Math.round(res.x)}, ${Math.round(res.z)}`;
+            addFact(ctx.brain.memory, `${s.structure} is near x ${Math.round(res.x)} z ${Math.round(res.z)}${typeof res.y === "number" ? " y " + Math.round(res.y) : ""}`, Date.now());
+            if (s.structure === "stronghold") { ctx.brain.memory.mission = ctx.brain.memory.mission || {}; ctx.brain.memory.mission.strongholdAt = { x: Math.round(res.x), z: Math.round(res.z) }; }
+            const d = Math.round(Math.hypot(res.x - ctx.bot.location.x, res.z - ctx.bot.location.z));
+            return { done: true, result: `nearest ${s.structure} is around ${where} (${d} blocks away)` };
+        }
+        if (ctx.now - s.started > 20 * 30) return { done: true, result: `no answer about the ${s.structure} (is the bridge connected and an operator?)` };
+        return undefined;
+    },
 };
 
 H.travel = {

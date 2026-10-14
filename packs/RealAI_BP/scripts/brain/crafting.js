@@ -32,6 +32,11 @@ const VANILLA = [
     { id: "golden_apple", result: M + "golden_apple", count: 1, needs: { [M + "gold_ingot"]: 8, [M + "apple"]: 1 } },
     { id: "boat", result: M + "oak_boat", count: 1, needs: { "#planks": 5 } },
     { id: "sign", result: M + "oak_sign", count: 3, needs: { "#planks": 6, [M + "stick"]: 1 } },
+    { id: "blaze_powder", result: M + "blaze_powder", count: 2, needs: { [M + "blaze_rod"]: 1 }, station: "hand" },
+    { id: "ender_eye", result: M + "ender_eye", count: 1, needs: { [M + "ender_pearl"]: 1, [M + "blaze_powder"]: 1 }, station: "hand" },
+    { id: "shears", result: M + "shears", count: 1, needs: { [M + "iron_ingot"]: 2 } },
+    { id: "enchanting_table", result: M + "enchanting_table", count: 1, needs: { [M + "book"]: 1, [M + "diamond"]: 2, [M + "obsidian"]: 4 } },
+    { id: "ender_chest", result: M + "ender_chest", count: 1, needs: { [M + "obsidian"]: 8, [M + "ender_eye"]: 1 } },
 ];
 for (const [tier, mat, n] of [["wooden", "#planks", 1], ["stone", M + "cobblestone", 1], ["iron", M + "iron_ingot", 1], ["golden", M + "gold_ingot", 1], ["diamond", M + "diamond", 1]]) {
     VANILLA.push({ id: `${tier}_sword`, result: M + `${tier}_sword`, count: 1, needs: { [mat]: 2, [M + "stick"]: 1 } });

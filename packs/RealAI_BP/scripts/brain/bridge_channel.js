@@ -28,7 +28,7 @@ export class BridgeChannel {
         this.pending = new Map();      // turnId -> {resolve, cfg, turn, bot, sentSys, t}
         this.sysSent = new Map();      // bot -> sysHash the bridge has
         this.reassembler = new Reassembler(() => Date.now());
-        this.listeners = { chat: [], hello: [] };
+        this.listeners = { chat: [], hello: [], locate: [] };
         this.info = null;
         this._subscribed = false;
     }
@@ -52,6 +52,7 @@ export class BridgeChannel {
 
     onChat(fn) { this.listeners.chat.push(fn); }
     onHello(fn) { this.listeners.hello.push(fn); }
+    onLocate(fn) { this.listeners.locate.push(fn); }
 
     _touch(player) {
         // Only operators can run /scriptevent, and optionally only the configured bridge account.
@@ -97,6 +98,9 @@ export class BridgeChannel {
                 break;
             case "ping":
                 this.send({ t: "pong", tick: system.currentTick });
+                break;
+            case "locate_result":
+                for (const fn of this.listeners.locate) { try { fn(msg); } catch (e) { console.warn(e, e.stack); } }
                 break;
             case "chat_in":
                 for (const fn of this.listeners.chat) { try { fn(msg.from, msg.text, msg.whisper); } catch (e) { console.warn(e, e.stack); } }

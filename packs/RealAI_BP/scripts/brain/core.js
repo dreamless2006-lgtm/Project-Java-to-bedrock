@@ -8,6 +8,8 @@ import { registerBrain, unregisterBrain, getBrain, allBrains, setBrainEnabled, i
 import { getWorldConfig, updateWorldConfig, callConfigFor, readBotSettings, writeBotSettings, patchBotSettings, configuredProviders, MEMORY_KEY, BUDGET_KEY } from "./config.js";
 import { loadMemory, saveMemory, addFact, forgetFact, addEpisode, addChat, notePerson, createMemory, setSelf, setPlans } from "./memory.js";
 import { createDrives, updateDrives, renderDrives, cadenceFactor } from "./drives.js";
+import { createMission, renderMission, assessMission } from "./progress.js";
+import { inventoryMap } from "./perception.js";
 import { timeLabel } from "./perception.js";
 import { buildSystemStable, buildTurn, promptHash } from "./prompt.js";
 import { createSchedulerState, noteEvent, shouldThink, beginThink, endThink, CADENCE } from "./scheduler.js";
@@ -106,6 +108,30 @@ export class BotBrain {
         this.sleptSince = false;
         this.lastPlace = "";
         if (!this.memory.drives) this.memory.drives = createDrives(Date.now());
+        if (!this.memory.mission) this.memory.mission = createMission();
+        this.locateWaiting = null;
+        this.locateResult = null;
+    }
+
+    // ---- the bridge account can run /locate for us ----
+    startLocate(structure) {
+        if (!bridge.isConnected()) return { ok: false, error: "locating a structure needs the bridge connected" };
+        this.locateWaiting = structure;
+        this.locateResult = null;
+        try { bridge.send({ t: "locate", bot: this.id, structure }); } catch (e) { return { ok: false, error: "could not ask the bridge" }; }
+        return { ok: true };
+    }
+    takeLocateResult(structure) {
+        const r = this.locateResult;
+        if (!r || r.structure !== structure) return null;
+        this.locateResult = null; this.locateWaiting = null;
+        return r;
+    }
+
+    missionLine() {
+        const cfg = getWorldConfig();
+        if (cfg.mission !== "beat_the_game") return "";
+        try { return renderMission(inventoryMap(this.bot), this.memory.mission || createMission()); } catch (e) { return ""; }
     }
 
     get name() { try { return this.bot.nameTag || "Player"; } catch (e) { return "Player"; } }
@@ -140,7 +166,8 @@ export class BotBrain {
     systemPrompt() {
         const cfg = getWorldConfig();
         const cc = callConfigFor(this);
-        const extra = [cfg.serverRules, `Your mind runs on the ${PROVIDER_LABELS[cc.provider] || cc.provider} model${cc.model ? ` (${cc.model})` : ""}. Keep playing as a person; if someone sincerely asks which AI you are, you may tell them.`, cfg.callByName ? "Only reply in chat when someone says your name or whispers to you; otherwise stay quiet unless something important happens." : null].filter(Boolean).join("\n");
+        const missionRule = cfg.mission === "beat_the_game" ? "Your primary long-term goal is to BEAT THE GAME: get to the End and kill the Ender Dragon. You are completely free in how you do it: any route, any pace, any side projects, any alliances or rivalries; the observation shows your progress and the usual next step, and the 'locate' action finds strongholds and fortresses. Survive, gear up, and keep moving towards it." : "";
+        const extra = [cfg.serverRules, missionRule, `Your mind runs on the ${PROVIDER_LABELS[cc.provider] || cc.provider} model${cc.model ? ` (${cc.model})` : ""}. Keep playing as a person; if someone sincerely asks which AI you are, you may tell them.`, cfg.callByName ? "Only reply in chat when someone says your name or whispers to you; otherwise stay quiet unless something important happens." : null].filter(Boolean).join("\n");
         const key = JSON.stringify([this.persona(), extra, worldContent().counts]);
         if (this.systemCache && this.systemCache.key === key) return this.systemCache.text;
         const text = buildSystemStable({ persona: this.persona(), worldContent: worldContent().text, extraRules: extra });
@@ -263,12 +290,17 @@ export class BotBrain {
             updateDrives(this.memory.drives, { talked, night, slept: this.sleptSince, threats: (obs.hostiles || []).length, health, hasGoal: !!obs.goal, newPlace: !!this.lastPlace && place !== this.lastPlace, idle: this.lastReplyIdle, progressed: lastActions.some(r => /: (finished|reached|collected|crafted|placed|smelted|travelled|done)/.test(r)) }, nowMs);
             this.lastPlace = place; this.sleptSince = false;
             obs.feelings = renderDrives(this.memory.drives);
+            // mission flags earned by being somewhere
+            if (obs.dimension === "nether") this.memory.mission.nether = true;
+            if (obs.dimension === "the end" || obs.dimension === "end") this.memory.mission.end = true;
             const every = Math.max(3, Number(wcfg.reflectEvery) || 20);
             if (this.thinks > 0 && this.thinks % every === 0 && (this.memory.episodes.length >= 2 || this.memory.chat.length >= 4 || this.memory.facts.length >= 3)) {
                 nudge = "Reflection time. Look back over 'Recently' and the chat: turn what matters into lasting facts (remember), drop facts that are stale (forget), rewrite 'self' in one or two sentences about who you are becoming and what you care about, and set 'plans' (up to 6 ordered steps) for the coming days. Then carry on as usual.";
                 this.reflections = (this.reflections || 0) + 1;
             }
         }
+        const mission = this.missionLine();
+        if (mission) obs.progress = mission;
         const systemStable = this.systemPrompt();
         const turn = buildTurn({ systemStable, memory: this.memory, now: Date.now(), obs, history: this.history, nudge });
         turn.sysHash = this.systemCache.hash;
@@ -337,7 +369,7 @@ export class BotBrain {
     }
 
     status() {
-        return { name: this.name, id: this.id, thinks: this.thinks, failures: this.failures, lastError: this.lastError, paused: this.paused, current: this.actuator.describeCurrent(), goal: this.memory.goal, owner: this.settings.owner || null, provider: callConfigFor(this).provider, model: callConfigFor(this).model || "(default)", feelings: renderDrives(this.memory.drives), self: this.memory.self || "", plans: (this.memory.plans || []).slice(), facts: this.memory.facts.length, nextThinkIn: Math.max(0, Math.round((this.sched.nextThink - system.currentTick) / 20)) };
+        return { name: this.name, id: this.id, thinks: this.thinks, failures: this.failures, lastError: this.lastError, paused: this.paused, current: this.actuator.describeCurrent(), goal: this.memory.goal, owner: this.settings.owner || null, provider: callConfigFor(this).provider, model: callConfigFor(this).model || "(default)", feelings: renderDrives(this.memory.drives), self: this.memory.self || "", plans: (this.memory.plans || []).slice(), mission: getWorldConfig().mission === "beat_the_game" ? (() => { try { return assessMission(inventoryMap(this.bot), this.memory.mission); } catch (e) { return null; } })() : null, facts: this.memory.facts.length, nextThinkIn: Math.max(0, Math.round((this.sched.nextThink - system.currentTick) / 20)) };
     }
 }
 
@@ -365,6 +397,7 @@ class BrainManager {
         this.refreshEnabled();
         try { bridge.subscribe(); } catch (e) { console.warn("[RealAI] bridge subscribe failed", e); }
         bridge.onChat((from, text, whisper) => this.intakeChat(from, text, { whisper, viaBridge: true }));
+        bridge.onLocate(msg => { try { const b = allBrains().get(String(msg.bot)); if (b) b.locateResult = { structure: msg.structure, ok: !!msg.ok, x: Number(msg.x), y: msg.y != null ? Number(msg.y) : undefined, z: Number(msg.z), error: msg.error }; } catch (e) { /* ignore */ } });
         bridge.onHello(info => { this.bridgeProviders = Array.isArray(info.providers) ? info.providers.filter(p => typeof p === "string") : []; this.adoptProvider(); console.warn(`[RealAI] bridge connected: ${info.name} v${info.version}, providers: ${(info.providers || []).join(", ")}`); this.refreshEnabled(); this.announce(`§a[Real AI] Bridge "${info.name}" connected. Bots are thinking through it.`); system.runTimeout(() => { try { this.populate("bridge"); } catch (e) { /* ignore */ } }, 20); });
         this.subscribeEvents();
         system.runInterval(() => this.discover(), DISCOVER_GAP);
@@ -494,6 +527,21 @@ class BrainManager {
                     unregisterBrain(dead.id);
                     try { this.onBotDeath(b, dead, killerName); } catch (e) { console.warn("[RealAI] death handling failed", e); }
                     return;
+                }
+                if (dead.typeId === "minecraft:ender_dragon") {
+                    let slayer = null;
+                    try { const k = ev.damageSource?.damagingEntity; slayer = k ? getBrain(k) : null; } catch (e) { /* ignore */ }
+                    const winners = slayer ? [slayer] : [...allBrains().values()].filter(br => { try { return br.bot.dimension.id === "minecraft:the_end"; } catch (e) { return false; } });
+                    for (const br of winners) {
+                        try {
+                            br.memory.mission = br.memory.mission || createMission(); br.memory.mission.dragon = true;
+                            addEpisode(br.memory, "I KILLED THE ENDER DRAGON. I beat the game.", Date.now());
+                            addFact(br.memory, "I have beaten the game: the Ender Dragon is dead", Date.now());
+                            br.saveMemory();
+                            br.noteEvent("death", "THE ENDER DRAGON IS DEAD. You beat the game! Celebrate, then decide what your life here is about now.");
+                        } catch (e) { /* ignore */ }
+                    }
+                    if (winners.length) this.announce(`§6[Real AI] ${winners.map(b => b.name).join(" and ")} killed the Ender Dragon and beat the game!`);
                 }
                 // Nearby brains notice deaths of players and bots
                 for (const [, br] of allBrains()) {
@@ -790,6 +838,7 @@ class BrainManager {
         let delay = 20;
         let i = 0;
         for (const r of roster) {
+            if (this.respawning && this.respawning.has(r.pid)) continue;   // coming back from a death in a moment
             if (present.has(r.pid)) {
                 // a body is already here: keep its brain's provider in step with the roster
                 try {
@@ -911,7 +960,10 @@ class BrainManager {
         const settingsCopy = { ...settings, respawns: (settings.respawns || 0) + 1 };
         const name = brain.name;
         const home = brain.memory?.home ? { ...brain.memory.home } : null;
+        this.respawning = this.respawning || new Set();
+        if (pid) this.respawning.add(pid);
         system.runTimeout(() => {
+            if (pid) this.respawning.delete(pid);
             try {
                 const o = (() => { try { return ownerId ? world.getEntity(ownerId) : undefined; } catch (e) { return undefined; } })();
                 let dim = world.getDimension(dimId), at = null, player = null;

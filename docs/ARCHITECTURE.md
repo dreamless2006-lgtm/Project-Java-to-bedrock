@@ -53,6 +53,23 @@ from `weatherChange`, and `home_touched` events when a non-owner breaks or
 places blocks within 12 blocks of a bot's home (`playerBreakBlock` /
 `playerPlaceBlock`). Bot-to-bot chatter wakes a listener half the time.
 
+## Mission: beat the game
+
+`progress.js` (pure) lists fifteen milestones with inventory/flag tests and
+a "usual next step" each; `renderMission` becomes the `obs.progress` line
+and the system prompt carries the purpose when `mission` is
+`beat_the_game`. Flags live in `memory.mission`: `nether`/`end` (set when
+the bot is observed in that dimension), `strongholdAt` (from `locate`),
+`portalLit` (from placing the twelfth eye), `dragon` (from `entityDie` of
+`minecraft:ender_dragon`, credited to the killer's brain or to every brain
+in the End). The `locate` action sends `{t: "locate"}` to the bridge, which
+runs `/locate structure <name>` as the account and parses the command
+output into `{t: "locate_result"}`; the brain's `takeLocateResult` hands it
+to the action. `use_item ender_eye` near `end_portal_frame` blocks fills one
+frame per use (tracked per brain, or from the block state when readable)
+and fills the 3x3 interior with `end_portal` when twelve are set.
+`freeBuild` is off by default so building draws on the inventory.
+
 ## The bridge account plays
 
 With `bridgePlays` (default on) the manager finds the bridge's player

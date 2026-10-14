@@ -171,6 +171,18 @@ export class Bridge {
         client.on("command_output", p => {
             try {
                 const out = (p.output || []).map(o => o.message_id || o.message || "").join(" ");
+                if (/locate/i.test(out) && this.pendingLocates && this.pendingLocates.length) {
+                    const req = this.pendingLocates.shift();
+                    const first = (p.output || [])[0] || {};
+                    const params = (first.parameters || []).map(String);
+                    const text = `${params.join(" ")} ${first.message || ""}`;
+                    const ints = text.match(/-?\d+/g)?.map(Number) || [];
+                    const ok = p.success_count > 0 && /success/i.test(first.message_id || "") && ints.length >= 2;
+                    let x = ints[0], y, z = ints[1];
+                    if (ints.length >= 4) { y = ints[1]; z = ints[2]; }
+                    this.sendToAddon(ok ? { t: "locate_result", bot: req.bot, structure: req.structure, ok: true, x, y, z } : { t: "locate_result", bot: req.bot, structure: req.structure, ok: false, error: (first.message_id || out || "not found").slice(0, 80) });
+                    return;
+                }
                 if (p.success_count === 0 || /permission|unknown|cheat|not allowed/i.test(out)) {
                     const key = out.slice(0, 80);
                     if (this._lastCmdErr !== key) { this._lastCmdErr = key; log("warn", `the world refused a command (${out || "no details"}). The bridge account must be an Operator and cheats must be on.`); }
@@ -274,6 +286,14 @@ export class Bridge {
                 try {
                     this.client.queue("text", { type: "chat", needs_translation: false, category: "authored", source_name: this.client.username, message: text, xuid: "", platform_chat_id: "", has_filtered_message: false, filtered_message: "" });
                 } catch (e) { log("warn", "chat failed:", e?.message || e); }
+                break;
+            }
+            case "locate": {
+                const structure = String(msg.structure || "").toLowerCase().replace(/[^a-z_]/g, "").slice(0, 32);
+                if (!structure) break;
+                this.pendingLocates = this.pendingLocates || [];
+                this.pendingLocates.push({ bot: msg.bot, structure, at: Date.now() });
+                this.outQueue.push(`/locate structure ${structure}`);
                 break;
             }
             case "anchor":

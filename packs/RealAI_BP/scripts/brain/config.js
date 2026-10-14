@@ -33,7 +33,8 @@ export const DEFAULTS = Object.freeze({
     bridgePlays: true,          // the bridge account's own player gets a brain and plays too (walks, builds, chats as itself)
     reflectEvery: 20,           // every N thinks a bot looks back and updates memory, self and plans
     autonomy: "full",           // full | companions_only | off
-    freeBuild: true,            // place blocks without inventory (like the original addon)
+    freeBuild: false,           // place blocks without inventory (creative-style); off = honest survival
+    mission: "beat_the_game",   // beat_the_game | free : the sole AI's long-term purpose
     keepAlive: true,            // ticking areas around bot homes when nobody is online (BDS)
     legacyFakeChat: false,      // the original fake-player chat simulator
     companionDeath: "respawn",  // respawn | permadeath : what happens when a summoned companion dies
@@ -81,7 +82,7 @@ function applyServerOverrides(cfg) {
         "realai.maxTokens": "maxTokens", "realai.maxBrains": "maxBrains", "realai.autonomy": "autonomy", "realai.chatVolume": "chatVolume",
         "realai.callByName": "callByName", "realai.freeBuild": "freeBuild", "realai.keepAlive": "keepAlive", "realai.serverRules": "serverRules",
         "realai.thinkIdleSec": "thinkIdleSec", "realai.thinkActiveSec": "thinkActiveSec", "realai.enabled": "enabled", "realai.bridgeName": "bridgeName",
-        "realai.worldPlayers": "worldPlayers", "realai.wildSpawns": "wildSpawns", "realai.mixProviders": "mixProviders", "realai.showThoughts": "showThoughts", "realai.innerLife": "innerLife", "realai.reflectEvery": "reflectEvery", "realai.bridgePlays": "bridgePlays",
+        "realai.worldPlayers": "worldPlayers", "realai.wildSpawns": "wildSpawns", "realai.mixProviders": "mixProviders", "realai.showThoughts": "showThoughts", "realai.innerLife": "innerLife", "realai.reflectEvery": "reflectEvery", "realai.bridgePlays": "bridgePlays", "realai.mission": "mission",
     };
     for (const [varName, key] of Object.entries(map)) {
         const v = readVariable(varName);

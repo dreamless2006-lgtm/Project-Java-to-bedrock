@@ -23,7 +23,7 @@ const gate = await import("../../packs/RealAI_BP/scripts/brain/gate.js");
 function fromBridge(obj) { for (const f of encodeFrames("b" + Math.random().toString(36).slice(2, 6), packMessage(obj), DEFAULT_CHUNK)) system.afterEvents.scriptEventReceive.emit({ id: "realai:in", message: f, sourceType: "Entity", sourceEntity: relay }); }
 const { getWorldConfig: gwc, updateWorldConfig: uwc } = await import("../../packs/RealAI_BP/scripts/brain/config.js");
 check(gwc().worldPlayers === 0 && gwc().bridgePlays === true, "by default the bridge account's player is the only AI player");
-uwc({ worldPlayers: 8 });   // the rest of the run covers residents too
+uwc({ worldPlayers: 8, freeBuild: true });   // the rest of the run covers residents and creative-style building too
 fromBridge({ t: "hello", v: 1, name: "RealAIBridge", version: "0.1.0", providers: ["anthropic", "openai", "xai", "gemini", "ollama", "lmstudio", "player2"] });
 await advanceTicksAsync(250);
 check(gate.isBrainEnabled(), "brains enabled after bridge hello");
@@ -249,6 +249,41 @@ check(residents().length === 8, "still 8 residents after the respawn: " + reside
         pump();
         check(otherMsgs.filter(m => m.t === "chat_out").length > chatOutBefore && otherMsgs.some(m => m.t === "chat_out" && m.text === "hello from the account itself"), "its chat goes out as real chat through the bridge");
         check(!log.chat.some(l => l.includes("hello from the account itself")), "and not as a fake <name> line");
+    }
+}
+// Seventh cycle: the mission. The bridge player sees its progress, locates a stronghold through
+// the bridge, lights the end portal with twelve eyes, and the dragon's death is recognised.
+{
+    const bb = gate.getBrain(relay.id);
+    if (bb) {
+        captured = null; wanted = msg => msg.bot === bb.id;
+        bb.request("what next?"); await run(200, 5, () => !!captured);
+        const m = captured; captured = null; wanted = null;
+        const obsText = m ? m.messages[m.messages.length - 1].content : "";
+        check(obsText.includes("Mission: beat the game") && obsText.includes("Usual next step"), "the bridge player's observation carries the mission and the next step");
+        const sysText = (m && m.sys) || seenThinks.filter(t => t.bot === bb.id && t.sys).map(t => t.sys).pop() || "";
+        check(sysText.includes("BEAT THE GAME"), "its system prompt states the purpose");
+        if (m) fromBridge({ t: "result", turnId: m.turnId, ok: true, text: IDLE, usage: { input: 1, output: 1 }, model: "mock", provider: "anthropic", attempts: 1 });
+        const locBefore = otherMsgs.filter(x => x.t === "locate").length;
+        bb.actuator.enqueue([{ type: "locate", structure: "stronghold" }]);
+        await run(60, 5, () => otherMsgs.filter(x => x.t === "locate").length > locBefore);
+        const req = otherMsgs.filter(x => x.t === "locate").slice(-1)[0];
+        check(!!req && req.structure === "stronghold" && req.bot === bb.id, "the bridge is asked to run /locate stronghold");
+        if (req) fromBridge({ t: "locate_result", bot: req.bot, structure: "stronghold", ok: true, x: 1200, y: 30, z: -340 });
+        await run(60, 5, () => !bb.actuator.current && !bb.actuator.queue.length);
+        check(bb.memory.facts.some(f => /stronghold is near x 1200 z -340/.test(f.text)) && bb.memory.mission.strongholdAt?.x === 1200, "the stronghold's position is remembered: " + bb.actuator.results.join(" | "));
+        const cx = Math.floor(relay.location.x) + 3, cz = Math.floor(relay.location.z) + 3, fy = 64;
+        const ring = []; for (let x = cx - 2; x <= cx + 2; x++) for (let z = cz - 2; z <= cz + 2; z++) { const edge = x === cx - 2 || x === cx + 2 || z === cz - 2 || z === cz + 2; const corner = (x === cx - 2 || x === cx + 2) && (z === cz - 2 || z === cz + 2); if (edge && !corner) ring.push([x, z]); }
+        for (const [x, z] of ring) overworld._set(x, fy, z, "minecraft:end_portal_frame");
+        relay.getComponent("minecraft:inventory").container.addItem(new ItemStack("minecraft:ender_eye", 12));
+        relay.location = { x: cx + 0.5, y: 64, z: cz + 0.5 };
+        bb.actuator.enqueue(Array.from({ length: 12 }, () => ({ type: "use_item", item: "ender_eye" })));
+        await run(800, 10, () => !bb.actuator.current && !bb.actuator.queue.length);
+        check(bb.memory.mission.portalLit === true && overworld.getBlock({ x: cx, y: fy, z: cz }).typeId === "minecraft:end_portal", "twelve eyes light the end portal: " + bb.actuator.results.slice(-1));
+        const dragon = overworld.spawnEntity("minecraft:ender_dragon", { x: relay.location.x + 3, y: 70, z: relay.location.z });
+        dragon.applyDamage(500, { cause: "entityAttack", damagingEntity: relay });
+        await run(20);
+        check(bb.memory.mission.dragon === true && (log.chat.some(l => l.includes("beat the game")) || steve.messages.some(l => l.includes("beat the game"))), "killing the dragon counts as beating the game");
     }
 }
 check(log.errors.length === 0, "no engine-level errors after lifecycle: " + log.errors.slice(0, 3).join(" | "));
