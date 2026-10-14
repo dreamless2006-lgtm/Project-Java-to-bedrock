@@ -114,10 +114,8 @@ export class Bridge {
         const c = this.cfg.connect || {};
         const opts = { username: c.username || "RealAIBridge", offline: !!c.offline, profilesFolder: c.profilesFolder || join(HERE, ".auth-cache"), conLog: (...a) => log("info", "[mc]", ...a) };
         if ((c.mode || "realm") === "realm") {
-            const r = c.realm || {};
-            if (r.invite) opts.realms = { realmInvite: r.invite };
-            else if (r.id) opts.realms = { realmId: String(r.id) };
-            else opts.realms = { pickRealm: realms => { log("info", "Realms available:", realms.map(x => `${x.name} (${x.id})`).join(", ")); return realms[0]; } };
+            try { await this.resolveRealm(opts, c); }
+            catch (e) { log("error", "could not join the Realm:", e?.message || e); this.scheduleReconnect(); return; }
         } else {
             opts.host = c.host || "127.0.0.1";
             opts.port = c.port || 19132;
@@ -151,6 +149,7 @@ export class Bridge {
             const msg = String(e?.message || e);
             log("error", "client error:", msg.length > 400 ? msg.slice(0, 400) + " ..." : msg);
             // Auth services rate-limit fast retries; back off hard and say what usually fixes it.
+            if (/Signal connection/i.test(msg)) { this.signalFailures = (this.signalFailures || 0) + 1; log("warn", "the Realm's signalling service dropped the connection; next try uses the global signalling host. Run with the debug switch (bash phone.sh debug, or node index.mjs --log debug) to see the server's answer."); }
             if (/429|Too Many Requests/i.test(msg)) { this.reconnectDelay = Math.max(this.reconnectDelay, 300_000); log("warn", "the sign-in service is rate limiting us; waiting 5 minutes before the next try"); }
             else if (/401|Unauthorized|not have an Xbox profile/i.test(msg)) {
                 this.reconnectDelay = Math.max(this.reconnectDelay, 120_000);
@@ -161,6 +160,44 @@ export class Bridge {
         this.pumpTimer = setInterval(() => this.pump(), 60);
         this.pingTimer = setInterval(() => { if (this.spawned) this.sendToAddon({ t: "ping" }); }, 30_000);
         this.anchorTimer = setInterval(() => this.anchor(), 5000);
+    }
+
+    // Resolve the Realm ourselves (what bedrock-protocol's realmAuthenticate does) so we can log
+    // the signalling host, sanitize the region name and fall back to the global signalling
+    // service when the regional one keeps dropping the connection.
+    async resolveRealm(opts, c) {
+        const req = createRequire(import.meta.url);
+        const bpReq = createRequire(req.resolve("bedrock-protocol"));
+        const { Authflow, Titles } = bpReq("prismarine-auth");
+        const { RealmAPI } = bpReq("prismarine-realms");
+        const r = c.realm || {};
+        const version = opts.version || bpReq("bedrock-protocol/src/options").CURRENT_VERSION;
+        this.authflow = this.authflow || new Authflow(opts.username, opts.profilesFolder, { flow: "live", authTitle: Titles.MinecraftNintendoSwitch, deviceType: "Nintendo" });
+        opts.authflow = this.authflow;
+        const api = RealmAPI.from(this.authflow, "bedrock", { minecraftVersion: version.startsWith("1.") ? version : `1.${version}` });
+        let realm;
+        if (r.invite) realm = await api.getRealmFromInvite(r.invite);
+        else {
+            const realms = await api.getRealms();
+            if (!realms.length) throw new Error("this account is not a member of any Realm; invite it and accept the invite (or give the invite link in the setup)");
+            realm = r.id ? realms.find(x => String(x.id) === String(r.id)) : realms[0];
+            if (!realm) throw new Error(`Realm ${r.id} not found among: ${realms.map(x => `${x.name} (${x.id})`).join(", ")}`);
+        }
+        const join = await api.rest.get(`/worlds/${realm.id}/join`);
+        if (join.networkProtocol === "NETHERNET_JSONRPC") {
+            const region = String(join.sessionRegionData?.regionName || "").toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "");
+            this.signalFailures = this.signalFailures || 0;
+            const host = (region && this.signalFailures < 1) ? `signal-${region}.franchise.minecraft-services.net` : "signal.franchise.minecraft-services.net";
+            opts.transport = "nethernet";
+            opts.nethernet = { networkId: join.address, signalling: "services", _signallingProtocol: "jsonrpc", _signallingHost: host, webrtcBackend: "werift" };
+            opts.skipPing = true;
+            log("info", `Realm "${realm.name}" (${realm.id}) uses NetherNet; signalling via ${host}${region ? ` (region ${region})` : ""}`);
+        } else {
+            const m = String(join.address || "").match(/^(.*):(\d+)$/);
+            if (!m) throw new Error("Realm returned no usable address");
+            opts.transport = "raknet"; opts.host = m[1].replace(/^\[|\]$/g, ""); opts.port = Number(m[2]);
+            log("info", `Realm "${realm.name}" (${realm.id}) uses RakNet at ${opts.host}:${opts.port}`);
+        }
     }
 
     scheduleReconnect() {
@@ -298,6 +335,7 @@ async function main() {
     }
     const cfg = loadConfig(argv);
     logLevel = LEVELS[argAfter(argv, "--log") || cfg.log || "info"] ?? 1;
+    if (logLevel === 0) process.env.DEBUG = [process.env.DEBUG, "minecraft-protocol", "bedrock-protocol:*", "prismarine-auth"].filter(Boolean).join(",");
     if (argv.includes("--test-provider")) {
         const id = argAfter(argv, "--test-provider") || cfg.defaults.provider;
         log("info", `testing provider ${id} ...`);

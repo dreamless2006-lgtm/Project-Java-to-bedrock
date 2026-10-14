@@ -28,4 +28,5 @@ echo "Real AI bridge is installed in $DIR. Starting it (first run asks a few que
 echo "Next time, just run:  bash ~/real-ai/bridge/phone.sh"
 echo
 if [ "$1" = "setup" ]; then exec node index.mjs --setup < /dev/tty; fi
+if [ "$1" = "debug" ]; then exec node index.mjs --log debug < /dev/tty; fi
 exec node index.mjs < /dev/tty
