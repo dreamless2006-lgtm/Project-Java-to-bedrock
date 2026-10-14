@@ -11,6 +11,8 @@ import { dist, dirName, fmtPos, inventoryMap, containerOf, healthOf, virtualFood
 import { nameOf, isModdedId, srpMobInfo } from "./world_content.js";
 import { craftPlan, smeltPlan, isLog, isPlanks } from "./crafting.js";
 import { getWorldConfig } from "./config.js";
+import { presetBlueprint } from "./blueprints.js";
+export { presetBlueprint };
 
 const SOURCE = "llm";
 const PRIO = NAV.TASK + 2;          // beats jobs, loses to survival/combat/water reflexes
@@ -33,7 +35,6 @@ function solid(b) { return !!b && !b.isAir && !b.isLiquid; }
 function goTo(bot, target, mode = "sprint", prio = PRIO, enterWater = false) { requestMove(bot, target, { priority: prio, source: SOURCE, mode, ttl: STEP * 3, enterWater }); }
 function stopMoving(bot) { releaseMove(bot, SOURCE); }
 function lookAt(bot, target) { try { faceBlock(bot, target); } catch (e) { /* ignore */ } }
-function say(brain, text) { try { brain.sayNow(text); } catch (e) { /* ignore */ } }
 function cfg() { return getWorldConfig(); }
 
 export function findPlayer(name) {
@@ -41,7 +42,11 @@ export function findPlayer(name) {
     const q = String(name).toLowerCase().replace(/^@/, "");
     let players = [];
     try { players = world.getAllPlayers(); } catch (e) { return null; }
-    return players.find(p => p.name.toLowerCase() === q) || players.find(p => p.name.toLowerCase().startsWith(q)) || players.find(p => (p.nameTag || "").toLowerCase().includes(q)) || null;
+    const exact = players.find(p => p.name.toLowerCase() === q);
+    if (exact) return exact;
+    const prefix = players.filter(p => p.name.toLowerCase().startsWith(q));
+    if (prefix.length === 1) return prefix[0];
+    return null;
 }
 
 export function findEntityByName(bot, name, range = 48) {
@@ -206,63 +211,6 @@ function findSafeSpot(dim, x, z, yHint) {
     return null;
 }
 
-// --------------------------------------------------------- blueprints ---
-export function presetBlueprint(preset, material, size = {}) {
-    const w = Math.max(3, Math.min(16, size.width || 5)), d = Math.max(3, Math.min(16, size.depth || 5)), h = Math.max(2, Math.min(12, size.height || 3));
-    const bp = [];
-    const put = (dx, dy, dz, block = material) => bp.push({ dx, dy, dz, block });
-    const hx = Math.floor(w / 2), hz = Math.floor(d / 2);
-    switch (preset) {
-        case "house": {
-            for (let x = 0; x < w; x++) for (let z = 0; z < d; z++) {
-                const edge = x === 0 || x === w - 1 || z === 0 || z === d - 1;
-                for (let y = 0; y < h; y++) {
-                    const isDoor = z === 0 && x === hx && y < 2;
-                    if (edge && !isDoor) {
-                        const window = y === 1 && !isDoor && ((x === 0 || x === w - 1) ? (z % 2 === 1 && z !== 0 && z !== d - 1) : (x % 2 === 1 && x !== 0 && x !== w - 1 && z === d - 1));
-                        put(x - hx, y, z, window ? "minecraft:glass" : material);
-                    }
-                }
-                put(x - hx, h, z, material);                       // flat roof
-                if (!edge) put(x - hx, -1, z, material);           // floor
-            }
-            put(1 - hx, 1, 1, "minecraft:torch"); put(w - 2 - hx, 1, d - 2, "minecraft:torch");
-            put(w - 2 - hx, 0, d - 2, "minecraft:crafting_table"); put(1 - hx, 0, d - 2, "minecraft:chest");
-            break;
-        }
-        case "shelter": {
-            for (let x = -1; x <= 1; x++) for (let z = 0; z <= 2; z++) for (let y = 0; y <= 2; y++) {
-                const edge = x === -1 || x === 1 || z === 0 || z === 2 || y === 2;
-                const door = z === 0 && x === 0 && y < 2;
-                if (edge && !door) put(x, y, z, material);
-            }
-            put(0, 1, 1, "minecraft:torch");
-            break;
-        }
-        case "wall": for (let x = 0; x < w; x++) for (let y = 0; y < h; y++) put(x - hx, y, 1); break;
-        case "tower": {
-            for (let y = 0; y < h; y++) for (let x = -1; x <= 1; x++) for (let z = 0; z <= 2; z++) {
-                const edge = x === -1 || x === 1 || z === 0 || z === 2;
-                if (edge && !(y < 2 && z === 0 && x === 0)) put(x, y, z);
-                if (!edge && y === h - 1) put(x, y, z);
-            }
-            for (let y = 0; y < h - 1; y++) put(0, y, 2, "minecraft:ladder");
-            break;
-        }
-        case "bridge": for (let z = 1; z <= Math.max(4, w); z++) for (let x = -1; x <= 1; x++) put(x, -1, z); break;
-        case "pillar": for (let y = 0; y < h; y++) put(1, y, 1); break;
-        case "farm": {
-            for (let x = -2; x <= 2; x++) for (let z = 0; z <= 4; z++) {
-                if (x === 0 && z === 2) { put(x, -1, z, "minecraft:water"); continue; }
-                put(x, -1, z, "minecraft:farmland"); put(x, 0, z, "minecraft:wheat");
-            }
-            break;
-        }
-        default: return null;
-    }
-    return bp;
-}
-
 // ------------------------------------------------------------ handlers ---
 // Each handler: start(a, ctx) -> {done, result} | state ; step(state, ctx) -> {done, result} | undefined
 const H = {};
@@ -278,7 +226,8 @@ H.stop = {
 
 H.look_at = {
     start: (a, ctx) => {
-        const t = a.name ? findEntityByName(ctx.bot, a.name, 64) : null;
+        let t = a.name ? findEntityByName(ctx.bot, a.name, 64) : null;
+        if (t && t.dimension?.id !== ctx.bot.dimension.id) t = null;
         const target = t ? t.location : (a.x !== undefined ? { x: a.x, y: a.y ?? ctx.bot.location.y, z: a.z } : null);
         if (!target) return { done: true, result: `look_at: could not find ${a.name || "target"}` };
         lookAt(ctx.bot, target);
@@ -323,6 +272,7 @@ H.follow = {
     start: (a, ctx) => {
         const t = findEntityByName(ctx.bot, a.name, 160);
         if (!t) return { done: true, result: `follow: nobody called ${a.name} is nearby` };
+        if (t.dimension?.id !== ctx.bot.dimension.id) return { done: true, result: `${a.name} is in another dimension` };
         ctx.actuator.follow = { targetId: t.id, name: a.name };
         return { done: true, result: `following ${a.name} (use stop to end)` };
     },
@@ -349,6 +299,7 @@ H.attack = {
     start: (a, ctx) => {
         const t = findEntityByName(ctx.bot, a.name, 48);
         if (!t) return { done: true, result: `attack: no ${a.name} nearby` };
+        if (t.dimension?.id !== ctx.bot.dimension.id || dist(t.location, ctx.bot.location) > 64) return { done: true, result: `${a.name} is too far away to attack` };
         if (t.typeId === "minecraft:player" && t.hasTag("aisb_bridge")) return { done: true, result: "that is the relay account, leave it alone" };
         try { setAITarget(ctx.bot, t); ctx.bot.addTag("allow_attack"); ctx.bot.applyDamage(0, { cause: EntityDamageCause.entityAttack, damagingEntity: t }); } catch (e) { /* ignore */ }
         equipBest(ctx.bot, "sword");
@@ -439,8 +390,8 @@ H.explore = {
         }
         if (Math.abs(bot.location.x - s.target.x) < 3 && Math.abs(bot.location.z - s.target.z) < 3) { stopMoving(bot); return { done: true, result: "explored to " + fmtPos(bot.location) }; }
         if (ctx.now - s.started > MOVE_TIMEOUT) { stopMoving(bot); return { done: true, result: `explored for a while, now at ${fmtPos(bot.location)}` }; }
-        const top = findSafeSpot(bot.dimension, s.target.x, s.target.z, bot.location.y);
-        goTo(bot, top || s.target, "sprint", PRIO, true);
+        if (!s.top || ctx.now - (s.topAt || 0) > 80) { s.top = findSafeSpot(bot.dimension, s.target.x, s.target.z, bot.location.y); s.topAt = ctx.now; }
+        goTo(bot, s.top || s.target, "sprint", PRIO, true);
         const moved = dist(bot.location, s.lastPos); s.stuck = moved < 0.15 ? s.stuck + 1 : 0; s.lastPos = { ...bot.location };
         if (s.stuck === 6) { try { jump(bot); } catch (e) { /* ignore */ } }
         if (s.stuck > 30) { stopMoving(bot); return { done: true, result: `blocked while exploring at ${fmtPos(bot.location)}` }; }
@@ -464,7 +415,6 @@ H.build = {
         const steps = bp.map(b => { const [rx, rz] = rot([b.dx, b.dz]); return { x: ox + rx, y: oy + b.dy, z: oz + rz, block: b.block || material }; });
         steps.sort((p, q) => p.y - q.y || dist(bot.location, p) - dist(bot.location, q));
         try { bot.addTag("is_busy_building"); bot.triggerEvent("cancel_stroll"); } catch (e) { /* ignore */ }
-        say(ctx.brain, null);
         return { steps, i: 0, placed: 0, skipped: 0, name: a.name || a.preset, waiting: 0, origin: { x: ox, y: oy, z: oz } };
     },
     step: (s, ctx) => {
@@ -702,6 +652,7 @@ H.give_item = {
     start: (a, ctx) => {
         const p = findPlayer(a.player) || findEntityByName(ctx.bot, a.player, 64);
         if (!p) return { done: true, result: `${a.player} is not around` };
+        if (p.dimension?.id !== ctx.bot.dimension.id || dist(p.location, ctx.bot.location) > 96) return { done: true, result: `${a.player} is too far away` };
         const id = resolveItemId(ctx.bot, a.item);
         if (!id) return { done: true, result: `no ${a.item} in inventory` };
         return { targetId: p.id, id, amount: a.amount || 1, name: a.player, started: ctx.now };
@@ -867,7 +818,7 @@ H.travel = {
         const c = containerOf(bot);
         if (haveObsidian) takeItems(c, "minecraft:obsidian", 10);
         for (const f of frame) { try { bot.dimension.runCommand(`setblock ${f.x} ${f.y} ${f.z} minecraft:obsidian`); } catch (e) { /* ignore */ } }
-        for (let x = 1; x <= 2; x++) for (let y = 1; y <= 3; y++) { try { bot.dimension.runCommand(`setblock ${bx + x} ${by + y} ${bz} minecraft:portal ["portal_axis":"x"]`); } catch (e) { /* ignore */ } }
+        for (let x = 1; x <= 2; x++) for (let y = 1; y <= 3; y++) { try { bot.dimension.runCommand(`setblock ${bx + x} ${by + y} ${bz} minecraft:portal ["portal_axis"="x"]`); } catch (e) { /* ignore */ } }
         try { bot.dimension.playSound("fire.ignite", { x: bx + 1, y: by + 1, z: bz }); } catch (e) { /* ignore */ }
         return { phase: "walk", portal: { x: bx + 1, y: by + 1, z: bz }, targetId, started: ctx.now, name: a.dimension, built: true };
     },

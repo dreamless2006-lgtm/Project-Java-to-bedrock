@@ -13,6 +13,7 @@ import { encodeFrames, Reassembler, nextMessageId, packMessage, unpackMessage, D
 import { getProvider } from "./providers/index.js";
 import { parseJsonLoose } from "./json_util.js";
 import { normalizeReply } from "./action_schema.js";
+import { getWorldConfig } from "./config.js";
 
 export const SCRIPT_EVENT_ID = "aisb:in";
 export const BRIDGE_TAG = "aisb_bridge";
@@ -37,9 +38,11 @@ export class BridgeChannel {
         this._subscribed = true;
         system.afterEvents.scriptEventReceive.subscribe(ev => {
             if (ev.id !== SCRIPT_EVENT_ID) return;
-            const got = this.reassembler.push(ev.message);
             const sender = ev.sourceEntity;
-            if (sender && sender.typeId === "minecraft:player") this._touch(sender);
+            if (!sender || sender.typeId !== "minecraft:player") return;
+            this._touch(sender);
+            if (!this.player || this.player.id !== sender.id) return;      // not the accepted bridge account
+            const got = this.reassembler.push(ev.message);
             if (!got) return;
             const msg = unpackMessage(got.text);
             if (msg) this._handle(msg, sender);
@@ -51,6 +54,12 @@ export class BridgeChannel {
     onHello(fn) { this.listeners.hello.push(fn); }
 
     _touch(player) {
+        // Only operators can run /scriptevent, and optionally only the configured bridge account.
+        try {
+            const wanted = getWorldConfig().bridgeName;
+            if (wanted && player.name.toLowerCase() !== String(wanted).toLowerCase()) return;
+            if (this.player && this.player.isValid && this.player.id !== player.id && system.currentTick - this.lastSeen < HELLO_TIMEOUT_TICKS) return;   // one bridge at a time
+        } catch (e) { /* ignore */ }
         this.player = player;
         this.lastSeen = system.currentTick;
         try { if (!player.hasTag(BRIDGE_TAG)) player.addTag(BRIDGE_TAG); } catch (e) { /* ignore */ }

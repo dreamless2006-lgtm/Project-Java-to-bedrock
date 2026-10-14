@@ -131,6 +131,7 @@ export function handleCommand(player, message) {
         case "fakechat": updateWorldConfig({ legacyFakeChat: rest[0] === "on" }); return reply(player, `§afake player chat ${rest[0] === "on" ? "on" : "off"}`);
         case "debug": manager.debug = rest[0] === "on"; return reply(player, `§adebug ${manager.debug ? "on (see server log)" : "off"}`);
         case "rules": { const text = rest.join(" "); updateWorldConfig({ serverRules: text }); for (const [, b] of allBrains()) b.systemCache = null; return reply(player, text ? "§aserver rules set" : "§aserver rules cleared"); }
+        case "bridgename": updateWorldConfig({ bridgeName: rest[0] || "" }); return reply(player, rest[0] ? `§aonly ${rest[0]} may act as the bridge` : "§aany operator account may act as the bridge");
         case "maxbrains": { const n = Number(rest[0]); if (!(n >= 0 && n <= 40)) return reply(player, "§cusage: !ai maxbrains 0-40"); updateWorldConfig({ maxBrains: n }); return reply(player, `§amax brains ${n}`); }
         case "autonomy": { const v = rest[0]; if (!["full", "companions_only", "off"].includes(v)) return reply(player, "§cusage: !ai autonomy full|companions_only|off"); updateWorldConfig({ autonomy: v }); manager.refreshEnabled(); return reply(player, `§aautonomy ${v}`); }
         case "budget": {

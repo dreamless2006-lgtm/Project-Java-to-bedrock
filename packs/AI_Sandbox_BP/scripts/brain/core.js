@@ -180,8 +180,11 @@ export class BotBrain {
         if (!text) return;
         const cfg = getWorldConfig();
         const line = cleanChat(text);
-        if (!line || line === this.lastSay) return;
+        if (!line) return;
+        // no verbatim repeats within two minutes (models love to echo themselves)
+        if (line === this.lastSay && system.currentTick - (this.lastSayTick || 0) < 20 * 120) return;
         this.lastSay = line;
+        this.lastSayTick = system.currentTick;
         if (cfg.chatVolume === 0) return;
         if (to) {
             const p = findPlayer(to);
@@ -388,20 +391,26 @@ class BrainManager {
         } catch (e) { console.warn("[AISB] chatSend event unavailable (stable API); chat reaches bots through the bridge or the Talk menu"); }
         try {
             world.afterEvents.entityHurt.subscribe(ev => {
-                const b = getBrain(ev.hurtEntity);
-                if (!b) return;
-                const src = ev.damageSource;
-                const who = src?.damagingEntity ? (src.damagingEntity.nameTag || src.damagingEntity.typeId.replace("minecraft:", "")) : (src?.cause || "something");
-                if (ev.damage >= 2) b.noteEvent("hurt", `took ${Math.round(ev.damage)} damage from ${who}`);
-                if (src?.damagingEntity?.typeId === "minecraft:player") notePerson(b.memory, src.damagingEntity.name, { note: "attacked me" }, Date.now());
+                try {
+                    const b = getBrain(ev.hurtEntity);
+                    if (!b) return;
+                    const src = ev.damageSource;
+                    let who = src?.cause || "something";
+                    try { if (src?.damagingEntity?.isValid) who = src.damagingEntity.nameTag || src.damagingEntity.typeId.replace("minecraft:", ""); } catch (e) { /* ignore */ }
+                    if (ev.damage >= 2) b.noteEvent("hurt", `took ${Math.round(ev.damage)} damage from ${who}`);
+                    try { if (src?.damagingEntity?.typeId === "minecraft:player") notePerson(b.memory, src.damagingEntity.name, { note: "attacked me" }, Date.now()); } catch (e) { /* ignore */ }
+                } catch (e) { /* ignore */ }
             });
             world.afterEvents.entityDie.subscribe(ev => {
                 const dead = ev.deadEntity;
                 const b = getBrain(dead);
                 if (b) {
-                    const killer = ev.damageSource?.damagingEntity;
-                    addEpisode(b.memory, `I died${killer ? " to " + (killer.nameTag || killer.typeId.replace("minecraft:", "")) : ""} at ${fmtPos(dead.location)}`, Date.now());
-                    b.saveMemory();
+                    try {
+                        let killerName = "";
+                        try { const k = ev.damageSource?.damagingEntity; if (k?.isValid) killerName = k.nameTag || k.typeId.replace("minecraft:", ""); } catch (e) { /* ignore */ }
+                        addEpisode(b.memory, `I died${killerName ? " to " + killerName : ""} at ${fmtPos(dead.location)}`, Date.now());
+                        b.saveMemory();
+                    } catch (e) { /* ignore */ }
                     unregisterBrain(dead.id);
                     return;
                 }

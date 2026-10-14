@@ -30,6 +30,7 @@ export const DEFAULTS = Object.freeze({
     keepAlive: true,            // ticking areas around bot homes when nobody is online (BDS)
     autoCure: true,             // cure Call of the Hive on bots so they are not replaced by parasites
     legacyFakeChat: false,      // the original fake-player chat simulator
+    bridgeName: "",             // optional: only this gamertag may act as the bridge
     serverRules: "",
     budget: { ...BUDGET_DEFAULTS },
 });
@@ -71,7 +72,7 @@ function applyServerOverrides(cfg) {
         "aisb.provider": "provider", "aisb.model": "model", "aisb.transport": "transport", "aisb.effort": "effort",
         "aisb.maxTokens": "maxTokens", "aisb.maxBrains": "maxBrains", "aisb.autonomy": "autonomy", "aisb.chatVolume": "chatVolume",
         "aisb.callByName": "callByName", "aisb.freeBuild": "freeBuild", "aisb.keepAlive": "keepAlive", "aisb.serverRules": "serverRules",
-        "aisb.thinkIdleSec": "thinkIdleSec", "aisb.thinkActiveSec": "thinkActiveSec", "aisb.enabled": "enabled",
+        "aisb.thinkIdleSec": "thinkIdleSec", "aisb.thinkActiveSec": "thinkActiveSec", "aisb.enabled": "enabled", "aisb.bridgeName": "bridgeName",
     };
     for (const [varName, key] of Object.entries(map)) {
         const v = readVariable(varName);
