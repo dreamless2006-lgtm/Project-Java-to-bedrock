@@ -49,10 +49,10 @@
         "minepreggo:growth": {
           "type": "float",
           "range": [
-            0.0,
-            1.0
+            0,
+            1
           ],
-          "default": 0.0,
+          "default": 0,
           "client_sync": true
         },
         "minepreggo:gender": {
@@ -78,6 +78,24 @@
         "minepreggo:navel": {
           "type": "bool",
           "default": false,
+          "client_sync": true
+        },
+        "minepreggo:belly": {
+          "type": "enum",
+          "values": [
+            "none",
+            "p0",
+            "p1",
+            "p2",
+            "p3",
+            "p4",
+            "p5",
+            "p6",
+            "p7",
+            "p8",
+            "p9"
+          ],
+          "default": "none",
           "client_sync": true
         }
       }
@@ -123,12 +141,12 @@
         "jump": 0.05,
         "attack": 0.1,
         "damage": 0.1,
-        "heal": 6.0,
-        "lunge": 4.0,
+        "heal": 6,
+        "lunge": 4,
         "sprint_jump": 0.2,
         "mine": 0.005,
         "swim": 0.01,
-        "walk": 0.0
+        "walk": 0
       },
       "minecraft:experience_reward": {
         "on_death": "Math.Min(query.player_level * 7, 100)"
@@ -192,8 +210,8 @@
             },
             "horizontal_power": 0.165,
             "vertical_power": 0.105,
-            "vertical_velocity_cap": 8.0,
-            "slowdown_scale": 1.0,
+            "vertical_velocity_cap": 8,
+            "slowdown_scale": 1,
             "scale_with_damage": true,
             "knockback_mode": "hit_direction",
             "extra_knockback_approach": "multiply_reduced"
@@ -207,8 +225,8 @@
             },
             "horizontal_power": 0.165,
             "vertical_power": 0.105,
-            "vertical_velocity_cap": 8.0,
-            "slowdown_scale": 1.0,
+            "vertical_velocity_cap": 8,
+            "slowdown_scale": 1,
             "scale_with_damage": true,
             "knockback_mode": "hit_direction",
             "extra_knockback_approach": "multiply_reduced"
@@ -222,8 +240,8 @@
             },
             "horizontal_power": 0.165,
             "vertical_power": 0.24,
-            "vertical_velocity_cap": 8.0,
-            "slowdown_scale": 1.0,
+            "vertical_velocity_cap": 8,
+            "slowdown_scale": 1,
             "scale_with_damage": true,
             "knockback_mode": "hit_direction",
             "extra_knockback_approach": "multiply_reduced"
@@ -237,8 +255,8 @@
             },
             "horizontal_power": 0.165,
             "vertical_power": 0.105,
-            "vertical_velocity_cap": 8.0,
-            "slowdown_scale": 1.0,
+            "vertical_velocity_cap": 8,
+            "slowdown_scale": 1,
             "scale_with_damage": true,
             "knockback_mode": "hit_direction",
             "extra_knockback_approach": "multiply_reduced"
@@ -252,8 +270,8 @@
             },
             "horizontal_power": 0.365,
             "vertical_power": 0.09,
-            "vertical_velocity_cap": 8.0,
-            "slowdown_scale": 1.0,
+            "vertical_velocity_cap": 8,
+            "slowdown_scale": 1,
             "scale_with_damage": true,
             "knockback_mode": "hit_direction",
             "extra_knockback_approach": "multiply_reduced"
@@ -267,8 +285,8 @@
             },
             "horizontal_power": 0.165,
             "vertical_power": 0.18,
-            "vertical_velocity_cap": 8.0,
-            "slowdown_scale": 1.0,
+            "vertical_velocity_cap": 8,
+            "slowdown_scale": 1,
             "scale_with_damage": true,
             "knockback_mode": "hit_direction",
             "extra_knockback_approach": "multiply_reduced"
@@ -282,8 +300,8 @@
             },
             "horizontal_power": 0.265,
             "vertical_power": 0.09,
-            "vertical_velocity_cap": 8.0,
-            "slowdown_scale": 1.0,
+            "vertical_velocity_cap": 8,
+            "slowdown_scale": 1,
             "scale_with_damage": true,
             "knockback_mode": "hit_direction",
             "extra_knockback_approach": "multiply_reduced"
@@ -297,8 +315,8 @@
             },
             "horizontal_power": 0.165,
             "vertical_power": 0.09,
-            "vertical_velocity_cap": 8.0,
-            "slowdown_scale": 1.0,
+            "vertical_velocity_cap": 8,
+            "slowdown_scale": 1,
             "scale_with_damage": true,
             "knockback_mode": "hit_direction",
             "extra_knockback_approach": "multiply_reduced"
@@ -312,8 +330,8 @@
             },
             "horizontal_power": 0.165,
             "vertical_power": 0.09,
-            "vertical_velocity_cap": 8.0,
-            "slowdown_scale": 1.0,
+            "vertical_velocity_cap": 8,
+            "slowdown_scale": 1,
             "scale_with_damage": true,
             "knockback_mode": "hit_direction",
             "extra_knockback_approach": "multiply_reduced"
@@ -327,8 +345,8 @@
             },
             "horizontal_power": 0.165,
             "vertical_power": 0.09,
-            "vertical_velocity_cap": 8.0,
-            "slowdown_scale": 1.0,
+            "vertical_velocity_cap": 8,
+            "slowdown_scale": 1,
             "scale_with_damage": true,
             "knockback_mode": "hit_direction",
             "extra_knockback_approach": "multiply_reduced"
@@ -342,8 +360,8 @@
             },
             "horizontal_power": 0.165,
             "vertical_power": 0.09,
-            "vertical_velocity_cap": 8.0,
-            "slowdown_scale": 1.0,
+            "vertical_velocity_cap": 8,
+            "slowdown_scale": 1,
             "scale_with_damage": true,
             "knockback_mode": "hit_direction",
             "extra_knockback_approach": "multiply_reduced"
@@ -357,8 +375,8 @@
             },
             "horizontal_power": 0.165,
             "vertical_power": 0.105,
-            "vertical_velocity_cap": 8.0,
-            "slowdown_scale": 1.0,
+            "vertical_velocity_cap": 8,
+            "slowdown_scale": 1,
             "scale_with_damage": true,
             "knockback_mode": "hit_direction",
             "extra_knockback_approach": "multiply_reduced"
@@ -415,8 +433,8 @@
         "minecraft:timer": {
           "looping": false,
           "time": [
-            0.0,
-            0.0
+            0,
+            0
           ],
           "time_down_event": {
             "event": "minecraft:clear_add_raid_omen",

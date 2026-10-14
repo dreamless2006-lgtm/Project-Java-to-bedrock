@@ -55,8 +55,7 @@
         "minepreggo_steve_p8": "textures/minepreggo/entity/player/predefined/alex/alex_p8",
         "minepreggo_steve_p8_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p8_extra",
         "minepreggo_steve_p9": "textures/minepreggo/entity/player/predefined/alex/alex_p9",
-        "minepreggo_steve_p9_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p9_extra",
-        "minepreggo_alex_extra_all": "textures/minepreggo/entity/player/predefined/alex/alex_extra_all"
+        "minepreggo_steve_p9_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p9_extra"
       },
       "geometry": {
         "default": "geometry.humanoid.custom",
@@ -64,8 +63,26 @@
         "minepreggo_boobs_custom": "geometry.minepreggo.player_boobs_custom",
         "minepreggo_boobs_predefined": "geometry.minepreggo.player_boobs_predefined",
         "minepreggo_labor": "geometry.minepreggo.player_labor",
-        "minepreggo_belly_custom": "geometry.minepreggo.player_belly_custom",
-        "minepreggo_belly_predefined": "geometry.minepreggo.player_belly_predefined"
+        "minepreggo_body_custom_p0": "geometry.minepreggo.player_body_custom_p0",
+        "minepreggo_body_predefined_p0": "geometry.minepreggo.player_body_predefined_p0",
+        "minepreggo_body_custom_p1": "geometry.minepreggo.player_body_custom_p1",
+        "minepreggo_body_predefined_p1": "geometry.minepreggo.player_body_predefined_p1",
+        "minepreggo_body_custom_p2": "geometry.minepreggo.player_body_custom_p2",
+        "minepreggo_body_predefined_p2": "geometry.minepreggo.player_body_predefined_p2",
+        "minepreggo_body_custom_p3": "geometry.minepreggo.player_body_custom_p3",
+        "minepreggo_body_predefined_p3": "geometry.minepreggo.player_body_predefined_p3",
+        "minepreggo_body_custom_p4": "geometry.minepreggo.player_body_custom_p4",
+        "minepreggo_body_predefined_p4": "geometry.minepreggo.player_body_predefined_p4",
+        "minepreggo_body_custom_p5": "geometry.minepreggo.player_body_custom_p5",
+        "minepreggo_body_predefined_p5": "geometry.minepreggo.player_body_predefined_p5",
+        "minepreggo_body_custom_p6": "geometry.minepreggo.player_body_custom_p6",
+        "minepreggo_body_predefined_p6": "geometry.minepreggo.player_body_predefined_p6",
+        "minepreggo_body_custom_p7": "geometry.minepreggo.player_body_custom_p7",
+        "minepreggo_body_predefined_p7": "geometry.minepreggo.player_body_predefined_p7",
+        "minepreggo_body_custom_p8": "geometry.minepreggo.player_body_custom_p8",
+        "minepreggo_body_predefined_p8": "geometry.minepreggo.player_body_predefined_p8",
+        "minepreggo_body_custom_p9": "geometry.minepreggo.player_body_custom_p9",
+        "minepreggo_body_predefined_p9": "geometry.minepreggo.player_body_predefined_p9"
       },
       "scripts": {
         "scale": "0.9375",
@@ -89,7 +106,9 @@
           "variable.riding_y_offset = query.is_riding_any_entity_of_type('minecraft:minecart', 'minecraft:boat', 'minecraft:chest_boat', 'minecraft:strider') ? -3.0 : 0.0;",
           "variable.mp_phase = query.property('minepreggo:phase');",
           "variable.mp_pose = query.property('minepreggo:pose');",
-          "variable.mp_phase = variable.mp_phase >= 0 ? variable.mp_phase : ((variable.mp_pose == 'none' || variable.mp_pose == 'postbirth' || variable.mp_pose == 'miscarriage') ? -1 : 5);",
+          "variable.mp_bp = (query.property('minepreggo:belly') == 'p0' ? 0 : (query.property('minepreggo:belly') == 'p1' ? 1 : (query.property('minepreggo:belly') == 'p2' ? 2 : (query.property('minepreggo:belly') == 'p3' ? 3 : (query.property('minepreggo:belly') == 'p4' ? 4 : (query.property('minepreggo:belly') == 'p5' ? 5 : (query.property('minepreggo:belly') == 'p6' ? 6 : (query.property('minepreggo:belly') == 'p7' ? 7 : (query.property('minepreggo:belly') == 'p8' ? 8 : (query.property('minepreggo:belly') == 'p9' ? 9 : -1))))))))));",
+          "variable.mp_bp = variable.mp_bp >= 0 ? variable.mp_bp : (variable.mp_phase >= 0 ? variable.mp_phase : ((variable.mp_pose == 'none' || variable.mp_pose == 'postbirth' || variable.mp_pose == 'miscarriage') ? -1 : 5));",
+          "variable.mp_phase = variable.mp_bp;",
           "variable.mp_navel = query.property('minepreggo:navel');",
           "v.push = variable.mp_pose == 'birth' ? q.property('minepreggo:growth') : 0.0;",
           "variable.mp_kick = query.property('minepreggo:kick');",
@@ -503,16 +522,70 @@
           "controller.render.minepreggo.player_boobs": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_female && !variable.mp_pregnant && !variable.mp_predefined"
         },
         {
-          "controller.render.minepreggo.player_belly_custom": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && !variable.mp_predefined"
-        },
-        {
-          "controller.render.minepreggo.player_belly_predefined": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && variable.mp_predefined"
-        },
-        {
           "controller.render.minepreggo.player_labor": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.mp_labor"
         },
         {
           "controller.render.minepreggo.player_boobs_predefined": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_female && !variable.mp_pregnant && variable.mp_predefined"
+        },
+        {
+          "controller.render.minepreggo.player_belly_custom_p0": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && !variable.mp_predefined && variable.mp_bp == 0"
+        },
+        {
+          "controller.render.minepreggo.player_belly_predefined_p0": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 0"
+        },
+        {
+          "controller.render.minepreggo.player_belly_custom_p1": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && !variable.mp_predefined && variable.mp_bp == 1"
+        },
+        {
+          "controller.render.minepreggo.player_belly_predefined_p1": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 1"
+        },
+        {
+          "controller.render.minepreggo.player_belly_custom_p2": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && !variable.mp_predefined && variable.mp_bp == 2"
+        },
+        {
+          "controller.render.minepreggo.player_belly_predefined_p2": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 2"
+        },
+        {
+          "controller.render.minepreggo.player_belly_custom_p3": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && !variable.mp_predefined && variable.mp_bp == 3"
+        },
+        {
+          "controller.render.minepreggo.player_belly_predefined_p3": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 3"
+        },
+        {
+          "controller.render.minepreggo.player_belly_custom_p4": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && !variable.mp_predefined && variable.mp_bp == 4"
+        },
+        {
+          "controller.render.minepreggo.player_belly_predefined_p4": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 4"
+        },
+        {
+          "controller.render.minepreggo.player_belly_custom_p5": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && !variable.mp_predefined && variable.mp_bp == 5"
+        },
+        {
+          "controller.render.minepreggo.player_belly_predefined_p5": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 5"
+        },
+        {
+          "controller.render.minepreggo.player_belly_custom_p6": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && !variable.mp_predefined && variable.mp_bp == 6"
+        },
+        {
+          "controller.render.minepreggo.player_belly_predefined_p6": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 6"
+        },
+        {
+          "controller.render.minepreggo.player_belly_custom_p7": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && !variable.mp_predefined && variable.mp_bp == 7"
+        },
+        {
+          "controller.render.minepreggo.player_belly_predefined_p7": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 7"
+        },
+        {
+          "controller.render.minepreggo.player_belly_custom_p8": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && !variable.mp_predefined && variable.mp_bp == 8"
+        },
+        {
+          "controller.render.minepreggo.player_belly_predefined_p8": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 8"
+        },
+        {
+          "controller.render.minepreggo.player_belly_custom_p9": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && !variable.mp_predefined && variable.mp_bp == 9"
+        },
+        {
+          "controller.render.minepreggo.player_belly_predefined_p9": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 9"
         }
       ],
       "enable_attachables": true

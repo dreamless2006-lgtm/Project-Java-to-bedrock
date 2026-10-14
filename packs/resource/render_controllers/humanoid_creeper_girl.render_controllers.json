@@ -16,177 +16,177 @@
         "g": "v.flash > 0.0 ? 1.0 : this",
         "b": "v.flash > 0.0 ? 1.0 : this",
         "a": "v.flash > 0.0 ? v.flash : this"
-      },
-      "part_visibility": [
+      }
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_p0": {
+      "geometry": "Geometry.p0",
+      "materials": [
         {
-          "*": true
-        },
-        {
-          "belly_p0": "v.phase == 0"
-        },
-        {
-          "belly_p1": "v.phase == 1"
-        },
-        {
-          "belly_p2": "v.phase == 2"
-        },
-        {
-          "belly_p3": "v.phase == 3"
-        },
-        {
-          "front_kick_p3": "v.phase == 3"
-        },
-        {
-          "right_kick_p3": "v.phase == 3"
-        },
-        {
-          "left_kick_p3": "v.phase == 3"
-        },
-        {
-          "belly_p4": "v.phase == 4"
-        },
-        {
-          "front_kick_p4": "v.phase == 4"
-        },
-        {
-          "right_kick_p4": "v.phase == 4"
-        },
-        {
-          "left_kick_p4": "v.phase == 4"
-        },
-        {
-          "belly_p5": "v.phase == 5"
-        },
-        {
-          "left_kick_p5": "v.phase == 5"
-        },
-        {
-          "right_kick_p5": "v.phase == 5"
-        },
-        {
-          "front_kick_p5": "v.phase == 5"
-        },
-        {
-          "belly_p6": "v.phase == 6"
-        },
-        {
-          "bellyCube6_r1_p6": "v.phase == 6"
-        },
-        {
-          "bellyCube5_r1_p6": "v.phase == 6"
-        },
-        {
-          "bellyCube4_r1_p6": "v.phase == 6"
-        },
-        {
-          "bellyCube3_r1_p6": "v.phase == 6"
-        },
-        {
-          "top_kick_p6": "v.phase == 6"
-        },
-        {
-          "bottom_kick_p6": "v.phase == 6"
-        },
-        {
-          "front_kick_p6": "v.phase == 6"
-        },
-        {
-          "right_kick_p6": "v.phase == 6"
-        },
-        {
-          "left_kick_p6": "v.phase == 6"
-        },
-        {
-          "belly_p7": "v.phase == 7"
-        },
-        {
-          "bellyCube7_r1_p7": "v.phase == 7"
-        },
-        {
-          "bellyCube6_r1_p7": "v.phase == 7"
-        },
-        {
-          "bellyCube5_r1_p7": "v.phase == 7"
-        },
-        {
-          "bellyCube4_r1_p7": "v.phase == 7"
-        },
-        {
-          "left_kick_p7": "v.phase == 7"
-        },
-        {
-          "right_kick_p7": "v.phase == 7"
-        },
-        {
-          "front_kick_p7": "v.phase == 7"
-        },
-        {
-          "bottom_kick_p7": "v.phase == 7"
-        },
-        {
-          "top_kick_p7": "v.phase == 7"
-        },
-        {
-          "belly_p8": "v.phase == 8"
-        },
-        {
-          "bellyCube8_r1_p8": "v.phase == 8"
-        },
-        {
-          "bellyCube7_r1_p8": "v.phase == 8"
-        },
-        {
-          "bellyCube6_r1_p8": "v.phase == 8"
-        },
-        {
-          "bellyCube5_r1_p8": "v.phase == 8"
-        },
-        {
-          "right_kick_p8": "v.phase == 8"
-        },
-        {
-          "left_kick_p8": "v.phase == 8"
-        },
-        {
-          "front_kick_p8": "v.phase == 8"
-        },
-        {
-          "bottom_kick_p8": "v.phase == 8"
-        },
-        {
-          "top_kick_p8": "v.phase == 8"
-        },
-        {
-          "belly_p9": "v.phase == 9"
-        },
-        {
-          "bellyCube8_r1_p9": "v.phase == 9"
-        },
-        {
-          "bellyCube7_r1_p9": "v.phase == 9"
-        },
-        {
-          "bellyCube6_r1_p9": "v.phase == 9"
-        },
-        {
-          "bellyCube5_r1_p9": "v.phase == 9"
-        },
-        {
-          "right_kick_p9": "v.phase == 9"
-        },
-        {
-          "left_kick_p9": "v.phase == 9"
-        },
-        {
-          "front_kick_p9": "v.phase == 9"
-        },
-        {
-          "bottom_kick_p9": "v.phase == 9"
-        },
-        {
-          "top_kick_p9": "v.phase == 9"
+          "*": "Material.default"
         }
-      ]
+      ],
+      "textures": [
+        "Texture.p0"
+      ],
+      "overlay_color": {
+        "r": "v.flash > 0.0 ? 1.0 : this",
+        "g": "v.flash > 0.0 ? 1.0 : this",
+        "b": "v.flash > 0.0 ? 1.0 : this",
+        "a": "v.flash > 0.0 ? v.flash : this"
+      }
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_p1": {
+      "geometry": "Geometry.p1",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.p1"
+      ],
+      "overlay_color": {
+        "r": "v.flash > 0.0 ? 1.0 : this",
+        "g": "v.flash > 0.0 ? 1.0 : this",
+        "b": "v.flash > 0.0 ? 1.0 : this",
+        "a": "v.flash > 0.0 ? v.flash : this"
+      }
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_p2": {
+      "geometry": "Geometry.p2",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.p2"
+      ],
+      "overlay_color": {
+        "r": "v.flash > 0.0 ? 1.0 : this",
+        "g": "v.flash > 0.0 ? 1.0 : this",
+        "b": "v.flash > 0.0 ? 1.0 : this",
+        "a": "v.flash > 0.0 ? v.flash : this"
+      }
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_p3": {
+      "geometry": "Geometry.p3",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.p3"
+      ],
+      "overlay_color": {
+        "r": "v.flash > 0.0 ? 1.0 : this",
+        "g": "v.flash > 0.0 ? 1.0 : this",
+        "b": "v.flash > 0.0 ? 1.0 : this",
+        "a": "v.flash > 0.0 ? v.flash : this"
+      }
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_p4": {
+      "geometry": "Geometry.p4",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.p4"
+      ],
+      "overlay_color": {
+        "r": "v.flash > 0.0 ? 1.0 : this",
+        "g": "v.flash > 0.0 ? 1.0 : this",
+        "b": "v.flash > 0.0 ? 1.0 : this",
+        "a": "v.flash > 0.0 ? v.flash : this"
+      }
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_p5": {
+      "geometry": "Geometry.p5",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.p5"
+      ],
+      "overlay_color": {
+        "r": "v.flash > 0.0 ? 1.0 : this",
+        "g": "v.flash > 0.0 ? 1.0 : this",
+        "b": "v.flash > 0.0 ? 1.0 : this",
+        "a": "v.flash > 0.0 ? v.flash : this"
+      }
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_p6": {
+      "geometry": "Geometry.p6",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.p6"
+      ],
+      "overlay_color": {
+        "r": "v.flash > 0.0 ? 1.0 : this",
+        "g": "v.flash > 0.0 ? 1.0 : this",
+        "b": "v.flash > 0.0 ? 1.0 : this",
+        "a": "v.flash > 0.0 ? v.flash : this"
+      }
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_p7": {
+      "geometry": "Geometry.p7",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.p7"
+      ],
+      "overlay_color": {
+        "r": "v.flash > 0.0 ? 1.0 : this",
+        "g": "v.flash > 0.0 ? 1.0 : this",
+        "b": "v.flash > 0.0 ? 1.0 : this",
+        "a": "v.flash > 0.0 ? v.flash : this"
+      }
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_p8": {
+      "geometry": "Geometry.p8",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.p8"
+      ],
+      "overlay_color": {
+        "r": "v.flash > 0.0 ? 1.0 : this",
+        "g": "v.flash > 0.0 ? 1.0 : this",
+        "b": "v.flash > 0.0 ? 1.0 : this",
+        "a": "v.flash > 0.0 ? v.flash : this"
+      }
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_p9": {
+      "geometry": "Geometry.p9",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.p9"
+      ],
+      "overlay_color": {
+        "r": "v.flash > 0.0 ? 1.0 : this",
+        "g": "v.flash > 0.0 ? 1.0 : this",
+        "b": "v.flash > 0.0 ? 1.0 : this",
+        "a": "v.flash > 0.0 ? v.flash : this"
+      }
     },
     "controller.render.minepreggo.humanoid_creeper_girl_charged": {
       "geometry": "Geometry.default",
@@ -215,177 +215,297 @@
         ]
       },
       "light_color_multiplier": 0.5,
-      "ignore_lighting": true,
-      "part_visibility": [
+      "ignore_lighting": true
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_charged_p0": {
+      "geometry": "Geometry.p0",
+      "materials": [
         {
-          "*": true
-        },
-        {
-          "belly_p0": "v.phase == 0"
-        },
-        {
-          "belly_p1": "v.phase == 1"
-        },
-        {
-          "belly_p2": "v.phase == 2"
-        },
-        {
-          "belly_p3": "v.phase == 3"
-        },
-        {
-          "front_kick_p3": "v.phase == 3"
-        },
-        {
-          "right_kick_p3": "v.phase == 3"
-        },
-        {
-          "left_kick_p3": "v.phase == 3"
-        },
-        {
-          "belly_p4": "v.phase == 4"
-        },
-        {
-          "front_kick_p4": "v.phase == 4"
-        },
-        {
-          "right_kick_p4": "v.phase == 4"
-        },
-        {
-          "left_kick_p4": "v.phase == 4"
-        },
-        {
-          "belly_p5": "v.phase == 5"
-        },
-        {
-          "left_kick_p5": "v.phase == 5"
-        },
-        {
-          "right_kick_p5": "v.phase == 5"
-        },
-        {
-          "front_kick_p5": "v.phase == 5"
-        },
-        {
-          "belly_p6": "v.phase == 6"
-        },
-        {
-          "bellyCube6_r1_p6": "v.phase == 6"
-        },
-        {
-          "bellyCube5_r1_p6": "v.phase == 6"
-        },
-        {
-          "bellyCube4_r1_p6": "v.phase == 6"
-        },
-        {
-          "bellyCube3_r1_p6": "v.phase == 6"
-        },
-        {
-          "top_kick_p6": "v.phase == 6"
-        },
-        {
-          "bottom_kick_p6": "v.phase == 6"
-        },
-        {
-          "front_kick_p6": "v.phase == 6"
-        },
-        {
-          "right_kick_p6": "v.phase == 6"
-        },
-        {
-          "left_kick_p6": "v.phase == 6"
-        },
-        {
-          "belly_p7": "v.phase == 7"
-        },
-        {
-          "bellyCube7_r1_p7": "v.phase == 7"
-        },
-        {
-          "bellyCube6_r1_p7": "v.phase == 7"
-        },
-        {
-          "bellyCube5_r1_p7": "v.phase == 7"
-        },
-        {
-          "bellyCube4_r1_p7": "v.phase == 7"
-        },
-        {
-          "left_kick_p7": "v.phase == 7"
-        },
-        {
-          "right_kick_p7": "v.phase == 7"
-        },
-        {
-          "front_kick_p7": "v.phase == 7"
-        },
-        {
-          "bottom_kick_p7": "v.phase == 7"
-        },
-        {
-          "top_kick_p7": "v.phase == 7"
-        },
-        {
-          "belly_p8": "v.phase == 8"
-        },
-        {
-          "bellyCube8_r1_p8": "v.phase == 8"
-        },
-        {
-          "bellyCube7_r1_p8": "v.phase == 8"
-        },
-        {
-          "bellyCube6_r1_p8": "v.phase == 8"
-        },
-        {
-          "bellyCube5_r1_p8": "v.phase == 8"
-        },
-        {
-          "right_kick_p8": "v.phase == 8"
-        },
-        {
-          "left_kick_p8": "v.phase == 8"
-        },
-        {
-          "front_kick_p8": "v.phase == 8"
-        },
-        {
-          "bottom_kick_p8": "v.phase == 8"
-        },
-        {
-          "top_kick_p8": "v.phase == 8"
-        },
-        {
-          "belly_p9": "v.phase == 9"
-        },
-        {
-          "bellyCube8_r1_p9": "v.phase == 9"
-        },
-        {
-          "bellyCube7_r1_p9": "v.phase == 9"
-        },
-        {
-          "bellyCube6_r1_p9": "v.phase == 9"
-        },
-        {
-          "bellyCube5_r1_p9": "v.phase == 9"
-        },
-        {
-          "right_kick_p9": "v.phase == 9"
-        },
-        {
-          "left_kick_p9": "v.phase == 9"
-        },
-        {
-          "front_kick_p9": "v.phase == 9"
-        },
-        {
-          "bottom_kick_p9": "v.phase == 9"
-        },
-        {
-          "top_kick_p9": "v.phase == 9"
+          "*": "Material.charged"
         }
-      ]
+      ],
+      "textures": [
+        "Texture.charged"
+      ],
+      "overlay_color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1
+      },
+      "uv_anim": {
+        "offset": [
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01",
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "light_color_multiplier": 0.5,
+      "ignore_lighting": true
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_charged_p1": {
+      "geometry": "Geometry.p1",
+      "materials": [
+        {
+          "*": "Material.charged"
+        }
+      ],
+      "textures": [
+        "Texture.charged"
+      ],
+      "overlay_color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1
+      },
+      "uv_anim": {
+        "offset": [
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01",
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "light_color_multiplier": 0.5,
+      "ignore_lighting": true
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_charged_p2": {
+      "geometry": "Geometry.p2",
+      "materials": [
+        {
+          "*": "Material.charged"
+        }
+      ],
+      "textures": [
+        "Texture.charged"
+      ],
+      "overlay_color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1
+      },
+      "uv_anim": {
+        "offset": [
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01",
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "light_color_multiplier": 0.5,
+      "ignore_lighting": true
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_charged_p3": {
+      "geometry": "Geometry.p3",
+      "materials": [
+        {
+          "*": "Material.charged"
+        }
+      ],
+      "textures": [
+        "Texture.charged"
+      ],
+      "overlay_color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1
+      },
+      "uv_anim": {
+        "offset": [
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01",
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "light_color_multiplier": 0.5,
+      "ignore_lighting": true
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_charged_p4": {
+      "geometry": "Geometry.p4",
+      "materials": [
+        {
+          "*": "Material.charged"
+        }
+      ],
+      "textures": [
+        "Texture.charged"
+      ],
+      "overlay_color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1
+      },
+      "uv_anim": {
+        "offset": [
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01",
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "light_color_multiplier": 0.5,
+      "ignore_lighting": true
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_charged_p5": {
+      "geometry": "Geometry.p5",
+      "materials": [
+        {
+          "*": "Material.charged"
+        }
+      ],
+      "textures": [
+        "Texture.charged"
+      ],
+      "overlay_color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1
+      },
+      "uv_anim": {
+        "offset": [
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01",
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "light_color_multiplier": 0.5,
+      "ignore_lighting": true
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_charged_p6": {
+      "geometry": "Geometry.p6",
+      "materials": [
+        {
+          "*": "Material.charged"
+        }
+      ],
+      "textures": [
+        "Texture.charged"
+      ],
+      "overlay_color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1
+      },
+      "uv_anim": {
+        "offset": [
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01",
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "light_color_multiplier": 0.5,
+      "ignore_lighting": true
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_charged_p7": {
+      "geometry": "Geometry.p7",
+      "materials": [
+        {
+          "*": "Material.charged"
+        }
+      ],
+      "textures": [
+        "Texture.charged"
+      ],
+      "overlay_color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1
+      },
+      "uv_anim": {
+        "offset": [
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01",
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "light_color_multiplier": 0.5,
+      "ignore_lighting": true
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_charged_p8": {
+      "geometry": "Geometry.p8",
+      "materials": [
+        {
+          "*": "Material.charged"
+        }
+      ],
+      "textures": [
+        "Texture.charged"
+      ],
+      "overlay_color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1
+      },
+      "uv_anim": {
+        "offset": [
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01",
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "light_color_multiplier": 0.5,
+      "ignore_lighting": true
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_charged_p9": {
+      "geometry": "Geometry.p9",
+      "materials": [
+        {
+          "*": "Material.charged"
+        }
+      ],
+      "textures": [
+        "Texture.charged"
+      ],
+      "overlay_color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1
+      },
+      "uv_anim": {
+        "offset": [
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01",
+          "(Math.floor(q.life_time * 20.0) + q.frame_alpha) * 0.01"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "light_color_multiplier": 0.5,
+      "ignore_lighting": true
     }
   }
 }

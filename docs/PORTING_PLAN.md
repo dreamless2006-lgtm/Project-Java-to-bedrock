@@ -143,6 +143,15 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   when hers is small). The client falls back to `q.variant` and to the pose when the phase
   property is unknown, and the mob system rewrites the phase property every tick (records from
   versions that only set it through entity events, wild mobs that only kept the variant).
+- ✅ **Belly on the proven path (0.3.6).** The one property path that is proven in game is the pose:
+  an enum written by the scripts and compared as a string. The belly is now the same kind of value
+  (`minepreggo:belly`: `none`, `p0`..`p9`), written next to the phase and kept equal to it every
+  tick. Each female renders the mod's own per-phase model and texture through a plain render
+  controller per size, chosen by the entity's render-controller conditions (`v.bp == N`), with the
+  phase, the variant and a pregnancy pose as fallbacks; the player's per-phase bodies are chosen the
+  same way. The belly animations (inflation, the mod's fetal movements, the pushes, the navel
+  birth) run from a state controller with one state per size, like the pain controller. The merged
+  models and part_visibility are no longer used (`tools/gen-belly-render.mjs` writes it all).
 - ✅ **Self-check names rejected definitions (0.3.5).** `tools/gen-ids.mjs` writes every entity,
   item and block identifier of the pack into `scripts/generated/ids.js`; on join the banner
   compares them with the game's registries and lists the ones it rejected, which is the only way

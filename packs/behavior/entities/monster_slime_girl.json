@@ -57,6 +57,24 @@
           "type": "bool",
           "default": false,
           "client_sync": true
+        },
+        "minepreggo:belly": {
+          "type": "enum",
+          "values": [
+            "none",
+            "p0",
+            "p1",
+            "p2",
+            "p3",
+            "p4",
+            "p5",
+            "p6",
+            "p7",
+            "p8",
+            "p9"
+          ],
+          "default": "none",
+          "client_sync": true
         }
       }
     },
@@ -577,7 +595,8 @@
         "set_property": {
           "minepreggo:phase": -1,
           "minepreggo:pose": "none",
-          "minepreggo:growth": 0
+          "minepreggo:growth": 0,
+          "minepreggo:belly": "none"
         }
       },
       "minepreggo:set_phase_0": {
@@ -600,7 +619,8 @@
           ]
         },
         "set_property": {
-          "minepreggo:phase": 0
+          "minepreggo:phase": 0,
+          "minepreggo:belly": "p0"
         }
       },
       "minepreggo:set_phase_1": {
@@ -623,7 +643,8 @@
           ]
         },
         "set_property": {
-          "minepreggo:phase": 1
+          "minepreggo:phase": 1,
+          "minepreggo:belly": "p1"
         }
       },
       "minepreggo:set_phase_2": {
@@ -646,7 +667,8 @@
           ]
         },
         "set_property": {
-          "minepreggo:phase": 2
+          "minepreggo:phase": 2,
+          "minepreggo:belly": "p2"
         }
       },
       "minepreggo:set_phase_3": {
@@ -669,7 +691,8 @@
           ]
         },
         "set_property": {
-          "minepreggo:phase": 3
+          "minepreggo:phase": 3,
+          "minepreggo:belly": "p3"
         }
       },
       "minepreggo:set_phase_4": {
@@ -692,7 +715,8 @@
           ]
         },
         "set_property": {
-          "minepreggo:phase": 4
+          "minepreggo:phase": 4,
+          "minepreggo:belly": "p4"
         }
       },
       "minepreggo:set_phase_5": {
@@ -715,7 +739,8 @@
           ]
         },
         "set_property": {
-          "minepreggo:phase": 5
+          "minepreggo:phase": 5,
+          "minepreggo:belly": "p5"
         }
       },
       "minepreggo:set_phase_6": {
@@ -738,7 +763,8 @@
           ]
         },
         "set_property": {
-          "minepreggo:phase": 6
+          "minepreggo:phase": 6,
+          "minepreggo:belly": "p6"
         }
       },
       "minepreggo:set_phase_7": {
@@ -761,7 +787,8 @@
           ]
         },
         "set_property": {
-          "minepreggo:phase": 7
+          "minepreggo:phase": 7,
+          "minepreggo:belly": "p7"
         }
       },
       "minepreggo:set_phase_8": {
@@ -784,7 +811,8 @@
           ]
         },
         "set_property": {
-          "minepreggo:phase": 8
+          "minepreggo:phase": 8,
+          "minepreggo:belly": "p8"
         }
       },
       "minepreggo:set_phase_9": {
@@ -807,7 +835,8 @@
           ]
         },
         "set_property": {
-          "minepreggo:phase": 9
+          "minepreggo:phase": 9,
+          "minepreggo:belly": "p9"
         }
       },
       "minepreggo:hostile_pregnant_init": {
@@ -839,7 +868,8 @@
           ]
         },
         "set_property": {
-          "minepreggo:phase": 3
+          "minepreggo:phase": 3,
+          "minepreggo:belly": "p3"
         },
         "remove": {
           "component_groups": [
@@ -855,7 +885,8 @@
           ]
         },
         "set_property": {
-          "minepreggo:phase": 5
+          "minepreggo:phase": 5,
+          "minepreggo:belly": "p5"
         },
         "remove": {
           "component_groups": [
@@ -871,7 +902,8 @@
           ]
         },
         "set_property": {
-          "minepreggo:phase": 7
+          "minepreggo:phase": 7,
+          "minepreggo:belly": "p7"
         },
         "remove": {
           "component_groups": [

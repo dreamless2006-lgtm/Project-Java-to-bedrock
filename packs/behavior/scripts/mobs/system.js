@@ -75,7 +75,18 @@ function setPhaseProperty(/** @type {Entity} */ entity, /** @type {number} */ ph
   } catch (error) {
     console.warn(`[minepreggo] cannot set the phase of ${entity.typeId}: ${error}`);
   }
+  // The belly the client renders is an enum, written and compared exactly like the pose (the one
+  // property path proven in game): 'none' or 'p0'..'p9'.
+  try {
+    entity.setProperty('minepreggo:belly', bellyValue(phase));
+  } catch (error) {
+    console.warn(`[minepreggo] cannot set the belly of ${entity.typeId}: ${error}`);
+  }
 }
+
+/** The belly enum value for a phase. */
+export const bellyValue = (/** @type {number} */ phase) => (phase < 0 ? 'none' : `p${phase}`);
+const bellyProperty = (/** @type {Entity} */ entity) => /** @type {string} */ (entity.getProperty('minepreggo:belly') ?? 'none');
 
 /** Entity events change component groups (speed, size, variant); a failure must never stop the pregnancy. */
 function fireEvent(/** @type {Entity} */ entity, /** @type {string} */ name) {
@@ -779,7 +790,7 @@ function syncClient(/** @type {MobRecord} */ record) {
   // tick: mobs saved by versions that only set it through entity events never had it, and the
   // debug command overrides it for a while.
   const phase = expectedPhase(record);
-  if (phaseProperty(entity) !== phase) setPhaseProperty(entity, phase);
+  if (phaseProperty(entity) !== phase || bellyProperty(entity) !== bellyValue(phase)) setPhaseProperty(entity, phase);
   if (sent.pose !== state.pose) entity.setProperty('minepreggo:pose', (sent.pose = state.pose));
   if (sent.kick !== state.kick) entity.setProperty('minepreggo:kick', (sent.kick = state.kick));
   if (sent.growth !== state.growth) entity.setProperty('minepreggo:growth', (sent.growth = state.growth));

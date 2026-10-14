@@ -255,7 +255,6 @@ for (const [family, texture] of Object.entries(FAMILY_TEXTURES)) {
   });
   writeFile(join(modelOut, `${family}_all.geo.json`), JSON.stringify({ ...merged.geometry, 'minecraft:geometry': [{ ...merged.geometry['minecraft:geometry'][0], description: { ...merged.geometry['minecraft:geometry'][0].description, identifier: `geometry.${MOD_ID}.${family}_all` } }] }, null, 2) + '\n');
   if (merged.texture) writeFile(join(textureOut, `${texture}_all.png`), encodePng(merged.texture));
-  writeBellyVisibility(family, merged.geometry['minecraft:geometry'][0], 'v.phase');
   mergedCount++;
 }
 // The player's belly layers: the custom one keeps its skin UVs (every phase maps onto the skin),
@@ -274,7 +273,6 @@ for (const [kind, texture, relocate] of [['custom', null, false], ['predefined',
   g.description.identifier = `geometry.${MOD_ID}.player_belly_${kind}`;
   writeFile(join(modelOut, `player_belly_${kind}.geo.json`), JSON.stringify(merged.geometry, null, 2) + '\n');
   if (merged.texture && texture) writeFile(join(textureOut, `${texture}_extra_all.png`), encodePng(merged.texture));
-  setPartVisibility(join(RP, 'render_controllers/player.render_controllers.json'), [`controller.render.minepreggo.player_belly_${kind}`], bellyVisibility(g, 'variable.mp_phase'));
   mergedCount++;
 }
 

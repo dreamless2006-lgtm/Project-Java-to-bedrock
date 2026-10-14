@@ -33,7 +33,7 @@ let warned = false;
 export function playerVisuals(/** @type {PlayerRecord} */ record) {
   const p = record.pregnancy;
   const gender = record.gender ?? 'unset';
-  if (!p || gender !== 'female') return { phase: -1, pose: 'none', kick: 0, growth: 0, gender, skin: record.skin, navel: false };
+  if (!p || gender !== 'female') return { phase: -1, belly: 'none', pose: 'none', kick: 0, growth: 0, gender, skin: record.skin, navel: false };
   const pain = p.pain;
   // Rubbing (crouch + look down) plays Java's BELLY_RUBBING_Px arm animation; the belly-rub need
   // shows the belly animation; pains map to the labor/pain body animations.
@@ -47,7 +47,7 @@ export function playerVisuals(/** @type {PlayerRecord} */ record) {
   if (pain?.type === 'BIRTH' && p.birth) growth = pushProgress(record) / 100;
   // Ender babies are born through the navel (a Bedrock addition): the client plays the navel animations.
   const navel = p.womb.includes('ENDER') || p.father === 'ENDER';
-  return { phase: p.phase, pose, kick, growth: Math.round(growth * 100) / 100, gender, skin: record.skin, navel };
+  return { phase: p.phase, belly: `p${p.phase}`, pose, kick, growth: Math.round(growth * 100) / 100, gender, skin: record.skin, navel };
 }
 
 /** Writes the visuals to the player's entity properties, only the ones that changed. */
@@ -58,8 +58,9 @@ export function debugPose(/** @type {PlayerRecord} */ record, /** @type {string}
   record.player.setProperty('minepreggo:kick', kick);
   // The kicks live in the P3+ bellies and P0-P2 are flat: a small or absent belly becomes a big
   // one for the duration; syncBody restores the real phase afterwards.
-  if (phase >= 0) record.player.setProperty('minepreggo:phase', phase);
-  else if (Number(record.player.getProperty('minepreggo:phase')) < 3) record.player.setProperty('minepreggo:phase', 7);
+  const shown = phase >= 0 ? phase : Number(record.player.getProperty('minepreggo:phase')) < 3 ? 7 : Number(record.player.getProperty('minepreggo:phase'));
+  record.player.setProperty('minepreggo:phase', shown);
+  record.player.setProperty('minepreggo:belly', `p${shown}`);
   record.sentVisuals = {};
 }
 

@@ -61,467 +61,6 @@
         "Texture.default"
       ]
     },
-    "controller.render.minepreggo.player_belly_custom": {
-      "geometry": "Geometry.minepreggo_belly_custom",
-      "materials": [
-        {
-          "*": "Material.default"
-        }
-      ],
-      "textures": [
-        "Texture.default"
-      ],
-      "part_visibility": [
-        {
-          "*": true
-        },
-        {
-          "belly_p0": "variable.mp_phase == 0"
-        },
-        {
-          "belly_p1": "variable.mp_phase == 1"
-        },
-        {
-          "belly_p2": "variable.mp_phase == 2"
-        },
-        {
-          "belly_p3": "variable.mp_phase == 3"
-        },
-        {
-          "front_kick_p3": "variable.mp_phase == 3"
-        },
-        {
-          "right_kick_p3": "variable.mp_phase == 3"
-        },
-        {
-          "left_kick_p3": "variable.mp_phase == 3"
-        },
-        {
-          "belly_p4": "variable.mp_phase == 4"
-        },
-        {
-          "left_kick_p4": "variable.mp_phase == 4"
-        },
-        {
-          "right_kick_p4": "variable.mp_phase == 4"
-        },
-        {
-          "front_kick_p4": "variable.mp_phase == 4"
-        },
-        {
-          "belly_p5": "variable.mp_phase == 5"
-        },
-        {
-          "bellyCube4_r1_p5": "variable.mp_phase == 5"
-        },
-        {
-          "front_kick_p5": "variable.mp_phase == 5"
-        },
-        {
-          "right_kick_p5": "variable.mp_phase == 5"
-        },
-        {
-          "left_kick_p5": "variable.mp_phase == 5"
-        },
-        {
-          "belly_p6": "variable.mp_phase == 6"
-        },
-        {
-          "bellyCube6_r1_p6": "variable.mp_phase == 6"
-        },
-        {
-          "bellyCube5_r1_p6": "variable.mp_phase == 6"
-        },
-        {
-          "bellyCube5_r2_p6": "variable.mp_phase == 6"
-        },
-        {
-          "bellyCube4_r1_p6": "variable.mp_phase == 6"
-        },
-        {
-          "bellyCube5_r3_p6": "variable.mp_phase == 6"
-        },
-        {
-          "bellyCube4_r2_p6": "variable.mp_phase == 6"
-        },
-        {
-          "left_kick_p6": "variable.mp_phase == 6"
-        },
-        {
-          "right_kick_p6": "variable.mp_phase == 6"
-        },
-        {
-          "front_kick_p6": "variable.mp_phase == 6"
-        },
-        {
-          "bottom_kick_p6": "variable.mp_phase == 6"
-        },
-        {
-          "top_kick_p6": "variable.mp_phase == 6"
-        },
-        {
-          "belly_p7": "variable.mp_phase == 7"
-        },
-        {
-          "bellyCube7_r1_p7": "variable.mp_phase == 7"
-        },
-        {
-          "bellyCube6_r1_p7": "variable.mp_phase == 7"
-        },
-        {
-          "bellyCube5_r1_p7": "variable.mp_phase == 7"
-        },
-        {
-          "bellyCube6_r2_p7": "variable.mp_phase == 7"
-        },
-        {
-          "bellyCube5_r2_p7": "variable.mp_phase == 7"
-        },
-        {
-          "bellyCube4_r1_p7": "variable.mp_phase == 7"
-        },
-        {
-          "bellyCube7_r2_p7": "variable.mp_phase == 7"
-        },
-        {
-          "bellyCube6_r3_p7": "variable.mp_phase == 7"
-        },
-        {
-          "bellyCube5_r3_p7": "variable.mp_phase == 7"
-        },
-        {
-          "bellyCube6_r4_p7": "variable.mp_phase == 7"
-        },
-        {
-          "bellyCube5_r4_p7": "variable.mp_phase == 7"
-        },
-        {
-          "bellyCube4_r2_p7": "variable.mp_phase == 7"
-        },
-        {
-          "left_kick_p7": "variable.mp_phase == 7"
-        },
-        {
-          "right_kick_p7": "variable.mp_phase == 7"
-        },
-        {
-          "front_kick_p7": "variable.mp_phase == 7"
-        },
-        {
-          "bottom_kick_p7": "variable.mp_phase == 7"
-        },
-        {
-          "top_kick_p7": "variable.mp_phase == 7"
-        },
-        {
-          "belly_p8": "variable.mp_phase == 8"
-        },
-        {
-          "bellyCube7_r1_p8": "variable.mp_phase == 8"
-        },
-        {
-          "bellyCube8_r1_p8": "variable.mp_phase == 8"
-        },
-        {
-          "bellyCube7_r2_p8": "variable.mp_phase == 8"
-        },
-        {
-          "bellyCube6_r1_p8": "variable.mp_phase == 8"
-        },
-        {
-          "bellyCube7_r3_p8": "variable.mp_phase == 8"
-        },
-        {
-          "bellyCube6_r2_p8": "variable.mp_phase == 8"
-        },
-        {
-          "bellyCube5_r1_p8": "variable.mp_phase == 8"
-        },
-        {
-          "bellyCube6_r3_p8": "variable.mp_phase == 8"
-        },
-        {
-          "bellyCube6_r4_p8": "variable.mp_phase == 8"
-        },
-        {
-          "bellyCube5_r2_p8": "variable.mp_phase == 8"
-        },
-        {
-          "bellyCube5_r3_p8": "variable.mp_phase == 8"
-        },
-        {
-          "bellyCube4_r1_p8": "variable.mp_phase == 8"
-        },
-        {
-          "left_kick_p8": "variable.mp_phase == 8"
-        },
-        {
-          "right_kick_p8": "variable.mp_phase == 8"
-        },
-        {
-          "front_kick_p8": "variable.mp_phase == 8"
-        },
-        {
-          "bottom_kick_p8": "variable.mp_phase == 8"
-        },
-        {
-          "top_kick_p8": "variable.mp_phase == 8"
-        },
-        {
-          "belly_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube7_r1_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube8_r1_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube7_r2_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube6_r1_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube7_r3_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube6_r2_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube5_r1_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube7_r4_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube6_r3_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube6_r4_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube6_r5_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube6_r6_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube5_r2_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube5_r3_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube5_r4_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube4_r1_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube5_r5_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube4_r2_p9": "variable.mp_phase == 9"
-        },
-        {
-          "left_kick_p9": "variable.mp_phase == 9"
-        },
-        {
-          "right_kick_p9": "variable.mp_phase == 9"
-        },
-        {
-          "front_kick_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bottom_kick_p9": "variable.mp_phase == 9"
-        },
-        {
-          "top_kick_p9": "variable.mp_phase == 9"
-        }
-      ]
-    },
-    "controller.render.minepreggo.player_belly_predefined": {
-      "geometry": "Geometry.minepreggo_belly_predefined",
-      "materials": [
-        {
-          "*": "Material.default"
-        }
-      ],
-      "textures": [
-        "Texture.minepreggo_alex_extra_all"
-      ],
-      "part_visibility": [
-        {
-          "*": true
-        },
-        {
-          "belly_p0": "variable.mp_phase == 0"
-        },
-        {
-          "belly_p1": "variable.mp_phase == 1"
-        },
-        {
-          "belly_p2": "variable.mp_phase == 2"
-        },
-        {
-          "belly_p3": "variable.mp_phase == 3"
-        },
-        {
-          "front_kick_p3": "variable.mp_phase == 3"
-        },
-        {
-          "right_kick_p3": "variable.mp_phase == 3"
-        },
-        {
-          "left_kick_p3": "variable.mp_phase == 3"
-        },
-        {
-          "belly_p4": "variable.mp_phase == 4"
-        },
-        {
-          "right_kick_p4": "variable.mp_phase == 4"
-        },
-        {
-          "left_kick_p4": "variable.mp_phase == 4"
-        },
-        {
-          "front_kick_p4": "variable.mp_phase == 4"
-        },
-        {
-          "belly_p5": "variable.mp_phase == 5"
-        },
-        {
-          "front_kick_p5": "variable.mp_phase == 5"
-        },
-        {
-          "right_kick_p5": "variable.mp_phase == 5"
-        },
-        {
-          "left_kick_p5": "variable.mp_phase == 5"
-        },
-        {
-          "belly_p6": "variable.mp_phase == 6"
-        },
-        {
-          "bellyCube6_r1_p6": "variable.mp_phase == 6"
-        },
-        {
-          "bellyCube5_r1_p6": "variable.mp_phase == 6"
-        },
-        {
-          "bellyCube4_r1_p6": "variable.mp_phase == 6"
-        },
-        {
-          "bellyCube3_r1_p6": "variable.mp_phase == 6"
-        },
-        {
-          "left_kick_p6": "variable.mp_phase == 6"
-        },
-        {
-          "right_kick_p6": "variable.mp_phase == 6"
-        },
-        {
-          "front_kick_p6": "variable.mp_phase == 6"
-        },
-        {
-          "bottom_kick_p6": "variable.mp_phase == 6"
-        },
-        {
-          "top_kick_p6": "variable.mp_phase == 6"
-        },
-        {
-          "belly_p7": "variable.mp_phase == 7"
-        },
-        {
-          "bellyCube7_r1_p7": "variable.mp_phase == 7"
-        },
-        {
-          "bellyCube6_r1_p7": "variable.mp_phase == 7"
-        },
-        {
-          "bellyCube5_r1_p7": "variable.mp_phase == 7"
-        },
-        {
-          "bellyCube4_r1_p7": "variable.mp_phase == 7"
-        },
-        {
-          "left_kick_p7": "variable.mp_phase == 7"
-        },
-        {
-          "right_kick_p7": "variable.mp_phase == 7"
-        },
-        {
-          "front_kick_p7": "variable.mp_phase == 7"
-        },
-        {
-          "bottom_kick_p7": "variable.mp_phase == 7"
-        },
-        {
-          "top_kick_p7": "variable.mp_phase == 7"
-        },
-        {
-          "belly_p8": "variable.mp_phase == 8"
-        },
-        {
-          "bellyCube8_r1_p8": "variable.mp_phase == 8"
-        },
-        {
-          "bellyCube7_r1_p8": "variable.mp_phase == 8"
-        },
-        {
-          "bellyCube6_r1_p8": "variable.mp_phase == 8"
-        },
-        {
-          "bellyCube5_r1_p8": "variable.mp_phase == 8"
-        },
-        {
-          "left_kick_p8": "variable.mp_phase == 8"
-        },
-        {
-          "right_kick_p8": "variable.mp_phase == 8"
-        },
-        {
-          "front_kick_p8": "variable.mp_phase == 8"
-        },
-        {
-          "bottom_kick_p8": "variable.mp_phase == 8"
-        },
-        {
-          "top_kick_p8": "variable.mp_phase == 8"
-        },
-        {
-          "belly_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube8_r1_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube7_r1_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube6_r1_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bellyCube5_r1_p9": "variable.mp_phase == 9"
-        },
-        {
-          "left_kick_p9": "variable.mp_phase == 9"
-        },
-        {
-          "right_kick_p9": "variable.mp_phase == 9"
-        },
-        {
-          "front_kick_p9": "variable.mp_phase == 9"
-        },
-        {
-          "bottom_kick_p9": "variable.mp_phase == 9"
-        },
-        {
-          "top_kick_p9": "variable.mp_phase == 9"
-        }
-      ]
-    },
     "controller.render.minepreggo.player_labor": {
       "geometry": "Geometry.minepreggo_labor",
       "materials": [
@@ -542,6 +81,226 @@
       ],
       "textures": [
         "Texture.minepreggo_alex_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom_p0": {
+      "geometry": "Geometry.minepreggo_body_custom_p0",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined_p0": {
+      "geometry": "Geometry.minepreggo_body_predefined_p0",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_p0_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom_p1": {
+      "geometry": "Geometry.minepreggo_body_custom_p1",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined_p1": {
+      "geometry": "Geometry.minepreggo_body_predefined_p1",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_p1_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom_p2": {
+      "geometry": "Geometry.minepreggo_body_custom_p2",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined_p2": {
+      "geometry": "Geometry.minepreggo_body_predefined_p2",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_p2_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom_p3": {
+      "geometry": "Geometry.minepreggo_body_custom_p3",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined_p3": {
+      "geometry": "Geometry.minepreggo_body_predefined_p3",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_p3_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom_p4": {
+      "geometry": "Geometry.minepreggo_body_custom_p4",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined_p4": {
+      "geometry": "Geometry.minepreggo_body_predefined_p4",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_p4_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom_p5": {
+      "geometry": "Geometry.minepreggo_body_custom_p5",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined_p5": {
+      "geometry": "Geometry.minepreggo_body_predefined_p5",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_p5_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom_p6": {
+      "geometry": "Geometry.minepreggo_body_custom_p6",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined_p6": {
+      "geometry": "Geometry.minepreggo_body_predefined_p6",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_p6_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom_p7": {
+      "geometry": "Geometry.minepreggo_body_custom_p7",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined_p7": {
+      "geometry": "Geometry.minepreggo_body_predefined_p7",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_p7_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom_p8": {
+      "geometry": "Geometry.minepreggo_body_custom_p8",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined_p8": {
+      "geometry": "Geometry.minepreggo_body_predefined_p8",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_p8_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom_p9": {
+      "geometry": "Geometry.minepreggo_body_custom_p9",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined_p9": {
+      "geometry": "Geometry.minepreggo_body_predefined_p9",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_p9_extra"
       ]
     }
   }

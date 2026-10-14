@@ -11,7 +11,7 @@ import { clearDebug as clearPlayer, debugPose as debugPlayer } from '../player/b
 import { getRecord } from '../pregnancy/system.js';
 import { VERSION } from '../version.js';
 
-const PROPS = ['minepreggo:phase', 'minepreggo:pose', 'minepreggo:kick', 'minepreggo:growth'];
+const PROPS = ['minepreggo:phase', 'minepreggo:belly', 'minepreggo:pose', 'minepreggo:kick', 'minepreggo:growth'];
 /** How long a forced state lasts when asked for with the command (10 s). */
 export const COMMAND_TICKS = 200;
 
