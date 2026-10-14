@@ -34,6 +34,7 @@ and wait. It also knows every modded block, item and creature in the world.
 npm install            # nothing to install for the packs; this is for the test runner
 npm run check          # syntax + JSON + manifest checks
 npm test               # unit tests for the pure brain modules
+npm run smoke          # boots the whole pack under a mock Script API engine and drives a bot
 python3 tools/build_mcaddon.py --edition all
 ```
 
@@ -54,6 +55,9 @@ and [docs/SETUP-REALM-BRIDGE.md](docs/SETUP-REALM-BRIDGE.md). Design:
 * `!ai` or `/aisb:menu` opens the hub (Getting Started, Companions, Behavior,
   Budget, Access Lists, Mod Intelligence, AI & Memory, Profiles & Models).
 * `!ai summon Ellie a cheerful builder` summons a companion bound to you.
+  A companion that dies respawns next to you with its memory intact
+  (operators can switch to permadeath), and companions far away come to
+  you when you join.
 * Just chat; bots within earshot answer by name. `!ai talk Ellie hi` or
   `/aisb:talk Ellie "hi"` whispers.
 * `!ai status`, `!ai memory Ellie`, `!ai pause`, `!ai budget`.

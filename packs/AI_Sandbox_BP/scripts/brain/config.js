@@ -30,6 +30,8 @@ export const DEFAULTS = Object.freeze({
     keepAlive: true,            // ticking areas around bot homes when nobody is online (BDS)
     autoCure: true,             // cure Call of the Hive on bots so they are not replaced by parasites
     legacyFakeChat: false,      // the original fake-player chat simulator
+    companionDeath: "respawn",  // respawn | permadeath : what happens when a summoned companion dies
+    companionJoinTeleport: true, // companions far from their owner come to them when the owner joins
     bridgeName: "",             // optional: only this gamertag may act as the bridge
     serverRules: "",
     budget: { ...BUDGET_DEFAULTS },

@@ -7,6 +7,7 @@
   "scripts": {
     "check": "node tools/check.mjs",
     "test": "node --test",
-    "build": "python3 tools/build_mcaddon.py"
+    "build": "python3 tools/build_mcaddon.py",
+    "smoke": "node --import ./tests/harness/register.mjs tests/smoke/run.mjs"
   }
 }

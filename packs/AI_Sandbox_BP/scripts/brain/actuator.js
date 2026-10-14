@@ -918,7 +918,10 @@ export class Actuator {
     }
 
     enqueue(actions) {
-        for (const a of actions || []) {
+        actions = actions || [];
+        // "just wait" while something is already running or queued is a no-op, not a queued pause
+        if (actions.length === 1 && actions[0].type === "wait" && (this.current || this.queue.length)) return;
+        for (const a of actions) {
             if (a.type === "stop") { this.queue.length = 0; if (this.current) this.finish(`cancelled ${this.current.action.type}`); this.run(a, system.currentTick); continue; }
             if (a.type === "follow" || a.type === "set_home" || a.type === "look_at" || a.type === "emote") { this.run(a, system.currentTick); continue; }   // instant
             this.queue.push(a);

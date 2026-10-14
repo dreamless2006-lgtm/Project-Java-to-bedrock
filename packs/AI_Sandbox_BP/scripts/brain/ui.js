@@ -147,12 +147,14 @@ function showBehavior(player) {
     f.toggle("Keep bots ticking when nobody is online (dedicated server)", { defaultValue: !!cfg.keepAlive });
     f.toggle("Auto-cure bots of the Call of the Hive", { defaultValue: !!cfg.autoCure });
     f.toggle("Legacy fake-player chat simulator", { defaultValue: !!cfg.legacyFakeChat });
+    f.dropdown("When a companion dies", ["Respawn next to its owner", "Permadeath"], { defaultValueIndex: cfg.companionDeath === "permadeath" ? 1 : 0 });
+    f.toggle("Companions come to their owner on join", { defaultValue: !!cfg.companionJoinTeleport });
     f.textField("Server rules for every bot", "e.g. no PvP, speak Spanish", { defaultValue: cfg.serverRules || "" });
     f.show(player).then(r => {
         if (r.canceled) return;
         if (!op) return player.sendMessage("§coperator permission required");
-        const [vol, cbn, auto, maxBrains, idle, freeBuild, keepAlive, autoCure, fake, rules] = r.formValues;
-        updateWorldConfig({ chatVolume: Number(vol), callByName: !!cbn, autonomy: ["full", "companions_only", "off"][Number(auto)], maxBrains: Number(maxBrains), thinkIdleSec: Number(idle), freeBuild: !!freeBuild, keepAlive: !!keepAlive, autoCure: !!autoCure, legacyFakeChat: !!fake, serverRules: String(rules || "").slice(0, 600) });
+        const [vol, cbn, auto, maxBrains, idle, freeBuild, keepAlive, autoCure, fake, death, joinTp, rules] = r.formValues;
+        updateWorldConfig({ chatVolume: Number(vol), callByName: !!cbn, autonomy: ["full", "companions_only", "off"][Number(auto)], maxBrains: Number(maxBrains), thinkIdleSec: Number(idle), freeBuild: !!freeBuild, keepAlive: !!keepAlive, autoCure: !!autoCure, legacyFakeChat: !!fake, companionDeath: Number(death) === 1 ? "permadeath" : "respawn", companionJoinTeleport: !!joinTp, serverRules: String(rules || "").slice(0, 600) });
         for (const [, b] of allBrains()) b.systemCache = null;
         manager.refreshEnabled();
         player.sendMessage("§abehaviour saved");

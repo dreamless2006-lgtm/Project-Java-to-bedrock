@@ -56,6 +56,14 @@ slower under a soft budget limit, paused under a hard one (`scheduler.js`).
 | `config.js`, `commands.js`, `ui.js`, `gate.js`, `world_content.js` | settings, `!ai` commands, hub menu, legacy gating, modded-content discovery | in-game |
 
 Pure modules have no `@minecraft/*` imports and are covered by `npm test`.
+The in-game modules are exercised by `npm run smoke`: `tests/harness/` is a
+small mock of `@minecraft/server` and `@minecraft/server-ui` (ticks, timers,
+events, a flat world, entities with inventories, commands, dynamic
+properties, ticking areas), and `tests/smoke/run.mjs` loads `main.js` on top
+of it, connects a fake bridge account, relays chat, answers the bot's think
+with a scripted model reply and checks that it talks, remembers, walks,
+builds, crafts, travels to the Nether, respawns as a companion and comes to
+its owner on join, with no engine errors.
 
 ## Two ways to reach a model
 

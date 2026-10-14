@@ -345,7 +345,13 @@ class BrainManager {
         const brains = allBrains();
         for (const [id, b] of [...brains]) { try { if (!b.bot.isValid) { unregisterBrain(id); } } catch (e) { unregisterBrain(id); } }
         if (cfg.autonomy === "off") return;
-        let bots = (ALL_AI_CACHE || []).filter(e => { try { return e.isValid; } catch (e2) { return false; } });
+        // Candidates: the legacy bot cache plus every bot that already has a brain (a companion
+        // summoned a moment ago is not in the cache yet, and must not lose its brain for that).
+        const seen = new Set();
+        let bots = [];
+        for (const e of [...(ALL_AI_CACHE || []), ...[...brains.values()].map(b => b.bot)]) {
+            try { if (e && e.isValid && !seen.has(e.id)) { seen.add(e.id); bots.push(e); } } catch (e2) { /* ignore */ }
+        }
         const players = (() => { try { return world.getAllPlayers(); } catch (e) { return []; } })();
         const score = (e) => {
             const s = readBotSettings(e);
@@ -405,13 +411,14 @@ class BrainManager {
                 const dead = ev.deadEntity;
                 const b = getBrain(dead);
                 if (b) {
+                    let killerName = "";
                     try {
-                        let killerName = "";
                         try { const k = ev.damageSource?.damagingEntity; if (k?.isValid) killerName = k.nameTag || k.typeId.replace("minecraft:", ""); } catch (e) { /* ignore */ }
                         addEpisode(b.memory, `I died${killerName ? " to " + killerName : ""} at ${fmtPos(dead.location)}`, Date.now());
                         b.saveMemory();
                     } catch (e) { /* ignore */ }
                     unregisterBrain(dead.id);
+                    try { this.onCompanionDeath(b, dead, killerName); } catch (e) { console.warn("[AISB] companion death handling failed", e); }
                     return;
                 }
                 // Nearby brains notice deaths of players and bots
@@ -427,6 +434,9 @@ class BrainManager {
             world.afterEvents.playerSpawn.subscribe(ev => {
                 if (!ev.initialSpawn) return;
                 for (const [, br] of allBrains()) { try { if (br.settings.owner === ev.player.id) br.noteEvent("player_near", `${ev.player.name} (my owner) joined the game`); } catch (e) { /* ignore */ } }
+                // Player2NPC behaviour: companions that wandered off (or are in another dimension) come to their owner
+                const player = ev.player;
+                system.runTimeout(() => { try { this.gatherCompanions(player); } catch (e) { /* ignore */ } }, 60);
             });
             world.afterEvents.playerLeave.subscribe(ev => {
                 for (const [, br] of allBrains()) { try { if (br.settings.owner === ev.playerId) br.noteEvent("action_done", `${ev.playerName} (my owner) left the game; carry on with your own goals`); } catch (e) { /* ignore */ } }
@@ -546,6 +556,73 @@ class BrainManager {
         }, 2);
         void cfg;
         return { ok: true, name };
+    }
+
+    // A summoned companion that dies comes back (like a player respawning) unless the server
+    // chose permadeath. Memory, persona and ownership survive through the persistent pid.
+    onCompanionDeath(brain, dead, killerName) {
+        const settings = brain.settings || {};
+        if (!settings.owner || settings.mode !== "companion") return;
+        const cfg = getWorldConfig();
+        let pid = null, ownerId = settings.owner, dimId = "minecraft:overworld", loc = { x: 0, y: 70, z: 0 };
+        try { pid = dead.getDynamicProperty(PID_KEY) || null; dimId = dead.dimension.id; loc = { x: dead.location.x, y: dead.location.y, z: dead.location.z }; } catch (e) { /* ignore */ }
+        const owner = (() => { try { return world.getEntity(ownerId); } catch (e) { return undefined; } })();
+        const tell = (msg) => { try { if (owner?.isValid) owner.sendMessage(msg); } catch (e) { /* ignore */ } };
+        if (cfg.companionDeath === "permadeath") {
+            tell(`§c${brain.name} has died${killerName ? " to " + killerName : ""} and will not return (permadeath is on)`);
+            return;
+        }
+        tell(`§e${brain.name} has died${killerName ? " to " + killerName : ""}; respawning in 10s`);
+        const settingsCopy = { ...settings, respawns: (settings.respawns || 0) + 1 };
+        const name = brain.name;
+        system.runTimeout(() => {
+            try {
+                const o = (() => { try { return world.getEntity(ownerId); } catch (e) { return undefined; } })();
+                const dim = o?.isValid ? o.dimension : world.getDimension(dimId);
+                const at = o?.isValid ? { x: o.location.x + 1.5, y: o.location.y, z: o.location.z + 1.5 } : { x: loc.x, y: loc.y + 1, z: loc.z };
+                const bot = dim.spawnEntity(BOT_TYPE, at);
+                bot.addTag("rg:awakened_ai");
+                system.runTimeout(() => {
+                    try {
+                        if (!bot.isValid) return;
+                        bot.nameTag = name;
+                        bot.addTag("online");
+                        if (pid) bot.setDynamicProperty(PID_KEY, pid);
+                        bot.setDynamicProperty("rg:ai_owner_id", ownerId);
+                        bot.setDynamicProperty("sympathy_player_" + ownerId, 60);
+                        bot.setDynamicProperty("friend_status_" + ownerId, "accepted");
+                        try { bot.triggerEvent("minecraft:on_tame"); } catch (e) { /* ignore */ }
+                        writeBotSettings(bot, settingsCopy);
+                        const nb = new BotBrain(bot);
+                        nb.settings = settingsCopy;
+                        addEpisode(nb.memory, `I respawned${o?.isValid ? " next to " + o.name : ""} after dying; my inventory was lost`, Date.now());
+                        nb.saveMemory();
+                        registerBrain(bot.id, nb);
+                        nb.request("you just respawned after dying; say something brief about it and carry on");
+                        tell(`§a${name} is back`);
+                    } catch (e) { console.warn("[AISB] companion respawn setup failed", e); }
+                }, 2);
+            } catch (e) { console.warn("[AISB] companion respawn failed", e); }
+        }, 200);
+    }
+
+    // Bring every companion of this player to them if they are far away or in another dimension.
+    gatherCompanions(player) {
+        const cfg = getWorldConfig();
+        if (!cfg.companionJoinTeleport) return;
+        if (!player?.isValid) return;
+        let n = 0;
+        for (const b of this.companionsOf(player)) {
+            try {
+                const far = b.bot.dimension.id !== player.dimension.id || dist(b.bot.location, player.location) > 48;
+                if (!far) continue;
+                b.actuator.stopAll();
+                b.bot.teleport({ x: player.location.x + 1.5 + n, y: player.location.y, z: player.location.z + 1.5 }, { dimension: player.dimension });
+                b.noteEvent("action_done", `${player.name} (my owner) came online and I was brought to their side`);
+                n++;
+            } catch (e) { /* ignore */ }
+        }
+        if (n) { try { player.sendMessage(`§7${n} companion${n > 1 ? "s" : ""} came to you`); } catch (e) { /* ignore */ } }
     }
 
     despawn(botEntity) {

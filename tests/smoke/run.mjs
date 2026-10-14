@@ -1,0 +1,137 @@
+// Headless smoke run: load the whole pack under the mock engine, bring a bot to life,
+// push chat through the bridge channel, answer its think with a scripted reply, and
+// make sure actions execute without errors.  Run: npm run smoke
+import { world, system, log, advanceTicksAsync, spawnPlayer, worldLoad, ItemStack } from "@minecraft/server";
+import { Reassembler, encodeFrames, packMessage, unpackMessage, DEFAULT_CHUNK } from "../../packs/AI_Sandbox_BP/scripts/brain/frame.js";
+
+const fails = [];
+function check(cond, msg) { if (!cond) fails.push(msg); else console.log("ok -", msg); }
+
+await import("../../packs/AI_Sandbox_BP/scripts/main.js");
+worldLoad();
+const overworld = world.getDimension("minecraft:overworld");
+const steve = spawnPlayer("Steve", { x: 0, y: 64, z: 0 });
+const relay = spawnPlayer("AISandboxBridge", { x: 3, y: 64, z: 3 });
+const bot = overworld.spawnEntity("rg:bot", { x: 4, y: 64, z: 0 });
+bot.addTag("good");
+await advanceTicksAsync(400);     // legacy boot (100) + brain start (140) + first discover/caches
+check(log.errors.length === 0, "no errors during boot: " + log.errors.slice(0, 3).join(" | "));
+const brainMod = await import("../../packs/AI_Sandbox_BP/scripts/brain/core.js");
+const gate = await import("../../packs/AI_Sandbox_BP/scripts/brain/gate.js");
+
+// Bridge handshake: the relay account runs /scriptevent aisb:in <frames>
+function fromBridge(obj) { for (const f of encodeFrames("b" + Math.random().toString(36).slice(2, 6), packMessage(obj), DEFAULT_CHUNK)) system.afterEvents.scriptEventReceive.emit({ id: "aisb:in", message: f, sourceType: "Entity", sourceEntity: relay }); }
+fromBridge({ t: "hello", v: 1, name: "AISandboxBridge", version: "0.1.0", providers: ["anthropic"] });
+await advanceTicksAsync(250);
+check(gate.isBrainEnabled(), "brains enabled after bridge hello");
+check(bot.nameTag && bot.nameTag.length > 0, "bot got a name: " + bot.nameTag);
+check(gate.allBrains().size >= 1, "a brain attached to the bot");
+const brain = gate.getBrain(bot.id);
+check(!!brain, "brain object for bot");
+// keep a copy of every action result, the think cycle drains them into the next observation
+const allResults = [];
+const origDrain = brain.actuator.drainResults.bind(brain.actuator);
+brain.actuator.drainResults = () => { const r = origDrain(); allResults.push(...r); return r; };
+
+// Relayed chat from Steve
+fromBridge({ t: "chat_in", from: "Steve", text: `hey ${bot.nameTag} come here and build us a house` });
+// Collect frames the addon sends to the relay player and reassemble the think requests.
+// Every think that nobody is waiting for gets a quiet default answer, like a real model would.
+const reasm = new Reassembler(() => 0);
+const IDLE = JSON.stringify({ thought: "nothing to do", say: "", say_to: "", mood: "", goal: "", actions: [{ type: "wait", seconds: 20 }], remember: [], forget: [] });
+let wanted = null;   // (msg) => boolean ; the think we are waiting for
+let captured = null;
+const seenThinks = [];
+function pump() {
+    for (const m of relay.messages.splice(0)) {
+        const got = reasm.push(m); if (!got) continue;
+        const msg = unpackMessage(got.text); if (!msg || msg.t !== "think") continue;
+        seenThinks.push(msg);
+        if (wanted && !captured && wanted(msg)) { captured = msg; continue; }
+        fromBridge({ t: "result", turnId: msg.turnId, ok: true, text: IDLE, usage: { input: 500, output: 30 }, model: "mock", provider: "anthropic", attempts: 1 });
+    }
+}
+async function run(ticks, step = 5, until = () => false) { for (let i = 0; i < ticks; i += step) { await advanceTicksAsync(step); pump(); if (until()) return true; } return false; }
+async function waitThink(pred, ticks = 400) { wanted = pred; captured = null; await run(ticks, 5, () => !!captured); wanted = null; return captured; }
+const thinkMsg = await waitThink(msg => msg.messages?.some(m => String(m.content).includes("build us a house")));
+check(!!thinkMsg, "addon sent a think request to the bridge");
+if (thinkMsg) {
+    check(typeof thinkMsg.sys === "string" && thinkMsg.sys.includes("# Actions you can take"), "think carried the system prompt");
+    check(thinkMsg.sys.includes("other:magic_block") && thinkMsg.sys.includes("srp:grunt"), "system prompt lists modded content");
+    const obs = thinkMsg.messages[thinkMsg.messages.length - 1].content;
+    check(obs.includes("<Steve>") && obs.includes("build us a house"), "observation contains the chat line");
+    check(obs.includes("Players nearby") && obs.includes("Steve"), "observation lists Steve nearby");
+    // give the bot planks so the craft at the end of the plan can succeed
+    bot.getComponent("minecraft:inventory").container.addItem(new ItemStack("minecraft:oak_planks", 64)); bot.getComponent("minecraft:inventory").container.addItem(new ItemStack("minecraft:oak_planks", 64)); bot.getComponent("minecraft:inventory").container.addItem(new ItemStack("minecraft:oak_planks", 64));
+    // Scripted model reply: talk, set goal, walk to Steve, build a house, craft, eat
+    const reply = { thought: "Steve asked for a house", say: "on my way Steve, house coming up", say_to: "", mood: "happy", goal: "build Steve a house", actions: [{ type: "go_to_player", name: "Steve" }, { type: "build", preset: "house", material: "oak_planks", width: 5, depth: 5, height: 3 }, { type: "craft", item: "crafting_table" }], remember: ["Steve wants a house near spawn"], forget: [] };
+    fromBridge({ t: "result", turnId: thinkMsg.turnId, ok: true, text: JSON.stringify(reply), usage: { input: 1200, output: 90 }, model: "mock", provider: "anthropic", attempts: 1 });
+    await run(40);
+    check(log.chat.some(l => l.includes("on my way Steve")), "bot spoke in chat: " + log.chat.slice(-1));
+    check(brain.memory.facts.some(f => f.text.includes("Steve wants a house")), "fact remembered");
+    check(brain.memory.goal === "build Steve a house", "goal stored");
+    check(bot.getDynamicProperty("rg:mood") === "happy", "mood written to the legacy property");
+    // let the actions run: go_to_player (bot walks via impulses in the mock), then build
+    await run(4000, 10, () => brain.actuator.current?.action.type === "build" && brain.actuator.current.state.placed > 10);
+    const placed = log.commands.filter(c => /^setblock .* minecraft:(oak_planks|glass|torch|crafting_table|chest)/.test(c)).length;
+    check(placed > 10, "house blocks were placed via setblock: " + placed);
+    await run(6000, 10, () => !brain.actuator.current && !brain.actuator.queue.length);
+    const results = [...allResults, ...brain.actuator.results];
+    check(results.some(r => /^build: finished building house/.test(r)), "build finished: " + results.join(" | "));
+    check(results.some(r => /^craft: crafted/.test(r)), "craft succeeded: " + results.join(" | "));
+}
+check(brain && brain.failures === 0, "no think failures");
+check(log.errors.length === 0, "no engine-level errors: " + log.errors.slice(0, 3).join(" | "));
+const aisbWarnings = log.warnings.filter(w => /\[AISB\]/.test(w) && !/started|connected|unavailable/.test(w));
+check(aisbWarnings.length === 0, "no [AISB] warnings: " + aisbWarnings.slice(0, 3).join(" | "));
+
+// Second cycle: status command and a travel action with a built portal
+const cmds = await import("../../packs/AI_Sandbox_BP/scripts/brain/commands.js");
+cmds.handleCommand(steve, "!ai status");
+check(steve.messages.some(m => m.includes("[AI Sandbox]")), "!ai status answered");
+cmds.handleCommand(steve, "!ai summon Ellie a cheerful builder");
+console.log("summon reply:", steve.messages.slice(-1)[0]);
+await run(200);
+const ellie = [...gate.allBrains().values()].find(b => b.name === "Ellie");
+check(!!ellie, "companion Ellie summoned with a brain");
+if (ellie) {
+    const ellieResults = [];
+    const d0 = ellie.actuator.drainResults.bind(ellie.actuator);
+    ellie.actuator.drainResults = () => { const r = d0(); ellieResults.push(...r); return r; };
+    ellie.actuator.enqueue([{ type: "travel", dimension: "nether" }]);
+    await run(2000, 10, () => !ellie.actuator.current && !ellie.actuator.queue.length);
+    check(ellie.bot.dimension.id === "minecraft:nether", "Ellie travelled to the nether: " + [...ellieResults, ...ellie.actuator.results].join(" | "));
+}
+check(log.errors.length === 0, "still no engine-level errors: " + log.errors.slice(0, 3).join(" | "));
+
+// Third cycle: a companion dies and respawns next to its owner, keeping its memory; the owner
+// re-joins far away and the companion is brought over.
+if (ellie) {
+    const pid = ellie.bot.getDynamicProperty("rg:p_id");
+    ellie.memory.facts.push({ text: "Steve likes oak houses", at: Date.now(), hits: 1 });
+    ellie.saveMemory();
+    ellie.bot.applyDamage(100, { cause: "lava" });
+    await run(260);
+    const ellie2 = [...gate.allBrains().values()].find(b => b.name === "Ellie");
+    check(!!ellie2 && ellie2 !== ellie, "Ellie respawned with a new body: " + (ellie2 ? ellie2.bot.id : "none"));
+    if (ellie2) {
+        check(ellie2.bot.getDynamicProperty("rg:p_id") === pid, "respawned Ellie keeps her pid");
+        check(ellie2.memory.facts.some(f => f.text.includes("oak houses")), "respawned Ellie keeps her memory");
+        check(ellie2.settings.owner === steve.id && ellie2.settings.mode === "companion", "respawned Ellie is still Steve's companion");
+        check(ellie2.bot.dimension.id === "minecraft:overworld" && Math.hypot(ellie2.bot.location.x - steve.location.x, ellie2.bot.location.z - steve.location.z) < 4, "respawned next to Steve");
+        check(steve.messages.some(m => m.includes("Ellie is back")), "owner told about the respawn");
+        // owner leaves and comes back 300 blocks away: companion is gathered
+        ellie2.bot.teleport({ x: 300, y: 64, z: 300 });
+        world.afterEvents.playerLeave.emit({ playerId: steve.id, playerName: steve.name });
+        world.afterEvents.playerSpawn.emit({ player: steve, initialSpawn: true });
+        await run(100);
+        check(Math.hypot(ellie2.bot.location.x - steve.location.x, ellie2.bot.location.z - steve.location.z) < 6, "Ellie brought to Steve on join: " + JSON.stringify(ellie2.bot.location));
+    }
+}
+check(log.errors.length === 0, "no engine-level errors after lifecycle: " + log.errors.slice(0, 3).join(" | "));
+const lateWarnings = log.warnings.filter(w => /\[AISB\]/.test(w) && !/started|connected|unavailable/.test(w));
+check(lateWarnings.length === 0, "no late [AISB] warnings: " + lateWarnings.slice(0, 3).join(" | "));
+
+if (fails.length) { console.log("\nFAILED:\n - " + fails.join("\n - ")); console.log("\nwarnings:\n" + log.warnings.slice(0, 15).join("\n")); process.exit(1); }
+console.log(`\nsmoke OK (${seenThinks.length} think requests answered, ${log.commands.length} commands)`);
+process.exit(0);

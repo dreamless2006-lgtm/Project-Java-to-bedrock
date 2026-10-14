@@ -18,7 +18,7 @@ const HELP = [
     "§b!ai talk <Name> <message>§r - whisper to a bot (works without the beta chat API)",
     "§b!ai memory <Name>§r | §b!ai forget <Name>§r - read or wipe a bot's memory",
     "§b!ai pause|resume [Name]§r - pause thinking (all bots or one)",
-    "§7operator: §b!ai provider <id>§r, §b!ai model <name>§r, §b!ai transport auto|direct|bridge§r, §b!ai volume 0-3§r, §b!ai budget soft|hard <tokens>|reset§r, §b!ai rules <text>§r, §b!ai callbyname on|off§r, §b!ai freebuild on|off§r, §b!ai debug on|off§r, §b!ai fakechat on|off§r, §b!ai content§r",
+    "§7operator: §b!ai provider <id>§r, §b!ai model <name>§r, §b!ai transport auto|direct|bridge§r, §b!ai volume 0-3§r, §b!ai budget soft|hard <tokens>|reset§r, §b!ai rules <text>§r, §b!ai callbyname on|off§r, §b!ai freebuild on|off§r, §b!ai debug on|off§r, §b!ai fakechat on|off§r, §b!ai companiondeath respawn|permadeath§r, §b!ai jointeleport on|off§r, §b!ai content§r",
 ];
 
 function reply(player, lines) { for (const l of [].concat(lines)) { try { player.sendMessage(l); } catch (e) { /* ignore */ } } }
@@ -132,6 +132,8 @@ export function handleCommand(player, message) {
         case "debug": manager.debug = rest[0] === "on"; return reply(player, `§adebug ${manager.debug ? "on (see server log)" : "off"}`);
         case "rules": { const text = rest.join(" "); updateWorldConfig({ serverRules: text }); for (const [, b] of allBrains()) b.systemCache = null; return reply(player, text ? "§aserver rules set" : "§aserver rules cleared"); }
         case "bridgename": updateWorldConfig({ bridgeName: rest[0] || "" }); return reply(player, rest[0] ? `§aonly ${rest[0]} may act as the bridge` : "§aany operator account may act as the bridge");
+        case "companiondeath": { const v = rest[0]; if (!["respawn", "permadeath"].includes(v)) return reply(player, "§cusage: !ai companiondeath respawn|permadeath"); updateWorldConfig({ companionDeath: v }); return reply(player, `§acompanions now ${v === "respawn" ? "respawn next to their owner after dying" : "stay dead (permadeath)"}`); }
+        case "jointeleport": updateWorldConfig({ companionJoinTeleport: rest[0] === "on" }); return reply(player, `§acompanions ${rest[0] === "on" ? "come to their owner on join" : "stay where they are when their owner joins"}`);
         case "maxbrains": { const n = Number(rest[0]); if (!(n >= 0 && n <= 40)) return reply(player, "§cusage: !ai maxbrains 0-40"); updateWorldConfig({ maxBrains: n }); return reply(player, `§amax brains ${n}`); }
         case "autonomy": { const v = rest[0]; if (!["full", "companions_only", "off"].includes(v)) return reply(player, "§cusage: !ai autonomy full|companions_only|off"); updateWorldConfig({ autonomy: v }); manager.refreshEnabled(); return reply(player, `§aautonomy ${v}`); }
         case "budget": {
