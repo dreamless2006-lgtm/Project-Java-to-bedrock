@@ -24,6 +24,107 @@
           ]
         }
       }
+    },
+    "animation.minepreggo.navel_prebirth": {
+      "loop": true,
+      "bones": {
+        "belly": {
+          "scale": [
+            "1.0 + 0.03 * math.sin(q.anim_time * 540)",
+            "1.0",
+            "1.06 + 0.06 * math.sin(q.anim_time * 540)"
+          ],
+          "rotation": [
+            "2.0 * math.sin(q.anim_time * 900)",
+            0.0,
+            0.0
+          ]
+        },
+        "front_kick": {
+          "position": [
+            0.0,
+            "0.3 * math.sin(q.anim_time * 900)",
+            "-(1.5 + 2.0 * math.max(0.0, math.sin(q.anim_time * 540)))"
+          ],
+          "scale": [
+            "1.3 + 0.4 * math.max(0.0, math.sin(q.anim_time * 540))",
+            "1.3 + 0.4 * math.max(0.0, math.sin(q.anim_time * 540))",
+            "1.2 + 0.6 * math.max(0.0, math.sin(q.anim_time * 540))"
+          ]
+        },
+        "left_kick": {
+          "position": [
+            "-0.4 * math.sin(q.anim_time * 900)",
+            0.0,
+            "-(1.0 + 1.2 * math.max(0.0, math.sin(q.anim_time * 540 + 120)))"
+          ]
+        },
+        "right_kick": {
+          "position": [
+            "0.4 * math.sin(q.anim_time * 900)",
+            0.0,
+            "-(1.0 + 1.2 * math.max(0.0, math.sin(q.anim_time * 540 + 240)))"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.navel_birth": {
+      "loop": true,
+      "bones": {
+        "belly": {
+          "scale": [
+            "1.0 + 0.04 * v.push + 0.02 * math.sin(q.anim_time * 540)",
+            "1.0 - 0.03 * v.push",
+            "1.08 + 0.12 * v.push + 0.04 * math.sin(q.anim_time * 540)"
+          ],
+          "rotation": [
+            "3.0 * math.sin(q.anim_time * 900) * v.push",
+            0.0,
+            "2.0 * math.sin(q.anim_time * 540) * v.push"
+          ]
+        },
+        "front_kick": {
+          "position": [
+            0.0,
+            "0.4 * math.sin(q.anim_time * 900) * v.push",
+            "-(2.0 + 7.0 * v.push + 0.8 * math.max(0.0, math.sin(q.anim_time * 540)))"
+          ],
+          "scale": [
+            "1.3 + 1.6 * v.push",
+            "1.3 + 1.6 * v.push",
+            "1.3 + 2.4 * v.push + 0.3 * math.max(0.0, math.sin(q.anim_time * 540))"
+          ],
+          "rotation": [
+            "8.0 * math.sin(q.anim_time * 900) * v.push",
+            "10.0 * math.sin(q.anim_time * 540) * v.push",
+            0.0
+          ]
+        },
+        "left_kick": {
+          "position": [
+            "-(0.6 + 1.0 * v.push)",
+            0.0,
+            "-(1.0 + 1.0 * math.max(0.0, math.sin(q.anim_time * 540 + 120)))"
+          ],
+          "scale": [
+            "1.0 - 0.4 * v.push",
+            "1.0 - 0.4 * v.push",
+            "1.0"
+          ]
+        },
+        "right_kick": {
+          "position": [
+            "(0.6 + 1.0 * v.push)",
+            0.0,
+            "-(1.0 + 1.0 * math.max(0.0, math.sin(q.anim_time * 540 + 240)))"
+          ],
+          "scale": [
+            "1.0 - 0.4 * v.push",
+            "1.0 - 0.4 * v.push",
+            "1.0"
+          ]
+        }
+      }
     }
   }
 }

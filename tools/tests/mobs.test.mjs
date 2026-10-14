@@ -233,3 +233,31 @@ test('the inducer makes a wild pregnant mob double over with a kick of the potio
   assert.equal(record.data.wild.incapacitated, false, 'she gets up after her pain cooldown');
   assert.equal(mob.getProperty('minepreggo:pose'), 'none');
 });
+
+test('the phase property is written by the script, wild spawns are read from the variant, birth drives the belly', () => {
+  const mob = new Mob('minepreggo:ender_woman', { variant: 6 }); // spawned with the phase_5 group only
+  run(mob, 1);
+  const record = getRecord(/** @type {any} */ (mob));
+  assert.equal(record.data.wild?.lastPhase >= 5, true, 'a mob spawned with the phase_5 group is wild pregnant');
+  assert.equal(mob.getProperty('minepreggo:phase'), 5, 'the client-visible phase comes from the script');
+
+  const tamed = new Mob('minepreggo:ender_woman', { tamed: true });
+  const t = getRecord(/** @type {any} */ (tamed));
+  assert.ok(startPregnancy(t, 1));
+  assert.equal(tamed.getProperty('minepreggo:phase'), 0);
+  assert.ok(setPhase(t, 4));
+  assert.equal(tamed.getProperty('minepreggo:phase'), 4);
+  assert.equal(tamed.variant, 5, 'the component group variant follows');
+  const p = /** @type {any} */ (t.data.pregnancy);
+  p.daysPassed = p.daysByPhase[4];
+  t.data.fullness = 30;
+  run(tamed, 1);
+  assert.equal(p.pain.type, 'WATER_BREAKING');
+  run(tamed, 1200 / STEP + 1);
+  run(tamed, PHASES[4].preBirthTicks / STEP + 1);
+  assert.equal(p.pain.type, 'BIRTH');
+  assert.equal(tamed.getProperty('minepreggo:kick'), 2, 'the hardest kicks during birth');
+  const before = tamed.getProperty('minepreggo:growth');
+  run(tamed, 5);
+  assert.ok(tamed.getProperty('minepreggo:growth') > before, 'the growth property carries the birth progress');
+});

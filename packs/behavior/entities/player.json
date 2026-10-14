@@ -74,6 +74,11 @@
           ],
           "default": "custom",
           "client_sync": true
+        },
+        "minepreggo:navel": {
+          "type": "bool",
+          "default": false,
+          "client_sync": true
         }
       }
     },

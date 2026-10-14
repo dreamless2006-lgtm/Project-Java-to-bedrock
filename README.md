@@ -83,6 +83,13 @@ craving. Those foods only agree with a mother carrying that species; anyone else
 no food from them. While pregnant with another species, a glass bottle fills with that species'
 breast milk.
 
+### Navel birth (ender babies)
+
+Ender babies come out through the navel: during pre-birth they push the belly button outward
+with every kick, and during birth the navel crowns further out with each push until the baby is
+born. This plays for the ender woman and for a player carrying ender babies, on top of the normal
+labor pose.
+
 ### Guide book
 
 Every new player gets the **Minepreggo Guide** (also craftable: book + lemon). Use it to open the

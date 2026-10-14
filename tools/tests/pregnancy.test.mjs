@@ -302,3 +302,17 @@ test('a mother carrying another species gives that species\' milk', async () => 
   assert.equal(SPECIES.ENDER.milkItem, 'minepreggo:ender_breast_milk_bottle');
   assert.equal(SPECIES.VILLAGER.milkItem, 'minepreggo:human_breast_milk_bottle');
 });
+
+test('an ender pregnancy flags the navel birth for the client', async () => {
+  const { playerVisuals } = await import('../../packs/behavior/scripts/player/body.js');
+  const player = new Player('Ender-mother');
+  const record = getRecord(player);
+  record.setGender('female');
+  assert.ok(startPregnancy(record, 2, /** @type {any} */ ('ENDER')));
+  assert.equal(playerVisuals(record).navel, true);
+  const human = new Player('Human-mother');
+  const h = getRecord(human);
+  h.setGender('female');
+  assert.ok(startPregnancy(h, 1));
+  assert.equal(playerVisuals(h).navel, false);
+});

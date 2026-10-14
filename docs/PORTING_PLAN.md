@@ -129,6 +129,16 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   Slimes (fall cushioning) effects plus `calculateExtraFallDamageMultiplier`, the species diets
   (`CRAVING_ITEM`: the species' foods are edible only for a mother carrying that species and
   satisfy her cravings) and species milk (`MILK_ITEM`). Baby mobs are still not spawned.
+- ✅ The phase property of a mob is written with `Entity.setProperty` on every change (the
+  client never showed the value the JSON events set, while the pose written by the script did);
+  wild pregnant spawns are recognised from the `minecraft:variant` their spawn event's component
+  group carries. With the phase visible, the fetal movement animations (by phase and intensity)
+  and the belly inflation levels play on every family.
+- ✅ Birth progress (push progress for players, the baby's birth timer for mobs) is sent in the
+  growth property during birth, so the belly pushes with it.
+- ✅ Navel birth for ender babies (Bedrock addition, ender woman and players carrying ender
+  babies): Molang animations push the navel (front kick bone) in pre-birth and crown it out with
+  the birth progress, on top of the labor pose.
 - ✅ Every mob render controller (the creeper girls and the ender woman have their own, which the
   first variant fix missed) selects geometry and texture with `query.variant`; no render controller
   reads a property, compares strings or uses `part_visibility` for the belly any more (the belly is

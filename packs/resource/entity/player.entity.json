@@ -106,6 +106,8 @@
           "variable.riding_y_offset = query.is_riding_any_entity_of_type('minecraft:minecart', 'minecraft:boat', 'minecraft:chest_boat', 'minecraft:strider') ? -3.0 : 0.0;",
           "variable.mp_phase = query.property('minepreggo:phase');",
           "variable.mp_pose = query.property('minepreggo:pose');",
+          "variable.mp_navel = query.property('minepreggo:navel');",
+          "v.push = variable.mp_pose == 'birth' ? q.property('minepreggo:growth') : 0.0;",
           "variable.mp_kick = query.property('minepreggo:kick');",
           "variable.mp_female = query.property('minepreggo:gender') == 'female';",
           "variable.mp_skin = query.property('minepreggo:skin');",
@@ -339,6 +341,12 @@
           },
           {
             "minepreggo_labor_miscarriage": "variable.mp_labor && variable.mp_pose == 'miscarriage'"
+          },
+          {
+            "minepreggo_navel_prebirth": "variable.mp_pregnant && variable.mp_navel && variable.mp_pose == 'prebirth'"
+          },
+          {
+            "minepreggo_navel_birth": "variable.mp_pregnant && variable.mp_navel && variable.mp_pose == 'birth'"
           }
         ],
         "variables": {
@@ -475,7 +483,9 @@
         "minepreggo_labor_prebirth": "animation.minepreggo.player.labor_prebirth",
         "minepreggo_labor_birth": "animation.minepreggo.player.labor_birth",
         "minepreggo_labor_postbirth": "animation.minepreggo.player.labor_postbirth",
-        "minepreggo_labor_miscarriage": "animation.minepreggo.player.labor_miscarriage"
+        "minepreggo_labor_miscarriage": "animation.minepreggo.player.labor_miscarriage",
+        "minepreggo_navel_prebirth": "animation.minepreggo.navel_prebirth",
+        "minepreggo_navel_birth": "animation.minepreggo.navel_birth"
       },
       "render_controllers": [
         {

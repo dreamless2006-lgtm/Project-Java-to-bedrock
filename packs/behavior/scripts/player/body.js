@@ -7,7 +7,7 @@
 
 import { system, world } from '@minecraft/server';
 import { CONFIG } from '../pregnancy/data.js';
-import { getRecord } from '../pregnancy/system.js';
+import { getRecord, pushProgress } from '../pregnancy/system.js';
 
 /** @typedef {import('@minecraft/server').Player} Player */
 /** @typedef {import('../pregnancy/state.js').PlayerRecord} PlayerRecord */
@@ -33,7 +33,7 @@ let warned = false;
 export function playerVisuals(/** @type {PlayerRecord} */ record) {
   const p = record.pregnancy;
   const gender = record.gender ?? 'unset';
-  if (!p || gender !== 'female') return { phase: -1, pose: 'none', kick: 0, growth: 0, gender, skin: record.skin };
+  if (!p || gender !== 'female') return { phase: -1, pose: 'none', kick: 0, growth: 0, gender, skin: record.skin, navel: false };
   const pain = p.pain;
   // Rubbing (crouch + look down) plays Java's BELLY_RUBBING_Px arm animation; the belly-rub need
   // shows the belly animation; pains map to the labor/pain body animations.
@@ -42,8 +42,12 @@ export function playerVisuals(/** @type {PlayerRecord} */ record) {
   const severity = pain?.type === 'PREBIRTH' || pain?.type === 'BIRTH' ? 4 : pain?.severity ?? 0; // hardest kicks on the way out
   const kick = severity <= 0 ? 0 : severity < 3 ? 1 : 2;
   const days = p.daysByPhase[p.phase] || 1;
-  const growth = Math.min(1, (p.daysPassed + p.timer / CONFIG.ticksPerPregnancyDay) / days);
-  return { phase: p.phase, pose, kick, growth: Math.round(growth * 100) / 100, gender, skin: record.skin };
+  let growth = Math.min(1, (p.daysPassed + p.timer / CONFIG.ticksPerPregnancyDay) / days);
+  // During birth the growth property carries the push progress of the current baby.
+  if (pain?.type === 'BIRTH' && p.birth) growth = pushProgress(record) / 100;
+  // Ender babies are born through the navel (a Bedrock addition): the client plays the navel animations.
+  const navel = p.womb.includes('ENDER') || p.father === 'ENDER';
+  return { phase: p.phase, pose, kick, growth: Math.round(growth * 100) / 100, gender, skin: record.skin, navel };
 }
 
 /** Writes the visuals to the player's entity properties, only the ones that changed. */

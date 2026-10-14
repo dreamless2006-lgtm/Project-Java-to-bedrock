@@ -140,7 +140,7 @@ export class Player {
     this.typeId = 'minecraft:player';
     this.isValid = true;
     /** entity properties of packs/behavior/entities/player.json */
-    this.entityProperties = new Map([['minepreggo:phase', -1], ['minepreggo:pose', 'none'], ['minepreggo:kick', 0], ['minepreggo:growth', 0], ['minepreggo:gender', 'unset'], ['minepreggo:skin', 'custom']]);
+    this.entityProperties = new Map([['minepreggo:phase', -1], ['minepreggo:pose', 'none'], ['minepreggo:kick', 0], ['minepreggo:growth', 0], ['minepreggo:gender', 'unset'], ['minepreggo:skin', 'custom'], ['minepreggo:navel', false]]);
     /** what the player picks on the next form (undefined = closes it) */
     this.formSelection = undefined;
     /** @type {ItemStack | undefined} */
@@ -277,7 +277,9 @@ world.getEntity = (id) => [...world.players, ...[...dimensions.values()].flatMap
  * events of DESIGN.md (only their effect on properties and tamed state is modelled).
  */
 export class Mob {
-  constructor(typeId = 'minepreggo:zombie_girl', { tamed = false, phase = -1 } = {}) {
+  constructor(typeId = 'minepreggo:zombie_girl', { tamed = false, phase = -1, variant = undefined } = {}) {
+    /** minecraft:variant of the phase component groups (phase + 1); a spawn event's property may or may not be visible */
+    this.variant = variant ?? phase + 1;
     this.typeId = typeId;
     this.id = `mob-${nextEntityId++}`;
     this.isValid = true;
@@ -301,6 +303,7 @@ export class Mob {
   }
   getComponent(id) {
     if (id === 'minecraft:is_tamed') return this.tamed ? {} : undefined;
+    if (id === 'minecraft:variant') return { value: this.variant };
     return this.components[id];
   }
   getProperty(id) {
@@ -318,9 +321,10 @@ export class Mob {
   }
   triggerEvent(name) {
     this.events.push(name);
+    // Events change the component groups (the variant); the property itself is written by the script.
     const phase = name.match(/^minepreggo:set_phase_(\d)$/);
-    if (phase) this.properties.set('minepreggo:phase', Number(phase[1]));
-    if (name === 'minepreggo:set_not_pregnant') this.properties.set('minepreggo:phase', -1);
+    if (phase) this.variant = Number(phase[1]) + 1;
+    if (name === 'minepreggo:set_not_pregnant') this.variant = 0;
     if (name === 'minepreggo:on_tame') this.tamed = true;
     if (name === 'minepreggo:become_savage') this.properties.set('minepreggo:savage', true);
     if (name === 'minepreggo:calm_down') this.properties.set('minepreggo:savage', false);

@@ -61,6 +61,21 @@ export const forgetRecord = (/** @type {string} */ id) => records.delete(id);
 export const familyOf = (/** @type {Entity} */ entity) => FAMILIES[entity.typeId];
 export const isTamed = (/** @type {Entity} */ entity) => entity.getComponent('minecraft:is_tamed') !== undefined;
 const phaseProperty = (/** @type {Entity} */ entity) => /** @type {number} */ (entity.getProperty('minepreggo:phase') ?? -1);
+/** The pregnancy variant the component groups carry (minecraft:variant = phase + 1, 0 when not pregnant). */
+const variantOf = (/** @type {Entity} */ entity) => /** @type {{ value: number } | undefined} */ (/** @type {unknown} */ (entity.getComponent('minecraft:variant')))?.value ?? 0;
+
+/**
+ * The phase as the client must see it. The events set the property too, but in game the client
+ * reads only values written through the script API (the pose property proved that), so every
+ * phase change writes it here as well.
+ */
+function setPhaseProperty(/** @type {Entity} */ entity, /** @type {number} */ phase) {
+  try {
+    entity.setProperty('minepreggo:phase', phase);
+  } catch {
+    // an entity without the property (never for ours)
+  }
+}
 
 // --- small helpers ---------------------------------------------------------------------------
 
@@ -151,12 +166,13 @@ function setWomb(/** @type {Pregnancy} */ p, /** @type {Family} */ family, /** @
 export function startPregnancy(record, babies) {
   const { data, entity } = record;
   const family = familyOf(entity);
-  if (!family || data.pregnancy || data.wild || data.post || phaseProperty(entity) >= 0) return false;
+  if (!family || data.pregnancy || data.wild || data.post) return false;
   const p = newPregnancy(babies, 'HUMAN');
   setWomb(p, family, babies);
   data.pregnancy = p;
   data.lactation = null;
   entity.triggerEvent('minepreggo:set_phase_0');
+  setPhaseProperty(entity, 0);
   particles(entity, 'minecraft:heart_particle', 5);
   record.save();
   return true;
@@ -170,6 +186,7 @@ export function setPhase(/** @type {MobRecord} */ record, /** @type {number} */ 
   p.daysPassed = 0;
   p.timer = 0;
   record.entity.triggerEvent(`minepreggo:set_phase_${phase}`);
+  setPhaseProperty(record.entity, phase);
   record.dirty = true;
   return true;
 }
@@ -181,6 +198,7 @@ export function endPregnancy(/** @type {MobRecord} */ record, /** @type {'PARTUM
   data.post = post ? { type: post, timer: 0 } : null;
   data.lactation = post === 'PARTUM' ? { level: 0, timer: 0, elapsed: 0 } : null;
   entity.triggerEvent('minepreggo:set_not_pregnant');
+  setPhaseProperty(entity, -1);
   record.save();
 }
 
@@ -203,6 +221,7 @@ export function initWild(/** @type {MobRecord} */ record, /** @type {number} */ 
     incapacitated: false,
   };
   record.entity.triggerEvent('minepreggo:hostile_pregnant_init');
+  setPhaseProperty(record.entity, phase);
   record.save();
 }
 
@@ -631,7 +650,14 @@ function clientState(/** @type {MobRecord} */ record) {
   const severity = pain?.type === 'PREBIRTH' || pain?.type === 'BIRTH' ? 4 : pain?.severity ?? 0;
   const kick = severity <= 0 ? 0 : severity < 3 ? 1 : 2;
   const days = p.daysByPhase[p.phase] || 1;
-  const growth = Math.min(1, (p.daysPassed + p.timer / CONFIG.ticksPerPregnancyDay) / days);
+  let growth = Math.min(1, (p.daysPassed + p.timer / CONFIG.ticksPerPregnancyDay) / days);
+  // During birth the growth property carries the current baby's progress (the belly animations push with it).
+  const birth = /** @type {{ remaining: number } | null | undefined} */ (/** @type {unknown} */ (p.birth));
+  if (pain?.type === 'BIRTH' && birth) {
+    const family = familyOf(record.entity);
+    const total = family ? birthTicks(family) : 300;
+    growth = Math.min(1, Math.max(0, 1 - birth.remaining / total));
+  }
   return { pose, kick, growth: Math.round(growth * 100) / 100 };
 }
 
@@ -665,8 +691,12 @@ export function tickMob(/** @type {Entity} */ entity) {
   if (!familyOf(entity)) return record;
   updateMovement(record);
 
-  // A mob that spawned pregnant (natural spawn) gets her hostile pregnancy data once.
-  if (!data.pregnancy && !data.wild && phaseProperty(entity) >= 0) initWild(record, phaseProperty(entity));
+  // A mob that spawned pregnant (natural spawn) gets her hostile pregnancy data once. Her spawn
+  // event added a phase component group, whose variant is phase + 1.
+  if (!data.pregnancy && !data.wild && !data.post) {
+    const spawnedPhase = phaseProperty(entity) >= 0 ? phaseProperty(entity) : variantOf(entity) - 1;
+    if (spawnedPhase >= 0) initWild(record, spawnedPhase);
+  }
 
   if (data.pending && system.currentTick >= data.pending.endTick) {
     const { amplifier } = data.pending;
