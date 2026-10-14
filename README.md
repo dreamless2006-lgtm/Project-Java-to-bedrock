@@ -18,8 +18,10 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
 - New players choose a gender; only female characters can become pregnant. A female character
   either keeps her own skin (the pregnant belly is drawn with the skin's own colours) or uses the
   mod's Alex skin (`/scriptevent minepreggo:skin custom|alex|steve` changes it later). Her body
-  shows the pregnancy in third person: the belly grows through the phases, swells as she breathes,
-  and the babies kick when she feels them.
+  shows the pregnancy: the belly grows through the phases, swells as she breathes, and the babies
+  kick when she feels them. Chest, belly and hips have the mod's jiggle physics (they bounce with
+  steps, jumps and landings), and in first person the chest and belly come into view when you
+  look down.
 - A Potion of Impregnation (creative inventory, *Items* tab) starts a pregnancy 15 seconds after
   drinking it. Stronger potions (II–VI) mean more babies and a later birth.
 - **Crouch** to see the pregnancy status on the action bar.

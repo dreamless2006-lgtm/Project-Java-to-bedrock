@@ -101,6 +101,7 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
 - ✅ Mob foods and their craving variants (brains, activated gunpowder, ender slime jelly, chorus
   fruit, rotten flesh and spider eye variants) with recipes; brains drop from player-killed
   villagers, illagers and witches; baby, dead-fetus and milk items of every species.
+- ✅ Jiggle physics for every female mob and the player (chest, belly from P0, hips from P3).
 - ✅ Player visuals: the player entity is overridden with the same properties as the mobs
   (plus gender and skin type); the mod's player body layers (CustomPregnantBodyModel on the
   player's own skin, PredefinedPregnantBodyModel with the Alex textures, and the chest layers)
@@ -183,7 +184,9 @@ removed systems. (Custom mob effects are emulated since phase 2.)
 | Rehabilitation effect after birth or miscarriage (-10 % speed, -30 % max health…) | Not applied; the recovery period still blocks a new pregnancy | No attribute modifier API |
 | Gravity and fall-damage modifiers per phase | Only knockback resistance per phase | No gravity/fall-damage components |
 | Species milk bottles have effects on mobs and players | Plain items | Item effects are phase 4 |
-| Expression (face) layer, armour layers, jiggle physics | Not shown | Phases 6 and 8 |
+| Expression (face) layer, armour layers | Not shown | Phases 6 and 8 |
+| Jiggle physics (BoobJigglePhysics, BellyJigglePhysics, ButtJigglePhysics: springs stepped once per client tick) | The same springs, stepped per rendered frame in Molang with the Java constants scaled by frame time | Molang keeps per-entity variables between frames; `query.position_delta` stands in for the Java position deltas |
+| Pregnant body and chest only in third person | Also in first person when looking down more than 25° | The Bedrock first-person body follows the camera, so the layers swing into view |
 | Hostile humanoid slime girls are not spawned naturally (no biome modifier) | Same | — |
 | Steve predefined skin has only a base texture; the loader falls back to Alex for the phases | Same (Steve = Steve base skin + Alex pregnancy art) | — |
 | Pregnant body shows in first person too (arms only) | Third person only | First-person view has no body |
