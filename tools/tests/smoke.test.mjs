@@ -534,6 +534,7 @@ test('the belly follows the real phase every tick, and the debug command can for
   assert.match(command(tester, 'minepreggo:debug', 'belly 42'), /belly P9 forced/);
   assert.match(command(tester, 'minepreggo:debug', 'belly'), /belly P7 forced/);
   assert.match(command(tester, 'minepreggo:debug', 'nonsense'), /usage/);
+  assert.match(command(tester, 'minepreggo:debug', 'belly abc'), /usage/);
   assert.match(command(tester, 'minepreggo:debug', 'off'), /you: minecraft:player: phase=-1/);
   assert.equal(girl.getProperty('minepreggo:phase'), -1, 'off restores the real phase at once');
   system.tick(STEP + 1);

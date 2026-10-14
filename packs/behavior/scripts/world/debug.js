@@ -61,7 +61,7 @@ export function forceBelly(/** @type {Player} */ player, /** @type {number} */ s
   debugPlayer(getRecord(player), 'none', 0, ticks, phase);
   const mob = nearestMob(player);
   if (mob) debugMob(getMobRecord(mob), 'none', 0, ticks, phase);
-  return `belly P${phase} forced for ${seconds(ticks)} on ${targets(player)}: that belly must show now${phase <= 1 ? ' (P0 and P1 are flat by design)' : ''}.`;
+  return `belly P${phase} forced for ${seconds(ticks)} on ${targets(player)}: that belly must show now${phase <= 1 ? ' (P0 and P1 are flat by design)' : phase === 2 ? ' (a small bump; the monster creeper girl has none before P3)' : ''}.`;
 }
 
 /** Ends every forced state; the real values come back at once. */
@@ -88,7 +88,7 @@ system.afterEvents.scriptEventReceive.subscribe(({ id, message, sourceEntity }) 
   const [mode = '', argument] = message.trim().toLowerCase().split(/\s+/);
   const say = (/** @type {string} */ line) => player.sendMessage(`[Minepreggo debug] ${line}`);
   if (mode === 'kick' || mode === 'birth') say(forcePose(player, mode));
-  else if (mode === 'belly') say(forceBelly(player, argument === undefined ? 7 : Number(argument)));
+  else if (mode === 'belly' && (argument === undefined || !Number.isNaN(Number(argument)))) say(forceBelly(player, argument === undefined ? 7 : Number(argument)));
   else if (mode === 'off') say(stopForcing(player));
   else if (mode !== '') say('usage: /scriptevent minepreggo:debug kick | birth | belly <0-9> | off');
   for (const line of report(player)) player.sendMessage(line);

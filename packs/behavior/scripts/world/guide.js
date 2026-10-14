@@ -27,7 +27,7 @@ export const CHAPTERS = [
     title: 'Phases P0-P9',
     body:
       'A pregnancy lasts 50 Minecraft days in up to ten phases. One baby is born in P4; more babies mean a later birth (P5 to P9) and a bigger belly.\n\n' +
-      'P0 and P1: the belly is flat, as in the mod (nothing to see yet). P2: a small bump. P3: the belly shows and the baby starts to move. P4+: back pain after long walks, heavy walking. P7+: a big belly and hard kicks.\n\n' +
+      'P0 and P1: the belly is flat, as in the mod (nothing to see yet). P2: a small bump (none yet on the monster creeper girl). P3: the belly shows and the baby starts to move. P4+: back pain after long walks, heavy walking. P7+: a big belly and hard kicks.\n\n' +
       'Sleeping through the night moves the pregnancy forward. A Potion of Pregnancy Acceleration skips 4 to 17 days at once; the Gradual one makes time run 120-600x faster for 3 minutes.',
   },
   {
