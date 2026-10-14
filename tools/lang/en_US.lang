@@ -9,6 +9,7 @@ minepreggo.birth.push_hint=Keep tapping sneak to push!
 minepreggo.hud.day=Day %s/%s
 minepreggo.hud.health=Pregnancy health %s
 minepreggo.hud.push=Tap %s to push: %s
+minepreggo.selfcheck.missing=§cNot loaded: %s. The game rejected these definition files; Settings > Creator > Content Log GUI shows the reason.
 minepreggo.loaded=§7[Minepreggo %s, resources {RP_VERSION}] Add-on loaded. If the two versions differ, remove Minepreggo (Resources) from the world's Resource Packs and add it again.
 entity.minepreggo:zombie_girl.name=Zombie Girl
 item.spawn_egg.entity.minepreggo:zombie_girl.name=Zombie Girl Spawn Egg

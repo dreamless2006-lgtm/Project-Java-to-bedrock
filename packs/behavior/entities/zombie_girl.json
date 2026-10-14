@@ -47,10 +47,10 @@
         "minepreggo:growth": {
           "type": "float",
           "range": [
-            0.0,
-            1.0
+            0,
+            1
           ],
-          "default": 0.0,
+          "default": 0,
           "client_sync": true
         },
         "minepreggo:savage": {
@@ -147,7 +147,7 @@
         },
         "minecraft:behavior.random_stroll": {
           "priority": 9,
-          "speed_multiplier": 1.0
+          "speed_multiplier": 1
         },
         "minecraft:behavior.random_look_around": {
           "priority": 10
@@ -156,7 +156,7 @@
           "priority": 8,
           "max_dist": 3,
           "goal_radius": 2,
-          "speed_multiplier": 1.0,
+          "speed_multiplier": 1,
           "pickup_based_on_chance": true,
           "can_pickup_any_item": true,
           "excluded_items": [
@@ -196,9 +196,9 @@
         },
         "minecraft:sittable": {},
         "minecraft:leashable": {
-          "soft_distance": 4.0,
-          "hard_distance": 6.0,
-          "max_distance": 10.0
+          "soft_distance": 4,
+          "hard_distance": 6,
+          "max_distance": 10
         },
         "minecraft:behavior.stay_while_sitting": {
           "priority": 2
@@ -220,7 +220,7 @@
         },
         "minecraft:behavior.random_stroll": {
           "priority": 9,
-          "speed_multiplier": 1.0
+          "speed_multiplier": 1
         }
       },
       "minepreggo:savage": {
@@ -510,17 +510,10 @@
         "speed_multiplier": 1.2,
         "track_target": true
       },
-      "minecraft:behavior.restrict_sun": {
-        "priority": 1
-      },
-      "minecraft:behavior.flee_sun": {
-        "priority": 2,
-        "speed_multiplier": 1.1
-      },
       "minecraft:behavior.stomp_turtle_egg": {
-        "priority": 7,
-        "speed_multiplier": 1.0,
-        "search_range": 3,
+        "priority": 5,
+        "speed_multiplier": 1,
+        "search_range": 10,
         "search_height": 2,
         "goal_radius": 1.14,
         "interval": 20
@@ -619,7 +612,7 @@
         "set_property": {
           "minepreggo:phase": -1,
           "minepreggo:pose": "none",
-          "minepreggo:growth": 0.0
+          "minepreggo:growth": 0
         }
       },
       "minepreggo:set_phase_0": {

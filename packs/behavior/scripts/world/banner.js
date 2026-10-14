@@ -1,8 +1,25 @@
 // Tells each player once per join that the scripts are running and what loaded, so a pack that
 // failed (no line, or a red entry) is easy to spot on any device, consoles included, without the
-// content log.
+// content log. Every entity, item and block the pack defines is checked against what the game
+// registered, and the ones it rejected are named.
 import { BlockTypes, EntityTypes, ItemTypes, system, world } from '@minecraft/server';
+import { BLOCK_IDS, ENTITY_IDS, ITEM_IDS } from '../generated/ids.js';
 import { VERSION } from '../version.js';
+
+/** @typedef {{ total: number, missing: string[] }} Registry */
+
+/** @param {string[]} ids @param {(id: string) => unknown} get */
+function compare(ids, get) {
+  const missing = [];
+  for (const id of ids) {
+    try {
+      if (get(id) === undefined) missing.push(id.replace('minepreggo:', ''));
+    } catch {
+      missing.push(id.replace('minepreggo:', ''));
+    }
+  }
+  return { total: ids.length, missing };
+}
 
 /** @param {import('@minecraft/server').Player} player */
 export function selfCheck(player) {
@@ -14,9 +31,9 @@ export function selfCheck(player) {
     visuals = false;
   }
   return {
-    entities: EntityTypes.get('minepreggo:zombie_girl') !== undefined,
-    items: ItemTypes.get('minepreggo:villager_brain') !== undefined,
-    blocks: BlockTypes.get('minepreggo:chili_peppers') !== undefined,
+    entities: compare(ENTITY_IDS, (id) => EntityTypes.get(id)),
+    items: compare(ITEM_IDS, (id) => ItemTypes.get(id)),
+    blocks: compare(BLOCK_IDS, (id) => BlockTypes.get(id)),
     visuals,
   };
 }
@@ -29,10 +46,15 @@ world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
     const results = selfCheck(player);
     /** @type {import('@minecraft/server').RawMessage[]} */
     const parts = [];
-    for (const [name, ok] of Object.entries(results)) {
+    const missing = [];
+    for (const [name, result] of Object.entries(results)) {
       if (parts.length) parts.push({ text: ' ' });
-      parts.push({ translate: ok ? 'minepreggo.selfcheck.ok' : 'minepreggo.selfcheck.fail', with: { rawtext: [{ translate: `minepreggo.selfcheck.${name}` }] } });
+      const ok = typeof result === 'boolean' ? result : result.missing.length === 0;
+      const label = typeof result === 'boolean' ? [{ translate: `minepreggo.selfcheck.${name}` }] : [{ translate: `minepreggo.selfcheck.${name}` }, { text: ` ${result.total - result.missing.length}/${result.total}` }];
+      parts.push({ translate: ok ? 'minepreggo.selfcheck.ok' : 'minepreggo.selfcheck.fail', with: { rawtext: [{ rawtext: label }] } });
+      if (typeof result !== 'boolean') missing.push(...result.missing);
     }
     player.sendMessage({ translate: 'minepreggo.selfcheck', with: { rawtext: [{ text: VERSION }, { rawtext: parts }] } });
+    if (missing.length) player.sendMessage({ translate: 'minepreggo.selfcheck.missing', with: [missing.join(', ')] });
   }, 40);
 });

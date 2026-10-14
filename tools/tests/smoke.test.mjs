@@ -116,7 +116,9 @@ test('joining: banner, gender form, self-check green, body properties synced', a
   assert.equal(record.gender, 'female');
   assert.equal(record.skin, 'alex');
   assert.match(text(player.messages[0]), /minepreggo\.loaded/);
-  assert.deepEqual(selfCheck(player), { entities: true, items: true, blocks: true, visuals: true });
+  const check0 = selfCheck(player);
+  assert.deepEqual([check0.entities.missing, check0.items.missing, check0.blocks.missing, check0.visuals], [[], [], [], true]);
+  assert.ok(check0.entities.total >= 6 && check0.items.total >= 100 && check0.blocks.total >= 2, 'every definition of the pack is checked');
 
   system.tick(40);
   const check = player.messages.find((m) => text(m).includes('minepreggo.selfcheck"'));

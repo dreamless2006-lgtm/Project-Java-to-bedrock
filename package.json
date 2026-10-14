@@ -1,12 +1,12 @@
 {
   "name": "minepreggo-bedrock",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "private": true,
   "description": "Bedrock Edition (.mcaddon) port of the Minepreggo Forge mod",
   "type": "module",
   "scripts": {
     "import": "node tools/import-jar.mjs",
-    "check": "tsc -p jsconfig.json && node tools/validate.mjs",
+    "check": "node tools/gen-ids.mjs && tsc -p jsconfig.json && node tools/validate.mjs",
     "build": "node tools/build.mjs",
     "test": "node --import ./tools/tests/register-mock.mjs --test tools/tests/*.test.mjs"
   },

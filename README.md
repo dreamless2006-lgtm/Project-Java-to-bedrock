@@ -52,7 +52,7 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
 A world keeps the pack versions it was created with, and Bedrock keeps older imports next to the
 new one. After importing a newer `.mcaddon`, open the world's settings and, under **Behavior
 Packs** *and* **Resource Packs**, remove Minepreggo from the active packs and add it again. The
-join message shows both versions (`[Minepreggo 0.3.4, resources 0.3.4]`); while the resources
+join message shows both versions (`[Minepreggo 0.3.5, resources 0.3.5]`); while the resources
 version lags behind, the models, bellies and animations are the old ones, whatever the scripts do.
 Old versions can be deleted in Settings → Storage.
 
@@ -79,6 +79,14 @@ is tamed, anyone on a wild pregnant one).
 
 The mod's brewing recipes use ingredients of its fertility systems, which are not ported, so the
 potions are creative-only (Bedrock cannot add brewing recipes either).
+
+### The self-check line
+
+Two seconds after joining, the add-on prints which of its definitions the game registered, for
+example `self-check: entities 6/6 ✔ items 139/139 ✔ blocks 2/2 ✔ player visuals ✔`. A red entry
+names the files the game rejected on your device; the reason is in Settings → Creator → Content Log
+GUI (turn on "Enable Content Log File" and "Enable Content Log GUI"), and that reason is what to
+report.
 
 ### Debug tools in the guide book
 

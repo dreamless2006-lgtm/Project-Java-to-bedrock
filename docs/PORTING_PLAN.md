@@ -143,6 +143,11 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   when hers is small). The client falls back to `q.variant` and to the pose when the phase
   property is unknown, and the mob system rewrites the phase property every tick (records from
   versions that only set it through entity events, wild mobs that only kept the variant).
+- ✅ **Self-check names rejected definitions (0.3.5).** `tools/gen-ids.mjs` writes every entity,
+  item and block identifier of the pack into `scripts/generated/ids.js`; on join the banner
+  compares them with the game's registries and lists the ones it rejected, which is the only way
+  to see a content error on a phone or console. The zombie girl's sun behaviors now match the
+  current vanilla zombie (no flee/restrict sun, vanilla turtle-egg stomping parameters).
 - ✅ **Belly shown by the render controller (0.3.4).** The belly group of the phase is selected with
   `part_visibility` (every bone of `belly_pN`, kick bones included, visible only while
   `v.phase == N`), generated per family from the merged model by the importer, which is how the
