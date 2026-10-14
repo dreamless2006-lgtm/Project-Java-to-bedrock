@@ -143,6 +143,16 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   when hers is small). The client falls back to `q.variant` and to the pose when the phase
   property is unknown, and the mob system rewrites the phase property every tick (records from
   versions that only set it through entity events, wild mobs that only kept the variant).
+- ✅ **What the game's content log said (0.3.7).** The first content log from a device named the
+  real failures: a float property default written as `0` (what JSON.stringify makes of 0.0) makes
+  the game drop every property of the entity ("'default' value does not match the specified type
+  'float'"), which took phase, pose, kick, growth and belly off the client at once; the zombie
+  girl's `alert_same_type` and the old leash distances are rejected by 1.26.30; the guide book
+  recipe lacked unlock data; the stuffed mushroom's nested `food_effects` parameters exceed the
+  custom component depth limit; and the jiggle variables were read before their first assignment.
+  Entity files are now written through `tools/lib/entity-json.mjs` (float literals kept), the
+  validator enforces all of these rules (and validates against the 1.26.30 schemas), food effects
+  are one flat string, every pre_animation variable is initialized, and the recipe unlocks.
 - ✅ **Belly on the proven path (0.3.6).** The one property path that is proven in game is the pose:
   an enum written by the scripts and compared as a string. The belly is now the same kind of value
   (`minepreggo:belly`: `none`, `p0`..`p9`), written next to the phase and kept equal to it every

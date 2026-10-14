@@ -17,6 +17,11 @@
     ],
     "result": {
       "item": "minepreggo:guide_book"
-    }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:book"
+      }
+    ]
   }
 }

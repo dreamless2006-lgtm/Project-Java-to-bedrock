@@ -5,6 +5,7 @@
 // (like the pain controller) for the belly animations. Run: node tools/gen-belly-render.mjs
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { writeEntityJson } from './lib/entity-json.mjs';
 
 const ROOT = new URL('../', import.meta.url).pathname;
 const RP = join(ROOT, 'packs/resource');
@@ -27,6 +28,29 @@ const BELLY_ANIMATE = /^(belly_low|belly_medium|belly_high|belly_growth|fetal_p\
 
 const read = (/** @type {string} */ file) => JSON.parse(readFileSync(file, 'utf8'));
 const write = (/** @type {string} */ file, /** @type {unknown} */ doc) => writeFileSync(file, JSON.stringify(doc, null, 2) + '\n');
+
+/**
+ * Initialize lines for every variable the pre_animation assigns (they keep state between frames,
+ * so the first frame reads them before any assignment), merged with the existing ones.
+ * @param {string[]} preAnimation
+ * @param {string[]} existing
+ */
+function initializers(preAnimation, existing) {
+  const assigned = new Set();
+  for (const line of preAnimation) for (const m of line.matchAll(/\b(?:v|variable)\.([a-z_0-9]+)\s*=(?!=)/g)) assigned.add(m[1]);
+  const lines = existing.filter((line) => !/^variable\.[a-z_0-9]+ = 0\.0;$/.test(line) || !assigned.has(line.slice(9, line.indexOf(' '))));
+  const have = new Set(lines.map((line) => line.match(/^(?:v|variable)\.([a-z_0-9]+)/)?.[1]));
+  for (const name of [...assigned].sort()) if (!have.has(name)) lines.push(`variable.${name} = 0.0;`);
+  return lines;
+}
+
+/** Fields the game (1.26.30) rejects in a behavior entity: the zombie's alert_same_type, the old leash distances. */
+function rejectedFields(/** @type {any} */ entity) {
+  for (const c of [entity.components ?? {}, ...Object.values(entity.component_groups ?? {})]) {
+    if (c['minecraft:behavior.hurt_by_target']) delete c['minecraft:behavior.hurt_by_target'].alert_same_type;
+    if (c['minecraft:leashable']) for (const key of ['soft_distance', 'hard_distance', 'max_distance']) delete c['minecraft:leashable'][key];
+  }
+}
 
 /** Molang: the belly size as a number from the enum property, -1 when none. */
 function bellyIndex(/** @type {string} */ property) {
@@ -129,12 +153,16 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
   for (const name of ['belly_low', 'belly_medium', 'belly_high', 'belly_growth', 'fetal_push', 'birth_push', 'belly_hidden', ...PHASES.filter((p) => p >= 3).flatMap((p) => [`fetal_p${p}_i`, `fetal_p${p}_ii`, `fetal_p${p}_iii`])]) {
     if (!d.animations[name]) throw new Error(`${family}: the belly controller needs animation "${name}"`);
   }
+  // Every Molang variable the pre_animation keeps between frames starts at 0, or the game logs
+  // "unhandled request for unknown variable" every frame until it is first assigned.
+  d.scripts.initialize = initializers(d.scripts.pre_animation, d.scripts.initialize ?? []);
   write(entityFile, entityDoc);
 
   // Behavior: the belly enum property, set by the same events that set the phase.
   const bpFile = join(BP, 'entities', `${family}.json`);
   const bpDoc = read(bpFile);
   const e = bpDoc['minecraft:entity'];
+  rejectedFields(e);
   e.description.properties['minepreggo:belly'] = { type: 'enum', values: BELLY_VALUES, default: 'none', client_sync: true };
   for (const [name, event] of Object.entries(e.events)) {
     // An event is a flat step or a sequence of steps; the properties go on the step that sets the phase (else the first).
@@ -145,7 +173,7 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
     step.set_property = { ...(step.set_property ?? {}), 'minepreggo:phase': phase ? Number(phase[1]) : (step.set_property?.['minepreggo:phase'] ?? -1) };
     step.set_property['minepreggo:belly'] = step.set_property['minepreggo:phase'] === -1 ? 'none' : `p${step.set_property['minepreggo:phase']}`;
   }
-  write(bpFile, bpDoc);
+  writeEntityJson(bpFile, bpDoc);
   console.log(`${family}: ${Object.keys(controllers).length} render controllers, belly ${navel ? 'navel ' : ''}controller`);
 }
 
@@ -177,6 +205,7 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
     "variable.mp_bp = variable.mp_bp >= 0 ? variable.mp_bp : (variable.mp_phase >= 0 ? variable.mp_phase : ((variable.mp_pose == 'none' || variable.mp_pose == 'postbirth' || variable.mp_pose == 'miscarriage') ? -1 : 5));",
     'variable.mp_phase = variable.mp_bp;');
   d.scripts.pre_animation = pre;
+  d.scripts.initialize = initializers(pre, [...(d.scripts.initialize ?? []), 'variable.melee_spear_equipped = 0.0;']);
   write(file, doc);
 
   const rcFile = join(RP, 'render_controllers/player.render_controllers.json');
@@ -191,6 +220,6 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
   const bpFile = join(BP, 'entities/player.json');
   const bpDoc = read(bpFile);
   bpDoc['minecraft:entity'].description.properties['minepreggo:belly'] = { type: 'enum', values: BELLY_VALUES, default: 'none', client_sync: true };
-  write(bpFile, bpDoc);
+  writeEntityJson(bpFile, bpDoc);
   console.log('player: 20 belly render controllers');
 }

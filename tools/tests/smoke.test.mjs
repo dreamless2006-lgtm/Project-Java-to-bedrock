@@ -888,3 +888,46 @@ test('the guide book gives every potion and the book itself', async () => {
   assert.deepEqual(reader.inventory, ['minepreggo:impregnation_potion_0']);
   world.players.pop();
 });
+
+test("the game's own parser rules hold: float literals, flat component parameters, recipe unlocks, no rejected fields, initialized Molang variables", async () => {
+  const { integerFloatLiterals, stringifyEntity } = await import('../lib/entity-json.mjs');
+  for (const file of readdirSync(join(BP, 'entities'))) {
+    const text = readFileSync(join(BP, 'entities', file), 'utf8');
+    assert.deepEqual(integerFloatLiterals(text), [], `${file}: float properties written as floats`);
+    assert.match(text, /"minepreggo:growth": \{[^}]*"default": 0\.0/, `${file}: growth default 0.0`);
+    assert.doesNotMatch(text, /alert_same_type|soft_distance|hard_distance|max_distance/, `${file}: no field the game rejects`);
+  }
+  // The writer keeps 0.0 as 0.0 and [0, 1] as [0.0, 1.0] for float properties.
+  const written = stringifyEntity({ 'minecraft:entity': { description: { properties: { 'x:f': { type: 'float', range: [0, 1], default: 0 }, 'x:i': { type: 'int', range: [0, 9], default: 0 } } } } });
+  assert.match(written, /"x:f": \{\s*"type": "float",\s*"range": \[\s*0\.0,\s*1\.0\s*\],\s*"default": 0\.0/);
+  assert.match(written, /"x:i": \{\s*"type": "int",\s*"range": \[\s*0,\s*9\s*\],\s*"default": 0/);
+  assert.deepEqual(integerFloatLiterals('"x:f": { "type": "float", "range": [0, 1], "default": 0 }'), ['x:f']);
+  // Custom component parameters are flat.
+  for (const file of files(join(BP, 'items'))) {
+    const components = json(join(BP, 'items', file))['minecraft:item'].components ?? {};
+    for (const [name, params] of Object.entries(components)) {
+      if (name.startsWith('minecraft:') || !params || typeof params !== 'object') continue;
+      for (const [key, value] of Object.entries(params)) assert.ok(value === null || typeof value !== 'object', `${file}: ${name}.${key} must be a flat value`);
+    }
+  }
+  // Every recipe unlocks.
+  for (const file of readdirSync(join(BP, 'recipes'))) {
+    const doc = json(join(BP, 'recipes', file));
+    const recipe = Object.entries(doc).find(([k]) => k.startsWith('minecraft:recipe_'))?.[1];
+    assert.ok(Array.isArray(recipe?.unlock) && recipe.unlock.length > 0, `${file}: unlock data`);
+  }
+  // The stuffed mushroom's effects still apply through the flat format.
+  const eater = new Player('Eater');
+  world.players.push(eater);
+  const [[component, params]] = customComponentsOf('minepreggo:stuffed_mushroom');
+  customComponents.items.get(component).onConsume({ source: eater, itemStack: new ItemStack('minepreggo:stuffed_mushroom') }, { params });
+  assert.ok(eater.getEffect('minecraft:nausea') && eater.getEffect('minecraft:hunger'), 'both effects from the string');
+  world.players.pop();
+  // Every variable a pre_animation keeps between frames is initialized, so the first frame never reads an unknown one.
+  for (const file of readdirSync(join(RP, 'entity'))) {
+    const scripts = json(join(RP, 'entity', file))['minecraft:client_entity'].description.scripts;
+    const initialized = new Set((scripts.initialize ?? []).map((/** @type {string} */ line) => line.match(/^(?:v|variable)\.([a-z_0-9]+)/)?.[1]));
+    for (const line of scripts.pre_animation ?? []) for (const m of line.matchAll(/\b(?:v|variable)\.([a-z_0-9]+)\s*=(?!=)/g)) assert.ok(initialized.has(m[1]), `${file}: variable.${m[1]} initialized`);
+    if (file === 'player.entity.json') assert.ok(initialized.has('melee_spear_equipped'), 'the vanilla animations read melee_spear_equipped');
+  }
+});

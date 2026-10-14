@@ -7,6 +7,8 @@
 //     the properties their Molang reads
 // Texture and lang checks are skipped (with a notice) until `npm run import` has run.
 
+import { integerFloatLiterals } from './lib/entity-json.mjs';
+import { readEffects } from '../packs/behavior/scripts/items/food_effects_format.js';
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -55,7 +57,7 @@ const SCHEMA = {
   item: schema('/server/item/1.26.30/ItemDocument.json'),
   block: schema('/server/block/1.26.20/Blocks.json'),
   trades: schema('/client_server/entity/1.21.30/Trade%20Table.json'),
-  entity: schema('/server/entity/1.26.50/ActorDocument.json'),
+  entity: schema('/server/entity/1.26.30/ActorDocument.json'),
 };
 
 // Mojang's component schemas accept unknown keys, so typos like "minecraft:fod" would pass silently.
@@ -63,7 +65,9 @@ const knownComponents = (id) => new Set(Object.keys(/** @type {any} */ (ajv.getS
 const ITEM_COMPONENTS = knownComponents('/server/item/1.26.30/Item%20Components.json');
 const BLOCK_COMPONENTS = knownComponents('/server/block/1.26.20/Components.json');
 // Mojang's entity schema lacks a few components the game still accepts (vanilla slime uses "minecraft:pushable").
-const ENTITY_COMPONENTS = new Set([...knownComponents('/server/entity/1.26.50/Entity%20component%20definitions.json'), 'minecraft:pushable']);
+const ENTITY_COMPONENTS = new Set([...knownComponents('/server/entity/1.26.30/Entity%20component%20definitions.json'), 'minecraft:pushable']);
+// Fields the game's parser (1.26.30) rejects although the published schemas accept them.
+const REJECTED_FIELDS = [['minecraft:behavior.hurt_by_target', ['alert_same_type']], ['minecraft:leashable', ['soft_distance', 'hard_distance', 'max_distance']]];
 
 function check(validate, data, file, what) {
   if (validate(data)) return;
@@ -196,8 +200,18 @@ for (const [file, doc] of items) {
     for (const target of placer.use_on ?? []) checkItemRef(file, typeof target === 'string' ? target : target.name);
   }
   checkComponentNames(file, c, ITEM_COMPONENTS);
-  for (const { effect } of c['minepreggo:food_effects']?.effects ?? []) {
-    if (!Object.values(MinecraftEffectTypes).includes(effect)) fail(file, `unknown effect ${effect}`);
+  if (c['minepreggo:food_effects']) {
+    try {
+      for (const { effect } of readEffects(c['minepreggo:food_effects'])) if (!Object.values(MinecraftEffectTypes).includes(effect)) fail(file, `unknown effect ${effect}`);
+    } catch (error) {
+      fail(file, String(error));
+    }
+  }
+  // Custom component parameters must be flat: the game refuses nested objects and arrays
+  // ("Exceeded the object and array depth limit") and drops the item.
+  for (const [name, params] of Object.entries(c)) {
+    if (name.startsWith('minecraft:') || !params || typeof params !== 'object') continue;
+    for (const [key, value] of Object.entries(params)) if (value !== null && typeof value === 'object') fail(file, `${name}.${key} is nested; custom component parameters must be flat values`);
   }
 }
 
@@ -231,6 +245,7 @@ for (const file of walk(join(BP, 'recipes'), '.json')) {
   const [type, recipe] = Object.entries(doc).find(([k]) => k.startsWith('minecraft:recipe_')) ?? [];
   if (!recipe) { fail(file, 'no minecraft:recipe_* object'); continue; }
   if (!recipe.description?.identifier?.startsWith(`${NS}:`)) fail(file, 'recipe identifier must use the minepreggo namespace');
+  if (!Array.isArray(recipe.unlock) || recipe.unlock.length === 0) fail(file, 'recipes need unlock data (the game refuses the recipe without it)');
   const refs = [];
   const add = (x) => x && refs.push(typeof x === 'string' ? x : x.item);
   if (type === 'minecraft:recipe_shaped') {
@@ -256,6 +271,12 @@ for (const file of walk(join(BP, 'entities'), '.json')) {
   const entity = readJson(file)?.['minecraft:entity'];
   if (!entity) { fail(file, 'missing "minecraft:entity"'); continue; }
   check(SCHEMA.entity, entity, file, 'entity');
+  // The game's typed property parser: a float default or range written without a decimal point
+  // fails the property, and with it every property of the entity.
+  for (const name of integerFloatLiterals(readFileSync(file, 'utf8'))) fail(file, `float property ${name} must be written with decimal points (0.0, not 0)`);
+  for (const group of [entity.components ?? {}, ...Object.values(entity.component_groups ?? {})]) {
+    for (const [component, fields] of REJECTED_FIELDS) for (const field of fields) if (group[component] && field in group[component]) fail(file, `${component}.${field} is rejected by the game`);
+  }
   const id = entity.description?.identifier;
   // The player override (player visuals) is the one vanilla entity the pack redefines.
   if (!id?.startsWith(`${NS}:`) && id !== 'minecraft:player') fail(file, 'entity identifier must use the minepreggo namespace');

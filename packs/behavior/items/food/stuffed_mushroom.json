@@ -18,21 +18,12 @@
         "saturation_modifier": 0.1
       },
       "minecraft:use_modifiers": {
-        "use_duration": 3.0,
+        "use_duration": 3,
         "movement_modifier": 0.35
       },
       "minecraft:use_animation": "eat",
       "minepreggo:food_effects": {
-        "effects": [
-          {
-            "effect": "minecraft:hunger",
-            "duration": 600
-          },
-          {
-            "effect": "minecraft:nausea",
-            "duration": 200
-          }
-        ]
+        "effects": "minecraft:hunger 600 0; minecraft:nausea 200 0"
       }
     }
   }

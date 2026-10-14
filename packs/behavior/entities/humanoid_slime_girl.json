@@ -47,10 +47,10 @@
         "minepreggo:growth": {
           "type": "float",
           "range": [
-            0,
-            1
+            0.0,
+            1.0
           ],
-          "default": 0,
+          "default": 0.0,
           "client_sync": true
         },
         "minepreggo:savage": {
@@ -190,11 +190,7 @@
           "value": 0.26
         },
         "minecraft:sittable": {},
-        "minecraft:leashable": {
-          "soft_distance": 4,
-          "hard_distance": 6,
-          "max_distance": 10
-        },
+        "minecraft:leashable": {},
         "minecraft:behavior.stay_while_sitting": {
           "priority": 2
         },
