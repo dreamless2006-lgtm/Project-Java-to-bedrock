@@ -55,10 +55,10 @@ export const REPLY_SCHEMA = {
     type: "object",
     properties: {
         thought: { type: "string", description: "Private reasoning, max 200 chars." },
-        say: { type: ["string", "null"], description: "A chat line in your own voice, or null to stay quiet." },
-        say_to: { type: ["string", "null"], description: "Player name to whisper to, or null for public chat." },
+        say: { type: "string", description: "A chat line in your own voice, or an empty string to stay quiet." },
+        say_to: { type: "string", description: "Player name to whisper to, or an empty string for public chat." },
         mood: { type: "string", enum: MOODS },
-        goal: { type: ["string", "null"], description: "Your current multi-step goal in one line (kept until changed)." },
+        goal: { type: "string", description: "Your current multi-step goal in one line (kept until changed); empty string = no change." },
         actions: {
             type: "array",
             maxItems: MAX_ACTIONS,
@@ -107,7 +107,8 @@ export function normalizeReply(raw) {
     if (typeof raw.say_to === "string" && raw.say_to.trim()) out.sayTo = raw.say_to.trim().slice(0, 32);
     if (typeof raw.mood === "string" && MOODS.includes(raw.mood)) out.mood = raw.mood;
     else if (raw.mood != null) problems.push(`unknown mood '${String(raw.mood).slice(0, 20)}'`);
-    if (typeof raw.goal === "string") out.goal = raw.goal.slice(0, 160);
+    if (typeof raw.goal === "string" && raw.goal.trim()) out.goal = raw.goal.trim().slice(0, 160);
+    else if (raw.goal === null || raw.goal === "none") out.goal = "";
     for (const key of ["remember", "forget"]) {
         if (Array.isArray(raw[key])) {
             out[key] = raw[key].filter(s => typeof s === "string" && s.trim()).map(s => s.trim().slice(0, 160)).slice(0, 4);

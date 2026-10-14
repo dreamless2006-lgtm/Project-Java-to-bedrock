@@ -28,7 +28,7 @@ export function buildSystemStable({ persona, worldContent, extraRules }) {
     return parts.join("\n\n");
 }
 
-export const REPLY_FORMAT = `{"thought": "...", "say": "..." | null, "say_to": "PlayerName" | null, "mood": "neutral", "goal": "..." | null, "actions": [{"type": "gather", "material": "oak_log", "amount": 16}], "remember": [], "forget": []}`;
+export const REPLY_FORMAT = `{"thought": "...", "say": "a chat line or empty string", "say_to": "PlayerName or empty string", "mood": "neutral", "goal": "one line, or empty string to keep the current goal", "actions": [{"type": "gather", "material": "oak_log", "amount": 16}], "remember": [], "forget": []}`;
 
 export function renderPersona(p = {}) {
     const lines = [];

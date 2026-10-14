@@ -256,9 +256,10 @@ export class BotBrain {
     apply(reply) {
         const cfg = getWorldConfig();
         if (reply.mood) { try { this.bot.setDynamicProperty("rg:mood", reply.mood); } catch (e) { /* ignore */ } }
-        if (reply.goal !== null) {
-            this.memory.goal = reply.goal || null;
-            try { this.bot.setDynamicProperty("rg:current_goal", reply.goal || "idle"); } catch (e) { /* ignore */ }
+        // goal: a non-empty string sets it; null or "" keeps the current one.
+        if (reply.goal) {
+            this.memory.goal = reply.goal;
+            try { this.bot.setDynamicProperty("rg:current_goal", reply.goal); } catch (e) { /* ignore */ }
         }
         for (const f of reply.remember) addFact(this.memory, f, Date.now());
         for (const f of reply.forget) forgetFact(this.memory, f);
@@ -353,7 +354,7 @@ class BrainManager {
         };
         bots = bots.map(e => ({ e, s: score(e) })).filter(x => x.s !== Infinity).sort((a, b) => a.s - b.s);
         const keep = new Set();
-        for (const { e } of bots.slice(0, Math.max(1, cfg.maxBrains))) {
+        for (const { e } of bots.slice(0, Math.max(0, Number(cfg.maxBrains) || 0))) {
             keep.add(e.id);
             if (!brains.has(e.id)) {
                 try { registerBrain(e.id, new BotBrain(e)); } catch (err) { console.warn(`[AISB] attach failed: ${err}`); }

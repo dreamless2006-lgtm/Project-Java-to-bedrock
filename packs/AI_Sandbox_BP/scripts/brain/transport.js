@@ -45,7 +45,7 @@ export function inFlightRequests() { return inFlight; }
  */
 export async function think(botId, cfg, turn) {
     const mode = cfg.transport || "auto";
-    const useBridge = mode === "bridge" || (mode === "auto" && (!hasDirectHttp || bridge.isConnected()));
+    const useBridge = mode === "bridge" || (mode === "auto" && !hasDirectHttp && bridge.isConnected());
     if (useBridge) {
         if (!bridge.isConnected()) return { ok: false, error: "no bridge connected (start the bridge, or run on a dedicated server)", type: "no_transport" };
         return bridge.think(botId, cfg, turn);

@@ -21,7 +21,8 @@ export const PRICES = {
     xai:        { "grok-4.3": [1.25, 2.50, 0.20], "grok-4.5": [2.00, 6.00, 0.20], "grok-4.6": [2.00, 6.00, 0.20], default: [1.25, 2.50, 0.20] },
     gemini:     { "gemini-2.5-pro": [1.25, 10.00, 0.31], "gemini-2.5-flash": [0.30, 2.50, 0.075], "gemini-3.6-flash": [0.75, 3.75, 0.19], "gemini-flash-lite-latest": [0.30, 1.50, 0.05], default: [0.75, 3.75, 0.19] },
     openrouter: { default: [0.50, 2.00, 0.5] },
-    player2:    { default: [0, 0, 0] },
+    player2:    { default: [0, 0, 0] },        // billed in Player2 Joules, not here
+    player2cloud: { default: [0, 0, 0] },
     ollama:     { default: [0, 0, 0] },
     lmstudio:   { default: [0, 0, 0] },
     custom:     { default: [0, 0, 0] },

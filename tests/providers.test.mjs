@@ -52,7 +52,10 @@ test("openai-compatible presets and parse", () => {
     assert.ok(r.headers.find(h => h.key === "Authorization").value.startsWith("Bearer "));
     const p2 = PROVIDERS.player2.build({ provider: "player2", apiKey: "gk" }, req);
     assert.equal(p2.uri, "http://127.0.0.1:4315/v1/chat/completions");
-    assert.ok(p2.headers.find(h => h.key === "player2-game-key"));
+    assert.ok(p2.headers.find(h => h.key === "Authorization").value === "Bearer gk");
+    assert.equal(JSON.parse(p2.body).model, undefined);
+    const p2c = PROVIDERS.player2cloud.build({ provider: "player2cloud", apiKey: "tok" }, req);
+    assert.equal(p2c.uri, "https://api.player2.game/v1/chat/completions");
     const parsed = PROVIDERS.openai.parse(200, JSON.stringify({ choices: [{ message: { content: "{}" }, finish_reason: "stop" }], usage: { prompt_tokens: 3, completion_tokens: 1 } }));
     assert.equal(parsed.ok, true); assert.equal(parsed.usage.input, 3);
     const err = PROVIDERS.openai.parse(401, JSON.stringify({ error: { message: "bad key", type: "invalid_request_error" } }));

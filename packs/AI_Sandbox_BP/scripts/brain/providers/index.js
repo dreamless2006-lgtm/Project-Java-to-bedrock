@@ -10,6 +10,7 @@ export const PROVIDERS = {
     xai:        { label: "Grok (xAI)",           build: buildOpenAICompatRequest, parse: parseOpenAICompatResponse, defaultModel: OPENAI_COMPAT_PRESETS.xai.model, needsKey: true },
     gemini:     { label: "Gemini (Google)",      build: buildGeminiRequest,       parse: parseGeminiResponse,       defaultModel: GEMINI_MODELS.fast, needsKey: true },
     player2:    { label: "Player2 app (local)",  build: buildOpenAICompatRequest, parse: parseOpenAICompatResponse, defaultModel: "", needsKey: false },
+    player2cloud: { label: "Player2 cloud API",  build: buildOpenAICompatRequest, parse: parseOpenAICompatResponse, defaultModel: "", needsKey: true },
     openrouter: { label: "OpenRouter",           build: buildOpenAICompatRequest, parse: parseOpenAICompatResponse, defaultModel: OPENAI_COMPAT_PRESETS.openrouter.model, needsKey: true },
     ollama:     { label: "Ollama (local)",       build: buildOpenAICompatRequest, parse: parseOpenAICompatResponse, defaultModel: OPENAI_COMPAT_PRESETS.ollama.model, needsKey: false },
     lmstudio:   { label: "LM Studio (local)",    build: buildOpenAICompatRequest, parse: parseOpenAICompatResponse, defaultModel: "", needsKey: false },

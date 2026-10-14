@@ -5,7 +5,10 @@ export const OPENAI_COMPAT_PRESETS = {
     openai:     { baseUrl: "https://api.openai.com/v1",       model: "gpt-5.4-mini", jsonMode: "json_schema" },
     xai:        { baseUrl: "https://api.x.ai/v1",             model: "grok-4.3",     jsonMode: "json_schema" },
     openrouter: { baseUrl: "https://openrouter.ai/api/v1",    model: "openai/gpt-5.4-mini", jsonMode: "json_object" },
-    player2:    { baseUrl: "http://127.0.0.1:4315/v1",        model: "",             jsonMode: "none", authHeader: "player2-game-key" },
+    // Player2 (player2.game): the desktop app serves the same API locally on :4315 and signs requests
+    // itself; the cloud API wants a Bearer token. Neither takes a model field (the user picks it in Player2).
+    player2:    { baseUrl: "http://127.0.0.1:4315/v1",        model: "",             jsonMode: "none", omitModel: true },
+    player2cloud: { baseUrl: "https://api.player2.game/v1",   model: "",             jsonMode: "none", omitModel: true },
     ollama:     { baseUrl: "http://127.0.0.1:11434/v1",       model: "llama3.1",     jsonMode: "json_object" },
     lmstudio:   { baseUrl: "http://127.0.0.1:1234/v1",        model: "",             jsonMode: "json_object" },
     custom:     { baseUrl: "",                                model: "",             jsonMode: "json_object" },
@@ -19,7 +22,8 @@ export function buildOpenAICompatRequest(cfg, req) {
         { role: "system", content: req.systemStable + (req.systemDynamic ? "\n\n" + req.systemDynamic : "") },
         ...req.messages.map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: String(m.content ?? "") })),
     ];
-    const body = { model, messages, max_tokens: req.maxTokens || cfg.maxTokens || 1024 };
+    const body = { messages, max_tokens: req.maxTokens || cfg.maxTokens || 1024 };
+    if (model && !(preset.omitModel && !cfg.model)) body.model = model;
     if (cfg.temperature !== undefined) body.temperature = cfg.temperature;
     const jsonMode = cfg.jsonMode || preset.jsonMode;
     if (req.schema && jsonMode === "json_schema") {

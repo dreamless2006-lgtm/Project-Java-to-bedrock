@@ -16,6 +16,7 @@
     "gemini":     { "apiKey": "", "model": "gemini-flash-lite-latest" },
     "openrouter": { "apiKey": "", "model": "" },
     "player2":    { "apiKey": "", "baseUrl": "http://127.0.0.1:4315/v1", "model": "" },
+    "player2cloud": { "apiKey": "", "baseUrl": "https://api.player2.game/v1", "model": "" },
     "ollama":     { "baseUrl": "http://127.0.0.1:11434/v1", "model": "llama3.1" },
     "lmstudio":   { "baseUrl": "http://127.0.0.1:1234/v1", "model": "" },
     "custom":     { "baseUrl": "", "apiKey": "", "model": "" }

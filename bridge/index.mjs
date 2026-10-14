@@ -22,7 +22,7 @@ const VERSION = "0.1.0";
 const SCRIPT_EVENT = "aisb:in";
 const ENV_KEYS = {
     anthropic: "ANTHROPIC_API_KEY", openai: "OPENAI_API_KEY", xai: "XAI_API_KEY", gemini: "GEMINI_API_KEY",
-    openrouter: "OPENROUTER_API_KEY", player2: "PLAYER2_API_KEY", custom: "CUSTOM_LLM_API_KEY",
+    openrouter: "OPENROUTER_API_KEY", player2: "PLAYER2_API_KEY", player2cloud: "PLAYER2_API_KEY", custom: "CUSTOM_LLM_API_KEY",
 };
 
 // ---------------------------------------------------------------- config ---

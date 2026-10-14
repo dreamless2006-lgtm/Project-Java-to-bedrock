@@ -362,7 +362,7 @@ H.attack = {
         try { bot.addTag("allow_attack"); } catch (e) { /* ignore */ }
         const d = dist(bot.location, t.location);
         if (d > 2.4) goTo(bot, t.location, "sprint", NAV.COMBAT + 1, true);
-        else { stopMoving(bot); lookAt(bot, t.location); if (ctx.now % 20 < STEP) { try { t.applyDamage(meleeDamage(bot), { cause: EntityDamageCause.entityAttack, damagingEntity: bot }); bot.playAnimation("animation.humanoid.attack.rotations"); } catch (e) { /* ignore */ } } }
+        else { stopMoving(bot); lookAt(bot, t.location); if (ctx.now - (s.lastHit || 0) >= 20) { s.lastHit = ctx.now; try { t.applyDamage(meleeDamage(bot), { cause: EntityDamageCause.entityAttack, damagingEntity: bot }); bot.playAnimation("animation.humanoid.attack.rotations"); } catch (e) { /* ignore */ } } }
         return undefined;
     },
 };
@@ -387,7 +387,7 @@ H.defend = {
         let hostiles = [];
         try { hostiles = ctx.bot.dimension.getEntities({ location: ctx.bot.location, maxDistance: 12, families: ["monster"] }); } catch (e) { /* ignore */ }
         const t = hostiles[0];
-        if (t) { try { setAITarget(ctx.bot, t); } catch (e) { /* ignore */ } if (dist(ctx.bot.location, t.location) > 2.4) goTo(ctx.bot, t.location, "sprint", NAV.COMBAT + 1); else if (ctx.now % 20 < STEP) { try { t.applyDamage(meleeDamage(ctx.bot), { cause: EntityDamageCause.entityAttack, damagingEntity: ctx.bot }); } catch (e) { /* ignore */ } } }
+        if (t) { try { setAITarget(ctx.bot, t); } catch (e) { /* ignore */ } if (dist(ctx.bot.location, t.location) > 2.4) goTo(ctx.bot, t.location, "sprint", NAV.COMBAT + 1); else if (ctx.now - (s.lastHit || 0) >= 20) { s.lastHit = ctx.now; try { t.applyDamage(meleeDamage(ctx.bot), { cause: EntityDamageCause.entityAttack, damagingEntity: ctx.bot }); } catch (e) { /* ignore */ } } }
         return undefined;
     },
 };
@@ -477,9 +477,12 @@ H.build = {
             if (!b) { s.i++; s.skipped++; continue; }
             if (!b.isAir && !b.isLiquid && !/grass$|tallgrass|snow_layer|fern|double_plant/.test(b.typeId)) { s.i++; continue; }
             if (Math.floor(bot.location.x) === st.x && Math.floor(bot.location.z) === st.z && st.y >= Math.floor(bot.location.y) && st.y <= Math.floor(bot.location.y) + 1) {
-                // standing in the cell: step aside
+                // standing in the cell: step aside (skip the block if that keeps failing)
+                s.inCell = (s.inCell || 0) + 1;
+                if (s.inCell > 12) { s.inCell = 0; s.i++; s.skipped++; continue; }
                 goTo(bot, { x: st.x + 1.5, y: st.y, z: st.z + 1.5 }, "walk"); return undefined;
             }
+            s.inCell = 0;
             const d = dist(eye(bot), center(st));
             if (d > REACH) {
                 goTo(bot, { x: st.x + 0.5, y: st.y, z: st.z + 0.5 }, "walk", PRIO, true);
@@ -809,7 +812,7 @@ H.sleep = {
         const bot = ctx.bot;
         const t = world.getTimeOfDay();
         if (s.asleep) {
-            if (t < 1000 || t > 12000 && t < 12500 || ctx.now - s.started > 20 * 60 * 3) { try { bot.removeTag("is_sleeping"); bot.isSneaking = false; } catch (e) { /* ignore */ } return { done: true, result: "woke up" }; }
+            if (t < 1000 || ctx.now - s.started > 20 * 60 * 3) { try { bot.removeTag("is_sleeping"); bot.isSneaking = false; } catch (e) { /* ignore */ } return { done: true, result: "woke up" }; }
             try { bot.isSneaking = true; } catch (e) { /* ignore */ }
             return undefined;
         }
