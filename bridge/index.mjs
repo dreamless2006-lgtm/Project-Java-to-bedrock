@@ -93,7 +93,7 @@ export async function callProvider(cfg, botCfg, turn, timeoutSeconds = 60) {
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ------------------------------------------------------------- the bridge ---
-class Bridge {
+export class Bridge {
     constructor(cfg) {
         this.cfg = cfg;
         this.client = null;

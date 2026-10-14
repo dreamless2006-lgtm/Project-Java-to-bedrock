@@ -52,6 +52,10 @@ node index.mjs                             # joins the Realm (device-code sign-i
 Keep the bridge running on any always-on machine (a laptop, a Raspberry Pi,
 a cheap VPS). It reconnects on its own.
 
+Optional hardening: `!ai bridgename <gamertag>` makes the addon accept
+bridge traffic only from that account (any operator can otherwise claim the
+role).
+
 ## 4. In game
 
 Join and type `!ai status`. You should see `bridge (<gamertag>)` as the
