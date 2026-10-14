@@ -1,0 +1,33 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "srp:dried_tendons"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " A ",
+      "CA ",
+      "C  "
+    ],
+    "key": {
+      "A": {
+        "item": "srp:strange_bone"
+      },
+      "C": {
+        "item": "srp:assimilated_flesh"
+      }
+    },
+    "unlock": [
+      {
+        "item": "srp:strange_bone"
+      }
+    ],
+    "result": {
+      "item": "srp:dried_tendons",
+      "count": 1
+    }
+  }
+}

@@ -1,0 +1,901 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.srp.modelganro.move": {
+      "loop": true,
+      "bones": {
+        "jointRA1": {
+          "rotation": [
+            0,
+            "(5.73+10.313*math.cos(q.modified_distance_moved*17.1887-360))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointURM": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*57.2958-274.06)",
+            0,
+            0
+          ]
+        },
+        "jointRL1": {
+          "rotation": [
+            "(5.73+17.189*math.cos(q.modified_distance_moved*17.1887-180))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointRL": {
+          "rotation": [
+            "(-11.459+24.064*math.cos(q.modified_distance_moved*17.1887-122.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointURM1": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*57.2958-274.06)",
+            0,
+            0
+          ]
+        },
+        "jointULM2": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*57.2958-274.06)",
+            0,
+            0
+          ]
+        },
+        "taclejointRT": {
+          "rotation": [
+            0,
+            0,
+            "(-5.73+10.313*math.cos(q.modified_distance_moved*11.4592-191.46))*q.modified_move_speed"
+          ]
+        },
+        "jointLA1": {
+          "rotation": [
+            0,
+            "(5.73+10.313*math.cos(q.modified_distance_moved*17.1887-180))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointDLM": {
+          "rotation": [
+            "8.594*math.cos(q.life_time*57.2958-302.7)",
+            0,
+            0
+          ]
+        },
+        "jointDLM1": {
+          "rotation": [
+            "8.594*math.cos(q.life_time*57.2958-302.7)",
+            0,
+            0
+          ]
+        },
+        "jointLL3": {
+          "rotation": [
+            "(-5.73+27.502*math.cos(q.modified_distance_moved*17.1887))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointLA": {
+          "rotation": [
+            "(-5.73+6.875*math.cos(q.modified_distance_moved*17.1887-168.54))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointLA2": {
+          "rotation": [
+            0,
+            "(5.73+10.313*math.cos(q.modified_distance_moved*17.1887-168.54))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointRA2": {
+          "rotation": [
+            0,
+            "(5.73+10.313*math.cos(q.modified_distance_moved*17.1887-348.54))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointULM": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*57.2958-274.06)",
+            0,
+            0
+          ]
+        },
+        "jointRL3": {
+          "rotation": [
+            "(-5.73+27.502*math.cos(q.modified_distance_moved*17.1887-180))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointULM1": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*57.2958-274.06)",
+            0,
+            0
+          ]
+        },
+        "jointDRM1": {
+          "rotation": [
+            "8.594*math.cos(q.life_time*57.2958-302.7)",
+            0,
+            0
+          ]
+        },
+        "taclejointLT": {
+          "rotation": [
+            0,
+            0,
+            "(5.73+10.313*math.cos(q.modified_distance_moved*11.4592-168.54))*q.modified_move_speed"
+          ]
+        },
+        "taclejointLT2": {
+          "rotation": [
+            "(5.73+3.438*math.cos(q.modified_distance_moved*11.4592-180))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointLL1": {
+          "rotation": [
+            "(5.73+17.189*math.cos(q.modified_distance_moved*17.1887))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "taclejointRT2": {
+          "rotation": [
+            "(-5.73+3.438*math.cos(q.modified_distance_moved*11.4592-180))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointLL": {
+          "rotation": [
+            "(-11.459+24.064*math.cos(q.modified_distance_moved*17.1887-302.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "mainbody": {
+          "position": [
+            0,
+            "(-0.8*math.cos(q.modified_distance_moved*34.3775))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointRA": {
+          "rotation": [
+            "(5.73+6.875*math.cos(q.modified_distance_moved*17.1887-348.54))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointURM2": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*57.2958-274.06)",
+            0,
+            0
+          ]
+        },
+        "jointDRM": {
+          "rotation": [
+            "8.594*math.cos(q.life_time*57.2958-302.7)",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.srp.modelganro.idle": {
+      "loop": true,
+      "bones": {
+        "jointRA": {
+          "rotation": [
+            "5.265*math.cos(q.life_time*91.6732-180)",
+            "8.594*math.cos(q.life_time*57.2958-180)",
+            0
+          ]
+        },
+        "jointURM1": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*57.2958-274.06)",
+            0,
+            0
+          ]
+        },
+        "jointLA2": {
+          "rotation": [
+            0,
+            "7.448*math.cos(q.life_time*80.2141)",
+            0
+          ]
+        },
+        "taclejointRT": {
+          "rotation": [
+            0,
+            0,
+            "5.265*math.cos(q.life_time*91.6732-180)"
+          ]
+        },
+        "jointULM1": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*57.2958-274.06)",
+            0,
+            0
+          ]
+        },
+        "jointLA": {
+          "rotation": [
+            "5.265*math.cos(q.life_time*91.6732-360)",
+            "8.594*math.cos(q.life_time*57.2958)",
+            0
+          ]
+        },
+        "jointURM": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*57.2958-274.06)",
+            0,
+            0
+          ]
+        },
+        "jointULM": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*57.2958-274.06)",
+            0,
+            0
+          ]
+        },
+        "jointDRM": {
+          "rotation": [
+            "8.594*math.cos(q.life_time*57.2958-302.7)",
+            0,
+            0
+          ]
+        },
+        "taclejointRT2": {
+          "rotation": [
+            "5.265*math.cos(q.life_time*91.6732-180)",
+            0,
+            0
+          ]
+        },
+        "taclejointLT": {
+          "rotation": [
+            0,
+            0,
+            "5.265*math.cos(q.life_time*91.6732-360)"
+          ]
+        },
+        "jointULM2": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*57.2958-274.06)",
+            0,
+            0
+          ]
+        },
+        "jointLA1": {
+          "rotation": [
+            0,
+            "7.448*math.cos(q.life_time*80.2141)",
+            0
+          ]
+        },
+        "jointDLM1": {
+          "rotation": [
+            "8.594*math.cos(q.life_time*57.2958-302.7)",
+            0,
+            0
+          ]
+        },
+        "jointDRM1": {
+          "rotation": [
+            "8.594*math.cos(q.life_time*57.2958-302.7)",
+            0,
+            0
+          ]
+        },
+        "jointRA1": {
+          "rotation": [
+            0,
+            "7.448*math.cos(q.life_time*80.2141-180)",
+            0
+          ]
+        },
+        "jointRA2": {
+          "rotation": [
+            0,
+            "7.448*math.cos(q.life_time*80.2141-180)",
+            0
+          ]
+        },
+        "jointURM2": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*57.2958-274.06)",
+            0,
+            0
+          ]
+        },
+        "jointDLM": {
+          "rotation": [
+            "8.594*math.cos(q.life_time*57.2958-302.7)",
+            0,
+            0
+          ]
+        },
+        "taclejointLT2": {
+          "rotation": [
+            "5.265*math.cos(q.life_time*91.6732-360)",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.srp.modelganro.attack": {
+      "animation_length": 1.2,
+      "bones": {
+        "jointRA": {
+          "rotation": {
+            "0.00": [
+              -9.17,
+              11.46,
+              0
+            ],
+            "0.10": [
+              -11.46,
+              34.38,
+              0
+            ],
+            "0.20": [
+              -11.46,
+              57.3,
+              0
+            ],
+            "0.30": [
+              -11.46,
+              80.21,
+              0
+            ],
+            "0.40": [
+              -11.46,
+              85.94,
+              0
+            ],
+            "0.50": [
+              -11.46,
+              74.48,
+              0
+            ],
+            "0.60": [
+              -11.46,
+              63.03,
+              0
+            ],
+            "0.70": [
+              -11.46,
+              51.57,
+              0
+            ],
+            "0.80": [
+              -11.46,
+              40.11,
+              0
+            ],
+            "0.90": [
+              -11.46,
+              28.65,
+              0
+            ],
+            "1.00": [
+              -11.46,
+              17.19,
+              0
+            ],
+            "1.10": [
+              -4.58,
+              5.73,
+              0
+            ],
+            "1.15": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "jointLA2": {
+          "rotation": {
+            "0.00": [
+              0,
+              -9.17,
+              0
+            ],
+            "0.10": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.20": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.30": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.40": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.50": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.60": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.70": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.80": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.90": [
+              0,
+              -11.46,
+              0
+            ],
+            "1.00": [
+              0,
+              -11.46,
+              0
+            ],
+            "1.10": [
+              0,
+              -4.58,
+              0
+            ],
+            "1.15": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "jointaRA4": {
+          "rotation": {
+            "0.00": [
+              0,
+              -9.17,
+              0
+            ],
+            "0.10": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.20": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.30": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.40": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.50": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.60": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.70": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.80": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.90": [
+              0,
+              -11.46,
+              0
+            ],
+            "1.00": [
+              0,
+              -11.46,
+              0
+            ],
+            "1.10": [
+              0,
+              -4.58,
+              0
+            ],
+            "1.15": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "jointLA": {
+          "rotation": {
+            "0.00": [
+              11.46,
+              11.46,
+              0
+            ],
+            "0.10": [
+              22.92,
+              34.38,
+              0
+            ],
+            "0.20": [
+              22.92,
+              57.3,
+              0
+            ],
+            "0.30": [
+              22.92,
+              80.21,
+              0
+            ],
+            "0.40": [
+              22.92,
+              85.94,
+              0
+            ],
+            "0.50": [
+              22.92,
+              74.48,
+              0
+            ],
+            "0.60": [
+              22.92,
+              63.03,
+              0
+            ],
+            "0.70": [
+              22.92,
+              51.57,
+              0
+            ],
+            "0.80": [
+              22.92,
+              40.11,
+              0
+            ],
+            "0.90": [
+              22.92,
+              28.65,
+              0
+            ],
+            "1.00": [
+              16.04,
+              17.19,
+              0
+            ],
+            "1.10": [
+              5.73,
+              5.73,
+              0
+            ],
+            "1.15": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "jointLA4": {
+          "rotation": {
+            "0.00": [
+              0,
+              -4.58,
+              0
+            ],
+            "0.10": [
+              0,
+              -5.73,
+              0
+            ],
+            "0.20": [
+              0,
+              -5.73,
+              0
+            ],
+            "0.30": [
+              0,
+              -5.73,
+              0
+            ],
+            "0.40": [
+              0,
+              -5.73,
+              0
+            ],
+            "0.50": [
+              0,
+              -5.73,
+              0
+            ],
+            "0.60": [
+              0,
+              -5.73,
+              0
+            ],
+            "0.70": [
+              0,
+              -5.73,
+              0
+            ],
+            "0.80": [
+              0,
+              -5.73,
+              0
+            ],
+            "0.90": [
+              0,
+              -5.73,
+              0
+            ],
+            "1.00": [
+              0,
+              -5.73,
+              0
+            ],
+            "1.10": [
+              0,
+              -2.29,
+              0
+            ],
+            "1.15": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "jointRA3": {
+          "rotation": {
+            "0.00": [
+              0,
+              -9.17,
+              0
+            ],
+            "0.10": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.20": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.30": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.40": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.50": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.60": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.70": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.80": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.90": [
+              0,
+              -11.46,
+              0
+            ],
+            "1.00": [
+              0,
+              -11.46,
+              0
+            ],
+            "1.10": [
+              0,
+              -4.58,
+              0
+            ],
+            "1.15": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "jointLA3": {
+          "rotation": {
+            "0.00": [
+              0,
+              -9.17,
+              0
+            ],
+            "0.10": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.20": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.30": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.40": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.50": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.60": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.70": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.80": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.90": [
+              0,
+              -11.46,
+              0
+            ],
+            "1.00": [
+              0,
+              -11.46,
+              0
+            ],
+            "1.10": [
+              0,
+              -4.58,
+              0
+            ],
+            "1.15": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "jointRA2": {
+          "rotation": {
+            "0.00": [
+              0,
+              -9.17,
+              0
+            ],
+            "0.10": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.20": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.30": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.40": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.50": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.60": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.70": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.80": [
+              0,
+              -11.46,
+              0
+            ],
+            "0.90": [
+              0,
+              -11.46,
+              0
+            ],
+            "1.00": [
+              0,
+              -11.46,
+              0
+            ],
+            "1.10": [
+              0,
+              -4.58,
+              0
+            ],
+            "1.15": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    }
+  }
+}

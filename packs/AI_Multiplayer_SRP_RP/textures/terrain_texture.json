@@ -1,0 +1,44 @@
+{
+  "resource_pack_name": "ai_multiplayer_srp",
+  "texture_name": "atlas.terrain",
+  "padding": 8,
+  "num_mip_levels": 4,
+  "texture_data": {
+    "srp_parasitestain_flesh_side": {
+      "textures": "textures/blocks/srp/parasitestain_flesh_side"
+    },
+    "srp_parasitestain_flesh_up": {
+      "textures": "textures/blocks/srp/parasitestain_flesh_up"
+    },
+    "srp_parasitestain_flesh_down": {
+      "textures": "textures/blocks/srp/parasitestain_flesh_down"
+    },
+    "srp_parasiterubble_flesh_side": {
+      "textures": "textures/blocks/srp/parasiterubble_flesh_side"
+    },
+    "srp_parasiterubble_flesh_up": {
+      "textures": "textures/blocks/srp/parasiterubble_flesh_up"
+    },
+    "srp_parasiterubble_flesh_down": {
+      "textures": "textures/blocks/srp/parasiterubble_flesh_down"
+    },
+    "srp_parasitetrunk_tree_side": {
+      "textures": "textures/blocks/srp/parasitetrunk_tree_side"
+    },
+    "srp_parasitetrunk_tree_up": {
+      "textures": "textures/blocks/srp/parasitetrunk_tree_up"
+    },
+    "srp_parasitetrunk_tree_down": {
+      "textures": "textures/blocks/srp/parasitetrunk_tree_down"
+    },
+    "srp_parasiterubbledense_colony_side": {
+      "textures": "textures/blocks/srp/parasiterubbledense_colony_side"
+    },
+    "srp_parasiterubbledense_colony_up": {
+      "textures": "textures/blocks/srp/parasiterubbledense_colony_up"
+    },
+    "srp_parasiterubbledense_colony_down": {
+      "textures": "textures/blocks/srp/parasiterubbledense_colony_down"
+    }
+  }
+}

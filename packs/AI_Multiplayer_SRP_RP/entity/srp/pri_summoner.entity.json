@@ -1,0 +1,36 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "srp:pri_summoner",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/srp/canra",
+        "skin5": "textures/entity/srp/canrav",
+        "skin6": "textures/entity/srp/canrab",
+        "skin7": "textures/entity/srp/canrah"
+      },
+      "geometry": {
+        "default": "geometry.srp.modelcanra"
+      },
+      "animations": {
+        "move": "animation.srp.modelcanra.move",
+        "idle": "animation.srp.modelcanra.idle",
+        "ctrl.move": "controller.animation.srp.move"
+      },
+      "scripts": {
+        "animate": [
+          "ctrl.move"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.srp.pri_summoner"
+      ],
+      "spawn_egg": {
+        "texture": "srp_egg_canra"
+      }
+    }
+  }
+}

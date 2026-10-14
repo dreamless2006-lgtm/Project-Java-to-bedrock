@@ -1,0 +1,38 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "srp:ada_reeker",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/srp/noglaa",
+        "skin5": "textures/entity/srp/noglaav",
+        "skin6": "textures/entity/srp/noglaab",
+        "skin7": "textures/entity/srp/noglaah"
+      },
+      "geometry": {
+        "default": "geometry.srp.modelnoglaadapted"
+      },
+      "animations": {
+        "move": "animation.srp.modelnoglaadapted.move",
+        "idle": "animation.srp.modelnoglaadapted.idle",
+        "ctrl.move": "controller.animation.srp.move",
+        "always": "animation.srp.modelnoglaadapted.always"
+      },
+      "scripts": {
+        "animate": [
+          "ctrl.move",
+          "always"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.srp.ada_reeker"
+      ],
+      "spawn_egg": {
+        "texture": "srp_egg_noglaadapted"
+      }
+    }
+  }
+}

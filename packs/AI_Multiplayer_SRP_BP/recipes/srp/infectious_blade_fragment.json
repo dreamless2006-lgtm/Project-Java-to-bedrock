@@ -1,0 +1,33 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "srp:infectious_blade_fragment"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " A ",
+      "CA ",
+      "C  "
+    ],
+    "key": {
+      "A": {
+        "item": "srp:ada_reeker_drop"
+      },
+      "C": {
+        "item": "srp:assimilated_flesh"
+      }
+    },
+    "unlock": [
+      {
+        "item": "srp:ada_reeker_drop"
+      }
+    ],
+    "result": {
+      "item": "srp:infectious_blade_fragment",
+      "count": 1
+    }
+  }
+}

@@ -1,0 +1,58 @@
+Picked up JAVA_TOOL_OPTIONS: -Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts -Djavax.net.ssl.trustStoreType=JKS -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=41751 -Dhttp.nonProxyHosts=localhost|127.0.0.1|::1|127.*|0.*|::|169.254.*|api.anthropic.com|api-staging.anthropic.com|api-pr-preview.anthropic.com|mcp-proxy.anthropic.com|mcp-proxy-staging.anthropic.com|registry.npmjs.org|jsr.io|npm.jsr.io|pypi.org|files.pythonhosted.org|index.crates.io|proxy.golang.org|host.docker.internal|10.*|172.16.*|172.17.*|172.18.*|172.19.*|172.20.*|172.21.*|172.22.*|172.23.*|172.24.*|172.25.*|172.26.*|172.27.*|172.28.*|172.29.*|172.30.*|172.31.*|192.168.*|100.64.0.0/10|*.svc.cluster.local|*.svc.cluster.local -Djdk.http.auth.tunneling.disabledSchemes= -Djdk.http.auth.proxying.disabledSchemes=
+Compiled from "PersistentDataManager.java"
+public final class com.goodbird.player2npc.companion.PersistentDataManager {
+  private static final org.apache.logging.log4j.Logger LOGGER;
+  private static final int STATE_SCHEMA_VERSION;
+  private static final int MAX_LIFECYCLE_NOTE_CHARS;
+  private static final java.lang.String KEY_SCHEMA;
+  private static final java.lang.String KEY_INVENTORY;
+  private static final java.lang.String KEY_SELECTED_SLOT;
+  private static final java.lang.String KEY_HUNGER;
+  private static final java.lang.String KEY_FOLLOW_MODE;
+  private static final java.lang.String KEY_HEAD_YAW;
+  private static final java.lang.String KEY_CHARACTER;
+  private static final java.lang.String KEY_OWNER_UUID;
+  private static final java.lang.String KEY_FOOD_LEVEL;
+  private static final java.lang.String KEY_FOOD_TICK_TIMER;
+  private static final java.lang.String KEY_FOOD_SATURATION;
+  private static final java.lang.String KEY_FOOD_EXHAUSTION;
+  static final java.lang.String KEY_LIFECYCLE_NOTE;
+  private static final java.util.concurrent.ConcurrentHashMap<java.nio.file.Path, java.lang.Object> PATH_LOCKS;
+  private com.goodbird.player2npc.companion.PersistentDataManager();
+  public static void saveInventory(com.goodbird.player2npc.companion.AutomatoneEntity);
+  public static void saveInventoryNow(com.goodbird.player2npc.companion.AutomatoneEntity);
+  public static boolean saveInventoryNowWithReceipt(com.goodbird.player2npc.companion.AutomatoneEntity);
+  public static com.goodbird.player2npc.companion.PersistentDataManager$InventoryStateReceipt captureInventoryStateNow(com.goodbird.player2npc.companion.AutomatoneEntity);
+  static net.minecraft.nbt.CompoundTag mutationAuthorityFingerprint(net.minecraft.nbt.CompoundTag);
+  private static void copyIfPresent(net.minecraft.nbt.CompoundTag, net.minecraft.nbt.CompoundTag, java.lang.String);
+  public static com.goodbird.player2npc.companion.PersistentDataManager$InventoryStateReceipt loadInventoryStateNow(com.goodbird.player2npc.companion.AutomatoneEntity);
+  public static boolean applyInventoryStateNow(com.goodbird.player2npc.companion.AutomatoneEntity, net.minecraft.nbt.CompoundTag);
+  private static boolean hasAnyLegacyHungerKey(net.minecraft.nbt.CompoundTag);
+  private static net.minecraft.nbt.CompoundTag canonicalHungerState(net.minecraft.nbt.CompoundTag);
+  private static void copyInventory(com.player2.playerengine.automaton.api.entity.LivingEntityInventory, com.player2.playerengine.automaton.api.entity.LivingEntityInventory);
+  private static net.minecraft.nbt.ListTag writeInventoryNbt(com.goodbird.player2npc.companion.AutomatoneEntity, com.player2.playerengine.automaton.api.entity.LivingEntityInventory);
+  private static void readInventoryNbt(com.goodbird.player2npc.companion.AutomatoneEntity, com.player2.playerengine.automaton.api.entity.LivingEntityInventory, net.minecraft.nbt.ListTag);
+  public static void loadInventory(com.goodbird.player2npc.companion.AutomatoneEntity);
+  static net.minecraft.nbt.CompoundTag withLifecycleNote(net.minecraft.nbt.CompoundTag, java.lang.String);
+  static java.lang.String lifecycleNote(net.minecraft.nbt.CompoundTag);
+  static net.minecraft.nbt.CompoundTag withoutLifecycleNote(net.minecraft.nbt.CompoundTag);
+  static boolean isFullStateForIdentity(net.minecraft.nbt.CompoundTag, java.util.UUID, java.lang.String);
+  private static boolean isStructurallyValidInventory(net.minecraft.nbt.ListTag);
+  private static net.minecraft.nbt.ListTag inventoryListOrNull(net.minecraft.nbt.CompoundTag);
+  private static boolean isValidHungerState(net.minecraft.nbt.CompoundTag);
+  private static com.player2.playerengine.FollowMode decodeFollowMode(java.lang.String);
+  private static boolean saveStateInternal(com.goodbird.player2npc.companion.AutomatoneEntity, net.minecraft.nbt.CompoundTag);
+  static void writeNbtAtomically(java.nio.file.Path, net.minecraft.nbt.CompoundTag) throws java.lang.Exception;
+  private static boolean identityMatchesDestination(com.goodbird.player2npc.companion.AutomatoneEntity, net.minecraft.nbt.CompoundTag);
+  private static java.lang.String boundedSingleLine(java.lang.String);
+  private static java.lang.String getCharacterIdOrNull(com.goodbird.player2npc.companion.AutomatoneEntity);
+  private static java.nio.file.Path getWorldRoot(com.goodbird.player2npc.companion.AutomatoneEntity);
+  private static java.nio.file.Path getInventoryFileForSave(com.goodbird.player2npc.companion.AutomatoneEntity, java.lang.String);
+  private static java.nio.file.Path resolveInventoryFileForLoad(com.goodbird.player2npc.companion.AutomatoneEntity, java.lang.String);
+  private static boolean saveConversationNow(com.goodbird.player2npc.companion.AutomatoneEntity);
+  private static boolean loadConversation(com.goodbird.player2npc.companion.AutomatoneEntity);
+  private static java.nio.file.Path lockKey(java.nio.file.Path);
+  private static java.lang.Object lambda$saveStateInternal$1(java.nio.file.Path);
+  private static java.lang.Object lambda$loadInventoryStateNow$0(java.nio.file.Path);
+  static {};
+}

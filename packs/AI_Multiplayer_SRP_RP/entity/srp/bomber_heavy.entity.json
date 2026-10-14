@@ -1,0 +1,33 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "srp:bomber_heavy",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/srp/jinjo"
+      },
+      "geometry": {
+        "default": "geometry.srp.modeljinjo"
+      },
+      "animations": {
+        "move": "animation.srp.modeljinjo.move",
+        "idle": "animation.srp.modeljinjo.idle",
+        "ctrl.move": "controller.animation.srp.move"
+      },
+      "scripts": {
+        "animate": [
+          "ctrl.move"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.srp.default"
+      ],
+      "spawn_egg": {
+        "texture": "srp_egg_jinjo"
+      }
+    }
+  }
+}

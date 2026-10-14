@@ -1,0 +1,34 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "srp:pri_yelloweye",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/srp/emana",
+        "skin7": "textures/entity/srp/emanah"
+      },
+      "geometry": {
+        "default": "geometry.srp.modelemana"
+      },
+      "animations": {
+        "move": "animation.srp.modelemana.move",
+        "idle": "animation.srp.modelemana.idle",
+        "ctrl.move": "controller.animation.srp.move"
+      },
+      "scripts": {
+        "animate": [
+          "ctrl.move"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.srp.pri_yelloweye"
+      ],
+      "spawn_egg": {
+        "texture": "srp_egg_emana"
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "srp:fer_enderman",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/srp/ferenderman"
+      },
+      "geometry": {
+        "default": "geometry.srp.modelferenderman"
+      },
+      "animations": {
+        "move": "animation.srp.modelferenderman.move",
+        "idle": "animation.srp.modelferenderman.idle",
+        "ctrl.move": "controller.animation.srp.move",
+        "always": "animation.srp.modelferenderman.always"
+      },
+      "scripts": {
+        "animate": [
+          "ctrl.move",
+          "always"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.srp.default"
+      ],
+      "spawn_egg": {
+        "texture": "srp_egg_ferenderman"
+      }
+    }
+  }
+}

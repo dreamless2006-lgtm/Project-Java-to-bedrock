@@ -1,0 +1,36 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "srp:host",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/srp/host"
+      },
+      "geometry": {
+        "default": "geometry.srp.modelhost"
+      },
+      "animations": {
+        "move": "animation.srp.modelhost.move",
+        "idle": "animation.srp.modelhost.idle",
+        "ctrl.move": "controller.animation.srp.move",
+        "attack": "animation.srp.modelhost.attack",
+        "ctrl.attack": "controller.animation.srp.attack"
+      },
+      "scripts": {
+        "animate": [
+          "ctrl.move",
+          "ctrl.attack"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.srp.default"
+      ],
+      "spawn_egg": {
+        "texture": "srp_egg_host"
+      }
+    }
+  }
+}

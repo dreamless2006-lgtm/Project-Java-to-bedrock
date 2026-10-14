@@ -1,0 +1,36 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "srp:living_lance"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "  B",
+      " C ",
+      "E  "
+    ],
+    "key": {
+      "B": {
+        "item": "srp:infectious_blade_fragment"
+      },
+      "C": {
+        "item": "srp:living_core"
+      },
+      "E": {
+        "item": "srp:hardened_bone_handle"
+      }
+    },
+    "unlock": [
+      {
+        "item": "srp:infectious_blade_fragment"
+      }
+    ],
+    "result": {
+      "item": "srp:living_lance",
+      "count": 1
+    }
+  }
+}

@@ -1,0 +1,174 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.srp.modelinfcow.move": {
+      "loop": true,
+      "bones": {
+        "jointFLL": {
+          "rotation": [
+            "(114.592*math.cos(q.modified_distance_moved*34.3775-360))*math.pow(q.modified_move_speed,2)",
+            0,
+            0
+          ]
+        },
+        "jointBRL": {
+          "rotation": [
+            "(114.592*math.cos(q.modified_distance_moved*34.3775-360))*math.pow(q.modified_move_speed,2)",
+            0,
+            0
+          ]
+        },
+        "popX2": {
+          "position": [
+            "0.344*math.cos(q.life_time*114.3624-360)",
+            0,
+            0
+          ]
+        },
+        "jointBLL": {
+          "rotation": [
+            "(114.592*math.cos(q.modified_distance_moved*34.3775-180))*math.pow(q.modified_move_speed,2)",
+            0,
+            0
+          ]
+        },
+        "jointFRL": {
+          "rotation": [
+            "(114.592*math.cos(q.modified_distance_moved*34.3775-180))*math.pow(q.modified_move_speed,2)",
+            0,
+            0
+          ]
+        },
+        "jointM": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*229.1831)",
+            0,
+            0
+          ]
+        },
+        "popY1": {
+          "position": [
+            0,
+            "-0.424*math.cos(q.life_time*403.6144)",
+            0
+          ]
+        },
+        "popY2": {
+          "position": [
+            0,
+            "-0.344*math.cos(q.life_time*114.3624-360)",
+            0
+          ]
+        },
+        "popX5": {
+          "position": [
+            "0.344*math.cos(q.life_time*114.3624-360)",
+            0,
+            0
+          ]
+        },
+        "mainbody": {
+          "position": [
+            0,
+            "(-0.8*math.cos(q.modified_distance_moved*68.7549))*q.modified_move_speed",
+            0
+          ]
+        },
+        "popX3": {
+          "position": [
+            "0.418*math.cos(q.life_time*219.0074)",
+            0,
+            0
+          ]
+        },
+        "popX1": {
+          "position": [
+            "0.424*math.cos(q.life_time*403.6144)",
+            0,
+            0
+          ]
+        },
+        "popX4": {
+          "position": [
+            "0.419*math.cos(q.life_time*320.3407-360)",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.srp.modelinfcow.idle": {
+      "loop": true,
+      "bones": {
+        "popX3": {
+          "position": [
+            "0.418*math.cos(q.life_time*219.0074)",
+            0,
+            0
+          ]
+        },
+        "popY1": {
+          "position": [
+            0,
+            "-0.424*math.cos(q.life_time*403.6144)",
+            0
+          ]
+        },
+        "jointM": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*229.1831)",
+            0,
+            0
+          ]
+        },
+        "popX4": {
+          "position": [
+            "0.419*math.cos(q.life_time*320.3407-360)",
+            0,
+            0
+          ]
+        },
+        "popX2": {
+          "position": [
+            "0.344*math.cos(q.life_time*114.3624-360)",
+            0,
+            0
+          ]
+        },
+        "popY2": {
+          "position": [
+            0,
+            "-0.344*math.cos(q.life_time*114.3624-360)",
+            0
+          ]
+        },
+        "popX5": {
+          "position": [
+            "0.344*math.cos(q.life_time*114.3624-360)",
+            0,
+            0
+          ]
+        },
+        "popX1": {
+          "position": [
+            "0.424*math.cos(q.life_time*403.6144)",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.srp.modelinfcow.always": {
+      "loop": true,
+      "bones": {
+        "jointH": {
+          "rotation": [
+            "0.9167*q.target_x_rotation",
+            "0.9167*q.target_y_rotation",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

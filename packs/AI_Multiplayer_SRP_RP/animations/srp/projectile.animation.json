@@ -1,0 +1,17 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.srp.projectile.spin": {
+      "loop": true,
+      "bones": {
+        "body": {
+          "rotation": [
+            "q.life_time * 360",
+            "q.life_time * 270",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

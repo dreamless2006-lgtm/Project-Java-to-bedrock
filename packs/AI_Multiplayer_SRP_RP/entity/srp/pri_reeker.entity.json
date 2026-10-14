@@ -1,0 +1,39 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "srp:pri_reeker",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/srp/nogla",
+        "skin1": "textures/entity/srp/noglasp1",
+        "skin5": "textures/entity/srp/noglav",
+        "skin6": "textures/entity/srp/noglab",
+        "skin7": "textures/entity/srp/noglah"
+      },
+      "geometry": {
+        "default": "geometry.srp.modelnogla"
+      },
+      "animations": {
+        "move": "animation.srp.modelnogla.move",
+        "idle": "animation.srp.modelnogla.idle",
+        "ctrl.move": "controller.animation.srp.move",
+        "always": "animation.srp.modelnogla.always"
+      },
+      "scripts": {
+        "animate": [
+          "ctrl.move",
+          "always"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.srp.pri_reeker"
+      ],
+      "spawn_egg": {
+        "texture": "srp_egg_nogla"
+      }
+    }
+  }
+}

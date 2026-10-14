@@ -1,0 +1,1507 @@
+import { world, system, EntityEquippableComponent, EquipmentSlot } from "@minecraft/server";
+import { ActionFormData, ModalFormData } from "@minecraft/server-ui";
+import { assignFriendTask, getFriendTask } from "./ai_task_worker.js";
+import { showSettingsForm } from "./ai_settings.js";
+import { startTrade, tradeOnCooldown } from "./ai_bot_trading.js";
+import { challengeToDuel } from "./ai_duels.js";
+
+// --- Configuration ---
+const ai_player_id = "rg:bot";
+const SYMPATHY_BASE_KEY = "sympathy_player_";
+const aim_ITEM_ID = "rg:friend_request";
+const FRIEND_LIST_ITEM_ID = "rg:friend_list_opener";
+
+// --- Persistence & Status Keys (Dynamic Properties) ---
+const AI_PERSISTENT_ID_KEY = "rg:p_id";             // Stored on AI entity: Persistent unique ID
+const FRIEND_STATUS_BASE_KEY = "friend_status_";    // Stored on AI entity: Friend status for specific player
+const FRIEND_COOLDOWN_BASE_KEY = "friend_cooldown_"; // Stored on AI entity: Friend request cooldown deadline
+const PLAYER_FRIENDS_DATA_KEY = "rg:friends_list_data"; // Stored on player entity: Friends list
+
+// --- World Global Status Key ---
+const DEAD_AI_LIST_KEY = "rg:dead_ais"; // Stored on world property: List of dead AI P-IDs
+const REVIVE_COOLDOWN_BASE_KEY = "rg:revive_cd_"; // Stored on world property: rg:revive_cd_[persistentId]
+const tp_COOLDOWN_BASE_KEY = "rg:tp_cd_";   // Stored on AI entity: rg:tp_cd_[playerId]
+
+// --- Cooldowns and Delays ---
+const FRIEND_COOLDOWN_SECONDS = 120;                // 2 minutes
+const MIN_RESPONSE_DELAY_TICKS = 100;               // 5 seconds
+const MAX_RESPONSE_DELAY_TICKS = 600;              // 30 seconds
+const revivals_interval_s = 300; // 5 minutes
+const tp_COOLDOWN_SECONDS = 60;       // 1 minute
+
+// Revive reset
+const PROGRESSION_PROPERTY = "rg:progression_points";
+const FACTION_TAGS = ['crazy', 'bad', 'good'];
+const LV_TAGS = ['lv1', 'lv2', 'lv3', 'lv4', 'lv5', 'lv6'];
+const TIER_TAGS = ['wooden', 'stone', 'copper', 'iron', 'diamond', 'diamond_pro'];
+const ALL_CLEANUP_TAGS = [...FACTION_TAGS, ...LV_TAGS, ...TIER_TAGS, 'captain'];
+
+// Features - Export these for other modules
+export const FOLLOW_AI_TAG = 'follow_player';
+export const CAN_FOLLOW_PLAYER_TAG = 'can_followed';
+export const LOCK_EQUIPMENT_TAG = 'suoding';
+export const PROHIBIT_BUILDING_TAG = 'prohibit_building';
+
+// --- Item and Initialization Keys ---
+const ITEM_friend_request = "rg:friend_request";
+const PLAYER_INIT_FLAG_KEY = "rg:startd_player"; // Stored on player entity
+
+// --- Global Pending Action Key ---
+const PENDING_KEY = "rg:pending_action"; // Global request lock
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Get or start player's friend list array
+ */
+function getPlayerFriends(player) {
+    try {
+        const data = player.getDynamicProperty(PLAYER_FRIENDS_DATA_KEY);
+        return data ? JSON.parse(data) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+/**
+ * Store player friend list. A throw here used to escape into a runInterval and
+ * stop the auto-unfriend loop for the rest of the session.
+ */
+function setPlayerFriends(player, friendsList) {
+    try {
+        player.setDynamicProperty(PLAYER_FRIENDS_DATA_KEY, JSON.stringify(friendsList));
+    } catch (e) { console.warn(e, e.stack); }
+}
+
+/**
+ * Get list of dead AI IDs stored in world dynamic property
+ */
+function getDeadAiIds() {
+    try {
+        const data = world.getDynamicProperty(DEAD_AI_LIST_KEY);
+        return data ? new Set(JSON.parse(data)) : new Set();
+    } catch (e) {
+        return new Set();
+    }
+}
+
+/**
+ * Store dead AI ID list to world dynamic property
+ */
+function setDeadAiIds(deadAiSet) {
+    try {
+        world.setDynamicProperty(DEAD_AI_LIST_KEY, JSON.stringify(Array.from(deadAiSet)));
+    } catch (e) { console.warn(e, e.stack); }
+}
+
+/**
+ * Find AI entity in loaded chunks by persistent ID
+ */
+function fetchAiBypid(persistentId) {
+    const dimensionIds = ["overworld", "nether", "the_end"];
+    for (const dimId of dimensionIds) {
+        try {
+            const dimension = world.getDimension(dimId);
+            const entities = dimension.getEntities({
+                type: ai_player_id,
+            });
+            for (const entity of entities) {
+                const entityPId = entity.getDynamicProperty(AI_PERSISTENT_ID_KEY);
+                if (entityPId === persistentId) {
+                    if (!entity.hasTag('online')) {
+                        entity.addTag('online');
+                    }
+                    return entity;
+                }
+            }
+        } catch (e) { console.warn(e, e.stack); }
+    }
+    return null;
+}
+
+/**
+ * Ensure AI entity has persistent ID. If AI is new, generate a GUID
+ */
+function ensurePersistentId(ai) {
+    let pId = ai.getDynamicProperty(AI_PERSISTENT_ID_KEY);
+    if (!pId) {
+        pId = `${Date.now()}-${Math.floor(Math.random() * 10000)}-${ai.id}`;
+        ai.setDynamicProperty(AI_PERSISTENT_ID_KEY, pId);
+    }
+    return pId;
+}
+
+/**
+ * Get friend data from cache
+ */
+function friendDataFromCache(ai, player) {
+    const persistentId = ai.getDynamicProperty(AI_PERSISTENT_ID_KEY);
+    if (!persistentId) return null;
+    return getPlayerFriends(player).find(f => f.id === persistentId);
+}
+
+/**
+ * Give friend configuration items to player
+ */
+function giveFriendConfigItems(player) {
+    player.runCommand(`give @s ${ITEM_friend_request}`);
+    player.runCommand(`give @s ${FRIEND_LIST_ITEM_ID}`);
+}
+
+/**
+ * Trigger faction-specific events
+ */
+function triggerFactionalEvent(ai, baseEventName) {
+    if (!ai?.isValid) return;
+
+    if (ai.hasTag("good")) {
+        ai.triggerEvent(`rg:good_${baseEventName}`);
+    } else if (ai.hasTag("bad")) {
+        ai.triggerEvent(`rg:bad_${baseEventName}`);
+    } else if (ai.hasTag("crazy")) {
+        ai.triggerEvent(`rg:crazy_${baseEventName}`);
+    } else {
+        ai.triggerEvent(`rg:${baseEventName}`);
+    }
+}
+
+// ============================================================================
+// PROBABILISTIC ACTION SYSTEM
+// ============================================================================
+
+function runProbabilisticAction({
+    player, ai, actionType, requestSentMessage,
+    baseChance, sympathy,
+    cooldownKey, cooldownSeconds, cooldownScope,
+    onSuccess, onFailure = () => { },
+    successMessage, failureMessage, cooldownMessage
+}) {
+    if (!ai.isValid || !player.isValid) return;
+
+    const aiName = ai.nameTag;
+    const cdKey = cooldownKey + player.id;
+    const currentTime = Date.now();
+    const expiry = ai.getDynamicProperty(cdKey) || 0;
+
+    // 1. Check if AI is already processing another request
+    const pendingAction = ai.getDynamicProperty(PENDING_KEY);
+    if (pendingAction) {
+        player.sendMessage(`§8[${aiName}] Is processing the previous request, please wait...`);
+        return;
+    }
+
+    // 2. Check player's personal cooldown
+    if (expiry > currentTime) {
+        const remaining = Math.ceil((expiry - currentTime) / 1000);
+
+        let cdMsg = `§8[${aiName}] Cooldown for this action, please wait ${remaining} seconds.`;
+        if (actionType === 'assist') {
+            cdMsg = `§8[${aiName}] Assist request on cooldown, please wait ${remaining} seconds before trying again.`;
+        } else if (actionType === 'follow') {
+            cdMsg = `§8[${aiName}] Follow request on cooldown, please wait ${remaining} seconds before trying again.`;
+        } else if (actionType === 'teleport') {
+            cdMsg = `§8[${aiName}] Teleport request on cooldown, please wait ${remaining} seconds before trying again.`;
+        }
+        player.sendMessage(cdMsg);
+        return;
+    }
+
+    // 3. Calculate probability (sympathy can be negative, which reduces chance)
+    let finalChance = baseChance + sympathy;
+    finalChance = Math.max(0, Math.min(100, finalChance));
+    const isSuccess = Math.random() * 100 < finalChance;
+
+    // 4. Set delay (3-10 seconds)
+    const delayTicks = Math.floor(Math.random() * (200 - 60 + 1)) + 60;
+
+    // 5. Set global lock and send immediate message
+    ai.setDynamicProperty(PENDING_KEY, actionType);
+    if (requestSentMessage) {
+        player.sendMessage(requestSentMessage);
+    }
+
+    // 6. Delayed execution
+    system.runTimeout(() => {
+        try {
+            // Always clear the lock after the delay, but only while the bot is
+            // still there: touching a dead entity throws, and that used to abort
+            // the whole callback so the action never happened at all.
+            if (ai.isValid) ai.setDynamicProperty(PENDING_KEY, null);
+
+            if (!ai.isValid || !player.isValid) return;
+
+            const newExpiry = currentTime + (cooldownSeconds * 1000);
+
+            if (isSuccess) {
+                player.sendMessage(`§a§l[${aiName}] ${successMessage}`);
+                onSuccess();
+                if (cooldownScope === 'always' || cooldownScope === 'success') {
+                    ai.setDynamicProperty(cdKey, newExpiry);
+                }
+            } else {
+                player.sendMessage(`§c§l[${aiName}] ${failureMessage}`);
+                onFailure();
+                if (cooldownScope === 'always' || cooldownScope === 'failure') {
+                    ai.setDynamicProperty(cdKey, newExpiry);
+                }
+            }
+
+            // Refresh menu
+            system.runTimeout(() => {
+                if (ai.isValid && player.isValid) {
+                    const friendData = friendDataFromCache(ai, player);
+                    if (friendData) {
+                        showFriendActionMenu(player, ai, friendData);
+                    }
+                }
+            }, 5);
+        } catch (e) {
+            console.warn(e, e.stack);
+        }
+    }, delayTicks);
+}
+
+// ============================================================================
+// AUTO-UNFRIEND ON NEGATIVE SYMPATHY
+// ============================================================================
+
+function checkNegativeSympathyUnfriend() {
+    for (const player of world.getAllPlayers()) {
+        if (!player.isValid) continue;
+
+        let friendsList = getPlayerFriends(player);
+        let updatedList = [];
+        let playerListChanged = false;
+
+        for (const friendData of friendsList) {
+            const persistentId = friendData.id;
+            const aiName = friendData.name;
+
+            const ai = fetchAiBypid(persistentId);
+            const isDead = getDeadAiIds().has(persistentId);
+
+            let sympathy = 0;
+            let dataAvailable = false;
+            const SYMPATHY_CACHE_KEY = `rg:dead_ai_sympathy_${persistentId}`;
+
+            // Get sympathy value (prioritize from online entity, else from dead cache)
+            if (ai && ai.isValid) {
+                sympathy = ai.getDynamicProperty(SYMPATHY_BASE_KEY + player.id) || 0;
+                dataAvailable = true;
+            } else if (isDead) {
+                try {
+                    const sympathyDataStr = world.getDynamicProperty(SYMPATHY_CACHE_KEY);
+                    if (sympathyDataStr) {
+                        const sympathyData = JSON.parse(sympathyDataStr);
+                        if (sympathyData[player.id] !== undefined) {
+                            sympathy = sympathyData[player.id];
+                            dataAvailable = true;
+                        }
+                    }
+                } catch (e) { /* Ignore read errors */ }
+            }
+
+            // Only check when sympathy data is available and sympathy < 0
+            if (dataAvailable && sympathy < 0) {
+                const unfriendChance = Math.abs(sympathy); // 1% per point of negative sympathy
+
+                if (Math.random() * 100 < unfriendChance) {
+                    // Execute unfriend logic
+
+                    // A. Clean up status on online/loaded entity
+                    if (ai && ai.isValid) {
+                        ai.setDynamicProperty(FRIEND_STATUS_BASE_KEY + player.id, null);
+                        ai.setDynamicProperty(FRIEND_COOLDOWN_BASE_KEY + player.id, null);
+                        ai.setDynamicProperty(SYMPATHY_BASE_KEY + player.id, null);
+                        ai.removeTag(FOLLOW_AI_TAG);
+                        player.removeTag(CAN_FOLLOW_PLAYER_TAG);
+                    }
+
+                    // B. Clean up sympathy in dead cache
+                    if (isDead) {
+                        try {
+                            const sympathyDataStr = world.getDynamicProperty(SYMPATHY_CACHE_KEY);
+                            if (sympathyDataStr) {
+                                let sympathyData = JSON.parse(sympathyDataStr);
+                                delete sympathyData[player.id];
+                                world.setDynamicProperty(SYMPATHY_CACHE_KEY, JSON.stringify(sympathyData));
+                            }
+                        } catch (e) { /* Ignore cleanup errors */ }
+                    }
+
+                    // C. Notify player
+                    player.sendMessage(`§c§l${aiName}§r§c has unfriended you.`);
+                    playerListChanged = true;
+
+                    // D. Skip adding to updatedList (remove from friends)
+                    continue;
+                }
+            }
+
+            // Keep in list if not removed
+            updatedList.push(friendData);
+        }
+
+        // Only update player's friend list if removals occurred
+        if (playerListChanged) {
+            setPlayerFriends(player, updatedList);
+        }
+    }
+}
+
+// ============================================================================
+// FRIEND REQUEST HANDLER
+// ============================================================================
+
+/**
+ * Mark a bot as a friend of this player: bot-side status plus the player's
+ * friend list entry. Shared by player-initiated and bot-initiated requests.
+ */
+export function acceptFriendship(ai, player) {
+    if (!ai?.isValid || !player?.isValid) return false;
+
+    const playerId = player.id;
+    const aiName = ai.nameTag || "AI Player";
+
+    ai.setDynamicProperty(FRIEND_STATUS_BASE_KEY + playerId, "accepted");
+    ai.setDynamicProperty(FRIEND_COOLDOWN_BASE_KEY + playerId, 0);
+    if (!ai.hasTag('online')) {
+        ai.addTag('online');
+    }
+
+    let variantId = null;
+    try {
+        const variantComp = ai.getComponent('minecraft:variant');
+        if (variantComp) {
+            variantId = variantComp.value;
+        }
+    } catch (e) {
+        console.warn(`[HandleFriend] Failed to get variant component for AI: ${e}`);
+    }
+
+    const persistentId = ensurePersistentId(ai);
+    const friends = getPlayerFriends(player);
+    if (friends.findIndex(f => f.id === persistentId) === -1) {
+        const storedFactionTag = FACTION_TAGS.find(tag => ai.hasTag(tag)) || null;
+        const storedLvTag = LV_TAGS.find(tag => ai.hasTag(tag)) || null;
+
+        friends.push({
+            id: persistentId,
+            name: aiName,
+            isTamed: false,
+            factionTag: storedFactionTag,
+            lvTag: storedLvTag,
+            variantId: variantId
+        });
+        setPlayerFriends(player, friends);
+    }
+    return true;
+}
+
+/**
+ * Turn a request down and start the re-ask cooldown.
+ */
+export function refuseFriendship(ai, player) {
+    if (!ai?.isValid || !player?.isValid) return false;
+
+    ai.setDynamicProperty(FRIEND_STATUS_BASE_KEY + player.id, "cooldown");
+    ai.setDynamicProperty(FRIEND_COOLDOWN_BASE_KEY + player.id, system.currentTick + (FRIEND_COOLDOWN_SECONDS * 20));
+    return true;
+}
+
+function handleFriendRequest(ai, player, sympathy) {
+    if (!ai.isValid || !player.isValid) return;
+
+    const playerId = player.id;
+    const aiName = ai.nameTag || "AI Player";
+
+    const delayTicks = Math.floor(Math.random() * (MAX_RESPONSE_DELAY_TICKS - MIN_RESPONSE_DELAY_TICKS + 1)) + MIN_RESPONSE_DELAY_TICKS;
+
+    ai.setDynamicProperty(FRIEND_STATUS_BASE_KEY + playerId, "requested");
+    player.sendMessage(`§a§lYour friend request has been submitted to [${aiName}].`);
+
+    system.runTimeout(() => {
+        if (!ai.isValid || !player.isValid) return;
+
+        let isAccepted = false;
+        let responseMessage = "";
+
+        // --- Logic check ---
+        if (sympathy < 0) {
+            // Sympathy < 0: Directly refused
+            responseMessage = `§c§l[${aiName}] refused your friend request.`;
+            isAccepted = false;
+        } else {
+            // Sympathy >= 0: Conduct probability check
+            let successRate = 20 + sympathy; // Base 20% + 1% per sympathy point
+            successRate = Math.min(successRate, 100);
+
+            if (Math.random() * 100 < successRate) {
+                responseMessage = `§a§l[${aiName}] accepted your friend request.`;
+                isAccepted = true;
+            } else {
+                responseMessage = `§c§l[${aiName}] refused your friend request.`;
+                isAccepted = false;
+            }
+        }
+
+        if (isAccepted) {
+            // A. Agree: Set permanent accept status
+            acceptFriendship(ai, player);
+        } else {
+            // B. Reject: Set cooldown status
+            refuseFriendship(ai, player);
+        }
+
+        player.sendMessage(responseMessage);
+        player.sendMessage("§b[Tip] Please re-open the menu to check the new friend status.");
+
+    }, delayTicks);
+}
+
+// ============================================================================
+// tp / INVITE FUNCTIONS
+// ============================================================================
+
+function inviteOnline(ai, player) {
+    if (!ai.isValid || !player.isValid) {
+        player.sendMessage("§cTarget is no longer valid.");
+        return;
+    }
+
+    if (ai.hasTag('online')) {
+        const playerId = player.id;
+        const aiName = ai.nameTag;
+        const tpCooldownKey = tp_COOLDOWN_BASE_KEY + playerId;
+        const tpExpiry = ai.getDynamicProperty(tpCooldownKey) || 0;
+        const currentTime = Date.now();
+
+        if (tpExpiry > currentTime) {
+            const remainingSeconds = Math.ceil((tpExpiry - currentTime) / 1000);
+            player.sendMessage(`§c[${aiName}] Teleport is on cooldown, please wait ${remainingSeconds} seconds before trying again.`);
+            return;
+        }
+
+        // Check if dimensions match
+        if (ai.dimension.id !== player.dimension.id) {
+            const playerDimName = player.dimension.id.split(':')[1] || "Unknown";
+            player.sendMessage(`§c[${ai.nameTag}] is currently in a different dimension (${playerDimName}), cannot teleport.`);
+            player.sendMessage("§e[Tip] Please go to their dimension first.");
+            return;
+        }
+
+        // Execute teleport
+        player.sendMessage(`§e Teleporting ${aiName}, please wait...`);
+
+        try {
+            ai.teleport(player.location, player.dimension);
+            player.sendMessage(`§a ${ai.nameTag} has been teleported to your side.`);
+            const newTpExpiry = currentTime + (tp_COOLDOWN_SECONDS * 1000);
+            ai.setDynamicProperty(tpCooldownKey, newTpExpiry);
+        } catch (e) {
+            player.sendMessage(`§c Teleport failed, please check the friend's location.`);
+        }
+    } else {
+        player.sendMessage(`§c[${ai.nameTag}] is currently offline, cannot teleport.`);
+    }
+}
+
+function askCoordinates(ai, player) {
+    if (!ai.isValid || !player.isValid) return;
+
+    const loc = ai.location;
+    const dim = ai.dimension.id.split(':')[1];
+
+    player.sendMessage(`§a[${ai.nameTag}] §fCurrent coordinates: §bX: ${loc.x.toFixed(1)}, Y: ${loc.y.toFixed(1)}, Z: ${loc.z.toFixed(1)} (§e${dim}§f)`);
+}
+
+// ============================================================================
+// REVIVE / awaken FUNCTION
+// ============================================================================
+
+function awakenAI(player, friendData) {
+    const persistentId = friendData.id;
+    const deadAiSet = getDeadAiIds();
+    const reviveCooldownKey = REVIVE_COOLDOWN_BASE_KEY + persistentId;
+    const reviveExpiry = world.getDynamicProperty(reviveCooldownKey) || 0;
+    const currentTime = Date.now();
+
+    if (reviveExpiry > currentTime) {
+        const remainingSeconds = Math.ceil((reviveExpiry - currentTime) / 1000);
+        player.sendMessage(`§c Please wait ${remainingSeconds} seconds before trying again.`);
+        return;
+    }
+
+    // Core check: Death mark
+    if (!deadAiSet.has(persistentId)) {
+        player.sendMessage(`§e ${friendData.name} has only temporarily departed and cannot be invited online.`);
+        return;
+    }
+
+    // Anti-clone check
+    const existingAi = fetchAiBypid(persistentId);
+    if (existingAi) {
+        player.sendMessage(`§e ${friendData.name} is already online.`);
+        deadAiSet.delete(persistentId);
+        setDeadAiIds(deadAiSet);
+        showFriendActionMenu(player, existingAi, friendData);
+        return;
+    }
+
+    // Execute spawn
+    const dimension = player.dimension;
+    const spawnLoc = player.location;
+
+    try {
+        const awaken_TAG = "rg:awakened_ai";
+        const newAi = dimension.spawnEntity(ai_player_id, spawnLoc);
+
+        // Set revive marker, persistent ID, and name
+        newAi.addTag(awaken_TAG);
+        newAi.setDynamicProperty(AI_PERSISTENT_ID_KEY, persistentId);
+        newAi.nameTag = friendData.name;
+
+        // Remove death marker
+        deadAiSet.delete(persistentId);
+        setDeadAiIds(deadAiSet);
+
+        const newReviveExpiry = currentTime + (revivals_interval_s * 1000);
+        world.setDynamicProperty(reviveCooldownKey, newReviveExpiry);
+        player.sendMessage(`§e${friendData.name} joined the game`);
+
+        // Delayed cleanup and state recovery
+        system.runTimeout(() => {
+            if (!newAi.isValid) return;
+
+            // Clear all tags
+            for (const tag of ALL_CLEANUP_TAGS) {
+                newAi.removeTag(tag);
+            }
+
+            // Reset progress and set initial equipment
+            newAi.setDynamicProperty(PROGRESSION_PROPERTY, 0);
+            newAi.addTag('wooden');
+
+            // Restore stored tags
+            if (friendData.factionTag) {
+                newAi.addTag(friendData.factionTag);
+            }
+            if (friendData.lvTag) {
+                newAi.addTag(friendData.lvTag);
+            }
+
+            if (!newAi.hasTag('online')) {
+                newAi.addTag('online');
+            }
+
+            // Restore Sympathy
+            const INTERACTED_PLAYERS_KEY = "rg:interacted_players_list";
+            const SYMPATHY_CACHE_KEY = `rg:dead_ai_sympathy_${persistentId}`;
+
+            try {
+                // Restore player list
+                const playersListData = world.getDynamicProperty(INTERACTED_PLAYERS_KEY + "_" + persistentId);
+                if (playersListData) {
+                    newAi.setDynamicProperty(INTERACTED_PLAYERS_KEY, playersListData);
+                    world.setDynamicProperty(INTERACTED_PLAYERS_KEY + "_" + persistentId, null);
+                }
+
+                // Restore sympathy data
+                const sympathyDataStr = world.getDynamicProperty(SYMPATHY_CACHE_KEY);
+                if (sympathyDataStr) {
+                    const sympathyData = JSON.parse(sympathyDataStr);
+                    for (const playerId in sympathyData) {
+                        newAi.setDynamicProperty(SYMPATHY_BASE_KEY + playerId, sympathyData[playerId]);
+                    }
+                    world.setDynamicProperty(SYMPATHY_CACHE_KEY, null);
+                }
+            } catch (e) {
+                console.warn(`[AI awaken] Failed to restore sympathy data for AI ${persistentId}: ${e}`);
+            }
+
+            // Skin variant recovery
+            if (friendData.variantId !== null && friendData.variantId !== undefined) {
+                const variantId = friendData.variantId;
+                newAi.triggerEvent("delete_skin");
+
+                if (variantId >= 0) {
+                    const variantEvent = `become_skin${(variantId + 1).toString().padStart(2, '0')}`;
+                    newAi.triggerEvent(variantEvent);
+                }
+            }
+
+            // Clear inventory
+            const commands = [
+                `replaceitem entity @s slot.weapon.mainhand 0 air`,
+                `replaceitem entity @s slot.weapon.offhand 0 air`,
+                `replaceitem entity @s slot.armor.head 0 air`,
+                `replaceitem entity @s slot.armor.chest 0 air`,
+                `replaceitem entity @s slot.armor.legs 0 air`,
+                `replaceitem entity @s slot.armor.feet 0 air`
+            ];
+
+            const TEMP_aim_TAG = "rg:temp_target_ai";
+            newAi.addTag(TEMP_aim_TAG);
+
+            commands.forEach(cmd => {
+                const finalCmd = cmd.replace(/@s/, `@e[tag=${TEMP_aim_TAG},c=1]`);
+                dimension.runCommand(finalCmd);
+            });
+
+            newAi.removeTag(TEMP_aim_TAG);
+
+        }, 10);
+
+    } catch (e) {
+        player.sendMessage(`§c Can't Invite: ${friendData.name}.`);
+    }
+}
+
+// ============================================================================
+// UNFRIEND FUNCTION
+// ============================================================================
+
+function unfriendAI(player, persistentId, aiName) {
+    // Calculate sympathy penalty (20-40 points)
+    const penalty = Math.floor(Math.random() * 21) + 20;
+
+    // Clean up state on AI entity (if alive)
+    const ai = fetchAiBypid(persistentId);
+    if (ai) {
+        ai.setDynamicProperty(FRIEND_STATUS_BASE_KEY + player.id, null);
+        ai.setDynamicProperty(FRIEND_COOLDOWN_BASE_KEY + player.id, null);
+        ai.removeTag(FOLLOW_AI_TAG);
+        player.removeTag(CAN_FOLLOW_PLAYER_TAG);
+
+        // Apply penalty instead of clearing sympathy
+        let currentSympathy = ai.getDynamicProperty(SYMPATHY_BASE_KEY + player.id) || 0;
+        let newSympathy = Math.max(-100, currentSympathy - penalty);
+        ai.setDynamicProperty(SYMPATHY_BASE_KEY + player.id, newSympathy);
+    }
+
+    // Clean up player friend list
+    const friends = getPlayerFriends(player);
+    const updatedFriends = friends.filter(f => f.id !== persistentId);
+    setPlayerFriends(player, updatedFriends);
+
+    // Update dead sympathy cache (apply penalty)
+    const SYMPATHY_CACHE_KEY = `rg:dead_ai_sympathy_${persistentId}`;
+    try {
+        const sympathyDataStr = world.getDynamicProperty(SYMPATHY_CACHE_KEY);
+        if (sympathyDataStr) {
+            let sympathyData = JSON.parse(sympathyDataStr);
+            let currentSympathy = sympathyData[player.id] || 0;
+            sympathyData[player.id] = Math.max(-100, currentSympathy - penalty);
+            world.setDynamicProperty(SYMPATHY_CACHE_KEY, JSON.stringify(sympathyData));
+        }
+    } catch (e) { /* Ignore cleanup error */ }
+
+    player.sendMessage(`§cYou have unfriended §l${aiName}§r§c.`);
+}
+
+// ============================================================================
+// UI FUNCTIONS
+// ============================================================================
+
+/**
+ * Friend request interface (non-friend status)
+ */
+function showAiInfoMenu(player, ai, sympathy) {
+    const playerId = player.id;
+    const aiName = ai.nameTag;
+
+    const friendStatus = ai.getDynamicProperty(FRIEND_STATUS_BASE_KEY + playerId) || "";
+    const cooldownExpiry = ai.getDynamicProperty(FRIEND_COOLDOWN_BASE_KEY + playerId) || 0;
+    const currentTick = system.currentTick;
+
+    let isCoolingDown = (friendStatus === "cooldown" && currentTick < cooldownExpiry);
+    let isRequested = (friendStatus === "requested");
+
+    const form = new ActionFormData();
+    form.title(aiName);
+
+    let sympathyText;
+    if (sympathy >= 50) sympathyText = `§a${sympathy} (Friendly)`;
+    else if (sympathy > 20) sympathyText = `§e${sympathy} (Warm)`;
+    else if (sympathy >= -20) sympathyText = `§f${sympathy} (Neutral)`;
+    else sympathyText = `§c${sympathy} (Hostile)`;
+
+    let bodyText = `§8Your sympathy with this person:\n§f${sympathyText}\n\n`;
+    form.body(bodyText);
+
+    let buttonText;
+    let buttonIcon;
+    let buttonAction;
+
+    if (isCoolingDown) {
+        const remainingTicks = cooldownExpiry - currentTick;
+        const remainingSeconds = (remainingTicks / 20).toFixed(0);
+        buttonText = `§e§lCooldown (${remainingSeconds}s)`;
+        buttonIcon = "textures/items/clock_item";
+        buttonAction = 1;
+    } else if (isRequested) {
+        buttonText = `§9Request Pending...`;
+        buttonIcon = "textures/items/pending";
+        buttonAction = 1;
+    } else {
+        buttonText = "§lFriend Request";
+        buttonIcon = "textures/items/friend_request";
+        buttonAction = 0;
+    }
+
+    form.button(buttonText, buttonIcon);
+    form.button("§cClose");
+
+    form.show(player).then(response => {
+        if (response.canceled || response.selection === 1) {
+            return;
+        }
+
+        if (response.selection === 0 && buttonAction === 0) {
+            handleFriendRequest(ai, player, sympathy);
+        }
+    }).catch(e => console.warn(e, e.stack));
+}
+
+/**
+ * Friend action menu (for existing friends)
+ */
+// What a bot can be asked to bring back. Ore wants match both the stone and
+// deepslate variants; log wants are exact block ids.
+const ORE_CHOICES = [
+    { label: "Any ore", want: null },
+    { label: "Coal", want: "coal" },
+    { label: "Iron", want: "iron" },
+    { label: "Copper", want: "copper" },
+    { label: "Gold", want: "gold" },
+    { label: "Redstone", want: "redstone" },
+    { label: "Lapis", want: "lapis" },
+    { label: "Diamond", want: "diamond" },
+    { label: "Emerald", want: "emerald" }
+];
+
+const LOG_CHOICES = [
+    { label: "Any tree", want: null },
+    { label: "Oak", want: "minecraft:oak_log" },
+    { label: "Birch", want: "minecraft:birch_log" },
+    { label: "Spruce", want: "minecraft:spruce_log" },
+    { label: "Jungle", want: "minecraft:jungle_log" },
+    { label: "Acacia", want: "minecraft:acacia_log" },
+    { label: "Dark Oak", want: "minecraft:dark_oak_log" },
+    { label: "Mangrove", want: "minecraft:mangrove_log" },
+    { label: "Cherry", want: "minecraft:cherry_log" },
+    { label: "Crimson", want: "minecraft:crimson_stem" },
+    { label: "Warped", want: "minecraft:warped_stem" }
+];
+
+function askJobForm(player, ai, sympathy, kind) {
+    if (!player?.isValid || !ai?.isValid) return;
+
+    const choices = kind === "chop" ? LOG_CHOICES : ORE_CHOICES;
+    const form = new ModalFormData();
+    form.title(kind === "chop" ? "§aAsk for Wood" : "§aAsk for Ore");
+    form.label(`Tell ${ai.nameTag} what you want brought back.`);
+    form.dropdown(kind === "chop" ? "Which logs?" : "Which ore?", choices.map(c => c.label), { defaultValueIndex: 0 });
+    form.slider("How many?", 1, 64, { defaultValue: kind === "chop" ? 24 : 12 });
+    form.submitButton("§aSend the request");
+
+    form.show(player).then(response => {
+        if (response.canceled) return;
+
+        const values = response.formValues || [];
+        const choice = choices[Number(values[0])] || choices[0];
+        const amount = Math.max(1, Math.min(64, Number(values[1]) || 16));
+
+        // He is already working for you: say so instead of the "off to find
+        // wood" message that used to print even though nothing was assigned
+        const existing = getFriendTask(ai);
+        if (existing) {
+            player.sendMessage(`§e[${ai.nameTag}] is already on a job: ${existing.kind}` +
+                `${existing.itemName ? ` (${existing.count}/${existing.amount || 24} ${existing.itemName})` : ""}. ` +
+                `Wait for him to deliver, or send him back and ask again.`);
+            return;
+        }
+
+        runProbabilisticAction({
+            player: player, ai: ai,
+            actionType: kind,
+            requestSentMessage: `§e[${ai.nameTag}] Your ${kind === "chop" ? "woodcutting" : "mining"} request has been sent...`,
+            // A friend asking a friend gets a yes far more often than not - the
+            // old 35/25 base meant most job requests were silently refused
+            baseChance: kind === "chop" ? 85 : 78,
+            sympathy: sympathy,
+            cooldownKey: "rg:task_cd_",
+            cooldownSeconds: 60,
+            cooldownScope: 'always',
+            onSuccess: () => assignFriendTask(ai, player, kind, { want: choice.want, amount: amount }),
+            successMessage: `is off to find ${choice.label.toLowerCase()} for you - ${amount} of them. Watch for his chat, or type !aistatus near him.`,
+            failureMessage: `says no ${kind === "chop" ? "woodcutting" : "mining"} for you right now, sorry.`
+        });
+    }).catch(e => console.warn(e, e.stack));
+}
+
+function showFriendActionMenu(player, ai, friendData) {
+    const persistentId = friendData.id;
+    const isAlive = !!ai;
+    const isDead = getDeadAiIds().has(persistentId);
+    const isOnline = isAlive ? ai.hasTag('online') : false;
+    const currentTime = Date.now();
+
+    // Sympathy retrieval logic
+    let sympathy = 0;
+    let sympathyText = "§8Unknown";
+
+    if (isAlive) {
+        sympathy = ai.getDynamicProperty(SYMPATHY_BASE_KEY + player.id) || 0;
+        sympathyText = `§f${sympathy}`;
+    } else if (isDead) {
+        try {
+            const SYMPATHY_CACHE_KEY = `rg:dead_ai_sympathy_${persistentId}`;
+            const sympathyDataStr = world.getDynamicProperty(SYMPATHY_CACHE_KEY);
+            if (sympathyDataStr) {
+                const sympathyData = JSON.parse(sympathyDataStr);
+                if (sympathyData[player.id] !== undefined) {
+                    sympathy = sympathyData[player.id];
+                    sympathyText = `§f${sympathy} (Offline)`;
+                }
+            }
+        } catch (e) { /* Ignore read error */ }
+    }
+
+    // Action codes (Rearranged for better readability and logic)
+    const ACTION_TOGGLE_FOLLOW = 0;
+    const ACTION_REQUEST_ASSISTANCE = 1;
+    const ACTION_INVITE_awaken = 2;
+    const ACTION_ASK_COORDS = 3;
+    const ACTION_TOGGLE_EQUIPMENT_LOCK = 4;
+    const ACTION_TOGGLE_BUILDING_PROHIBITION = 5;
+    const ACTION_ASK_CHOP = 6;
+    const ACTION_ASK_MINE = 7;
+    const ACTION_TRADE = 8;
+    const ACTION_DUEL = 9;
+    const ACTION_UNFRIEND = 10;
+    const ACTION_BACK = 11;
+
+    // Read all cooldowns and global locks
+    const reviveCooldownKey = REVIVE_COOLDOWN_BASE_KEY + persistentId;
+    const reviveExpiry = world.getDynamicProperty(reviveCooldownKey) || 0;
+    const reviveOnCooldown = reviveExpiry > currentTime;
+    const reviveRemaining = reviveOnCooldown ? Math.ceil((reviveExpiry - currentTime) / 1000) : 0;
+
+    const pendingAction = isAlive ? (ai.getDynamicProperty(PENDING_KEY) || null) : null;
+
+    let tpRemaining = 0;
+    let assistRemaining = 0;
+    let followRemaining = 0;
+    let tpOnCooldown = false;
+    let assistOnCooldown = false;
+    let followOnCooldown = false;
+
+    if (isAlive) {
+        const tpExpiry = ai.getDynamicProperty(tp_COOLDOWN_BASE_KEY + player.id) || 0;
+        if (tpExpiry > currentTime) {
+            tpOnCooldown = true;
+            tpRemaining = Math.ceil((tpExpiry - currentTime) / 1000);
+        }
+
+        const assistExpiry = ai.getDynamicProperty("rg:prob_tame_cd_" + player.id) || 0;
+        if (assistExpiry > currentTime) {
+            assistOnCooldown = true;
+            assistRemaining = Math.ceil((assistExpiry - currentTime) / 1000);
+        }
+
+        const followExpiry = ai.getDynamicProperty("rg:prob_follow_cd_" + player.id) || 0;
+        if (followExpiry > currentTime) {
+            followOnCooldown = true;
+            followRemaining = Math.ceil((followExpiry - currentTime) / 1000);
+        }
+    }
+
+    const aiName = friendData.name;
+    const form = new ActionFormData();
+    form.title(`§aFriend Actions: ${aiName}`);
+
+    let statusText = isAlive ? '§aOnline' : (isDead ? '§8Offline' : '§8Offline');
+    form.body(`Current Status: ${statusText}\n§8Your sympathy with this person: ${sympathyText}\n\nPlease select the action you want to perform.`);
+
+    // --- BUTTON 0: Request/Cancel Follow ---
+    let followText, followIcon, followEnabled = false;
+    const isPlayerFollowed = player.hasTag(CAN_FOLLOW_PLAYER_TAG);
+
+    if (isPlayerFollowed) {
+        followText = "§cUnfollow";
+        followIcon = "textures/ui/cancel";
+        followEnabled = isAlive;
+    } else if (pendingAction) {
+        followText = "§9Request Pending.";
+        followIcon = "textures/items/pending";
+        followEnabled = false;
+    } else if (followOnCooldown) {
+        followText = `§8Follow Cooldown (${followRemaining}s)`;
+        followIcon = "textures/items/clock_item";
+        followEnabled = false;
+    } else if (isAlive) {
+        followText = "Request Follow";
+        followIcon = "textures/items/friend_request";
+        followEnabled = true;
+    } else if (!isAlive && !isPlayerFollowed) {
+        followText = "§8Follow (Offline)";
+        followIcon = "textures/items/friend_request";
+        followEnabled = false;
+    } else {
+        followText = "§8Follow (Offline)";
+        followIcon = "textures/items/friend_request";
+        followEnabled = false;
+    }
+    form.button(followText, followIcon);
+
+    // --- BUTTON 1: Request Assistance ---
+    let assistText, assistIcon, assistEnabled = false;
+    let isTamed = false;
+    if (isAlive) {
+        try {
+            const tameable = ai.getComponent('minecraft:tameable');
+            isTamed = tameable ? tameable.isTamed : false;
+        } catch (e) { /* No tame component */ }
+    }
+
+    if (isTamed) {
+        assistText = "§aAlready Assisting";
+        assistIcon = "textures/ui/check";
+        assistEnabled = false;
+    } else if (pendingAction) {
+        assistText = "§9Request being processed...";
+        assistIcon = "textures/items/pending";
+        assistEnabled = false;
+    } else if (assistOnCooldown) {
+        assistText = `§8Assist Cooldown (${assistRemaining}s)`;
+        assistIcon = "textures/items/clock_item";
+        assistEnabled = false;
+    } else if (isAlive) {
+        assistText = "Request Assistance";
+        assistIcon = "textures/items/assist";
+        assistEnabled = true;
+    } else {
+        assistText = "§8Request Assistance (Offline)";
+        assistIcon = "textures/items/assist";
+        assistEnabled = false;
+    }
+    form.button(assistText, assistIcon);
+
+    // --- BUTTON 2: Invite Online / awaken ---
+    let inviteText;
+    let inviteIcon;
+    let inviteEnabled = true;
+
+    if (isDead) {
+        if (reviveOnCooldown) {
+            inviteText = `§8§lRevive Cooldown (${reviveRemaining}s)`;
+            inviteIcon = "textures/items/clock_item";
+            inviteEnabled = false;
+        } else {
+            inviteText = "§b§lInvite Online";
+            inviteIcon = "textures/items/online";
+        }
+    } else if (isAlive) {
+        if (pendingAction) {
+            inviteText = "§9Request being processed...";
+            inviteIcon = "textures/items/paper";
+            inviteEnabled = false;
+        } else if (tpOnCooldown) {
+            inviteText = `§8§lTeleport Cooldown (${tpRemaining}s)`;
+            inviteIcon = "textures/items/clock_item";
+            inviteEnabled = false;
+        } else {
+            inviteText = isOnline ? "§lRequest Teleport" : "§8Offline (Cannot teleport)";
+            inviteIcon = isOnline ? "textures/items/ender_eye" : "textures/items/bush";
+            inviteEnabled = isOnline;
+        }
+    } else {
+        inviteText = "§8Too far away to operate";
+        inviteIcon = "textures/items/clock_item";
+        inviteEnabled = false;
+    }
+    form.button(inviteText, inviteIcon);
+
+    // --- BUTTON 3: Ask Coordinates ---
+    let coordsText = isAlive ? "§fAsk Coordinates" : "§8Ask Coordinates";
+    form.button(coordsText, "textures/items/coords");
+
+    // --- BUTTON 4: Lock/Unlock Equipment ---
+    let lockText, lockIcon;
+    const isEquipmentLocked = isAlive && ai.hasTag(LOCK_EQUIPMENT_TAG);
+    lockText = isEquipmentLocked ? "§aUnlock Equipment" : "§cLock Equipment";
+    lockIcon = "textures/ui/armor_full";
+    if (!isAlive) {
+        lockText = "§8Lock Equipment (Offline)";
+    }
+    form.button(lockText, lockIcon);
+
+    // --- BUTTON 5: Prohibit/Allow Building ---
+    let buildText, buildIcon;
+    const isBuildingProhibited = isAlive && ai.hasTag(PROHIBIT_BUILDING_TAG);
+    buildText = isBuildingProhibited ? "§aAllow Building" : "§cProhibit Building";
+    buildIcon = isBuildingProhibited ? "textures/items/iron_pickaxe" : "textures/ui/cancel";
+    if (!isAlive) {
+        buildText = "§8Prohibit Building (Offline)";
+    }
+    form.button(buildText, buildIcon);
+
+    // --- BUTTON 6 & 7: Ask to work ---
+    const activeTask = isAlive ? getFriendTask(ai) : null;
+    const taskSecondsLeft = activeTask ? Math.ceil(activeTask.remainingTicks / 20) : 0;
+
+    let chopText, mineText, workEnabled;
+    if (!isAlive) {
+        chopText = "§8Cut Trees (Offline)";
+        mineText = "§8Help Mine (Offline)";
+        workEnabled = false;
+    } else if (activeTask) {
+        const jobLabel = activeTask.kind === "chop" ? "cutting trees" : "mining";
+        const targetLabel = activeTask.itemName
+            || (activeTask.want ? String(activeTask.want).replace("minecraft:", "").replace(/_(log|stem)$/, "").replace(/_/g, " ") : null)
+            || (activeTask.kind === "chop" ? "logs" : "ore");
+
+        let carry;
+        if (activeTask.count > 0) {
+            carry = ` - ${activeTask.count}/${activeTask.amount} ${targetLabel}`;
+        } else if (activeTask.kind === "mine" && activeTask.depth !== null) {
+            carry = ` - digging at y ${activeTask.depth} for ${targetLabel}`;
+        } else {
+            carry = ` - looking for ${targetLabel}`;
+        }
+        chopText = `§9${aiName}: ${jobLabel}${carry} (${taskSecondsLeft}s)`;
+        mineText = chopText;
+        workEnabled = false;
+    } else {
+        chopText = "Ask to Cut Trees";
+        mineText = "Ask to Help Mine";
+        workEnabled = true;
+    }
+    form.button(chopText, "textures/items/iron_axe");
+    form.button(mineText, "textures/items/iron_pickaxe");
+
+    // --- BUTTON 8 & 9: Trade and duel ---
+    const dueling = isAlive && !!ai.getDynamicProperty("rg:duel_with");
+    let tradeText, duelText;
+
+    if (!isAlive) {
+        tradeText = "§8Trade (Offline)";
+        duelText = "§8Duel (Offline)";
+    } else if (dueling) {
+        tradeText = "§9Already dueling";
+        duelText = tradeText;
+    } else if (tradeOnCooldown(ai, player)) {
+        tradeText = "§8Trade (wait)";
+        duelText = "§cChallenge to Duel";
+    } else {
+        tradeText = "§6Trade";
+        duelText = "§cChallenge to Duel";
+    }
+    form.button(tradeText, "textures/items/emerald");
+    form.button(duelText, "textures/items/iron_sword");
+
+    // --- BUTTON 10: Delete Friend ---
+    form.button("§cUnfriend", "textures/ui/icon_trash");
+
+    // --- BUTTON 11: Back ---
+    form.button("§eBack", "textures/ui/icon_import");
+
+    form.show(player).then(response => {
+        if (response.canceled || response.selection === ACTION_BACK) return;
+
+        // Check if AI is valid for actions that require it
+        if (response.selection !== ACTION_INVITE_awaken && response.selection !== ACTION_UNFRIEND && (!isAlive && !isDead)) {
+            if (response.selection === ACTION_ASK_COORDS) {
+                player.sendMessage(`§8 ${aiName} is too far away from you to operate.`);
+            } else {
+                player.sendMessage(`§8 Operation failed: The target is not nearby or is offline.`);
+            }
+            return;
+        }
+
+        switch (response.selection) {
+            case ACTION_TOGGLE_FOLLOW: // Request/Cancel Follow
+                if (isAlive) {
+                    if (isPlayerFollowed) {
+                        // Cancel Follow (execute immediately)
+                        triggerFactionalEvent(ai, "no_follow");
+                        ai.removeTag(FOLLOW_AI_TAG);
+                        player.removeTag(CAN_FOLLOW_PLAYER_TAG);
+                        player.sendMessage(`§a ${aiName} has stopped following.`);
+                        system.runTimeout(() => showFriendActionMenu(player, ai, friendData), 5);
+                    } else {
+                        runProbabilisticAction({
+                            player: player, ai: ai,
+                            actionType: 'follow',
+                            requestSentMessage: `§e[${aiName}] Your follow request has been sent...`,
+                            baseChance: 20,
+                            sympathy: sympathy,
+                            cooldownKey: "rg:prob_follow_cd_",
+                            cooldownSeconds: 60,
+                            cooldownScope: 'failure',
+                            onSuccess: () => {
+                                triggerFactionalEvent(ai, "follow");
+                                ai.addTag(FOLLOW_AI_TAG);
+                                player.addTag(CAN_FOLLOW_PLAYER_TAG);
+                                const sympathyKey = SYMPATHY_BASE_KEY + player.id;
+                                let currentSympathy = ai.getDynamicProperty(sympathyKey) || 0;
+                                const reduction = Math.floor(Math.random() * 10) + 3;
+                                currentSympathy = currentSympathy - reduction;
+                                ai.setDynamicProperty(sympathyKey, currentSympathy);
+                            },
+                            successMessage: "Accepted your follow request.",
+                            failureMessage: "Rejected your follow request."
+                        });
+                    }
+                }
+                break;
+
+            case ACTION_REQUEST_ASSISTANCE: // Request Assistance (Taming)
+                if (isAlive && !isTamed) {
+                    runProbabilisticAction({
+                        player: player, ai: ai,
+                        actionType: 'assist',
+                        requestSentMessage: `§e[${aiName}] Your assistance request has been sent...`,
+                        baseChance: 10,
+                        sympathy: sympathy,
+                        cooldownKey: "rg:prob_tame_cd_",
+                        cooldownSeconds: 60,
+                        cooldownScope: 'failure',
+                        onSuccess: () => {
+                            try {
+                                const tameable = ai.getComponent('minecraft:tameable');
+                                if (tameable) tameable.tame(player);
+                                const sympathyKey = SYMPATHY_BASE_KEY + player.id;
+                                let currentSympathy = ai.getDynamicProperty(sympathyKey) || 0;
+                                const reduction = Math.floor(Math.random() * 14) + 5;
+                                currentSympathy = currentSympathy - reduction;
+                                ai.setDynamicProperty(sympathyKey, currentSympathy);
+                            } catch (e) { /* Ignore error */ }
+                        },
+                        successMessage: "accepted your assistance request.",
+                        failureMessage: "refused your assistance request."
+                    });
+                } else {
+                    player.sendMessage(isTamed ? `§8 The target is currently assisting someone else.` : `§8 Operation failed: The target is not nearby or is offline.`);
+                }
+                break;
+
+            case ACTION_INVITE_awaken: // Teleport / awaken
+                if (isDead && !reviveOnCooldown) {
+                    awakenAI(player, friendData);
+                } else if (isAlive && isOnline) {
+                    runProbabilisticAction({
+                        player: player, ai: ai,
+                        actionType: 'teleport',
+                        requestSentMessage: `§e[${aiName}] Your teleport request has been sent...`,
+                        baseChance: 20,
+                        sympathy: sympathy,
+                        cooldownKey: tp_COOLDOWN_BASE_KEY,
+                        cooldownSeconds: 60,
+                        cooldownScope: 'always',
+                        onSuccess: () => {
+                            if (ai.isValid) inviteOnline(ai, player);
+                            const sympathyKey = SYMPATHY_BASE_KEY + player.id;
+                            let currentSympathy = ai.getDynamicProperty(sympathyKey) || 0;
+                            const reduction = Math.floor(Math.random() * 7) + 2;
+                            currentSympathy = currentSympathy - reduction;
+                            ai.setDynamicProperty(sympathyKey, currentSympathy);
+                        },
+                        successMessage: "agreed to your teleport request.",
+                        failureMessage: "refused your teleport request."
+                    });
+                } else if (isAlive && !isOnline) {
+                    player.sendMessage("§8Offline (Cannot teleport)");
+                } else {
+                    player.sendMessage("§8 Operation failed: The action is on cooldown or friend status does not match.");
+                }
+                break;
+
+            case ACTION_ASK_COORDS: // Ask for Coordinates
+                if (isAlive) {
+                    askCoordinates(ai, player);
+                } else {
+                    player.sendMessage(`§8 ${aiName} is not online.`);
+                }
+                break;
+
+            case ACTION_TOGGLE_EQUIPMENT_LOCK: // Lock/Unlock Equipment
+                if (isAlive) {
+                    if (isEquipmentLocked) {
+                        ai.removeTag(LOCK_EQUIPMENT_TAG);
+                        ai.triggerEvent("unlock");
+                        player.sendMessage(`§a ${aiName}'s equipment has been unlocked.`);
+                    } else {
+                        ai.addTag(LOCK_EQUIPMENT_TAG);
+                        ai.triggerEvent("suoding");
+                        player.sendMessage(`§c ${aiName}'s equipment has been locked.`);
+                    }
+                    system.runTimeout(() => showFriendActionMenu(player, ai, friendData), 5);
+                }
+                break;
+
+            case ACTION_TOGGLE_BUILDING_PROHIBITION: // Prohibit/Allow Building
+                if (isAlive) {
+                    if (isBuildingProhibited) {
+                        ai.removeTag(PROHIBIT_BUILDING_TAG);
+                        player.sendMessage(`§a ${aiName} is now allowed to build.`);
+                    } else {
+                        ai.addTag(PROHIBIT_BUILDING_TAG);
+                        player.sendMessage(`§c ${aiName} is now prohibited from building.`);
+                    }
+                    system.runTimeout(() => showFriendActionMenu(player, ai, friendData), 5);
+                }
+                break;
+
+            case ACTION_ASK_CHOP: // Ask the friend to fell trees
+            case ACTION_ASK_MINE: // Ask the friend to dig alongside you
+                if (isAlive && workEnabled) {
+                    askJobForm(player, ai, sympathy, response.selection === ACTION_ASK_CHOP ? "chop" : "mine");
+                } else if (isAlive && activeTask) {
+                    // Used to be dead silence: tapping the button while he was
+                    // already working looked like the job was broken
+                    player.sendMessage(`§e[${aiName}] is already ${activeTask.kind === "chop" ? "cutting trees" : "mining"} for you` +
+                        `${activeTask.itemName ? ` (${activeTask.count}/${activeTask.amount} ${activeTask.itemName})` : ""}. ` +
+                        `He stops on his own after ${taskSecondsLeft}s, or type !aistatus near him to see what he is doing.`);
+                }
+                break;
+
+            case ACTION_TRADE: // Offer size scales with how much they like you
+                if (isAlive && !dueling) {
+                    if (tradeOnCooldown(ai, player)) {
+                        player.sendMessage(`§8 ${aiName} won't deal with you again this soon.`);
+                    } else {
+                        startTrade(player, ai, sympathy);
+                    }
+                }
+                break;
+
+            case ACTION_DUEL: // Time boxed spar, damped so it should not kill
+                if (isAlive && !dueling) {
+                    challengeToDuel(player, ai);
+                }
+                break;
+
+            case ACTION_UNFRIEND: // Delete Friend
+                unfriendAI(player, persistentId, aiName);
+                break;
+        }
+    }).catch(e => console.warn(e, e.stack));
+}
+
+/**
+ * Friend List UI (Level 1)
+ */
+function showFriendListUI(player) {
+    const friends = getPlayerFriends(player);
+    const form = new ActionFormData();
+    form.title("§b§lFriend List");
+
+    if (friends.length === 0) {
+        form.body("You have no friends yet. Go talk and help other players!");
+    } else {
+        form.body("Please select a friend to talk with:");
+
+        friends.forEach(friend => {
+            const isAlive = !!fetchAiBypid(friend.id);
+            const isDead = getDeadAiIds().has(friend.id);
+
+            let status;
+            if (isAlive) {
+                status = '§aOnline';
+            } else if (isDead) {
+                status = '§cOffline';
+            } else {
+                status = '§eNot Loaded';
+            }
+            form.button(`[${friend.name}] - ${status}`, 'textures/ui/icon_steve');
+        });
+    }
+
+    form.button("§aBehaviour Settings");
+    form.button("§cClose");
+
+    form.show(player).then(response => {
+        if (response.canceled || response.selection === undefined) return;
+        if (response.selection === friends.length) {
+            showSettingsForm(player);
+            return;
+        }
+        if (response.selection === friends.length + 1) return;
+
+        const selectedFriendData = friends[response.selection];
+        const targetAi = fetchAiBypid(selectedFriendData.id);
+        showFriendActionMenu(player, targetAi, selectedFriendData);
+    }).catch(e => console.warn(e, e.stack));
+}
+
+// ============================================================================
+// EVENT HANDLERS
+// ============================================================================
+
+function handleItemUse(event) {
+    const { source, itemStack } = event;
+
+    if (source.typeId === "minecraft:player" && itemStack?.typeId === FRIEND_LIST_ITEM_ID) {
+        if (!source.isValid) return;
+        showFriendListUI(source);
+    }
+}
+
+function handleEntityInteract(event) {
+    const { player, target, itemStack } = event;
+
+    // Target must be our AI
+    if (target.typeId !== ai_player_id) return;
+
+    // Player must hold friend offer item
+    if (!itemStack || itemStack.typeId !== aim_ITEM_ID) return;
+
+    const ai = target;
+    const playerId = player.id;
+
+    // Get AI's persistent ID
+    const persistentId = ensurePersistentId(ai);
+
+    // Get/start sympathy
+    const sympathyKey = SYMPATHY_BASE_KEY + playerId;
+    let sympathy = ai.getDynamicProperty(sympathyKey);
+    if (sympathy === undefined || sympathy === null) {
+        sympathy = Math.floor(Math.random() * 51) - 30;
+        ai.setDynamicProperty(sympathyKey, sympathy);
+    }
+
+    // Track players who have interacted
+    const INTERACTED_PLAYERS_KEY = "rg:interacted_players_list";
+    let interactedPlayers = [];
+    try {
+        const data = ai.getDynamicProperty(INTERACTED_PLAYERS_KEY);
+        if (data) {
+            interactedPlayers = JSON.parse(data);
+        }
+    } catch (e) { /* Ignore parsing errors */ }
+
+    if (!interactedPlayers.includes(playerId)) {
+        interactedPlayers.push(playerId);
+        ai.setDynamicProperty(INTERACTED_PLAYERS_KEY, JSON.stringify(interactedPlayers));
+    }
+
+    // Core friend status check
+    let friendStatus = ai.getDynamicProperty(FRIEND_STATUS_BASE_KEY + playerId) || "";
+    let isFriend = (friendStatus === "accepted");
+
+    // If AI entity status is not "accepted", check player list
+    if (!isFriend) {
+        const friendsList = getPlayerFriends(player);
+        const friendData = friendsList.find(f => f.id === persistentId);
+
+        if (friendData) {
+            isFriend = true;
+            ai.setDynamicProperty(FRIEND_STATUS_BASE_KEY + playerId, "accepted");
+        }
+    }
+
+    if (isFriend) {
+        const friendData = getPlayerFriends(player).find(f => f.id === persistentId);
+        if (friendData) {
+            showFriendActionMenu(player, ai, friendData);
+        } else {
+            showAiInfoMenu(player, ai, sympathy);
+        }
+    } else {
+        showAiInfoMenu(player, ai, sympathy);
+    }
+}
+
+// ============================================================================
+// EXPORT INITIALIZATION FUNCTION
+// ============================================================================
+
+export function startInteractionUI() {
+    // Run negative sympathy check every 30 seconds (600 ticks)
+    system.runInterval(checkNegativeSympathyUnfriend, 600);
+
+    // Player interacts with AI while holding request item
+    world.afterEvents.playerInteractWithEntity.subscribe(handleEntityInteract);
+
+    // Player uses friend list item
+    world.afterEvents.itemUse.subscribe(handleItemUse);
+
+    // Player first entry into world trigger
+    world.afterEvents.playerSpawn.subscribe(event => {
+        const { player, initialSpawn } = event;
+
+        const isstartd = player.getDynamicProperty(PLAYER_INIT_FLAG_KEY);
+
+        if (initialSpawn && !isstartd) {
+            giveFriendConfigItems(player);
+            player.setDynamicProperty(PLAYER_INIT_FLAG_KEY, true);
+            player.sendMessage("§a Welcome! social items are given. Hold the 'Friend Request' item & right-click an AI to interact!");
+        }
+
+        if (!initialSpawn && player.isValid) {
+            giveFriendConfigItems(player);
+        }
+    });
+
+    // Chat command trigger
+    world.afterEvents.chatSend.subscribe(event => {
+        const { message, sender } = event;
+
+        if (message.toLowerCase() === "!givemefriendconfig") {
+            event.cancel = true;
+            giveFriendConfigItems(sender);
+            sender.sendMessage("§a Friendship items have been given.");
+        }
+    });
+
+    // Listen to entity death events, mark AI as dead
+    world.afterEvents.entityDie.subscribe(event => {
+        const { deadEntity } = event;
+        if (deadEntity.typeId === ai_player_id) {
+            deadEntity.removeTag('online');
+            const pId = deadEntity.getDynamicProperty(AI_PERSISTENT_ID_KEY);
+
+            if (pId) {
+                const deadAiSet = getDeadAiIds();
+                deadAiSet.add(pId);
+                setDeadAiIds(deadAiSet);
+
+                // Store sympathy data for dead AI
+                const INTERACTED_PLAYERS_KEY = "rg:interacted_players_list";
+                const SYMPATHY_CACHE_KEY = `rg:dead_ai_sympathy_${pId}`;
+                let sympathyData = {};
+
+                let killerPlayerId = null;
+                if (event.damageSource && event.damageSource.damagingEntity && event.damageSource.damagingEntity.typeId === 'minecraft:player') {
+                    killerPlayerId = event.damageSource.damagingEntity.id;
+                }
+
+                try {
+                    const data = deadEntity.getDynamicProperty(INTERACTED_PLAYERS_KEY);
+                    if (data) {
+                        const interactedPlayers = JSON.parse(data);
+                        for (const playerId of interactedPlayers) {
+                            let sympathy = deadEntity.getDynamicProperty(SYMPATHY_BASE_KEY + playerId);
+                            if (sympathy !== undefined) {
+                                if (playerId === killerPlayerId) {
+                                    const penalty = Math.floor(Math.random() * 21) + 10;
+                                    sympathy -= penalty;
+                                }
+                                sympathyData[playerId] = sympathy;
+                            }
+                        }
+                        world.setDynamicProperty(SYMPATHY_CACHE_KEY, JSON.stringify(sympathyData));
+                        world.setDynamicProperty(INTERACTED_PLAYERS_KEY + "_" + pId, data);
+                    }
+                } catch (e) {
+                    console.warn(`[AI Death] Failed to save sympathy data for AI ${pId}: ${e}`);
+                }
+            }
+        }
+    });
+}
+

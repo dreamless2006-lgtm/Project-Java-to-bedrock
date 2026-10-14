@@ -1,0 +1,449 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.srp.modelwymo.move": {
+      "loop": true,
+      "bones": {
+        "jointb2": {
+          "rotation": [
+            0,
+            0,
+            "2.865*math.cos(q.life_time*591.2581-90)"
+          ]
+        },
+        "jointb7ar_3": {
+          "rotation": [
+            0,
+            "18.105*math.cos(q.life_time*1114.1909-90)",
+            0
+          ]
+        },
+        "jointm2": {
+          "rotation": [
+            "-40.107+9.74*math.cos(q.life_time*826.8927-90)",
+            0,
+            0
+          ]
+        },
+        "jointb8": {
+          "rotation": [
+            "4.011*math.cos(q.life_time*620.4904-90)",
+            0,
+            0
+          ]
+        },
+        "jointb4": {
+          "rotation": [
+            0,
+            0,
+            "3.438*math.cos(q.life_time*644.1965-90)"
+          ]
+        },
+        "jointb4a_3": {
+          "rotation": [
+            "23.892*math.cos(q.life_time*826.8927-90)",
+            0,
+            0
+          ]
+        },
+        "jointb7a_2": {
+          "rotation": [
+            0,
+            "23.892*math.cos(q.life_time*826.8927-90)",
+            0
+          ]
+        },
+        "jointb7ar_2": {
+          "rotation": [
+            0,
+            "23.892*math.cos(q.life_time*826.8927-90)",
+            0
+          ]
+        },
+        "jointm6": {
+          "rotation": [
+            "-40.107+9.167*math.cos(q.life_time*1114.1909-90)",
+            0,
+            0
+          ]
+        },
+        "jointm9": {
+          "rotation": [
+            "-40.107+8.594*math.cos(q.life_time*999.4836-90)",
+            0,
+            0
+          ]
+        },
+        "jointb4a": {
+          "rotation": [
+            0,
+            0,
+            "18.105*math.cos(q.life_time*1114.1909-90)"
+          ]
+        },
+        "jointm1": {
+          "rotation": [
+            "-40.107+9.74*math.cos(q.life_time*826.8927-90)",
+            0,
+            0
+          ]
+        },
+        "jointb7": {
+          "rotation": [
+            0,
+            0,
+            "2.865*math.cos(q.life_time*591.2581-90)"
+          ]
+        },
+        "jointm3": {
+          "rotation": [
+            "-40.107+9.167*math.cos(q.life_time*1114.1909-90)",
+            0,
+            0
+          ]
+        },
+        "jointb9": {
+          "rotation": [
+            0,
+            0,
+            "3.438*math.cos(q.life_time*644.1965-90)"
+          ]
+        },
+        "jointm5": {
+          "rotation": [
+            "-40.107+9.74*math.cos(q.life_time*826.8927-90)",
+            0,
+            0
+          ]
+        },
+        "jointb4ar_2": {
+          "rotation": [
+            "23.778*math.cos(q.life_time*999.4332-90)",
+            0,
+            0
+          ]
+        },
+        "jointm7": {
+          "rotation": [
+            "-40.107+8.594*math.cos(q.life_time*999.4332-90)",
+            0,
+            0
+          ]
+        },
+        "jointb1": {
+          "rotation": [
+            "2.865*math.cos(q.life_time*591.2581-90)",
+            0,
+            0
+          ]
+        },
+        "jointm4": {
+          "rotation": [
+            "-40.107+8.594*math.cos(q.life_time*999.4836-90)",
+            0,
+            0
+          ]
+        },
+        "jointb5": {
+          "rotation": [
+            "2.865*math.cos(q.life_time*594.3176-90)",
+            0,
+            0
+          ]
+        },
+        "jointm8": {
+          "rotation": [
+            "-40.107+9.74*math.cos(q.life_time*826.8927-90)",
+            0,
+            0
+          ]
+        },
+        "jointm0": {
+          "rotation": [
+            "-40.107+8.594*math.cos(q.life_time*999.4332-90)",
+            0,
+            0
+          ]
+        },
+        "jointb7a": {
+          "rotation": [
+            0,
+            0,
+            "23.778*math.cos(q.life_time*999.4332-90)"
+          ]
+        },
+        "jointb4a_2": {
+          "rotation": [
+            "23.778*math.cos(q.life_time*999.4332-90)",
+            0,
+            0
+          ]
+        },
+        "jointb4ar": {
+          "rotation": [
+            0,
+            0,
+            "18.105*math.cos(q.life_time*1114.1909-90)"
+          ]
+        },
+        "jointb7ar": {
+          "rotation": [
+            0,
+            0,
+            "23.778*math.cos(q.life_time*999.4332-90)"
+          ]
+        },
+        "jointb3": {
+          "rotation": [
+            "4.011*math.cos(q.life_time*620.4904-90)",
+            0,
+            0
+          ]
+        },
+        "jointb4ar_3": {
+          "rotation": [
+            "23.892*math.cos(q.life_time*826.8927-90)",
+            0,
+            0
+          ]
+        },
+        "jointb6": {
+          "rotation": [
+            0,
+            0,
+            "3.438*math.cos(q.life_time*644.1965-90)"
+          ]
+        },
+        "jointb7a_3": {
+          "rotation": [
+            0,
+            "18.105*math.cos(q.life_time*1114.1909-90)",
+            0
+          ]
+        }
+      }
+    },
+    "animation.srp.modelwymo.idle": {
+      "loop": true,
+      "bones": {
+        "jointb1": {
+          "rotation": [
+            "2.865*math.cos(q.life_time*591.2581-90)",
+            0,
+            0
+          ]
+        },
+        "jointm2": {
+          "rotation": [
+            "-40.107+9.74*math.cos(q.life_time*826.8927-90)",
+            0,
+            0
+          ]
+        },
+        "jointb4": {
+          "rotation": [
+            0,
+            0,
+            "3.438*math.cos(q.life_time*644.1965-90)"
+          ]
+        },
+        "jointb7a": {
+          "rotation": [
+            0,
+            0,
+            "23.778*math.cos(q.life_time*999.4332-90)"
+          ]
+        },
+        "jointb3": {
+          "rotation": [
+            "4.011*math.cos(q.life_time*620.4904-90)",
+            0,
+            0
+          ]
+        },
+        "jointm9": {
+          "rotation": [
+            "-40.107+8.594*math.cos(q.life_time*999.4836-90)",
+            0,
+            0
+          ]
+        },
+        "jointb4ar_2": {
+          "rotation": [
+            "23.778*math.cos(q.life_time*999.4332-90)",
+            0,
+            0
+          ]
+        },
+        "jointb2": {
+          "rotation": [
+            0,
+            0,
+            "2.865*math.cos(q.life_time*591.2581-90)"
+          ]
+        },
+        "jointm6": {
+          "rotation": [
+            "-40.107+9.167*math.cos(q.life_time*1114.1909-90)",
+            0,
+            0
+          ]
+        },
+        "jointb4a_2": {
+          "rotation": [
+            "23.778*math.cos(q.life_time*999.4332-90)",
+            0,
+            0
+          ]
+        },
+        "jointm5": {
+          "rotation": [
+            "-40.107+9.74*math.cos(q.life_time*826.8927-90)",
+            0,
+            0
+          ]
+        },
+        "jointb8": {
+          "rotation": [
+            "4.011*math.cos(q.life_time*620.4904-90)",
+            0,
+            0
+          ]
+        },
+        "jointb4a": {
+          "rotation": [
+            0,
+            0,
+            "18.105*math.cos(q.life_time*1114.1909-90)"
+          ]
+        },
+        "jointb7ar_2": {
+          "rotation": [
+            0,
+            "23.892*math.cos(q.life_time*826.8927-90)",
+            0
+          ]
+        },
+        "jointb9": {
+          "rotation": [
+            0,
+            0,
+            "3.438*math.cos(q.life_time*644.1965-90)"
+          ]
+        },
+        "jointb7ar": {
+          "rotation": [
+            0,
+            0,
+            "23.778*math.cos(q.life_time*999.4332-90)"
+          ]
+        },
+        "jointm7": {
+          "rotation": [
+            "-40.107+8.594*math.cos(q.life_time*999.4332-90)",
+            0,
+            0
+          ]
+        },
+        "jointm0": {
+          "rotation": [
+            "-40.107+8.594*math.cos(q.life_time*999.4332-90)",
+            0,
+            0
+          ]
+        },
+        "jointm1": {
+          "rotation": [
+            "-40.107+9.74*math.cos(q.life_time*826.8927-90)",
+            0,
+            0
+          ]
+        },
+        "jointb7": {
+          "rotation": [
+            0,
+            0,
+            "2.865*math.cos(q.life_time*591.2581-90)"
+          ]
+        },
+        "jointm3": {
+          "rotation": [
+            "-40.107+9.167*math.cos(q.life_time*1114.1909-90)",
+            0,
+            0
+          ]
+        },
+        "jointm4": {
+          "rotation": [
+            "-40.107+8.594*math.cos(q.life_time*999.4836-90)",
+            0,
+            0
+          ]
+        },
+        "jointb7ar_3": {
+          "rotation": [
+            0,
+            "18.105*math.cos(q.life_time*1114.1909-90)",
+            0
+          ]
+        },
+        "jointb6": {
+          "rotation": [
+            0,
+            0,
+            "3.438*math.cos(q.life_time*644.1965-90)"
+          ]
+        },
+        "jointb4ar_3": {
+          "rotation": [
+            "23.892*math.cos(q.life_time*826.8927-90)",
+            0,
+            0
+          ]
+        },
+        "jointb4ar": {
+          "rotation": [
+            0,
+            0,
+            "18.105*math.cos(q.life_time*1114.1909-90)"
+          ]
+        },
+        "jointb7a_2": {
+          "rotation": [
+            0,
+            "23.892*math.cos(q.life_time*826.8927-90)",
+            0
+          ]
+        },
+        "jointb5": {
+          "rotation": [
+            "2.865*math.cos(q.life_time*594.3176-90)",
+            0,
+            0
+          ]
+        },
+        "jointb4a_3": {
+          "rotation": [
+            "23.892*math.cos(q.life_time*826.8927-90)",
+            0,
+            0
+          ]
+        },
+        "jointm8": {
+          "rotation": [
+            "-40.107+9.74*math.cos(q.life_time*826.8927-90)",
+            0,
+            0
+          ]
+        },
+        "jointb7a_3": {
+          "rotation": [
+            0,
+            "18.105*math.cos(q.life_time*1114.1909-90)",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

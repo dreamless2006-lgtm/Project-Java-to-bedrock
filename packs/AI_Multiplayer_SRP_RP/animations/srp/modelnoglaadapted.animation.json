@@ -1,0 +1,174 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.srp.modelnoglaadapted.move": {
+      "loop": true,
+      "bones": {
+        "jointFRLX": {
+          "rotation": [
+            0,
+            0,
+            "(34.377*math.cos(q.modified_distance_moved*16.0428))*math.pow(q.modified_move_speed,2)"
+          ]
+        },
+        "jointFRLY": {
+          "rotation": [
+            "(22.918*math.cos(q.modified_distance_moved*16.0428-122.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointBLLX": {
+          "rotation": [
+            "(34.377*math.cos(q.modified_distance_moved*16.0428))*math.pow(q.modified_move_speed,2)",
+            0,
+            0
+          ]
+        },
+        "jointFLLY": {
+          "rotation": [
+            "(22.918*math.cos(q.modified_distance_moved*16.0428-302.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointBRLX": {
+          "rotation": [
+            "(34.377*math.cos(q.modified_distance_moved*16.0428-180))*math.pow(q.modified_move_speed,2)",
+            0,
+            0
+          ]
+        },
+        "jointLAX": {
+          "rotation": [
+            "(13.751*math.cos(q.modified_distance_moved*16.0428))*math.pow(q.modified_move_speed,2)",
+            0,
+            0
+          ]
+        },
+        "jointFLLX": {
+          "rotation": [
+            0,
+            0,
+            "(34.377*math.cos(q.modified_distance_moved*16.0428))*math.pow(q.modified_move_speed,2)"
+          ]
+        },
+        "jointRAX": {
+          "rotation": [
+            "(13.751*math.cos(q.modified_distance_moved*16.0428-180))*math.pow(q.modified_move_speed,2)",
+            0,
+            0
+          ]
+        },
+        "mainbody": {
+          "position": [
+            0,
+            "(-1.28*math.cos(q.modified_distance_moved*32.0856))*q.modified_move_speed",
+            0
+          ]
+        }
+      }
+    },
+    "animation.srp.modelnoglaadapted.idle": {
+      "loop": true,
+      "bones": {
+        "jointLAMRF": {
+          "rotation": [
+            "8.594*math.cos(q.life_time*229.1831-57.3)",
+            0,
+            0
+          ]
+        },
+        "jointLABRF": {
+          "rotation": [
+            "8.594*math.cos(q.life_time*229.1831-114.59)",
+            0,
+            0
+          ]
+        },
+        "jointLA1": {
+          "rotation": [
+            "2.865*math.cos(q.life_time*113.4456-180)",
+            0,
+            0
+          ]
+        },
+        "jointDM": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*229.1831-180)",
+            0,
+            0
+          ]
+        },
+        "jointRA1": {
+          "rotation": [
+            "2.865*math.cos(q.life_time*113.4456)",
+            0,
+            0
+          ]
+        },
+        "jointRABLF": {
+          "rotation": [
+            "8.594*math.cos(q.life_time*229.1831-114.59)",
+            0,
+            0
+          ]
+        },
+        "jointLAMLF": {
+          "rotation": [
+            "8.594*math.cos(q.life_time*229.1831-57.3)",
+            0,
+            0
+          ]
+        },
+        "jointRAMRF": {
+          "rotation": [
+            "8.594*math.cos(q.life_time*229.1831-57.3)",
+            0,
+            0
+          ]
+        },
+        "jointUM": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*229.1831)",
+            0,
+            0
+          ]
+        },
+        "jointRAMLF": {
+          "rotation": [
+            "8.594*math.cos(q.life_time*229.1831-57.3)",
+            0,
+            0
+          ]
+        },
+        "jointLAX": {
+          "rotation": [
+            "2.865*math.cos(q.life_time*113.4456)",
+            0,
+            0
+          ]
+        },
+        "jointRAX": {
+          "rotation": [
+            "2.865*math.cos(q.life_time*113.4456-180)",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.srp.modelnoglaadapted.always": {
+      "loop": true,
+      "bones": {
+        "jointH": {
+          "rotation": [
+            "0.9167*q.target_x_rotation",
+            "-0.9167*q.target_y_rotation",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

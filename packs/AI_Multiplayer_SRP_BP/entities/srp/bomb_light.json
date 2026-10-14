@@ -1,0 +1,99 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "srp:bomb_light",
+      "is_spawnable": false,
+      "is_summonable": true,
+      "is_experimental": false
+    },
+    "component_groups": {
+      "srp:exploding": {
+        "minecraft:explode": {
+          "fuse_length": 0,
+          "fuse_lit": true,
+          "power": 2.0,
+          "causes_fire": false,
+          "breaks_blocks": false,
+          "destroy_affected_by_griefing": true
+        }
+      },
+      "srp:expired": {
+        "minecraft:instant_despawn": {}
+      }
+    },
+    "components": {
+      "minecraft:collision_box": {
+        "width": 0.4,
+        "height": 0.4
+      },
+      "minecraft:projectile": {
+        "on_hit": {
+          "definition_event": {
+            "affect_projectile": true,
+            "event_trigger": {
+              "event": "srp:explode",
+              "target": "self"
+            }
+          }
+        },
+        "power": 0.6,
+        "gravity": 0.06,
+        "inertia": 1.0,
+        "liquid_inertia": 0.8,
+        "uncertainty_base": 6,
+        "uncertainty_multiplier": 3,
+        "anchor": "eye_height",
+        "offset": [
+          0,
+          -0.2,
+          0
+        ],
+        "reflect_on_hurt": false,
+        "hit_sound": "random.explode"
+      },
+      "minecraft:physics": {},
+      "minecraft:pushable": {
+        "is_pushable": false,
+        "is_pushable_by_piston": true
+      },
+      "minecraft:timer": {
+        "looping": false,
+        "time": 8,
+        "time_down_event": {
+          "event": "srp:expire",
+          "target": "self"
+        }
+      },
+      "minecraft:conditional_bandwidth_optimization": {
+        "default_values": {
+          "max_optimized_distance": 80.0,
+          "max_dropped_ticks": 7,
+          "use_motion_prediction_hints": true
+        }
+      },
+      "minecraft:type_family": {
+        "family": [
+          "srp_projectile",
+          "projectile"
+        ]
+      }
+    },
+    "events": {
+      "srp:explode": {
+        "add": {
+          "component_groups": [
+            "srp:exploding"
+          ]
+        }
+      },
+      "srp:expire": {
+        "add": {
+          "component_groups": [
+            "srp:expired"
+          ]
+        }
+      }
+    }
+  }
+}

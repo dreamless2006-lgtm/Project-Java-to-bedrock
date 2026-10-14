@@ -1,0 +1,33 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "srp:quench"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " C ",
+      "CAC",
+      " C "
+    ],
+    "key": {
+      "C": {
+        "item": "minecraft:blaze_rod"
+      },
+      "A": {
+        "item": "minecraft:magma_cream"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:blaze_rod"
+      }
+    ],
+    "result": {
+      "item": "srp:quench",
+      "count": 3
+    }
+  }
+}

@@ -1,0 +1,1539 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.srp.modeloronco.move": {
+      "loop": true,
+      "bones": {
+        "taclejointLM1": {
+          "rotation": [
+            0,
+            "2.922*math.cos(q.life_time*171.8873-90)",
+            0
+          ]
+        },
+        "tacleJointDL4": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLALF3": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointMR2": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFL1_1": {
+          "rotation": [
+            "2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR2_10": {
+          "rotation": [
+            "2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointML8": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR1_1": {
+          "rotation": [
+            "8+2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRARF5": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointUL5": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRA4": {
+          "rotation": [
+            "2.865*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR3_4": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLALF5": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDR12": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointURRF5": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL2_4": {
+          "rotation": [
+            "2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointULLF7": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDR2": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLA2": {
+          "rotation": [
+            "2.865*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointULLF1": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFL3_7": {
+          "rotation": [
+            "1.805*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "taclejointLM3": {
+          "rotation": [
+            "2.922*math.cos(q.life_time*171.8873-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLARF3": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFR2_7": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDR10": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointULRF5": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL3_4": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRARF3": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFL3_4": {
+          "rotation": [
+            "1.805*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDL8": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointMR12": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointML4": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "taclejointUM1": {
+          "rotation": [
+            "2.922*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointMR10": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDR6": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointULLF5": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFR3_1": {
+          "rotation": [
+            "1.805*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointURLF5": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointML12": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointUR5": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFR1_4": {
+          "rotation": [
+            "2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointML6": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDR8": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLALF7": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL1_4": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointML10": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLARF7": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLALF1": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-90)",
+            0,
+            0
+          ]
+        },
+        "taclejointDM1": {
+          "rotation": [
+            "2.922*math.cos(q.life_time*171.8873-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointMR4": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR3_7": {
+          "rotation": [
+            "1.805*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLARF5": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR2_7": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "taclejointUM3": {
+          "rotation": [
+            "2.922*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "taclejointRM3": {
+          "rotation": [
+            "2.922*math.cos(q.life_time*171.8873-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointUR1": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFL2_1": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL2_10": {
+          "rotation": [
+            "2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR2_4": {
+          "rotation": [
+            "2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR1_4": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLA4": {
+          "rotation": [
+            "2.865*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR1_10": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointURLF7": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointULRF7": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL2_7": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFL2_7": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "taclejointDM3": {
+          "rotation": [
+            "2.922*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointULRF1": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDL12": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDR4": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR3_1": {
+          "rotation": [
+            "8+1.805*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFR3_4": {
+          "rotation": [
+            "1.805*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointMR6": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL1_7": {
+          "rotation": [
+            "2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRARF1": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL1_10": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRA2": {
+          "rotation": [
+            "2.865*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFR2_1": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointMR8": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "taclejointRM1": {
+          "rotation": [
+            0,
+            "2.922*math.cos(q.life_time*171.8873-270)",
+            0
+          ]
+        },
+        "hair_jointBL2_1": {
+          "rotation": [
+            "8+1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointURLF1": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFR3_7": {
+          "rotation": [
+            "1.805*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRALF1": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFR2_4": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL1_1": {
+          "rotation": [
+            "8+2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDL6": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointURRF7": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFL2_4": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR2_1": {
+          "rotation": [
+            "8+1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRA6": {
+          "rotation": [
+            "2.865*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR1_7": {
+          "rotation": [
+            "2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLA6": {
+          "rotation": [
+            "2.865*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL3_7": {
+          "rotation": [
+            "1.805*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointML2": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFL3_1": {
+          "rotation": [
+            "1.805*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFL1_4": {
+          "rotation": [
+            "2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRALF5": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDL10": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLARF1": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRALF7": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRARF7": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDL2": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL3_1": {
+          "rotation": [
+            "8+1.805*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointUL1": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRALF3": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointURRF1": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFR1_1": {
+          "rotation": [
+            "2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.srp.modeloronco.idle": {
+      "loop": true,
+      "bones": {
+        "tacleJointLARF5": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointMR10": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR2_10": {
+          "rotation": [
+            "2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "taclejointUM3": {
+          "rotation": [
+            "2.922*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL2_4": {
+          "rotation": [
+            "2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDL10": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRA2": {
+          "rotation": [
+            "2.865*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointML8": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL3_4": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDL6": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointURRF7": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointULLF1": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointULLF5": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRALF7": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFL3_7": {
+          "rotation": [
+            "1.805*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLARF1": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLA6": {
+          "rotation": [
+            "2.865*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFL2_4": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFR2_1": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "taclejointRM3": {
+          "rotation": [
+            "2.922*math.cos(q.life_time*171.8873-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL2_7": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFR1_4": {
+          "rotation": [
+            "2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointULRF1": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-270)",
+            0,
+            0
+          ]
+        },
+        "taclejointLM3": {
+          "rotation": [
+            "2.922*math.cos(q.life_time*171.8873-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointUR1": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFR3_1": {
+          "rotation": [
+            "1.805*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointURLF5": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFL2_1": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRARF7": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLARF3": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFL3_4": {
+          "rotation": [
+            "1.805*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDR4": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDL4": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointML12": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR3_1": {
+          "rotation": [
+            "8+1.805*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFR2_7": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR2_1": {
+          "rotation": [
+            "8+1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFR3_7": {
+          "rotation": [
+            "1.805*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointMR4": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFR3_4": {
+          "rotation": [
+            "1.805*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL3_1": {
+          "rotation": [
+            "8+1.805*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDL8": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR1_4": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRA6": {
+          "rotation": [
+            "2.865*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointML2": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointMR6": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR3_7": {
+          "rotation": [
+            "1.805*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL1_7": {
+          "rotation": [
+            "2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLALF5": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFL1_4": {
+          "rotation": [
+            "2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDR10": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointMR12": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointML6": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointMR8": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLALF3": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLA4": {
+          "rotation": [
+            "2.865*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR1_7": {
+          "rotation": [
+            "2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "taclejointRM1": {
+          "rotation": [
+            0,
+            "2.922*math.cos(q.life_time*171.8873-270)",
+            0
+          ]
+        },
+        "tacleJointURRF1": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRALF1": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointML4": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR1_10": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointUR5": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointMR2": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointURLF7": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDR8": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRARF1": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFL1_1": {
+          "rotation": [
+            "2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDR6": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "taclejointUM1": {
+          "rotation": [
+            "2.922*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "taclejointLM1": {
+          "rotation": [
+            0,
+            "2.922*math.cos(q.life_time*171.8873-90)",
+            0
+          ]
+        },
+        "tacleJointDR2": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLALF7": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR1_1": {
+          "rotation": [
+            "8+2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL1_10": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFR1_1": {
+          "rotation": [
+            "2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFR2_4": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRALF5": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL1_4": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRARF3": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR2_7": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL1_1": {
+          "rotation": [
+            "8+2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRARF5": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFL2_7": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDL2": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointML10": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointUL5": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLARF7": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-270)",
+            0,
+            0
+          ]
+        },
+        "taclejointDM3": {
+          "rotation": [
+            "2.922*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointUL1": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLA2": {
+          "rotation": [
+            "2.865*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRA4": {
+          "rotation": [
+            "2.865*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointFL3_1": {
+          "rotation": [
+            "1.805*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointULRF7": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointRALF3": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR3_4": {
+          "rotation": [
+            "1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDL12": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointULRF5": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL2_10": {
+          "rotation": [
+            "2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        },
+        "tacleJointDR12": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*91.6732-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL2_1": {
+          "rotation": [
+            "8+1.851*math.cos(q.life_time*171.8873-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointLALF1": {
+          "rotation": [
+            "4.584*math.cos(q.life_time*126.0507-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointURRF5": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointULLF7": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBL3_7": {
+          "rotation": [
+            "1.805*math.cos(q.life_time*194.8057-90)",
+            0,
+            0
+          ]
+        },
+        "tacleJointURLF1": {
+          "rotation": [
+            "3.438*math.cos(q.life_time*194.8057-270)",
+            0,
+            0
+          ]
+        },
+        "taclejointDM1": {
+          "rotation": [
+            "2.922*math.cos(q.life_time*171.8873-270)",
+            0,
+            0
+          ]
+        },
+        "hair_jointBR2_4": {
+          "rotation": [
+            "2.504*math.cos(q.life_time*217.724-270)",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.srp.modeloronco.always": {
+      "loop": true,
+      "bones": {
+        "jointH": {
+          "rotation": [
+            "0.9167*q.target_x_rotation",
+            "0.9167*q.target_y_rotation",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

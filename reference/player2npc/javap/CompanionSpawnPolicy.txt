@@ -1,0 +1,13 @@
+Picked up JAVA_TOOL_OPTIONS: -Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts -Djavax.net.ssl.trustStoreType=JKS -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=41751 -Dhttp.nonProxyHosts=localhost|127.0.0.1|::1|127.*|0.*|::|169.254.*|api.anthropic.com|api-staging.anthropic.com|api-pr-preview.anthropic.com|mcp-proxy.anthropic.com|mcp-proxy-staging.anthropic.com|registry.npmjs.org|jsr.io|npm.jsr.io|pypi.org|files.pythonhosted.org|index.crates.io|proxy.golang.org|host.docker.internal|10.*|172.16.*|172.17.*|172.18.*|172.19.*|172.20.*|172.21.*|172.22.*|172.23.*|172.24.*|172.25.*|172.26.*|172.27.*|172.28.*|172.29.*|172.30.*|172.31.*|192.168.*|100.64.0.0/10|*.svc.cluster.local|*.svc.cluster.local -Djdk.http.auth.tunneling.disabledSchemes= -Djdk.http.auth.proxying.disabledSchemes=
+Compiled from "CompanionSpawnPolicy.java"
+public final class com.goodbird.player2npc.companion.CompanionSpawnPolicy {
+  private com.goodbird.player2npc.companion.CompanionSpawnPolicy();
+  public static java.util.Set<java.lang.String> listStoredCharacterIds(net.minecraft.server.MinecraftServer, java.util.UUID);
+  public static java.util.Optional<net.minecraft.network.chat.Component> denial(net.minecraft.server.level.ServerPlayer, com.player2.playerengine.player2api.Character, com.goodbird.player2npc.companion.CompanionManager);
+  public static java.util.List<com.player2.playerengine.player2api.Character> filterForJoin(net.minecraft.server.level.ServerPlayer, java.util.List<com.player2.playerengine.player2api.Character>, com.goodbird.player2npc.companion.CompanionManager);
+  private static java.lang.String characterIdOrEmpty(com.player2.playerengine.player2api.Character);
+  private static java.lang.Boolean lambda$filterForJoin$3(java.util.Set, com.player2.playerengine.player2api.Character);
+  private static boolean lambda$filterForJoin$2(java.util.Set, net.minecraft.server.level.ServerPlayer, com.player2.playerengine.player2api.Character);
+  private static java.lang.String lambda$listStoredCharacterIds$1(java.nio.file.Path);
+  private static boolean lambda$listStoredCharacterIds$0(java.nio.file.Path);
+}

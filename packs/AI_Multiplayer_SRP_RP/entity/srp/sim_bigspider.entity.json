@@ -1,0 +1,35 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "srp:sim_bigspider",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/srp/dorpa",
+        "skin1": "textures/entity/srp/dorpa2"
+      },
+      "geometry": {
+        "default": "geometry.srp.modeldorpa"
+      },
+      "animations": {
+        "move": "animation.srp.modeldorpa.move",
+        "idle": "animation.srp.modeldorpa.idle",
+        "ctrl.move": "controller.animation.srp.move"
+      },
+      "scripts": {
+        "animate": [
+          "ctrl.move"
+        ],
+        "scale": "0.78"
+      },
+      "render_controllers": [
+        "controller.render.srp.sim_bigspider"
+      ],
+      "spawn_egg": {
+        "texture": "srp_egg_dorpa"
+      }
+    }
+  }
+}

@@ -1,0 +1,608 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.srp.modelinfenderman.move": {
+      "loop": true,
+      "bones": {
+        "jointRRD1": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            "5.73+6.371*math.cos(q.life_time*224.588-180)",
+            0
+          ]
+        },
+        "jointLLD1": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointMD1": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointLA0": {
+          "rotation": [
+            "(5.73+20.626*math.cos(q.modified_distance_moved*22.9183-245.41))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointRL0": {
+          "rotation": [
+            "(5.73+25.21*math.cos(q.modified_distance_moved*22.9183-245.41))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointURT1": {
+          "rotation": [
+            "-28.648+17.189*math.cos(q.life_time*224.588-360)",
+            0,
+            0
+          ]
+        },
+        "jointULT3": {
+          "rotation": [
+            0,
+            "28.648+17.876*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointDRT2": {
+          "rotation": [
+            0,
+            0,
+            "11.459+11.459*math.cos(q.life_time*273.8738)"
+          ]
+        },
+        "jointURT3": {
+          "rotation": [
+            0,
+            "28.648+17.876*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointLLD3": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0,
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)"
+          ]
+        },
+        "jointULT1": {
+          "rotation": [
+            "-28.648+17.189*math.cos(q.life_time*224.588-360)",
+            0,
+            0
+          ]
+        },
+        "jointLA2": {
+          "rotation": [
+            "(-63.025+25.21*math.cos(q.modified_distance_moved*22.9183-302.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointMD2": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0,
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)"
+          ]
+        },
+        "jointDRT4": {
+          "rotation": [
+            0,
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointLD1": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointRRD3": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0,
+            "5.73+6.371*math.cos(q.life_time*224.588-180)"
+          ]
+        },
+        "jointRD1": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            "5.73+6.371*math.cos(q.life_time*224.588-180)",
+            0
+          ]
+        },
+        "jointLL0": {
+          "rotation": [
+            "(5.73+25.21*math.cos(q.modified_distance_moved*22.9183-65.41))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointRA1": {
+          "rotation": [
+            "(63.025+25.21*math.cos(q.modified_distance_moved*22.9183-122.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointRL2": {
+          "rotation": [
+            "(5.73+25.21*math.cos(q.modified_distance_moved*22.9183-302.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointDLT2": {
+          "rotation": [
+            0,
+            0,
+            "-11.459+11.459*math.cos(q.life_time*273.8738-180)"
+          ]
+        },
+        "jointLD2": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0,
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)"
+          ]
+        },
+        "jointDRT1": {
+          "rotation": [
+            "-28.648+17.189*math.cos(q.life_time*224.588-360)",
+            0,
+            0
+          ]
+        },
+        "jointRD3": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0,
+            "5.73+6.371*math.cos(q.life_time*224.588-180)"
+          ]
+        },
+        "jointLA1": {
+          "rotation": [
+            "(63.025+25.21*math.cos(q.modified_distance_moved*22.9183-302.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointHM": {
+          "rotation": [
+            "-2.865+2.865*math.cos(q.life_time*224.588-360)",
+            0,
+            0
+          ]
+        },
+        "jointLD3": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0,
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)"
+          ]
+        },
+        "jointRRD2": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0,
+            "5.73+6.371*math.cos(q.life_time*224.588-180)"
+          ]
+        },
+        "jointULT2": {
+          "rotation": [
+            0,
+            0,
+            "-11.459+11.459*math.cos(q.life_time*296.7921-360)"
+          ]
+        },
+        "jointDLT3": {
+          "rotation": [
+            0,
+            "5.73+17.876*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointMD3": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0,
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)"
+          ]
+        },
+        "jointLLD2": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0,
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)"
+          ]
+        },
+        "jointLL1": {
+          "rotation": [
+            "(5.73+25.21*math.cos(q.modified_distance_moved*22.9183-122.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointRD2": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0,
+            "5.73+6.371*math.cos(q.life_time*224.588-180)"
+          ]
+        },
+        "jointRL1": {
+          "rotation": [
+            "(5.73+25.21*math.cos(q.modified_distance_moved*22.9183-302.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointDRT3": {
+          "rotation": [
+            0,
+            "5.73+17.876*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "mainbody": {
+          "position": [
+            0,
+            "(-0.8*math.cos(q.modified_distance_moved*45.8366))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointDLT1": {
+          "rotation": [
+            "-28.648+17.189*math.cos(q.life_time*224.588-360)",
+            0,
+            0
+          ]
+        },
+        "jointRA0": {
+          "rotation": [
+            "(5.73+20.626*math.cos(q.modified_distance_moved*22.9183-65.41))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointURT2": {
+          "rotation": [
+            0,
+            0,
+            "11.459+11.459*math.cos(q.life_time*296.7921-180)"
+          ]
+        },
+        "jointURT4": {
+          "rotation": [
+            0,
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointULT4": {
+          "rotation": [
+            0,
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointRA2": {
+          "rotation": [
+            "(-63.025+25.21*math.cos(q.modified_distance_moved*22.9183-122.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointDLT4": {
+          "rotation": [
+            0,
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointLL2": {
+          "rotation": [
+            "(5.73+25.21*math.cos(q.modified_distance_moved*22.9183-122.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.srp.modelinfenderman.idle": {
+      "loop": true,
+      "bones": {
+        "jointDRT4": {
+          "rotation": [
+            0,
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointURT2": {
+          "rotation": [
+            0,
+            0,
+            "11.459+11.459*math.cos(q.life_time*296.7921-180)"
+          ]
+        },
+        "jointLA1": {
+          "rotation": [
+            "-5.73+6.875*math.cos(q.life_time*201.6697)",
+            0,
+            0
+          ]
+        },
+        "jointRA2": {
+          "rotation": [
+            "5.73+10.955*math.cos(q.life_time*217.6094-180)",
+            0,
+            0
+          ]
+        },
+        "jointDLT1": {
+          "rotation": [
+            "-28.648+17.189*math.cos(q.life_time*224.588-360)",
+            0,
+            0
+          ]
+        },
+        "jointMD3": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0,
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)"
+          ]
+        },
+        "jointMD2": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0,
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)"
+          ]
+        },
+        "jointLLD1": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointRA1": {
+          "rotation": [
+            "5.73+6.875*math.cos(q.life_time*201.6697-180)",
+            0,
+            0
+          ]
+        },
+        "jointDLT3": {
+          "rotation": [
+            0,
+            "5.73+17.876*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointURT1": {
+          "rotation": [
+            "-28.648+17.189*math.cos(q.life_time*224.588-360)",
+            0,
+            0
+          ]
+        },
+        "jointRD3": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0,
+            "5.73+6.371*math.cos(q.life_time*224.588-180)"
+          ]
+        },
+        "jointDRT3": {
+          "rotation": [
+            0,
+            "5.73+17.876*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointDLT2": {
+          "rotation": [
+            0,
+            0,
+            "-11.459+11.459*math.cos(q.life_time*273.8738-180)"
+          ]
+        },
+        "jointRD2": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0,
+            "5.73+6.371*math.cos(q.life_time*224.588-180)"
+          ]
+        },
+        "jointDRT2": {
+          "rotation": [
+            0,
+            0,
+            "11.459+11.459*math.cos(q.life_time*273.8738)"
+          ]
+        },
+        "jointURT4": {
+          "rotation": [
+            0,
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointHM": {
+          "rotation": [
+            "-2.865+2.865*math.cos(q.life_time*224.588-360)",
+            0,
+            0
+          ]
+        },
+        "jointRRD1": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            "5.73+6.371*math.cos(q.life_time*224.588-180)",
+            0
+          ]
+        },
+        "jointLD1": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointMD1": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointLA2": {
+          "rotation": [
+            "-5.73+10.955*math.cos(q.life_time*217.6094-360)",
+            0,
+            0
+          ]
+        },
+        "jointULT2": {
+          "rotation": [
+            0,
+            0,
+            "-11.459+11.459*math.cos(q.life_time*296.7921-360)"
+          ]
+        },
+        "jointLD2": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0,
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)"
+          ]
+        },
+        "jointRRD3": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0,
+            "5.73+6.371*math.cos(q.life_time*224.588-180)"
+          ]
+        },
+        "jointLLD3": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0,
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)"
+          ]
+        },
+        "jointDRT1": {
+          "rotation": [
+            "-28.648+17.189*math.cos(q.life_time*224.588-360)",
+            0,
+            0
+          ]
+        },
+        "jointLA0": {
+          "rotation": [
+            "25.783+8.594*math.cos(q.life_time*228.0372)",
+            0,
+            0
+          ]
+        },
+        "jointURT3": {
+          "rotation": [
+            0,
+            "28.648+17.876*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointLD3": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0,
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)"
+          ]
+        },
+        "jointLLD2": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0,
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)"
+          ]
+        },
+        "jointULT1": {
+          "rotation": [
+            "-28.648+17.189*math.cos(q.life_time*224.588-360)",
+            0,
+            0
+          ]
+        },
+        "jointULT4": {
+          "rotation": [
+            0,
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointDLT4": {
+          "rotation": [
+            0,
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointULT3": {
+          "rotation": [
+            0,
+            "28.648+17.876*math.cos(q.life_time*224.588-360)",
+            0
+          ]
+        },
+        "jointRD1": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            "5.73+6.371*math.cos(q.life_time*224.588-180)",
+            0
+          ]
+        },
+        "jointRA0": {
+          "rotation": [
+            "2.865+8.594*math.cos(q.life_time*228.0372-180)",
+            0,
+            0
+          ]
+        },
+        "jointRRD2": {
+          "rotation": [
+            "-5.73+6.371*math.cos(q.life_time*224.588-360)",
+            0,
+            "5.73+6.371*math.cos(q.life_time*224.588-180)"
+          ]
+        }
+      }
+    },
+    "animation.srp.modelinfenderman.always": {
+      "loop": true,
+      "bones": {
+        "jointH": {
+          "rotation": [
+            "0.9167*q.target_x_rotation",
+            "0.9167*q.target_y_rotation",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

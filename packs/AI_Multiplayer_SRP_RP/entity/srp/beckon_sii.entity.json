@@ -1,0 +1,33 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "srp:beckon_sii",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/srp/venkrolsii"
+      },
+      "geometry": {
+        "default": "geometry.srp.modelvenkrolsii"
+      },
+      "animations": {
+        "move": "animation.srp.modelvenkrolsii.move",
+        "idle": "animation.srp.modelvenkrolsii.idle",
+        "ctrl.move": "controller.animation.srp.move"
+      },
+      "scripts": {
+        "animate": [
+          "ctrl.move"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.srp.default"
+      ],
+      "spawn_egg": {
+        "texture": "srp_egg_venkrolsii"
+      }
+    }
+  }
+}

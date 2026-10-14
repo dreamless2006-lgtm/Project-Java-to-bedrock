@@ -1,0 +1,47 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "AI Multiplayer + Scape and Run: Parasites RP",
+    "description": "Models, textures and sounds for AI players and the parasites.",
+    "uuid": "3d7f2b9a-1e6c-4f08-a5d3-9b2c8e7f1a40",
+    "version": [
+      2,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      30
+    ]
+  },
+  "modules": [
+    {
+      "description": "Resources",
+      "type": "resources",
+      "uuid": "b6e14f3a-9c2d-4e75-8a1b-0f5d7c3e2b98",
+      "version": [
+        2,
+        0,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "5f1b8c2e-7a3d-4e91-b6c4-2d8e9f0a1b37",
+      "version": [
+        2,
+        0,
+        0
+      ]
+    }
+  ],
+  "metadata": {
+    "authors": [
+      "AI Multiplayer authors",
+      "Dhanantry (Scape and Run: Parasites)"
+    ],
+    "product_type": "addon"
+  }
+}

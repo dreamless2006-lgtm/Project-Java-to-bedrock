@@ -1,0 +1,51 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "srp:quench_ball",
+      "is_spawnable": false,
+      "is_summonable": true,
+      "is_experimental": false
+    },
+    "components": {
+      "minecraft:collision_box": {
+        "width": 0.25,
+        "height": 0.25
+      },
+      "minecraft:projectile": {
+        "on_hit": {
+          "impact_damage": {
+            "damage": 4,
+            "knockback": true,
+            "catch_fire": true,
+            "destroy_on_hit": true
+          },
+          "catch_fire": {
+            "fire_affected_by_griefing": true
+          },
+          "remove_on_hit": {}
+        },
+        "power": 1.5,
+        "gravity": 0.03,
+        "angle_offset": 0.0,
+        "anchor": "eye_height",
+        "offset": [
+          0,
+          -0.1,
+          0
+        ]
+      },
+      "minecraft:physics": {},
+      "minecraft:pushable": {
+        "is_pushable": true,
+        "is_pushable_by_piston": true
+      },
+      "minecraft:type_family": {
+        "family": [
+          "srp_projectile",
+          "projectile"
+        ]
+      }
+    }
+  }
+}

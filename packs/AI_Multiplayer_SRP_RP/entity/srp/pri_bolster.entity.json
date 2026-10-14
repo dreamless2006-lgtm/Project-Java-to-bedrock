@@ -1,0 +1,35 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "srp:pri_bolster",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/srp/bano",
+        "skin5": "textures/entity/srp/banov",
+        "skin7": "textures/entity/srp/banoh"
+      },
+      "geometry": {
+        "default": "geometry.srp.modelbano"
+      },
+      "animations": {
+        "move": "animation.srp.modelbano.move",
+        "idle": "animation.srp.modelbano.idle",
+        "ctrl.move": "controller.animation.srp.move"
+      },
+      "scripts": {
+        "animate": [
+          "ctrl.move"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.srp.pri_bolster"
+      ],
+      "spawn_egg": {
+        "texture": "srp_egg_zetmo"
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "srp:living_core"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " A ",
+      "CBC"
+    ],
+    "key": {
+      "A": {
+        "item": "srp:ada_summoner_drop"
+      },
+      "B": {
+        "item": "srp:ada_manducater_drop"
+      },
+      "C": {
+        "item": "srp:assimilated_flesh"
+      }
+    },
+    "unlock": [
+      {
+        "item": "srp:ada_summoner_drop"
+      }
+    ],
+    "result": {
+      "item": "srp:living_core",
+      "count": 1
+    }
+  }
+}

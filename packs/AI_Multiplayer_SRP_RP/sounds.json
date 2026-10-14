@@ -1,0 +1,1655 @@
+{
+  "entity_sounds": {
+    "entities": {
+      "srp:sim_bigspider": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedspider.growl",
+          "hurt": "srp.infected.hurt",
+          "death": "srp.infectedspider.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_squid": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infected.growl",
+          "hurt": "srp.infected.hurt",
+          "death": "srp.infected.death",
+          "step": {
+            "sound": "srp.small.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_human": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedhuman.growl",
+          "hurt": "srp.infectedhuman.hurt",
+          "death": "srp.infectedhuman.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_cow": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedcow.growl",
+          "hurt": "srp.infectedcow.hurt",
+          "death": "srp.infectedcow.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_sheep": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedsheep.growl",
+          "hurt": "srp.infectedsheep.hurt",
+          "death": "srp.infectedsheep.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_wolf": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedwolf.growl",
+          "hurt": "srp.infectedwolf.hurt",
+          "death": "srp.infectedwolf.death",
+          "step": {
+            "sound": "srp.small.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_pig": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedpig.growl",
+          "hurt": "srp.infectedpig.hurt",
+          "death": "srp.infectedpig.death",
+          "step": {
+            "sound": "srp.small.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_villager": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedhuman.growl",
+          "hurt": "srp.infectedhuman.hurt",
+          "death": "srp.infectedhuman.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_adventurer": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infected.growl",
+          "hurt": "srp.infected.hurt",
+          "death": "srp.infected.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_horse": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedhorse.growl",
+          "hurt": "srp.infectedhorse.hurt",
+          "death": "srp.infectedhorse.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_bear": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedbear.growl",
+          "hurt": "srp.infectedbear.hurt",
+          "death": "srp.infectedbear.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_enderman": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedenderman.growl",
+          "hurt": "srp.infectedenderman.hurt",
+          "death": "srp.infectedenderman.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_dragone": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.infected.growl",
+          "hurt": "srp.infected.hurt",
+          "death": "srp.infected.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_sheephead": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedhead.growl",
+          "hurt": "srp.infectedhead.hurt",
+          "death": "srp.infectedhead.death",
+          "step": {
+            "sound": "srp.small.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_wolfhead": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedhead.growl",
+          "hurt": "srp.infectedhead.hurt",
+          "death": "srp.infectedhead.death",
+          "step": {
+            "sound": "srp.small.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_cowhead": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedhead.growl",
+          "hurt": "srp.infectedhead.hurt",
+          "death": "srp.infectedhead.death",
+          "step": {
+            "sound": "srp.small.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_pighead": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedhead.growl",
+          "hurt": "srp.infectedhead.hurt",
+          "death": "srp.infectedhead.death",
+          "step": {
+            "sound": "srp.small.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_villagerhead": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedhead.growl",
+          "hurt": "srp.infectedhead.hurt",
+          "death": "srp.infectedhead.death",
+          "step": {
+            "sound": "srp.small.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_horsehead": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedhead.growl",
+          "hurt": "srp.infectedhead.hurt",
+          "death": "srp.infectedhead.death",
+          "step": {
+            "sound": "srp.small.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_humanhead": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedhead.growl",
+          "hurt": "srp.infectedhead.hurt",
+          "death": "srp.infectedhead.death",
+          "step": {
+            "sound": "srp.small.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_endermanhead": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infected.growl",
+          "hurt": "srp.infected.hurt",
+          "death": "srp.infected.death",
+          "step": {
+            "sound": "srp.small.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_dragonehead": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infected.growl",
+          "hurt": "srp.infected.hurt",
+          "death": "srp.infected.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sim_adventurerhead": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedhead.growl",
+          "hurt": "srp.infectedhead.hurt",
+          "death": "srp.infectedhead.death",
+          "step": {
+            "sound": "srp.small.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:fer_bear": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedbear.growl",
+          "hurt": "srp.infectedbear.hurt",
+          "death": "srp.infectedbear.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:fer_cow": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedcow.growl",
+          "hurt": "srp.infectedcow.hurt",
+          "death": "srp.infectedcow.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:fer_enderman": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedenderman.growl",
+          "hurt": "srp.infectedenderman.hurt",
+          "death": "srp.infectedenderman.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:fer_horse": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedhorse.growl",
+          "hurt": "srp.infectedhorse.hurt",
+          "death": "srp.infectedhorse.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:fer_human": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedhuman.growl",
+          "hurt": "srp.infectedhuman.hurt",
+          "death": "srp.infectedhuman.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:fer_pig": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedpig.growl",
+          "hurt": "srp.infectedpig.hurt",
+          "death": "srp.infectedpig.death",
+          "step": {
+            "sound": "srp.small.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:fer_sheep": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedsheep.growl",
+          "hurt": "srp.infectedsheep.hurt",
+          "death": "srp.infectedsheep.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:fer_villager": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.infectedhuman.growl",
+          "hurt": "srp.infectedhuman.hurt",
+          "death": "srp.infectedhuman.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:hi_golem": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.higolem.growl",
+          "hurt": "srp.higolem.hurt",
+          "death": "srp.higolem.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:carrier_heavy": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.carrier.growl",
+          "hurt": "srp.carrier.hurt",
+          "death": "srp.carrier.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:carrier_light": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.carrier.growl",
+          "hurt": "srp.carrier.hurt",
+          "death": "srp.carrier.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:buglin": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.lodo.growl",
+          "hurt": "srp.lodo.hurt",
+          "death": "srp.lodo.death",
+          "step": {
+            "sound": "srp.small.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:carrier_flying": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.carrier.growl",
+          "hurt": "srp.carrier.hurt",
+          "death": "srp.carrier.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:rupter": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.mudo.growl",
+          "hurt": "srp.mudo.hurt",
+          "death": "srp.mudo.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:movingflesh": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.flesh.growl",
+          "hurt": "srp.flesh.hurt",
+          "death": "srp.flesh.death",
+          "step": {
+            "sound": "srp.small.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:worker": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.mudo.growl",
+          "hurt": "srp.mudo.hurt",
+          "death": "srp.mudo.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:mangler": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.mudo.growl",
+          "hurt": "srp.mudo.hurt",
+          "death": "srp.mudo.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:gnat": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.mudo.growl",
+          "hurt": "srp.mudo.hurt",
+          "death": "srp.mudo.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:beckon_si": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.venkrolsi.growl",
+          "hurt": "srp.venkrolsi.hurt",
+          "death": "srp.venkrolsi.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:beckon_sii": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.venkrolsii.growl",
+          "hurt": "srp.venkrolsii.hurt",
+          "death": "srp.venkrolsii.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:beckon_siii": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.venkrolsiii.growl",
+          "hurt": "srp.venkrolsiii.hurt",
+          "death": "srp.venkrolsiii.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:beckon_siv": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.venkrolsi.growl",
+          "hurt": "srp.venkrolsi.hurt",
+          "death": "srp.venkrolsi.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:dispatcherten": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.unvo.growl",
+          "hurt": "srp.unvo.hurt",
+          "death": "srp.unvo.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:dispatcher_si": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.venkrolsi.growl",
+          "hurt": "srp.venkrolsi.hurt",
+          "death": "srp.venkrolsi.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:dispatcher_sii": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.venkrolsi.growl",
+          "hurt": "srp.venkrolsi.hurt",
+          "death": "srp.venkrolsi.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:dispatcher_siii": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.venkrolsi.growl",
+          "hurt": "srp.venkrolsi.hurt",
+          "death": "srp.venkrolsi.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:dispatcher_siv": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.venkrolsi.growl",
+          "hurt": "srp.venkrolsi.hurt",
+          "death": "srp.venkrolsi.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:kyphosis": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.unvo.growl",
+          "hurt": "srp.unvo.hurt",
+          "death": "srp.unvo.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:sentry": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.unvo.growl",
+          "hurt": "srp.unvo.hurt",
+          "death": "srp.unvo.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:seizer": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.unvo.growl",
+          "hurt": "srp.unvo.hurt",
+          "death": "srp.unvo.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:worm": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.unvo.growl",
+          "hurt": "srp.unvo.hurt",
+          "death": "srp.unvo.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:incompleteform_small": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.flesh.growl",
+          "hurt": "srp.flesh.hurt",
+          "death": "srp.flesh.death",
+          "step": {
+            "sound": "srp.small.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:incompleteform_medium": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.flesh.growl",
+          "hurt": "srp.flesh.hurt",
+          "death": "srp.flesh.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:host": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.host.underground",
+          "hurt": "srp.host.hurt",
+          "death": "srp.host.death",
+          "step": {
+            "sound": "srp.small.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:hostii": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.host.underground",
+          "hurt": "srp.host.hurt",
+          "death": "srp.host.death",
+          "step": {
+            "sound": "srp.small.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:heed": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.flesh.growl",
+          "hurt": "srp.flesh.hurt",
+          "death": "srp.flesh.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:crux": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.flesh.growl",
+          "hurt": "srp.flesh.hurt",
+          "death": "srp.flesh.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:thrall": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.mudo.growl",
+          "hurt": "srp.mudo.hurt",
+          "death": "srp.mudo.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:pri_longarms": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.shyco.growl",
+          "hurt": "srp.shyco.hurt",
+          "death": "srp.shyco.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:pri_manducater": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.hull.growl",
+          "hurt": "srp.hull.hurt",
+          "death": "srp.hull.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:pri_reeker": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.nogla.growl",
+          "hurt": "srp.nogla.hurt",
+          "death": "srp.nogla.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:pri_yelloweye": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.emana.growl",
+          "hurt": "srp.emana.hurt",
+          "death": "srp.emana.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:pri_summoner": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.canra.growl",
+          "hurt": "srp.canra.hurt",
+          "death": "srp.canra.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:pri_bolster": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.zetmo.growl",
+          "hurt": "srp.zetmo.hurt",
+          "death": "srp.zetmo.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:pri_tozoon": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.shyco.growl",
+          "hurt": "srp.shyco.hurt",
+          "death": "srp.shyco.death",
+          "step": {
+            "sound": "srp.small.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:pri_arachnida": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.shyco.growl",
+          "hurt": "srp.shyco.hurt",
+          "death": "srp.shyco.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:pri_devourer": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.lum.growl",
+          "hurt": "srp.lum.hurt",
+          "death": "srp.lum.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:pri_vermin": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.iki.growl",
+          "hurt": "srp.iki.hurt",
+          "death": "srp.iki.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:ada_longarms": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.ashyco.growl",
+          "hurt": "srp.ashyco.hurt",
+          "death": "srp.ashyco.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:ada_manducater": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.ahull.growl",
+          "hurt": "srp.ahull.hurt",
+          "death": "srp.ahull.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:ada_reeker": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.anogla.growl",
+          "hurt": "srp.anogla.hurt",
+          "death": "srp.anogla.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:ada_yelloweye": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.aemana.growl",
+          "hurt": "srp.aemana.hurt",
+          "death": "srp.aemana.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:ada_summoner": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.acanra.growl",
+          "hurt": "srp.acanra.hurt",
+          "death": "srp.acanra.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:ada_bolster": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.azetmo.growl",
+          "hurt": "srp.azetmo.hurt",
+          "death": "srp.azetmo.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:ada_arachnida": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.aranrac.growl",
+          "hurt": "srp.aranrac.hurt",
+          "death": "srp.aranrac.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:overseer": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.alafha.growl",
+          "hurt": "srp.alafha.hurt",
+          "death": "srp.alafha.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:vigilante": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.anged.growl",
+          "hurt": "srp.anged.hurt",
+          "death": "srp.anged.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:warden": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.ganro.growl",
+          "hurt": "srp.ganro.hurt",
+          "death": "srp.ganro.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:bomber_light": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.ganro.growl",
+          "hurt": "srp.ganro.hurt",
+          "death": "srp.ganro.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:marauder": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.esor.growl",
+          "hurt": "srp.esor.hurt",
+          "death": "srp.esor.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:monarch": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.monarch.growl",
+          "hurt": "srp.monarch.hurt",
+          "death": "srp.monarch.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:grunt": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.ganro.growl",
+          "hurt": "srp.ganro.hurt",
+          "death": "srp.ganro.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:bomber_heavy": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.monarch.growl",
+          "hurt": "srp.monarch.hurt",
+          "death": "srp.monarch.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:wraith": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.elvia.growl",
+          "hurt": "srp.elvia.hurt",
+          "death": "srp.elvia.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:bogle": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.lencia.growl",
+          "hurt": "srp.lencia.hurt",
+          "death": "srp.lencia.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:haunter": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.monarch.growl",
+          "hurt": "srp.monarch.hurt",
+          "death": "srp.monarch.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:carrier_colony": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.monarch.growl",
+          "hurt": "srp.monarch.hurt",
+          "death": "srp.monarch.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:succor": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.monarch.growl",
+          "hurt": "srp.monarch.hurt",
+          "death": "srp.monarch.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:seeker": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.alafha.growl",
+          "hurt": "srp.alafha.hurt",
+          "death": "srp.alafha.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:architect": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.alafha.growl",
+          "hurt": "srp.alafha.hurt",
+          "death": "srp.alafha.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:anc_dreadnaut": {
+        "volume": 1.0,
+        "pitch": [
+          0.85,
+          1.0
+        ],
+        "events": {
+          "ambient": "srp.oronco.growl",
+          "hurt": "srp.oronco.hurt",
+          "death": "srp.oronco.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:anc_overlord": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.oronco.growl",
+          "hurt": "srp.oronco.hurt",
+          "death": "srp.oronco.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:anc_pod": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.mudo.growl",
+          "hurt": "srp.mudo.hurt",
+          "death": "srp.mudo.death",
+          "step": {
+            "sound": "srp.monster.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      },
+      "srp:anc_dreadnaut_ten": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "srp.mudo.growl",
+          "hurt": "srp.mudo.hurt",
+          "death": "srp.mudo.death",
+          "step": {
+            "sound": "srp.small.step",
+            "volume": 0.25,
+            "pitch": 1.0
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "srp:elviaball",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/srp/projectile/elvia"
+      },
+      "geometry": {
+        "default": "geometry.srp.projectile_blob"
+      },
+      "render_controllers": [
+        "controller.render.srp.default"
+      ],
+      "animations": {
+        "spin": "animation.srp.projectile.spin"
+      },
+      "scripts": {
+        "animate": [
+          "spin"
+        ]
+      }
+    }
+  }
+}

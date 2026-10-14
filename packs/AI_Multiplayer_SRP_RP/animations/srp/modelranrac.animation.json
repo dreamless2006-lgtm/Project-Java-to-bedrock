@@ -1,0 +1,181 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.srp.modelranrac.move": {
+      "loop": true,
+      "bones": {
+        "jointMD": {
+          "rotation": [
+            0,
+            0,
+            "11.459*math.cos(q.life_time*229.1831-180)"
+          ]
+        },
+        "mainbody": {
+          "position": [
+            0,
+            "(-0.64*math.cos(q.modified_distance_moved*48.1285-360))*q.modified_move_speed",
+            0
+          ],
+          "rotation": [
+            "(5.157*math.cos(q.modified_distance_moved*24.0642))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointRA1": {
+          "rotation": [
+            0,
+            "(25.783*math.cos(q.modified_distance_moved*24.0642-57.3))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointFLLX": {
+          "rotation": [
+            0,
+            "(20.626*math.cos(q.modified_distance_moved*24.0642-34.38))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointBLLX": {
+          "rotation": [
+            0,
+            "(20.626*math.cos(q.modified_distance_moved*24.0642-214.38))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointRAX": {
+          "rotation": [
+            0,
+            "(13.751*math.cos(q.modified_distance_moved*24.0642-122.7))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointBLL1": {
+          "rotation": [
+            "(20.626*math.cos(q.modified_distance_moved*24.0642-122.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointLAY": {
+          "rotation": [
+            "(25.783*math.cos(q.modified_distance_moved*24.0642-122.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointFLL1": {
+          "rotation": [
+            "(20.626*math.cos(q.modified_distance_moved*24.0642-302.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointMU": {
+          "rotation": [
+            0,
+            0,
+            "11.459*math.cos(q.life_time*229.1831)"
+          ]
+        },
+        "jointLAX": {
+          "rotation": [
+            0,
+            "(13.751*math.cos(q.modified_distance_moved*24.0642-122.7))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointBRLX": {
+          "rotation": [
+            0,
+            "(20.626*math.cos(q.modified_distance_moved*24.0642-214.38))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointFRLX": {
+          "rotation": [
+            0,
+            "(20.626*math.cos(q.modified_distance_moved*24.0642-34.38))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointFRL1": {
+          "rotation": [
+            "(20.626*math.cos(q.modified_distance_moved*24.0642-122.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointFLLY": {
+          "rotation": [
+            "(13.751*math.cos(q.modified_distance_moved*24.0642-302.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointBRLY": {
+          "rotation": [
+            "(13.751*math.cos(q.modified_distance_moved*24.0642-302.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointFRLY": {
+          "rotation": [
+            "(13.751*math.cos(q.modified_distance_moved*24.0642-122.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointBLLY": {
+          "rotation": [
+            "(13.751*math.cos(q.modified_distance_moved*24.0642-122.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointBRL1": {
+          "rotation": [
+            "(20.626*math.cos(q.modified_distance_moved*24.0642-302.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointRAY": {
+          "rotation": [
+            "(25.783*math.cos(q.modified_distance_moved*24.0642-302.7))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "jointLA1": {
+          "rotation": [
+            0,
+            "(25.783*math.cos(q.modified_distance_moved*24.0642-57.3))*q.modified_move_speed",
+            0
+          ]
+        }
+      }
+    },
+    "animation.srp.modelranrac.idle": {
+      "loop": true,
+      "bones": {
+        "jointMU": {
+          "rotation": [
+            0,
+            0,
+            "11.459*math.cos(q.life_time*229.1831)"
+          ]
+        },
+        "jointMD": {
+          "rotation": [
+            0,
+            0,
+            "11.459*math.cos(q.life_time*229.1831-180)"
+          ]
+        }
+      }
+    }
+  }
+}

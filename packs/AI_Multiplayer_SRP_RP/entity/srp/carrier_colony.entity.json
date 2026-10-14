@@ -1,0 +1,36 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "srp:carrier_colony",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/srp/vesta",
+        "skin1": "textures/entity/srp/vestare"
+      },
+      "geometry": {
+        "default": "geometry.srp.modelvesta"
+      },
+      "animations": {
+        "move": "animation.srp.modelvesta.move",
+        "idle": "animation.srp.modelvesta.idle",
+        "ctrl.move": "controller.animation.srp.move",
+        "always": "animation.srp.modelvesta.always"
+      },
+      "scripts": {
+        "animate": [
+          "ctrl.move",
+          "always"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.srp.carrier_colony"
+      ],
+      "spawn_egg": {
+        "texture": "srp_egg_vesta"
+      }
+    }
+  }
+}

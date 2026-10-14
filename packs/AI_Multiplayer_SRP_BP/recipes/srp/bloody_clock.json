@@ -1,0 +1,33 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "srp:bloody_clock"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " A ",
+      "ACA",
+      " A "
+    ],
+    "key": {
+      "A": {
+        "item": "srp:assimilated_flesh"
+      },
+      "C": {
+        "item": "minecraft:clock"
+      }
+    },
+    "unlock": [
+      {
+        "item": "srp:assimilated_flesh"
+      }
+    ],
+    "result": {
+      "item": "srp:bloody_clock",
+      "count": 1
+    }
+  }
+}

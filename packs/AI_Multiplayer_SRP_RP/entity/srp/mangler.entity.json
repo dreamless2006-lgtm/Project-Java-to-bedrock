@@ -1,0 +1,35 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "srp:mangler",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/srp/nuuh",
+        "skin5": "textures/entity/srp/nuuhv",
+        "skin6": "textures/entity/srp/nuuhb"
+      },
+      "geometry": {
+        "default": "geometry.srp.modelnuuh"
+      },
+      "animations": {
+        "move": "animation.srp.modelnuuh.move",
+        "idle": "animation.srp.modelnuuh.idle",
+        "ctrl.move": "controller.animation.srp.move"
+      },
+      "scripts": {
+        "animate": [
+          "ctrl.move"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.srp.mangler"
+      ],
+      "spawn_egg": {
+        "texture": "srp_egg_nuuh"
+      }
+    }
+  }
+}

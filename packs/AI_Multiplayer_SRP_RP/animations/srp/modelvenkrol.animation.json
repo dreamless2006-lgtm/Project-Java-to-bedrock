@@ -1,0 +1,197 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.srp.modelvenkrol.move": {
+      "loop": true,
+      "bones": {
+        "body2": {
+          "rotation": [
+            "0.189*math.cos(q.life_time*105.0667-90)",
+            0,
+            "0.378*math.cos(q.life_time*61.3237-270)"
+          ]
+        },
+        "jointBL3": {
+          "rotation": [
+            0,
+            "2.578*math.cos(q.life_time*114.5916-90)",
+            0
+          ]
+        },
+        "jointFR3": {
+          "rotation": [
+            0,
+            "2.578*math.cos(q.life_time*114.5916-90)",
+            0
+          ]
+        },
+        "body1": {
+          "rotation": [
+            "0.189*math.cos(q.life_time*105.0667-90)",
+            0,
+            "0.378*math.cos(q.life_time*61.3237-270)"
+          ]
+        },
+        "jointFL3": {
+          "rotation": [
+            0,
+            "2.578*math.cos(q.life_time*114.5916-90)",
+            0
+          ]
+        },
+        "jointFL1": {
+          "rotation": [
+            "2.578*math.cos(q.life_time*114.5916-270)",
+            0,
+            0
+          ]
+        },
+        "body4": {
+          "rotation": [
+            "0.189*math.cos(q.life_time*105.0667-90)",
+            0,
+            "0.378*math.cos(q.life_time*61.3237-270)"
+          ]
+        },
+        "jointFR1": {
+          "rotation": [
+            "2.578*math.cos(q.life_time*114.5916-90)",
+            0,
+            0
+          ]
+        },
+        "body3": {
+          "rotation": [
+            "0.189*math.cos(q.life_time*105.0667-90)",
+            0,
+            "0.378*math.cos(q.life_time*61.3237-270)"
+          ]
+        },
+        "body5": {
+          "rotation": [
+            "0.189*math.cos(q.life_time*105.0667-90)",
+            0,
+            "0.378*math.cos(q.life_time*61.3237-270)"
+          ]
+        },
+        "jointBL1": {
+          "rotation": [
+            "2.578*math.cos(q.life_time*114.5916-270)",
+            0,
+            0
+          ]
+        },
+        "jointBR1": {
+          "rotation": [
+            "2.578*math.cos(q.life_time*114.5916-90)",
+            0,
+            0
+          ]
+        },
+        "jointBR3": {
+          "rotation": [
+            0,
+            "2.578*math.cos(q.life_time*114.5916-90)",
+            0
+          ]
+        }
+      }
+    },
+    "animation.srp.modelvenkrol.idle": {
+      "loop": true,
+      "bones": {
+        "jointBL1": {
+          "rotation": [
+            "2.578*math.cos(q.life_time*114.5916-270)",
+            0,
+            0
+          ]
+        },
+        "jointBL3": {
+          "rotation": [
+            0,
+            "2.578*math.cos(q.life_time*114.5916-90)",
+            0
+          ]
+        },
+        "jointFR3": {
+          "rotation": [
+            0,
+            "2.578*math.cos(q.life_time*114.5916-90)",
+            0
+          ]
+        },
+        "jointFL3": {
+          "rotation": [
+            0,
+            "2.578*math.cos(q.life_time*114.5916-90)",
+            0
+          ]
+        },
+        "jointFL1": {
+          "rotation": [
+            "2.578*math.cos(q.life_time*114.5916-270)",
+            0,
+            0
+          ]
+        },
+        "body4": {
+          "rotation": [
+            "0.189*math.cos(q.life_time*105.0667-90)",
+            0,
+            "0.378*math.cos(q.life_time*61.3237-270)"
+          ]
+        },
+        "body2": {
+          "rotation": [
+            "0.189*math.cos(q.life_time*105.0667-90)",
+            0,
+            "0.378*math.cos(q.life_time*61.3237-270)"
+          ]
+        },
+        "jointBR1": {
+          "rotation": [
+            "2.578*math.cos(q.life_time*114.5916-90)",
+            0,
+            0
+          ]
+        },
+        "jointFR1": {
+          "rotation": [
+            "2.578*math.cos(q.life_time*114.5916-90)",
+            0,
+            0
+          ]
+        },
+        "jointBR3": {
+          "rotation": [
+            0,
+            "2.578*math.cos(q.life_time*114.5916-90)",
+            0
+          ]
+        },
+        "body3": {
+          "rotation": [
+            "0.189*math.cos(q.life_time*105.0667-90)",
+            0,
+            "0.378*math.cos(q.life_time*61.3237-270)"
+          ]
+        },
+        "body5": {
+          "rotation": [
+            "0.189*math.cos(q.life_time*105.0667-90)",
+            0,
+            "0.378*math.cos(q.life_time*61.3237-270)"
+          ]
+        },
+        "body1": {
+          "rotation": [
+            "0.189*math.cos(q.life_time*105.0667-90)",
+            0,
+            "0.378*math.cos(q.life_time*61.3237-270)"
+          ]
+        }
+      }
+    }
+  }
+}

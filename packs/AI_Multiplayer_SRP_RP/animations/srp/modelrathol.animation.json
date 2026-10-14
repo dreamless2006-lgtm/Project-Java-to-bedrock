@@ -1,0 +1,204 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.srp.modelrathol.move": {
+      "loop": true,
+      "bones": {
+        "pop1": {
+          "position": [
+            0,
+            "-0.4*math.cos(q.life_time*343.7747-106.23)",
+            0
+          ]
+        },
+        "up3_3": {
+          "position": [
+            0,
+            "-0.8*math.cos(q.life_time*343.7747-335.41)",
+            0
+          ]
+        },
+        "joint1": {
+          "position": [
+            0,
+            "-0.8*math.cos(q.life_time*343.7747-335.41)",
+            0
+          ]
+        },
+        "pop6": {
+          "position": [
+            0,
+            "-0.4*math.cos(q.life_time*343.7747-220.82)",
+            0
+          ]
+        },
+        "up1_1": {
+          "position": [
+            0,
+            "-0.8*math.cos(q.life_time*343.7747-106.23)",
+            0
+          ]
+        },
+        "frontleg": {
+          "rotation": [
+            "(57.296*math.cos(q.modified_distance_moved*28.6479-180))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "leftleg": {
+          "rotation": [
+            "(57.296*math.cos(q.modified_distance_moved*28.6479-360))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "rightleg": {
+          "rotation": [
+            "(57.296*math.cos(q.modified_distance_moved*28.6479-360))*q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "pop3": {
+          "position": [
+            0,
+            "-0.4*math.cos(q.life_time*343.7747-106.23)",
+            0
+          ]
+        },
+        "up2_2": {
+          "position": [
+            0,
+            "-0.8*math.cos(q.life_time*343.7747-220.82)",
+            0
+          ]
+        },
+        "pop5": {
+          "position": [
+            0,
+            "-0.4*math.cos(q.life_time*343.7747-106.23)",
+            0
+          ]
+        },
+        "joint2": {
+          "position": [
+            0,
+            "-0.8*math.cos(q.life_time*343.7747-220.82)",
+            0
+          ]
+        },
+        "pop4": {
+          "position": [
+            0,
+            "-0.4*math.cos(q.life_time*343.7747-220.82)",
+            0
+          ]
+        },
+        "joint3": {
+          "position": [
+            0,
+            "-0.8*math.cos(q.life_time*343.7747-106.23)",
+            0
+          ]
+        },
+        "pop2": {
+          "position": [
+            0,
+            "-0.4*math.cos(q.life_time*343.7747-220.82)",
+            0
+          ]
+        }
+      }
+    },
+    "animation.srp.modelrathol.idle": {
+      "loop": true,
+      "bones": {
+        "pop1": {
+          "position": [
+            0,
+            "-0.4*math.cos(q.life_time*343.7747-106.23)",
+            0
+          ]
+        },
+        "pop4": {
+          "position": [
+            0,
+            "-0.4*math.cos(q.life_time*343.7747-220.82)",
+            0
+          ]
+        },
+        "pop6": {
+          "position": [
+            0,
+            "-0.4*math.cos(q.life_time*343.7747-220.82)",
+            0
+          ]
+        },
+        "joint3": {
+          "position": [
+            0,
+            "-0.8*math.cos(q.life_time*343.7747-106.23)",
+            0
+          ]
+        },
+        "up3_3": {
+          "position": [
+            0,
+            "-0.8*math.cos(q.life_time*343.7747-335.41)",
+            0
+          ]
+        },
+        "pop3": {
+          "position": [
+            0,
+            "-0.4*math.cos(q.life_time*343.7747-106.23)",
+            0
+          ]
+        },
+        "up2_2": {
+          "position": [
+            0,
+            "-0.8*math.cos(q.life_time*343.7747-220.82)",
+            0
+          ]
+        },
+        "pop5": {
+          "position": [
+            0,
+            "-0.4*math.cos(q.life_time*343.7747-106.23)",
+            0
+          ]
+        },
+        "joint2": {
+          "position": [
+            0,
+            "-0.8*math.cos(q.life_time*343.7747-220.82)",
+            0
+          ]
+        },
+        "pop2": {
+          "position": [
+            0,
+            "-0.4*math.cos(q.life_time*343.7747-220.82)",
+            0
+          ]
+        },
+        "joint1": {
+          "position": [
+            0,
+            "-0.8*math.cos(q.life_time*343.7747-335.41)",
+            0
+          ]
+        },
+        "up1_1": {
+          "position": [
+            0,
+            "-0.8*math.cos(q.life_time*343.7747-106.23)",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1078 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.srp.modelbanoadapted.move": {
+      "loop": true,
+      "bones": {
+        "jointMRT": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*68.7549-90)",
+            0
+          ]
+        },
+        "jointDFRT2": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-40.82)",
+            0,
+            0
+          ]
+        },
+        "jointDBLT4": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-351.63)",
+            0,
+            0
+          ]
+        },
+        "jointDBLT0": {
+          "rotation": [
+            0,
+            0,
+            "5.73*math.cos(q.life_time*80.2141-351.63)"
+          ]
+        },
+        "jointUBLT4": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-351.63)",
+            0,
+            0
+          ]
+        },
+        "jointMLT": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*68.7549-90)",
+            0
+          ]
+        },
+        "jointDRT": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*68.7549-90)",
+            0
+          ]
+        },
+        "jointUBRT3": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-171.63)",
+            0,
+            0
+          ]
+        },
+        "jointUFLT1": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-40.82)",
+            0,
+            0
+          ]
+        },
+        "jointUBRT2": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-171.63)",
+            0,
+            0
+          ]
+        },
+        "jointUBLT1": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-351.63)",
+            0,
+            0
+          ]
+        },
+        "jointDLT": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*68.7549-90)",
+            0
+          ]
+        },
+        "jointUBRT4": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-171.63)",
+            0,
+            0
+          ]
+        },
+        "jointDDLT": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*68.7549-90)",
+            0
+          ]
+        },
+        "jointDBRT0": {
+          "rotation": [
+            0,
+            0,
+            "5.73*math.cos(q.life_time*80.2141-171.63)"
+          ]
+        },
+        "jointTR": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*137.5099-90)",
+            0
+          ]
+        },
+        "jointDFRT1": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-40.82)",
+            0,
+            0
+          ]
+        },
+        "jointUFRT0": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-40.82)",
+            0,
+            0
+          ]
+        },
+        "jointTL": {
+          "rotation": [
+            0,
+            "-5.73+11.459*math.cos(q.life_time*137.5099-270)",
+            0
+          ]
+        },
+        "jointUBRT0": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-171.63)",
+            0,
+            0
+          ]
+        },
+        "jointDBRT3": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-171.63)",
+            0,
+            0
+          ]
+        },
+        "jointDFLT2": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-220.82)",
+            0,
+            0
+          ]
+        },
+        "jointDBLT3": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-351.63)",
+            0,
+            0
+          ]
+        },
+        "jointUBLT2": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-351.63)",
+            0,
+            0
+          ]
+        },
+        "jointDFLT0": {
+          "rotation": [
+            0,
+            0,
+            "5.73*math.cos(q.life_time*68.7549-220.82)"
+          ]
+        },
+        "jointDBRT2": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-171.63)",
+            0,
+            0
+          ]
+        },
+        "jointDFRT3": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-40.82)",
+            0,
+            0
+          ]
+        },
+        "jointDBLT2": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-351.63)",
+            0,
+            0
+          ]
+        },
+        "jointDFRT4": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-40.82)",
+            0,
+            0
+          ]
+        },
+        "jointDBLT1": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-351.63)",
+            0,
+            0
+          ]
+        },
+        "jointDDRT": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*68.7549-90)",
+            0
+          ]
+        },
+        "jointUULT": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*68.7549-90)",
+            0
+          ]
+        },
+        "jointURT": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*68.7549-90)",
+            0
+          ]
+        },
+        "jointDBRT4": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-171.63)",
+            0,
+            0
+          ]
+        },
+        "jointUBLT0": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-351.63)",
+            0,
+            0
+          ]
+        },
+        "jointUBLT3": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-351.63)",
+            0,
+            0
+          ]
+        },
+        "jointUFLT0": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-220.82)",
+            0,
+            0
+          ]
+        },
+        "jointULT": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*68.7549-90)",
+            0
+          ]
+        },
+        "jointDFRT0": {
+          "rotation": [
+            0,
+            0,
+            "5.73*math.cos(q.life_time*68.7549-40.82)"
+          ]
+        },
+        "jointDFLT4": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-220.82)",
+            0,
+            0
+          ]
+        },
+        "jointUURT": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*68.7549-90)",
+            0
+          ]
+        },
+        "jointUFRT1": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-220.82)",
+            0,
+            0
+          ]
+        },
+        "jointDFLT1": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-220.82)",
+            0,
+            0
+          ]
+        },
+        "jointUBRT1": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-171.63)",
+            0,
+            0
+          ]
+        },
+        "jointDBRT1": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-171.63)",
+            0,
+            0
+          ]
+        },
+        "jointDFLT3": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-220.82)",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.srp.modelbanoadapted.idle": {
+      "loop": true,
+      "bones": {
+        "jointDBLT1": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-351.63)",
+            0,
+            0
+          ]
+        },
+        "jointTR": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*137.5099-90)",
+            0
+          ]
+        },
+        "jointDFLT0": {
+          "rotation": [
+            0,
+            0,
+            "5.73*math.cos(q.life_time*68.7549-220.82)"
+          ]
+        },
+        "jointDBRT1": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-171.63)",
+            0,
+            0
+          ]
+        },
+        "jointUFLT0": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-220.82)",
+            0,
+            0
+          ]
+        },
+        "jointUBRT1": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-171.63)",
+            0,
+            0
+          ]
+        },
+        "jointMLT": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*68.7549-90)",
+            0
+          ]
+        },
+        "jointDBRT2": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-171.63)",
+            0,
+            0
+          ]
+        },
+        "jointUFRT1": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-220.82)",
+            0,
+            0
+          ]
+        },
+        "jointUBLT4": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-351.63)",
+            0,
+            0
+          ]
+        },
+        "jointUFLT1": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-40.82)",
+            0,
+            0
+          ]
+        },
+        "jointDBLT3": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-351.63)",
+            0,
+            0
+          ]
+        },
+        "jointTL": {
+          "rotation": [
+            0,
+            "-5.73+11.459*math.cos(q.life_time*137.5099-270)",
+            0
+          ]
+        },
+        "jointDBLT2": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-351.63)",
+            0,
+            0
+          ]
+        },
+        "jointDDLT": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*68.7549-90)",
+            0
+          ]
+        },
+        "jointDRT": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*68.7549-90)",
+            0
+          ]
+        },
+        "jointUBRT2": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-171.63)",
+            0,
+            0
+          ]
+        },
+        "jointUBRT3": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-171.63)",
+            0,
+            0
+          ]
+        },
+        "jointDFRT0": {
+          "rotation": [
+            0,
+            0,
+            "5.73*math.cos(q.life_time*68.7549-40.82)"
+          ]
+        },
+        "jointDBRT4": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-171.63)",
+            0,
+            0
+          ]
+        },
+        "jointMRT": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*68.7549-90)",
+            0
+          ]
+        },
+        "jointURT": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*68.7549-90)",
+            0
+          ]
+        },
+        "jointUBLT1": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-351.63)",
+            0,
+            0
+          ]
+        },
+        "jointUBLT2": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-351.63)",
+            0,
+            0
+          ]
+        },
+        "jointDDRT": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*68.7549-90)",
+            0
+          ]
+        },
+        "jointDFRT2": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-40.82)",
+            0,
+            0
+          ]
+        },
+        "jointUBLT0": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-351.63)",
+            0,
+            0
+          ]
+        },
+        "jointDFLT2": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-220.82)",
+            0,
+            0
+          ]
+        },
+        "jointDBLT4": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-351.63)",
+            0,
+            0
+          ]
+        },
+        "jointDFRT3": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-40.82)",
+            0,
+            0
+          ]
+        },
+        "jointDBRT0": {
+          "rotation": [
+            0,
+            0,
+            "5.73*math.cos(q.life_time*80.2141-171.63)"
+          ]
+        },
+        "jointUBRT0": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-171.63)",
+            0,
+            0
+          ]
+        },
+        "jointDLT": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*68.7549-90)",
+            0
+          ]
+        },
+        "jointDBRT3": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-171.63)",
+            0,
+            0
+          ]
+        },
+        "jointDBLT0": {
+          "rotation": [
+            0,
+            0,
+            "5.73*math.cos(q.life_time*80.2141-351.63)"
+          ]
+        },
+        "jointDFRT4": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-40.82)",
+            0,
+            0
+          ]
+        },
+        "jointUBRT4": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-171.63)",
+            0,
+            0
+          ]
+        },
+        "jointUULT": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*68.7549-90)",
+            0
+          ]
+        },
+        "jointDFLT1": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-220.82)",
+            0,
+            0
+          ]
+        },
+        "jointUBLT3": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*80.2141-351.63)",
+            0,
+            0
+          ]
+        },
+        "jointDFRT1": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-40.82)",
+            0,
+            0
+          ]
+        },
+        "jointDFLT4": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-220.82)",
+            0,
+            0
+          ]
+        },
+        "jointUFRT0": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-40.82)",
+            0,
+            0
+          ]
+        },
+        "jointULT": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*68.7549-90)",
+            0
+          ]
+        },
+        "jointUURT": {
+          "rotation": [
+            0,
+            "5.73+11.459*math.cos(q.life_time*68.7549-90)",
+            0
+          ]
+        },
+        "jointDFLT3": {
+          "rotation": [
+            "5.73*math.cos(q.life_time*68.7549-220.82)",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.srp.modelbanoadapted.attack": {
+      "animation_length": 1.2,
+      "bones": {
+        "jointUFLT0": {
+          "rotation": {
+            "0.00": [
+              11.46,
+              9.17,
+              0
+            ],
+            "0.10": [
+              34.38,
+              11.46,
+              0
+            ],
+            "0.20": [
+              51.57,
+              11.46,
+              0
+            ],
+            "0.30": [
+              51.57,
+              11.46,
+              0
+            ],
+            "0.40": [
+              51.57,
+              11.46,
+              0
+            ],
+            "0.50": [
+              51.57,
+              11.46,
+              0
+            ],
+            "0.60": [
+              51.57,
+              11.46,
+              0
+            ],
+            "0.70": [
+              48.13,
+              11.46,
+              0
+            ],
+            "0.80": [
+              40.11,
+              11.46,
+              0
+            ],
+            "0.90": [
+              28.65,
+              11.46,
+              0
+            ],
+            "1.00": [
+              17.19,
+              11.46,
+              0
+            ],
+            "1.10": [
+              5.73,
+              4.58,
+              0
+            ],
+            "1.15": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "jointUFRT2": {
+          "rotation": {
+            "0.00": [
+              9.17,
+              0,
+              0
+            ],
+            "0.10": [
+              11.46,
+              0,
+              0
+            ],
+            "0.20": [
+              11.46,
+              0,
+              0
+            ],
+            "0.30": [
+              11.46,
+              0,
+              0
+            ],
+            "0.40": [
+              11.46,
+              0,
+              0
+            ],
+            "0.50": [
+              11.46,
+              0,
+              0
+            ],
+            "0.60": [
+              11.46,
+              0,
+              0
+            ],
+            "0.70": [
+              11.46,
+              0,
+              0
+            ],
+            "0.80": [
+              11.46,
+              0,
+              0
+            ],
+            "0.90": [
+              11.46,
+              0,
+              0
+            ],
+            "1.00": [
+              11.46,
+              0,
+              0
+            ],
+            "1.10": [
+              4.58,
+              0,
+              0
+            ],
+            "1.15": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "jointUFRT1": {
+          "rotation": {
+            "0.00": [
+              11.46,
+              0,
+              0
+            ],
+            "0.10": [
+              34.38,
+              0,
+              0
+            ],
+            "0.20": [
+              57.3,
+              0,
+              0
+            ],
+            "0.30": [
+              80.21,
+              0,
+              0
+            ],
+            "0.40": [
+              85.94,
+              0,
+              0
+            ],
+            "0.50": [
+              74.48,
+              0,
+              0
+            ],
+            "0.60": [
+              63.03,
+              0,
+              0
+            ],
+            "0.70": [
+              51.57,
+              0,
+              0
+            ],
+            "0.80": [
+              40.11,
+              0,
+              0
+            ],
+            "0.90": [
+              28.65,
+              0,
+              0
+            ],
+            "1.00": [
+              17.19,
+              0,
+              0
+            ],
+            "1.10": [
+              5.73,
+              0,
+              0
+            ],
+            "1.15": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "jointUFLT1": {
+          "rotation": {
+            "0.00": [
+              11.46,
+              0,
+              0
+            ],
+            "0.10": [
+              34.38,
+              0,
+              0
+            ],
+            "0.20": [
+              57.3,
+              0,
+              0
+            ],
+            "0.30": [
+              80.21,
+              0,
+              0
+            ],
+            "0.40": [
+              85.94,
+              0,
+              0
+            ],
+            "0.50": [
+              74.48,
+              0,
+              0
+            ],
+            "0.60": [
+              63.03,
+              0,
+              0
+            ],
+            "0.70": [
+              51.57,
+              0,
+              0
+            ],
+            "0.80": [
+              40.11,
+              0,
+              0
+            ],
+            "0.90": [
+              28.65,
+              0,
+              0
+            ],
+            "1.00": [
+              17.19,
+              0,
+              0
+            ],
+            "1.10": [
+              5.73,
+              0,
+              0
+            ],
+            "1.15": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "jointUFLT2": {
+          "rotation": {
+            "0.00": [
+              9.17,
+              0,
+              0
+            ],
+            "0.10": [
+              11.46,
+              0,
+              0
+            ],
+            "0.20": [
+              11.46,
+              0,
+              0
+            ],
+            "0.30": [
+              11.46,
+              0,
+              0
+            ],
+            "0.40": [
+              11.46,
+              0,
+              0
+            ],
+            "0.50": [
+              11.46,
+              0,
+              0
+            ],
+            "0.60": [
+              11.46,
+              0,
+              0
+            ],
+            "0.70": [
+              11.46,
+              0,
+              0
+            ],
+            "0.80": [
+              11.46,
+              0,
+              0
+            ],
+            "0.90": [
+              11.46,
+              0,
+              0
+            ],
+            "1.00": [
+              11.46,
+              0,
+              0
+            ],
+            "1.10": [
+              4.58,
+              0,
+              0
+            ],
+            "1.15": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "jointUFRT0": {
+          "rotation": {
+            "0.00": [
+              11.46,
+              -9.17,
+              0
+            ],
+            "0.10": [
+              34.38,
+              -11.46,
+              0
+            ],
+            "0.20": [
+              51.57,
+              -11.46,
+              0
+            ],
+            "0.30": [
+              51.57,
+              -11.46,
+              0
+            ],
+            "0.40": [
+              51.57,
+              -11.46,
+              0
+            ],
+            "0.50": [
+              51.57,
+              -11.46,
+              0
+            ],
+            "0.60": [
+              51.57,
+              -11.46,
+              0
+            ],
+            "0.70": [
+              48.13,
+              -11.46,
+              0
+            ],
+            "0.80": [
+              40.11,
+              -11.46,
+              0
+            ],
+            "0.90": [
+              28.65,
+              -11.46,
+              0
+            ],
+            "1.00": [
+              17.19,
+              -11.46,
+              0
+            ],
+            "1.10": [
+              5.73,
+              -4.58,
+              0
+            ],
+            "1.15": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    }
+  }
+}

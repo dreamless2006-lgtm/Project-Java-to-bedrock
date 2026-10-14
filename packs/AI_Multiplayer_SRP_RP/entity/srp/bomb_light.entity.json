@@ -1,0 +1,20 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "srp:bomb_light",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/srp/projectile/bombo"
+      },
+      "geometry": {
+        "default": "geometry.srp.modelbombomboo"
+      },
+      "render_controllers": [
+        "controller.render.srp.default"
+      ]
+    }
+  }
+}

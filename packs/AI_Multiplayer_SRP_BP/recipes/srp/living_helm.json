@@ -1,0 +1,32 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "srp:living_helm"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "DCD",
+      "D D"
+    ],
+    "key": {
+      "D": {
+        "item": "srp:vile_shell"
+      },
+      "C": {
+        "item": "srp:living_core"
+      }
+    },
+    "unlock": [
+      {
+        "item": "srp:vile_shell"
+      }
+    ],
+    "result": {
+      "item": "srp:living_helm",
+      "count": 1
+    }
+  }
+}

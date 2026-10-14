@@ -1,0 +1,26 @@
+Picked up JAVA_TOOL_OPTIONS: -Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts -Djavax.net.ssl.trustStoreType=JKS -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=41751 -Dhttp.nonProxyHosts=localhost|127.0.0.1|::1|127.*|0.*|::|169.254.*|api.anthropic.com|api-staging.anthropic.com|api-pr-preview.anthropic.com|mcp-proxy.anthropic.com|mcp-proxy-staging.anthropic.com|registry.npmjs.org|jsr.io|npm.jsr.io|pypi.org|files.pythonhosted.org|index.crates.io|proxy.golang.org|host.docker.internal|10.*|172.16.*|172.17.*|172.18.*|172.19.*|172.20.*|172.21.*|172.22.*|172.23.*|172.24.*|172.25.*|172.26.*|172.27.*|172.28.*|172.29.*|172.30.*|172.31.*|192.168.*|100.64.0.0/10|*.svc.cluster.local|*.svc.cluster.local -Djdk.http.auth.tunneling.disabledSchemes= -Djdk.http.auth.proxying.disabledSchemes=
+Compiled from "Player2NPC.java"
+public class com.goodbird.player2npc.Player2NPC {
+  private static final org.apache.logging.log4j.Logger LOGGER;
+  public static final java.lang.String MOD_ID;
+  public static final net.minecraft.resources.ResourceLocation SPAWN_PACKET_ID;
+  public static final net.minecraft.resources.ResourceLocation SPAWN_REQUEST_PACKET_ID;
+  public static final net.minecraft.resources.ResourceLocation DESPAWN_REQUEST_PACKET_ID;
+  public static final net.minecraft.resources.ResourceLocation EQUIP_SYNC_PACKET_ID;
+  public static final net.minecraft.resources.ResourceLocation GUI_SNAPSHOT_REQUEST_PACKET_ID;
+  public static final net.minecraft.resources.ResourceLocation GUI_SNAPSHOT_PACKET_ID;
+  public static final net.minecraft.resources.ResourceLocation GUI_UPDATE_PACKET_ID;
+  public static final dev.architectury.registry.registries.DeferredRegister<net.minecraft.world.entity.EntityType<?>> ENTITY_TYPES;
+  public static dev.architectury.registry.registries.RegistrySupplier<net.minecraft.world.entity.EntityType<com.goodbird.player2npc.companion.AutomatoneEntity>> AUTOMATONE;
+  public com.goodbird.player2npc.Player2NPC();
+  public static net.minecraft.resources.ResourceLocation id(java.lang.String);
+  public static void onInitialize();
+  private static void lambda$onInitialize$6(net.minecraft.world.entity.player.Player);
+  private static void lambda$onInitialize$5(net.minecraft.server.level.ServerPlayer);
+  private static void lambda$onInitialize$4(net.minecraft.server.level.ServerPlayer, boolean, net.minecraft.world.entity.Entity$RemovalReason);
+  private static void lambda$onInitialize$3(net.minecraft.server.level.ServerPlayer);
+  private static java.lang.Void lambda$onInitialize$2(net.minecraft.server.level.ServerPlayer, java.lang.Throwable);
+  private static void lambda$onInitialize$1(com.mojang.brigadier.CommandDispatcher, net.minecraft.commands.CommandBuildContext, net.minecraft.commands.Commands$CommandSelection);
+  private static net.minecraft.world.entity.EntityType lambda$static$0();
+  static {};
+}

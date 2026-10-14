@@ -1,0 +1,33 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "srp:incompleteform_medium",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/srp/inhoom"
+      },
+      "geometry": {
+        "default": "geometry.srp.modelinhoom"
+      },
+      "animations": {
+        "move": "animation.srp.modelinhoom.move",
+        "idle": "animation.srp.modelinhoom.idle",
+        "ctrl.move": "controller.animation.srp.move"
+      },
+      "scripts": {
+        "animate": [
+          "ctrl.move"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.srp.default"
+      ],
+      "spawn_egg": {
+        "texture": "srp_egg_inhoom"
+      }
+    }
+  }
+}

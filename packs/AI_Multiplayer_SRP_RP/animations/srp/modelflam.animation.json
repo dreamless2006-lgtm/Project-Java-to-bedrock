@@ -1,0 +1,897 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.srp.modelflam.move": {
+      "loop": true,
+      "bones": {
+        "hjointB_2": {
+          "rotation": [
+            0,
+            "17.189+24.78*math.cos(q.life_time*233.0792-90)",
+            0
+          ]
+        },
+        "hjointF_3": {
+          "rotation": [
+            0,
+            "17.189+24.78*math.cos(q.life_time*611.9189-90)",
+            0
+          ]
+        },
+        "hjointJ_2": {
+          "rotation": [
+            0,
+            "5.73+18.621*math.cos(q.life_time*301.8342-270)",
+            0
+          ]
+        },
+        "hjointF_7": {
+          "rotation": [
+            0,
+            "-28.648+25.969*math.cos(q.life_time*576.8539-270)",
+            0
+          ]
+        },
+        "hjointG_1": {
+          "rotation": [
+            0,
+            "-5.73+7.592*math.cos(q.life_time*611.9189-90)",
+            0
+          ]
+        },
+        "hjointH_7": {
+          "rotation": [
+            0,
+            "-5.73+18.621*math.cos(q.life_time*268.1442-270)",
+            0
+          ]
+        },
+        "hjointC_5": {
+          "rotation": [
+            0,
+            "-5.73+7.592*math.cos(q.life_time*611.9189-90)",
+            0
+          ]
+        },
+        "hjointE_6": {
+          "rotation": [
+            0,
+            "5.73+25.969*math.cos(q.life_time*268.1442-90)",
+            0
+          ]
+        },
+        "hjointI_6": {
+          "rotation": [
+            0,
+            "5.73+18.621*math.cos(q.life_time*268.1442-270)",
+            0
+          ]
+        },
+        "hjointH_6": {
+          "rotation": [
+            0,
+            "17.189+18.621*math.cos(q.life_time*233.0792-270)",
+            0
+          ]
+        },
+        "hjointG_6": {
+          "rotation": [
+            0,
+            "-17.189+24.78*math.cos(q.life_time*542.4764-270)",
+            0
+          ]
+        },
+        "hjointA_3": {
+          "rotation": [
+            0,
+            "17.189+18.621*math.cos(q.life_time*198.7018-270)",
+            0
+          ]
+        },
+        "hjointC_6": {
+          "rotation": [
+            0,
+            "17.189+18.621*math.cos(q.life_time*233.0792-270)",
+            0
+          ]
+        },
+        "hjointC_1": {
+          "rotation": [
+            0,
+            "-17.189+18.621*math.cos(q.life_time*233.0792-90)",
+            0
+          ]
+        },
+        "hjointE_4": {
+          "rotation": [
+            0,
+            "5.73+18.621*math.cos(q.life_time*301.8342-270)",
+            0
+          ]
+        },
+        "hjointE_5": {
+          "rotation": [
+            0,
+            "-17.189+24.78*math.cos(q.life_time*233.0792-90)",
+            0
+          ]
+        },
+        "hjointJ_4": {
+          "rotation": [
+            0,
+            "-17.189+24.78*math.cos(q.life_time*233.0792-90)",
+            0
+          ]
+        },
+        "hjointI_5": {
+          "rotation": [
+            0,
+            "5.73+18.621*math.cos(q.life_time*268.1442-90)",
+            0
+          ]
+        },
+        "hjointD_6": {
+          "rotation": [
+            0,
+            "28.648+30.51*math.cos(q.life_time*611.9189-270)",
+            0
+          ]
+        },
+        "hjointH_1": {
+          "rotation": [
+            0,
+            "5.73+18.621*math.cos(q.life_time*268.1442-270)",
+            0
+          ]
+        },
+        "hjointH_2": {
+          "rotation": [
+            0,
+            "-5.73+18.621*math.cos(q.life_time*268.1442-270)",
+            0
+          ]
+        },
+        "hjointF_1": {
+          "rotation": [
+            0,
+            "28.648+25.969*math.cos(q.life_time*576.8539-90)",
+            0
+          ]
+        },
+        "hjointG_5": {
+          "rotation": [
+            0,
+            "5.73+7.592*math.cos(q.life_time*611.9189-270)",
+            0
+          ]
+        },
+        "hjointJ_1": {
+          "rotation": [
+            0,
+            "-17.189+24.78*math.cos(q.life_time*233.0792-90)",
+            0
+          ]
+        },
+        "hjointH_4": {
+          "rotation": [
+            0,
+            "17.189+18.621*math.cos(q.life_time*233.0792-270)",
+            0
+          ]
+        },
+        "mainmodel": {
+          "position": [
+            0,
+            "-1.6-0.852*math.cos(q.life_time*425.5243-270)",
+            0
+          ]
+        },
+        "hjointF_6": {
+          "rotation": [
+            0,
+            "17.189+18.621*math.cos(q.life_time*198.7018-270)",
+            0
+          ]
+        },
+        "hjointI_7": {
+          "rotation": [
+            0,
+            "17.189+18.621*math.cos(q.life_time*233.0792-270)",
+            0
+          ]
+        },
+        "hjointA_1": {
+          "rotation": [
+            0,
+            "-28.648+25.969*math.cos(q.life_time*576.8539-270)",
+            0
+          ]
+        },
+        "hjointI_3": {
+          "rotation": [
+            0,
+            "-17.189+18.621*math.cos(q.life_time*233.0792-90)",
+            0
+          ]
+        },
+        "hjointI_2": {
+          "rotation": [
+            0,
+            "5.73+18.621*math.cos(q.life_time*268.1442-270)",
+            0
+          ]
+        },
+        "hjointA_4": {
+          "rotation": [
+            0,
+            "17.189+24.78*math.cos(q.life_time*611.9189-90)",
+            0
+          ]
+        },
+        "hjointD_5": {
+          "rotation": [
+            0,
+            "-17.189+24.78*math.cos(q.life_time*233.0792-270)",
+            0
+          ]
+        },
+        "hjointD_1": {
+          "rotation": [
+            0,
+            "17.189+24.78*math.cos(q.life_time*233.0792-90)",
+            0
+          ]
+        },
+        "hjointJ_3": {
+          "rotation": [
+            0,
+            "-17.189+30.51*math.cos(q.life_time*198.7018-270)",
+            0
+          ]
+        },
+        "hjointI_4": {
+          "rotation": [
+            0,
+            "-17.189+24.78*math.cos(q.life_time*542.4764-270)",
+            0
+          ]
+        },
+        "hjointC_3": {
+          "rotation": [
+            0,
+            "5.73+12.791*math.cos(q.life_time*226.135-90)",
+            0
+          ]
+        },
+        "hjointE_3": {
+          "rotation": [
+            0,
+            "-5.73+25.969*math.cos(q.life_time*268.1442-270)",
+            0
+          ]
+        },
+        "hjointG_2": {
+          "rotation": [
+            0,
+            "17.189+18.621*math.cos(q.life_time*233.0792-270)",
+            0
+          ]
+        },
+        "hjointI_1": {
+          "rotation": [
+            0,
+            "-5.73+18.621*math.cos(q.life_time*268.1442-270)",
+            0
+          ]
+        },
+        "hjointJ_7": {
+          "rotation": [
+            0,
+            "-17.189+24.78*math.cos(q.life_time*233.0792-90)",
+            0
+          ]
+        },
+        "hjointG_3": {
+          "rotation": [
+            0,
+            "-5.73+7.592*math.cos(q.life_time*611.9189-90)",
+            0
+          ]
+        },
+        "hjointC_4": {
+          "rotation": [
+            0,
+            "17.189+24.78*math.cos(q.life_time*542.4764-90)",
+            0
+          ]
+        },
+        "hjointB_4": {
+          "rotation": [
+            0,
+            "-28.648+30.51*math.cos(q.life_time*611.9189-90)",
+            0
+          ]
+        },
+        "hjointF_2": {
+          "rotation": [
+            0,
+            "17.189+18.621*math.cos(q.life_time*198.7018-270)",
+            0
+          ]
+        },
+        "hjointG_4": {
+          "rotation": [
+            0,
+            "5.73+12.791*math.cos(q.life_time*226.135-90)",
+            0
+          ]
+        },
+        "hjointB_1": {
+          "rotation": [
+            0,
+            "5.73+18.621*math.cos(q.life_time*301.8342-270)",
+            0
+          ]
+        },
+        "hjointJ_6": {
+          "rotation": [
+            0,
+            "5.73+25.969*math.cos(q.life_time*268.1442-90)",
+            0
+          ]
+        },
+        "hjointD_2": {
+          "rotation": [
+            0,
+            "5.73+18.621*math.cos(q.life_time*301.8342-270)",
+            0
+          ]
+        },
+        "hjointF_4": {
+          "rotation": [
+            0,
+            "-17.189+18.621*math.cos(q.life_time*198.7018-90)",
+            0
+          ]
+        },
+        "hjointE_2": {
+          "rotation": [
+            0,
+            "17.189+24.78*math.cos(q.life_time*233.0792-270)",
+            0
+          ]
+        },
+        "hjointE_1": {
+          "rotation": [
+            0,
+            "-17.189+30.51*math.cos(q.life_time*198.7018-270)",
+            0
+          ]
+        },
+        "hjointJ_5": {
+          "rotation": [
+            0,
+            "5.73+18.621*math.cos(q.life_time*301.8342-270)",
+            0
+          ]
+        },
+        "hjointD_3": {
+          "rotation": [
+            0,
+            "17.189+41.969*math.cos(q.life_time*542.4764-270)",
+            0
+          ]
+        },
+        "hjointG_7": {
+          "rotation": [
+            0,
+            "17.189+18.621*math.cos(q.life_time*233.0792-270)",
+            0
+          ]
+        },
+        "hjointC_2": {
+          "rotation": [
+            0,
+            "-5.73+7.592*math.cos(q.life_time*611.9189-90)",
+            0
+          ]
+        },
+        "hjointH_5": {
+          "rotation": [
+            0,
+            "-5.73+18.621*math.cos(q.life_time*268.1442-90)",
+            0
+          ]
+        },
+        "hjointF_5": {
+          "rotation": [
+            0,
+            "-28.648+20.054*math.cos(q.life_time*301.8342-270)",
+            0
+          ]
+        },
+        "hjointD_4": {
+          "rotation": [
+            0,
+            "28.648+30.51*math.cos(q.life_time*611.9189-270)",
+            0
+          ]
+        },
+        "hjointH_3": {
+          "rotation": [
+            0,
+            "17.189+24.78*math.cos(q.life_time*542.4764-90)",
+            0
+          ]
+        },
+        "hjointD_7": {
+          "rotation": [
+            0,
+            "17.189+41.969*math.cos(q.life_time*542.4764-270)",
+            0
+          ]
+        },
+        "hjointA_2": {
+          "rotation": [
+            0,
+            "28.648+20.054*math.cos(q.life_time*301.8342-90)",
+            0
+          ]
+        },
+        "hjointB_3": {
+          "rotation": [
+            0,
+            "-17.189+41.969*math.cos(q.life_time*542.4764-90)",
+            0
+          ]
+        }
+      }
+    },
+    "animation.srp.modelflam.idle": {
+      "loop": true,
+      "bones": {
+        "hjointE_6": {
+          "rotation": [
+            0,
+            "5.73+25.969*math.cos(q.life_time*268.1442-90)",
+            0
+          ]
+        },
+        "hjointJ_5": {
+          "rotation": [
+            0,
+            "5.73+18.621*math.cos(q.life_time*301.8342-270)",
+            0
+          ]
+        },
+        "hjointE_1": {
+          "rotation": [
+            0,
+            "-17.189+30.51*math.cos(q.life_time*198.7018-270)",
+            0
+          ]
+        },
+        "hjointB_2": {
+          "rotation": [
+            0,
+            "17.189+24.78*math.cos(q.life_time*233.0792-90)",
+            0
+          ]
+        },
+        "hjointD_5": {
+          "rotation": [
+            0,
+            "-17.189+24.78*math.cos(q.life_time*233.0792-270)",
+            0
+          ]
+        },
+        "hjointI_3": {
+          "rotation": [
+            0,
+            "-17.189+18.621*math.cos(q.life_time*233.0792-90)",
+            0
+          ]
+        },
+        "hjointE_5": {
+          "rotation": [
+            0,
+            "-17.189+24.78*math.cos(q.life_time*233.0792-90)",
+            0
+          ]
+        },
+        "hjointC_4": {
+          "rotation": [
+            0,
+            "17.189+24.78*math.cos(q.life_time*542.4764-90)",
+            0
+          ]
+        },
+        "hjointG_7": {
+          "rotation": [
+            0,
+            "17.189+18.621*math.cos(q.life_time*233.0792-270)",
+            0
+          ]
+        },
+        "hjointI_6": {
+          "rotation": [
+            0,
+            "5.73+18.621*math.cos(q.life_time*268.1442-270)",
+            0
+          ]
+        },
+        "hjointA_3": {
+          "rotation": [
+            0,
+            "17.189+18.621*math.cos(q.life_time*198.7018-270)",
+            0
+          ]
+        },
+        "hjointF_3": {
+          "rotation": [
+            0,
+            "17.189+24.78*math.cos(q.life_time*611.9189-90)",
+            0
+          ]
+        },
+        "hjointH_2": {
+          "rotation": [
+            0,
+            "-5.73+18.621*math.cos(q.life_time*268.1442-270)",
+            0
+          ]
+        },
+        "hjointD_1": {
+          "rotation": [
+            0,
+            "17.189+24.78*math.cos(q.life_time*233.0792-90)",
+            0
+          ]
+        },
+        "hjointJ_1": {
+          "rotation": [
+            0,
+            "-17.189+24.78*math.cos(q.life_time*233.0792-90)",
+            0
+          ]
+        },
+        "hjointC_6": {
+          "rotation": [
+            0,
+            "17.189+18.621*math.cos(q.life_time*233.0792-270)",
+            0
+          ]
+        },
+        "hjointJ_2": {
+          "rotation": [
+            0,
+            "5.73+18.621*math.cos(q.life_time*301.8342-270)",
+            0
+          ]
+        },
+        "hjointJ_3": {
+          "rotation": [
+            0,
+            "-17.189+30.51*math.cos(q.life_time*198.7018-270)",
+            0
+          ]
+        },
+        "hjointC_2": {
+          "rotation": [
+            0,
+            "-5.73+7.592*math.cos(q.life_time*611.9189-90)",
+            0
+          ]
+        },
+        "hjointG_3": {
+          "rotation": [
+            0,
+            "-5.73+7.592*math.cos(q.life_time*611.9189-90)",
+            0
+          ]
+        },
+        "hjointD_4": {
+          "rotation": [
+            0,
+            "28.648+30.51*math.cos(q.life_time*611.9189-270)",
+            0
+          ]
+        },
+        "hjointJ_7": {
+          "rotation": [
+            0,
+            "-17.189+24.78*math.cos(q.life_time*233.0792-90)",
+            0
+          ]
+        },
+        "hjointF_6": {
+          "rotation": [
+            0,
+            "17.189+18.621*math.cos(q.life_time*198.7018-270)",
+            0
+          ]
+        },
+        "hjointF_2": {
+          "rotation": [
+            0,
+            "17.189+18.621*math.cos(q.life_time*198.7018-270)",
+            0
+          ]
+        },
+        "hjointJ_4": {
+          "rotation": [
+            0,
+            "-17.189+24.78*math.cos(q.life_time*233.0792-90)",
+            0
+          ]
+        },
+        "hjointI_4": {
+          "rotation": [
+            0,
+            "-17.189+24.78*math.cos(q.life_time*542.4764-270)",
+            0
+          ]
+        },
+        "mainmodel": {
+          "position": [
+            0,
+            "-1.6-0.852*math.cos(q.life_time*425.5243-270)",
+            0
+          ]
+        },
+        "hjointB_3": {
+          "rotation": [
+            0,
+            "-17.189+41.969*math.cos(q.life_time*542.4764-90)",
+            0
+          ]
+        },
+        "hjointG_4": {
+          "rotation": [
+            0,
+            "5.73+12.791*math.cos(q.life_time*226.135-90)",
+            0
+          ]
+        },
+        "hjointF_1": {
+          "rotation": [
+            0,
+            "28.648+25.969*math.cos(q.life_time*576.8539-90)",
+            0
+          ]
+        },
+        "hjointI_7": {
+          "rotation": [
+            0,
+            "17.189+18.621*math.cos(q.life_time*233.0792-270)",
+            0
+          ]
+        },
+        "hjointD_6": {
+          "rotation": [
+            0,
+            "28.648+30.51*math.cos(q.life_time*611.9189-270)",
+            0
+          ]
+        },
+        "hjointA_2": {
+          "rotation": [
+            0,
+            "28.648+20.054*math.cos(q.life_time*301.8342-90)",
+            0
+          ]
+        },
+        "hjointC_3": {
+          "rotation": [
+            0,
+            "5.73+12.791*math.cos(q.life_time*226.135-90)",
+            0
+          ]
+        },
+        "hjointH_5": {
+          "rotation": [
+            0,
+            "-5.73+18.621*math.cos(q.life_time*268.1442-90)",
+            0
+          ]
+        },
+        "hjointB_4": {
+          "rotation": [
+            0,
+            "-28.648+30.51*math.cos(q.life_time*611.9189-90)",
+            0
+          ]
+        },
+        "hjointB_1": {
+          "rotation": [
+            0,
+            "5.73+18.621*math.cos(q.life_time*301.8342-270)",
+            0
+          ]
+        },
+        "hjointH_4": {
+          "rotation": [
+            0,
+            "17.189+18.621*math.cos(q.life_time*233.0792-270)",
+            0
+          ]
+        },
+        "hjointJ_6": {
+          "rotation": [
+            0,
+            "5.73+25.969*math.cos(q.life_time*268.1442-90)",
+            0
+          ]
+        },
+        "hjointF_7": {
+          "rotation": [
+            0,
+            "-28.648+25.969*math.cos(q.life_time*576.8539-270)",
+            0
+          ]
+        },
+        "hjointE_3": {
+          "rotation": [
+            0,
+            "-5.73+25.969*math.cos(q.life_time*268.1442-270)",
+            0
+          ]
+        },
+        "hjointF_5": {
+          "rotation": [
+            0,
+            "-28.648+20.054*math.cos(q.life_time*301.8342-270)",
+            0
+          ]
+        },
+        "hjointH_3": {
+          "rotation": [
+            0,
+            "17.189+24.78*math.cos(q.life_time*542.4764-90)",
+            0
+          ]
+        },
+        "hjointA_1": {
+          "rotation": [
+            0,
+            "-28.648+25.969*math.cos(q.life_time*576.8539-270)",
+            0
+          ]
+        },
+        "hjointI_2": {
+          "rotation": [
+            0,
+            "5.73+18.621*math.cos(q.life_time*268.1442-270)",
+            0
+          ]
+        },
+        "hjointG_1": {
+          "rotation": [
+            0,
+            "-5.73+7.592*math.cos(q.life_time*611.9189-90)",
+            0
+          ]
+        },
+        "hjointG_5": {
+          "rotation": [
+            0,
+            "5.73+7.592*math.cos(q.life_time*611.9189-270)",
+            0
+          ]
+        },
+        "hjointH_6": {
+          "rotation": [
+            0,
+            "17.189+18.621*math.cos(q.life_time*233.0792-270)",
+            0
+          ]
+        },
+        "hjointC_1": {
+          "rotation": [
+            0,
+            "-17.189+18.621*math.cos(q.life_time*233.0792-90)",
+            0
+          ]
+        },
+        "hjointD_2": {
+          "rotation": [
+            0,
+            "5.73+18.621*math.cos(q.life_time*301.8342-270)",
+            0
+          ]
+        },
+        "hjointD_3": {
+          "rotation": [
+            0,
+            "17.189+41.969*math.cos(q.life_time*542.4764-270)",
+            0
+          ]
+        },
+        "hjointG_2": {
+          "rotation": [
+            0,
+            "17.189+18.621*math.cos(q.life_time*233.0792-270)",
+            0
+          ]
+        },
+        "hjointH_1": {
+          "rotation": [
+            0,
+            "5.73+18.621*math.cos(q.life_time*268.1442-270)",
+            0
+          ]
+        },
+        "hjointI_1": {
+          "rotation": [
+            0,
+            "-5.73+18.621*math.cos(q.life_time*268.1442-270)",
+            0
+          ]
+        },
+        "hjointD_7": {
+          "rotation": [
+            0,
+            "17.189+41.969*math.cos(q.life_time*542.4764-270)",
+            0
+          ]
+        },
+        "hjointF_4": {
+          "rotation": [
+            0,
+            "-17.189+18.621*math.cos(q.life_time*198.7018-90)",
+            0
+          ]
+        },
+        "hjointA_4": {
+          "rotation": [
+            0,
+            "17.189+24.78*math.cos(q.life_time*611.9189-90)",
+            0
+          ]
+        },
+        "hjointI_5": {
+          "rotation": [
+            0,
+            "5.73+18.621*math.cos(q.life_time*268.1442-90)",
+            0
+          ]
+        },
+        "hjointH_7": {
+          "rotation": [
+            0,
+            "-5.73+18.621*math.cos(q.life_time*268.1442-270)",
+            0
+          ]
+        },
+        "hjointG_6": {
+          "rotation": [
+            0,
+            "-17.189+24.78*math.cos(q.life_time*542.4764-270)",
+            0
+          ]
+        },
+        "hjointE_4": {
+          "rotation": [
+            0,
+            "5.73+18.621*math.cos(q.life_time*301.8342-270)",
+            0
+          ]
+        },
+        "hjointE_2": {
+          "rotation": [
+            0,
+            "17.189+24.78*math.cos(q.life_time*233.0792-270)",
+            0
+          ]
+        },
+        "hjointC_5": {
+          "rotation": [
+            0,
+            "-5.73+7.592*math.cos(q.life_time*611.9189-90)",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

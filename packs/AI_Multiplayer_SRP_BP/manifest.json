@@ -1,0 +1,67 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "AI Multiplayer + Scape and Run: Parasites",
+    "description": "AI players that act like real multiplayer users, fighting an evolving parasite apocalypse (Scape and Run: Parasites port). Enable Beta APIs.",
+    "uuid": "5f1b8c2e-7a3d-4e91-b6c4-2d8e9f0a1b37",
+    "version": [
+      2,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      30
+    ]
+  },
+  "modules": [
+    {
+      "description": "AI Multiplayer + Parasites data",
+      "type": "data",
+      "uuid": "8c3e1a7f-2b4d-4c65-9e18-7f0a6d3b5c21",
+      "version": [
+        2,
+        0,
+        0
+      ]
+    },
+    {
+      "description": "AI Multiplayer + Parasites scripts",
+      "type": "script",
+      "language": "javascript",
+      "uuid": "e2a9d4c1-6f3b-4a87-8d25-1c7e0b9f4a63",
+      "version": [
+        2,
+        0,
+        0
+      ],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.11.0-beta"
+    },
+    {
+      "module_name": "@minecraft/server-ui",
+      "version": "2.0.0"
+    },
+    {
+      "uuid": "3d7f2b9a-1e6c-4f08-a5d3-9b2c8e7f1a40",
+      "version": [
+        2,
+        0,
+        0
+      ]
+    }
+  ],
+  "metadata": {
+    "authors": [
+      "AI Multiplayer authors",
+      "Dhanantry (Scape and Run: Parasites)"
+    ],
+    "product_type": "addon"
+  }
+}

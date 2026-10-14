@@ -1,0 +1,33 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "srp:sim_dragone",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/srp/infdragone"
+      },
+      "geometry": {
+        "default": "geometry.srp.modelinfdragone"
+      },
+      "animations": {
+        "move": "animation.srp.modelinfdragone.move",
+        "idle": "animation.srp.modelinfdragone.idle",
+        "ctrl.move": "controller.animation.srp.move"
+      },
+      "scripts": {
+        "animate": [
+          "ctrl.move"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.srp.default"
+      ],
+      "spawn_egg": {
+        "texture": "srp_egg_infdragone"
+      }
+    }
+  }
+}

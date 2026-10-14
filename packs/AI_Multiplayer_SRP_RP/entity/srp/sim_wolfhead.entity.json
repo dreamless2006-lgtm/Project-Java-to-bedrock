@@ -1,0 +1,33 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "srp:sim_wolfhead",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/srp/wolfh"
+      },
+      "geometry": {
+        "default": "geometry.srp.modelinfwolfhead"
+      },
+      "animations": {
+        "move": "animation.srp.modelinfwolfhead.move",
+        "idle": "animation.srp.modelinfwolfhead.idle",
+        "ctrl.move": "controller.animation.srp.move"
+      },
+      "scripts": {
+        "animate": [
+          "ctrl.move"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.srp.default"
+      ],
+      "spawn_egg": {
+        "texture": "srp_egg_infwolfhead"
+      }
+    }
+  }
+}

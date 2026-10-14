@@ -1,0 +1,771 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.srp.modellum.move": {
+      "loop": true,
+      "bones": {
+        "taclejointBL": {
+          "rotation": [
+            0,
+            "5.586*math.cos(q.life_time*101.7573-90)",
+            0
+          ]
+        },
+        "taclejointFL_3": {
+          "rotation": [
+            0,
+            "5.586*math.cos(q.life_time*101.7573-90)",
+            0
+          ]
+        },
+        "jointLM_2": {
+          "rotation": [
+            0,
+            0,
+            "7.878*math.cos(q.life_time*100.8406-90)"
+          ]
+        },
+        "taclejointFR_4": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*112.2997-90)",
+            "5.586*math.cos(q.life_time*101.7573-90)"
+          ]
+        },
+        "taclejointLB_5": {
+          "rotation": [
+            0,
+            "4.297*math.cos(q.life_time*226.8913-90)",
+            0
+          ]
+        },
+        "taclejointFL_1": {
+          "rotation": [
+            0,
+            "4.323*math.cos(q.life_time*113.1935-90)",
+            0
+          ]
+        },
+        "taclejointFR": {
+          "rotation": [
+            0,
+            "4.959*math.cos(q.life_time*101.4135-90)",
+            0
+          ]
+        },
+        "taclejointFR_2": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*112.2997-90)",
+            0
+          ]
+        },
+        "taclejointRB_1": {
+          "rotation": [
+            0,
+            "4.326*math.cos(q.life_time*113.2738-90)",
+            0
+          ]
+        },
+        "taclejointRB_2": {
+          "rotation": [
+            "4.956*math.cos(q.life_time*101.7573-90)",
+            "4.323*math.cos(q.life_time*100.6114-90)",
+            0
+          ]
+        },
+        "taclejointBL_4": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*100.4739-90)",
+            "5.586*math.cos(q.life_time*101.7573-90)"
+          ]
+        },
+        "jointLM": {
+          "rotation": [
+            0,
+            0,
+            "-8.594+7.878*math.cos(q.life_time*100.8406-90)"
+          ]
+        },
+        "taclejointBR_4": {
+          "rotation": [
+            0,
+            "5.586*math.cos(q.life_time*101.7573-90)",
+            "4.956*math.cos(q.life_time*112.2997-90)"
+          ]
+        },
+        "taclejointBR_2": {
+          "rotation": [
+            0,
+            "4.959*math.cos(q.life_time*101.4135-90)",
+            0
+          ]
+        },
+        "taclejointFL_4": {
+          "rotation": [
+            0,
+            "4.323*math.cos(q.life_time*113.1935-90)",
+            "4.956*math.cos(q.life_time*112.2997-90)"
+          ]
+        },
+        "taclejointBL_1": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*100.4739-90)",
+            0
+          ]
+        },
+        "taclejointFL_2": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*100.4739-90)",
+            0
+          ]
+        },
+        "taclejointLB_4": {
+          "rotation": [
+            0,
+            "5.595*math.cos(q.life_time*100.4739-90)",
+            0
+          ]
+        },
+        "taclejointBR_1": {
+          "rotation": [
+            0,
+            "4.323*math.cos(q.life_time*113.1935-90)",
+            0
+          ]
+        },
+        "taclejointLF_3": {
+          "rotation": [
+            "5.595*math.cos(q.life_time*100.4739-90)",
+            "4.326*math.cos(q.life_time*113.2738-90)",
+            0
+          ]
+        },
+        "taclejointLB_3": {
+          "rotation": [
+            "4.326*math.cos(q.life_time*113.2738-90)",
+            "4.956*math.cos(q.life_time*101.7573-90)",
+            0
+          ]
+        },
+        "taclejointLB": {
+          "rotation": [
+            0,
+            "4.297*math.cos(q.life_time*226.8913-90)",
+            0
+          ]
+        },
+        "taclejointFL_5": {
+          "rotation": [
+            0,
+            "4.959*math.cos(q.life_time*101.4135-90)",
+            "4.959*math.cos(q.life_time*101.4135-90)"
+          ]
+        },
+        "taclejointBL_5": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*112.2997-90)",
+            "4.959*math.cos(q.life_time*101.4135-90)"
+          ]
+        },
+        "taclejointRF_5": {
+          "rotation": [
+            0,
+            "4.326*math.cos(q.life_time*113.2738-90)",
+            0
+          ]
+        },
+        "taclejointBL_3": {
+          "rotation": [
+            0,
+            "4.323*math.cos(q.life_time*113.1935-90)",
+            0
+          ]
+        },
+        "taclejointLF_1": {
+          "rotation": [
+            0,
+            "4.326*math.cos(q.life_time*113.2738-90)",
+            0
+          ]
+        },
+        "taclejointRB_3": {
+          "rotation": [
+            "4.323*math.cos(q.life_time*100.6114-90)",
+            "4.297*math.cos(q.life_time*226.8913-90)",
+            0
+          ]
+        },
+        "taclejointRF": {
+          "rotation": [
+            0,
+            "4.326*math.cos(q.life_time*113.2738-90)",
+            0
+          ]
+        },
+        "taclejointFR_3": {
+          "rotation": [
+            0,
+            "4.323*math.cos(q.life_time*113.1935-90)",
+            0
+          ]
+        },
+        "taclejointLF": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*101.7573-90)",
+            0
+          ]
+        },
+        "taclejointRF_4": {
+          "rotation": [
+            0,
+            "4.297*math.cos(q.life_time*226.8913-90)",
+            0
+          ]
+        },
+        "taclejointRF_2": {
+          "rotation": [
+            "5.595*math.cos(q.life_time*100.4739-90)",
+            "4.323*math.cos(q.life_time*100.6114-90)",
+            0
+          ]
+        },
+        "taclejointLB_1": {
+          "rotation": [
+            0,
+            "4.323*math.cos(q.life_time*100.6114-90)",
+            0
+          ]
+        },
+        "taclejointRB": {
+          "rotation": [
+            0,
+            "5.595*math.cos(q.life_time*100.4739-90)",
+            0
+          ]
+        },
+        "taclejointFL": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*112.2997-90)",
+            0
+          ]
+        },
+        "taclejointLF_2": {
+          "rotation": [
+            "4.297*math.cos(q.life_time*226.8913-90)",
+            "4.323*math.cos(q.life_time*100.6114-90)",
+            0
+          ]
+        },
+        "taclejointFR_5": {
+          "rotation": [
+            0,
+            "4.959*math.cos(q.life_time*101.4135-90)",
+            "4.323*math.cos(q.life_time*113.1935-90)"
+          ]
+        },
+        "jointRM": {
+          "rotation": [
+            0,
+            0,
+            "8.594+7.878*math.cos(q.life_time*100.8406-270)"
+          ]
+        },
+        "taclejointBR_3": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*100.4739-90)",
+            0
+          ]
+        },
+        "taclejointLB_2": {
+          "rotation": [
+            "4.326*math.cos(q.life_time*113.2738-90)",
+            "4.323*math.cos(q.life_time*100.6114-90)",
+            0
+          ]
+        },
+        "jointLM_1": {
+          "rotation": [
+            0,
+            0,
+            "7.878*math.cos(q.life_time*100.8406-90)"
+          ]
+        },
+        "taclejointRB_5": {
+          "rotation": [
+            0,
+            "4.326*math.cos(q.life_time*113.2738-90)",
+            0
+          ]
+        },
+        "taclejointRF_3": {
+          "rotation": [
+            "4.323*math.cos(q.life_time*100.6114-90)",
+            "4.956*math.cos(q.life_time*101.7573-90)",
+            0
+          ]
+        },
+        "taclejointFR_1": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*100.4739-90)",
+            0
+          ]
+        },
+        "jointRM_2": {
+          "rotation": [
+            0,
+            0,
+            "7.878*math.cos(q.life_time*100.8406-90)"
+          ]
+        },
+        "taclejointBR_5": {
+          "rotation": [
+            0,
+            "4.323*math.cos(q.life_time*113.1935-90)",
+            "4.956*math.cos(q.life_time*100.4739-90)"
+          ]
+        },
+        "taclejointRB_4": {
+          "rotation": [
+            0,
+            "4.297*math.cos(q.life_time*226.8913-90)",
+            0
+          ]
+        },
+        "taclejointBL_2": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*100.4739-90)",
+            0
+          ]
+        },
+        "taclejointLF_5": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*101.7573-90)",
+            0
+          ]
+        },
+        "taclejointLF_4": {
+          "rotation": [
+            0,
+            "5.595*math.cos(q.life_time*100.4739-90)",
+            0
+          ]
+        },
+        "taclejointBR": {
+          "rotation": [
+            0,
+            "4.323*math.cos(q.life_time*113.1935-90)",
+            0
+          ]
+        },
+        "taclejointRF_1": {
+          "rotation": [
+            0,
+            "4.297*math.cos(q.life_time*226.8913-90)",
+            0
+          ]
+        },
+        "jointRM_1": {
+          "rotation": [
+            0,
+            0,
+            "7.878*math.cos(q.life_time*100.8406-90)"
+          ]
+        }
+      }
+    },
+    "animation.srp.modellum.idle": {
+      "loop": true,
+      "bones": {
+        "taclejointBL_4": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*100.4739-90)",
+            "5.586*math.cos(q.life_time*101.7573-90)"
+          ]
+        },
+        "taclejointBR": {
+          "rotation": [
+            0,
+            "4.323*math.cos(q.life_time*113.1935-90)",
+            0
+          ]
+        },
+        "taclejointFR": {
+          "rotation": [
+            0,
+            "4.959*math.cos(q.life_time*101.4135-90)",
+            0
+          ]
+        },
+        "jointRM_2": {
+          "rotation": [
+            0,
+            0,
+            "7.878*math.cos(q.life_time*100.8406-90)"
+          ]
+        },
+        "taclejointRF_4": {
+          "rotation": [
+            0,
+            "4.297*math.cos(q.life_time*226.8913-90)",
+            0
+          ]
+        },
+        "taclejointRF_5": {
+          "rotation": [
+            0,
+            "4.326*math.cos(q.life_time*113.2738-90)",
+            0
+          ]
+        },
+        "taclejointRB_5": {
+          "rotation": [
+            0,
+            "4.326*math.cos(q.life_time*113.2738-90)",
+            0
+          ]
+        },
+        "taclejointFL_2": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*100.4739-90)",
+            0
+          ]
+        },
+        "taclejointFR_2": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*112.2997-90)",
+            0
+          ]
+        },
+        "taclejointBR_2": {
+          "rotation": [
+            0,
+            "4.959*math.cos(q.life_time*101.4135-90)",
+            0
+          ]
+        },
+        "taclejointRF_2": {
+          "rotation": [
+            "5.595*math.cos(q.life_time*100.4739-90)",
+            "4.323*math.cos(q.life_time*100.6114-90)",
+            0
+          ]
+        },
+        "taclejointRB_4": {
+          "rotation": [
+            0,
+            "4.297*math.cos(q.life_time*226.8913-90)",
+            0
+          ]
+        },
+        "taclejointBL": {
+          "rotation": [
+            0,
+            "5.586*math.cos(q.life_time*101.7573-90)",
+            0
+          ]
+        },
+        "taclejointBL_3": {
+          "rotation": [
+            0,
+            "4.323*math.cos(q.life_time*113.1935-90)",
+            0
+          ]
+        },
+        "taclejointBR_3": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*100.4739-90)",
+            0
+          ]
+        },
+        "taclejointLB_3": {
+          "rotation": [
+            "4.326*math.cos(q.life_time*113.2738-90)",
+            "4.956*math.cos(q.life_time*101.7573-90)",
+            0
+          ]
+        },
+        "taclejointLB_1": {
+          "rotation": [
+            0,
+            "4.323*math.cos(q.life_time*100.6114-90)",
+            0
+          ]
+        },
+        "taclejointFL_3": {
+          "rotation": [
+            0,
+            "5.586*math.cos(q.life_time*101.7573-90)",
+            0
+          ]
+        },
+        "taclejointLB_2": {
+          "rotation": [
+            "4.326*math.cos(q.life_time*113.2738-90)",
+            "4.323*math.cos(q.life_time*100.6114-90)",
+            0
+          ]
+        },
+        "taclejointRB_3": {
+          "rotation": [
+            "4.323*math.cos(q.life_time*100.6114-90)",
+            "4.297*math.cos(q.life_time*226.8913-90)",
+            0
+          ]
+        },
+        "taclejointRB_1": {
+          "rotation": [
+            0,
+            "4.326*math.cos(q.life_time*113.2738-90)",
+            0
+          ]
+        },
+        "jointLM": {
+          "rotation": [
+            0,
+            0,
+            "-8.594+7.878*math.cos(q.life_time*100.8406-90)"
+          ]
+        },
+        "taclejointRF": {
+          "rotation": [
+            0,
+            "4.326*math.cos(q.life_time*113.2738-90)",
+            0
+          ]
+        },
+        "taclejointRF_3": {
+          "rotation": [
+            "4.323*math.cos(q.life_time*100.6114-90)",
+            "4.956*math.cos(q.life_time*101.7573-90)",
+            0
+          ]
+        },
+        "taclejointLF_1": {
+          "rotation": [
+            0,
+            "4.326*math.cos(q.life_time*113.2738-90)",
+            0
+          ]
+        },
+        "taclejointLB": {
+          "rotation": [
+            0,
+            "4.297*math.cos(q.life_time*226.8913-90)",
+            0
+          ]
+        },
+        "taclejointLF_2": {
+          "rotation": [
+            "4.297*math.cos(q.life_time*226.8913-90)",
+            "4.323*math.cos(q.life_time*100.6114-90)",
+            0
+          ]
+        },
+        "taclejointFL_4": {
+          "rotation": [
+            0,
+            "4.323*math.cos(q.life_time*113.1935-90)",
+            "4.956*math.cos(q.life_time*112.2997-90)"
+          ]
+        },
+        "jointLM_2": {
+          "rotation": [
+            0,
+            0,
+            "7.878*math.cos(q.life_time*100.8406-90)"
+          ]
+        },
+        "taclejointFR_3": {
+          "rotation": [
+            0,
+            "4.323*math.cos(q.life_time*113.1935-90)",
+            0
+          ]
+        },
+        "taclejointRF_1": {
+          "rotation": [
+            0,
+            "4.297*math.cos(q.life_time*226.8913-90)",
+            0
+          ]
+        },
+        "taclejointBL_2": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*100.4739-90)",
+            0
+          ]
+        },
+        "taclejointFR_4": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*112.2997-90)",
+            "5.586*math.cos(q.life_time*101.7573-90)"
+          ]
+        },
+        "taclejointLF_5": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*101.7573-90)",
+            0
+          ]
+        },
+        "taclejointFL_5": {
+          "rotation": [
+            0,
+            "4.959*math.cos(q.life_time*101.4135-90)",
+            "4.959*math.cos(q.life_time*101.4135-90)"
+          ]
+        },
+        "taclejointLB_4": {
+          "rotation": [
+            0,
+            "5.595*math.cos(q.life_time*100.4739-90)",
+            0
+          ]
+        },
+        "taclejointLB_5": {
+          "rotation": [
+            0,
+            "4.297*math.cos(q.life_time*226.8913-90)",
+            0
+          ]
+        },
+        "taclejointFR_1": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*100.4739-90)",
+            0
+          ]
+        },
+        "taclejointRB": {
+          "rotation": [
+            0,
+            "5.595*math.cos(q.life_time*100.4739-90)",
+            0
+          ]
+        },
+        "taclejointLF": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*101.7573-90)",
+            0
+          ]
+        },
+        "jointRM_1": {
+          "rotation": [
+            0,
+            0,
+            "7.878*math.cos(q.life_time*100.8406-90)"
+          ]
+        },
+        "taclejointBL_5": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*112.2997-90)",
+            "4.959*math.cos(q.life_time*101.4135-90)"
+          ]
+        },
+        "taclejointFL_1": {
+          "rotation": [
+            0,
+            "4.323*math.cos(q.life_time*113.1935-90)",
+            0
+          ]
+        },
+        "taclejointLF_4": {
+          "rotation": [
+            0,
+            "5.595*math.cos(q.life_time*100.4739-90)",
+            0
+          ]
+        },
+        "taclejointBL_1": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*100.4739-90)",
+            0
+          ]
+        },
+        "taclejointFR_5": {
+          "rotation": [
+            0,
+            "4.959*math.cos(q.life_time*101.4135-90)",
+            "4.323*math.cos(q.life_time*113.1935-90)"
+          ]
+        },
+        "taclejointBR_1": {
+          "rotation": [
+            0,
+            "4.323*math.cos(q.life_time*113.1935-90)",
+            0
+          ]
+        },
+        "taclejointBR_4": {
+          "rotation": [
+            0,
+            "5.586*math.cos(q.life_time*101.7573-90)",
+            "4.956*math.cos(q.life_time*112.2997-90)"
+          ]
+        },
+        "taclejointLF_3": {
+          "rotation": [
+            "5.595*math.cos(q.life_time*100.4739-90)",
+            "4.326*math.cos(q.life_time*113.2738-90)",
+            0
+          ]
+        },
+        "taclejointFL": {
+          "rotation": [
+            0,
+            "4.956*math.cos(q.life_time*112.2997-90)",
+            0
+          ]
+        },
+        "taclejointBR_5": {
+          "rotation": [
+            0,
+            "4.323*math.cos(q.life_time*113.1935-90)",
+            "4.956*math.cos(q.life_time*100.4739-90)"
+          ]
+        },
+        "taclejointRB_2": {
+          "rotation": [
+            "4.956*math.cos(q.life_time*101.7573-90)",
+            "4.323*math.cos(q.life_time*100.6114-90)",
+            0
+          ]
+        },
+        "jointRM": {
+          "rotation": [
+            0,
+            0,
+            "8.594+7.878*math.cos(q.life_time*100.8406-270)"
+          ]
+        },
+        "jointLM_1": {
+          "rotation": [
+            0,
+            0,
+            "7.878*math.cos(q.life_time*100.8406-90)"
+          ]
+        }
+      }
+    }
+  }
+}

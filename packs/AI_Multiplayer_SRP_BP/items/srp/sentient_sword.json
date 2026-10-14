@@ -1,0 +1,41 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:item": {
+    "description": {
+      "identifier": "srp:sentient_sword",
+      "menu_category": {
+        "category": "equipment",
+        "group": "minecraft:itemGroup.name.sword"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "texture": "srp_sentient_sword"
+      },
+      "minecraft:display_name": {
+        "value": "§6Sentient Greatsword"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:hand_equipped": true,
+      "minecraft:damage": 15,
+      "minecraft:durability": {
+        "max_durability": 1500
+      },
+      "minecraft:enchantable": {
+        "slot": "sword",
+        "value": 15
+      },
+      "minecraft:repairable": {
+        "repair_items": [
+          {
+            "items": [
+              "srp:living_core"
+            ],
+            "repair_amount": 250
+          }
+        ]
+      },
+      "minecraft:can_destroy_in_creative": false
+    }
+  }
+}

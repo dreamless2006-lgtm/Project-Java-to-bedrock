@@ -1,0 +1,20 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:item": {
+    "description": {
+      "identifier": "srp:ada_arachnida_drop",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "texture": "srp_ada_arachnida_drop"
+      },
+      "minecraft:display_name": {
+        "value": "§bArachnida Claw"
+      },
+      "minecraft:max_stack_size": 64
+    }
+  }
+}

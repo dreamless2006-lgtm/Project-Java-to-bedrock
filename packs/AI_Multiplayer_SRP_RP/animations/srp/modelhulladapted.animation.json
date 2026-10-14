@@ -1,0 +1,120 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.srp.modelhulladapted.move": {
+      "loop": true,
+      "bones": {
+        "taclejointR2": {
+          "rotation": [
+            0,
+            "5.73*math.cos(q.life_time*114.5916)",
+            0
+          ]
+        },
+        "taclejointL2": {
+          "rotation": [
+            0,
+            "5.73*math.cos(q.life_time*114.5916-180)",
+            0
+          ]
+        },
+        "mainbody": {
+          "position": [
+            0,
+            "(-0.64*math.cos(q.modified_distance_moved*37.8152))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointBRL": {
+          "rotation": [
+            "(28.648*math.cos(q.modified_distance_moved*18.9076-360))*math.pow(q.modified_move_speed,2)",
+            0,
+            0
+          ]
+        },
+        "jointFLL": {
+          "rotation": [
+            "(28.648*math.cos(q.modified_distance_moved*18.9076-360))*math.pow(q.modified_move_speed,2)",
+            0,
+            0
+          ]
+        },
+        "jointM": {
+          "rotation": [
+            "6.36*math.cos(q.life_time*228.0372-360)",
+            0,
+            0
+          ]
+        },
+        "jointFRL": {
+          "rotation": [
+            "(28.648*math.cos(q.modified_distance_moved*18.9076-180))*math.pow(q.modified_move_speed,2)",
+            0,
+            0
+          ]
+        },
+        "taclejointL1": {
+          "rotation": [
+            0,
+            0,
+            "5.73*math.cos(q.life_time*114.5916-180)"
+          ]
+        },
+        "jointBLL": {
+          "rotation": [
+            "(28.648*math.cos(q.modified_distance_moved*18.9076-180))*math.pow(q.modified_move_speed,2)",
+            0,
+            0
+          ]
+        },
+        "taclejointR1": {
+          "rotation": [
+            0,
+            0,
+            "5.73*math.cos(q.life_time*114.5916)"
+          ]
+        }
+      }
+    },
+    "animation.srp.modelhulladapted.idle": {
+      "loop": true,
+      "bones": {
+        "taclejointL2": {
+          "rotation": [
+            0,
+            "5.73*math.cos(q.life_time*114.5916-180)",
+            0
+          ]
+        },
+        "taclejointL1": {
+          "rotation": [
+            0,
+            0,
+            "5.73*math.cos(q.life_time*114.5916-180)"
+          ]
+        },
+        "jointM": {
+          "rotation": [
+            "6.36*math.cos(q.life_time*228.0372-360)",
+            0,
+            0
+          ]
+        },
+        "taclejointR1": {
+          "rotation": [
+            0,
+            0,
+            "5.73*math.cos(q.life_time*114.5916)"
+          ]
+        },
+        "taclejointR2": {
+          "rotation": [
+            0,
+            "5.73*math.cos(q.life_time*114.5916)",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

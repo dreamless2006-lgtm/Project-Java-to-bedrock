@@ -1,0 +1,33 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "srp:dispatcher_siv",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/srp/dodsiv"
+      },
+      "geometry": {
+        "default": "geometry.srp.modeldodsiv"
+      },
+      "animations": {
+        "move": "animation.srp.modeldodsiv.move",
+        "idle": "animation.srp.modeldodsiv.idle",
+        "ctrl.move": "controller.animation.srp.move"
+      },
+      "scripts": {
+        "animate": [
+          "ctrl.move"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.srp.default"
+      ],
+      "spawn_egg": {
+        "texture": "srp_egg_dodsiv"
+      }
+    }
+  }
+}

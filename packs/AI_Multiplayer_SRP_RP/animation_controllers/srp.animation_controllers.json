@@ -1,0 +1,54 @@
+{
+  "format_version": "1.10.0",
+  "animation_controllers": {
+    "controller.animation.srp.move": {
+      "initial_state": "moving",
+      "states": {
+        "moving": {
+          "animations": [
+            "move"
+          ],
+          "transitions": [
+            {
+              "still": "q.modified_move_speed < 0.03"
+            }
+          ],
+          "blend_transition": 0.3
+        },
+        "still": {
+          "animations": [
+            "idle"
+          ],
+          "transitions": [
+            {
+              "moving": "q.modified_move_speed >= 0.03"
+            }
+          ],
+          "blend_transition": 0.3
+        }
+      }
+    },
+    "controller.animation.srp.attack": {
+      "initial_state": "default",
+      "states": {
+        "default": {
+          "transitions": [
+            {
+              "attacking": "v.attack_time > 0.0"
+            }
+          ]
+        },
+        "attacking": {
+          "animations": [
+            "attack"
+          ],
+          "transitions": [
+            {
+              "default": "q.all_animations_finished && v.attack_time <= 0.0"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

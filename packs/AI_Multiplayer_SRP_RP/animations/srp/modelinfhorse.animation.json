@@ -1,0 +1,188 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.srp.modelinfhorse.move": {
+      "loop": true,
+      "bones": {
+        "popX1_2": {
+          "position": [
+            "0.259*math.cos(q.life_time*320.3407)",
+            0,
+            0
+          ]
+        },
+        "jointBLL": {
+          "rotation": [
+            "(91.673*math.cos(q.modified_distance_moved*34.3775-180))*math.pow(q.modified_move_speed,2)",
+            0,
+            0
+          ]
+        },
+        "mainbody": {
+          "position": [
+            0,
+            "(-0.8*math.cos(q.modified_distance_moved*68.7549))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointFLL": {
+          "rotation": [
+            "(91.673*math.cos(q.modified_distance_moved*34.3775-360))*math.pow(q.modified_move_speed,2)",
+            0,
+            0
+          ]
+        },
+        "jointFRL": {
+          "rotation": [
+            "(91.673*math.cos(q.modified_distance_moved*34.3775-180))*math.pow(q.modified_move_speed,2)",
+            0,
+            0
+          ]
+        },
+        "pop1x_1": {
+          "rotation": [
+            "9.282*math.cos(q.life_time*320.3407)",
+            0,
+            0
+          ]
+        },
+        "popX1_4": {
+          "position": [
+            "0.24*math.cos(q.life_time*228.9539)",
+            0,
+            0
+          ]
+        },
+        "jointBRL": {
+          "rotation": [
+            "(91.673*math.cos(q.modified_distance_moved*34.3775-360))*math.pow(q.modified_move_speed,2)",
+            0,
+            0
+          ]
+        },
+        "popX1_3": {
+          "position": [
+            "0.33*math.cos(q.life_time*254.6225-360)",
+            0,
+            0
+          ]
+        },
+        "popX1_1": {
+          "position": [
+            "0.418*math.cos(q.life_time*219.0074)",
+            0,
+            0
+          ]
+        },
+        "popX1": {
+          "position": [
+            "0.24*math.cos(q.life_time*228.9539)",
+            0,
+            0
+          ]
+        },
+        "pop1x": {
+          "rotation": [
+            "14.954*math.cos(q.life_time*219.0074)",
+            0,
+            0
+          ]
+        },
+        "jointm": {
+          "rotation": [
+            "14.324*math.cos(q.life_time*228.9539-360)",
+            0,
+            0
+          ]
+        },
+        "pop1x_2": {
+          "rotation": [
+            "11.832*math.cos(q.life_time*254.6225-360)",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.srp.modelinfhorse.idle": {
+      "loop": true,
+      "bones": {
+        "popX1_2": {
+          "position": [
+            "0.259*math.cos(q.life_time*320.3407)",
+            0,
+            0
+          ]
+        },
+        "pop1x": {
+          "rotation": [
+            "14.954*math.cos(q.life_time*219.0074)",
+            0,
+            0
+          ]
+        },
+        "popX1": {
+          "position": [
+            "0.24*math.cos(q.life_time*228.9539)",
+            0,
+            0
+          ]
+        },
+        "pop1x_2": {
+          "rotation": [
+            "11.832*math.cos(q.life_time*254.6225-360)",
+            0,
+            0
+          ]
+        },
+        "popX1_3": {
+          "position": [
+            "0.33*math.cos(q.life_time*254.6225-360)",
+            0,
+            0
+          ]
+        },
+        "jointm": {
+          "rotation": [
+            "14.324*math.cos(q.life_time*228.9539-360)",
+            0,
+            0
+          ]
+        },
+        "pop1x_1": {
+          "rotation": [
+            "9.282*math.cos(q.life_time*320.3407)",
+            0,
+            0
+          ]
+        },
+        "popX1_1": {
+          "position": [
+            "0.418*math.cos(q.life_time*219.0074)",
+            0,
+            0
+          ]
+        },
+        "popX1_4": {
+          "position": [
+            "0.24*math.cos(q.life_time*228.9539)",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.srp.modelinfhorse.always": {
+      "loop": true,
+      "bones": {
+        "jointH": {
+          "rotation": [
+            "0.9167*q.target_x_rotation",
+            "0.9167*q.target_y_rotation",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

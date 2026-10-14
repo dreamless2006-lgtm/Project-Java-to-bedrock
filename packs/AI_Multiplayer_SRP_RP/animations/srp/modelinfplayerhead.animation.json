@@ -1,0 +1,133 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.srp.modelinfplayerhead.move": {
+      "loop": true,
+      "bones": {
+        "jointFRLX": {
+          "rotation": [
+            0,
+            "(17.189*math.cos(q.modified_distance_moved*27.502-191.46))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointBBLLY": {
+          "rotation": [
+            0,
+            0,
+            "(17.189*math.cos(q.modified_distance_moved*27.502-122.7))*q.modified_move_speed"
+          ]
+        },
+        "jointBRLY": {
+          "rotation": [
+            0,
+            0,
+            "(17.189*math.cos(q.modified_distance_moved*27.502-122.7))*q.modified_move_speed"
+          ]
+        },
+        "jointFFLLX": {
+          "rotation": [
+            0,
+            "(13.751*math.cos(q.modified_distance_moved*27.502-11.46))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointBLLX": {
+          "rotation": [
+            0,
+            "(25.783*math.cos(q.modified_distance_moved*27.502-11.46))*q.modified_move_speed",
+            0
+          ]
+        },
+        "mainbody": {
+          "position": [
+            0,
+            "(-0.32*math.cos(q.modified_distance_moved*55.0039-360))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointBRLX": {
+          "rotation": [
+            0,
+            "(25.783*math.cos(q.modified_distance_moved*27.502-11.46))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointBLLY": {
+          "rotation": [
+            0,
+            0,
+            "(17.189*math.cos(q.modified_distance_moved*27.502-302.7))*q.modified_move_speed"
+          ]
+        },
+        "jointFLLY": {
+          "rotation": [
+            0,
+            0,
+            "(17.189*math.cos(q.modified_distance_moved*27.502-122.7))*q.modified_move_speed"
+          ]
+        },
+        "jointBBRLY": {
+          "rotation": [
+            0,
+            0,
+            "(17.189*math.cos(q.modified_distance_moved*27.502-302.7))*q.modified_move_speed"
+          ]
+        },
+        "jointFLLX": {
+          "rotation": [
+            0,
+            "(17.189*math.cos(q.modified_distance_moved*27.502-191.46))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointFFLLY": {
+          "rotation": [
+            0,
+            0,
+            "(17.189*math.cos(q.modified_distance_moved*27.502-302.7))*q.modified_move_speed"
+          ]
+        },
+        "jointBBRLX": {
+          "rotation": [
+            0,
+            "(25.783*math.cos(q.modified_distance_moved*27.502-191.46))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointBBLLX": {
+          "rotation": [
+            0,
+            "(25.783*math.cos(q.modified_distance_moved*27.502-191.46))*q.modified_move_speed",
+            0
+          ]
+        },
+        "jointFFRLY": {
+          "rotation": [
+            0,
+            0,
+            "(17.189*math.cos(q.modified_distance_moved*27.502-122.7))*q.modified_move_speed"
+          ]
+        },
+        "jointFRLY": {
+          "rotation": [
+            0,
+            0,
+            "(17.189*math.cos(q.modified_distance_moved*27.502-302.7))*q.modified_move_speed"
+          ]
+        },
+        "jointFFRLX": {
+          "rotation": [
+            0,
+            "(13.751*math.cos(q.modified_distance_moved*27.502-11.46))*q.modified_move_speed",
+            0
+          ]
+        }
+      }
+    },
+    "animation.srp.modelinfplayerhead.idle": {
+      "loop": true,
+      "bones": {}
+    }
+  }
+}

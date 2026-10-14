@@ -1,0 +1,869 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.srp.modeldodsiii.move": {
+      "loop": true,
+      "bones": {
+        "hair_jointNCA_2": {
+          "rotation": [
+            "5.28*math.cos(q.life_time*675.9298-180)",
+            "5.689*math.cos(q.life_time*548.4352-360)",
+            0
+          ]
+        },
+        "hair_jointNCA": {
+          "rotation": [
+            "5.689*math.cos(q.life_time*548.4352-360)",
+            "5.231*math.cos(q.life_time*765.3112-360)",
+            0
+          ]
+        },
+        "taclejointB_2": {
+          "rotation": [
+            "12.045*math.cos(q.life_time*100.3683-180)",
+            "8.841*math.cos(q.life_time*125.5907-360)",
+            0
+          ]
+        },
+        "taclejointI_4": {
+          "rotation": [
+            "8.841*math.cos(q.life_time*125.5907-180)",
+            "10.748*math.cos(q.life_time*125.8903-360)",
+            0
+          ]
+        },
+        "taclejointE_2": {
+          "rotation": [
+            "8.841*math.cos(q.life_time*125.5907-360)",
+            "10.748*math.cos(q.life_time*125.8903-180)",
+            0
+          ]
+        },
+        "taclejointD": {
+          "rotation": [
+            "10.748*math.cos(q.life_time*125.8903-360)",
+            "12.045*math.cos(q.life_time*100.3683-180)",
+            0
+          ]
+        },
+        "taclejointD_2": {
+          "rotation": [
+            "8.841*math.cos(q.life_time*125.5907-360)",
+            "12.045*math.cos(q.life_time*100.3683-180)",
+            0
+          ]
+        },
+        "taclejointH_4": {
+          "rotation": [
+            "10.748*math.cos(q.life_time*125.8903-180)",
+            "12.045*math.cos(q.life_time*100.3683)",
+            0
+          ]
+        },
+        "hair_jointNAA": {
+          "rotation": [
+            "5.328*math.cos(q.life_time*663.0267-360)",
+            "5.722*math.cos(q.life_time*536.1281)",
+            0
+          ]
+        },
+        "hair_jointNBA": {
+          "rotation": [
+            "5.328*math.cos(q.life_time*663.0267-180)",
+            "5.722*math.cos(q.life_time*536.1281-180)",
+            0
+          ]
+        },
+        "taclejointJ": {
+          "rotation": [
+            "10.748*math.cos(q.life_time*125.8903-360)",
+            "8.841*math.cos(q.life_time*125.5907-180)",
+            0
+          ]
+        },
+        "hair_jointNBC": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*790.5213-360)",
+            "5.328*math.cos(q.life_time*663.0267-180)",
+            0
+          ]
+        },
+        "taclejointF_2": {
+          "rotation": [
+            "12.045*math.cos(q.life_time*100.3683)",
+            "10.748*math.cos(q.life_time*125.8903-360)",
+            0
+          ]
+        },
+        "jointNBMA": {
+          "rotation": [
+            0,
+            0,
+            "27.044*math.cos(q.life_time*50.052-360)"
+          ]
+        },
+        "taclejointF": {
+          "rotation": [
+            "10.748*math.cos(q.life_time*125.8903-180)",
+            "8.841*math.cos(q.life_time*125.5907-180)",
+            0
+          ]
+        },
+        "taclejointJ_4": {
+          "rotation": [
+            "12.045*math.cos(q.life_time*100.3683)",
+            "8.841*math.cos(q.life_time*125.5907-180)",
+            0
+          ]
+        },
+        "hair_jointNAC": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*790.5213-180)",
+            "5.328*math.cos(q.life_time*663.0267-360)",
+            0
+          ]
+        },
+        "hair_jointNBC_2": {
+          "rotation": [
+            "5.722*math.cos(q.life_time*536.1281)",
+            "5.248*math.cos(q.life_time*790.5213-180)",
+            0
+          ]
+        },
+        "hair_jointNCC": {
+          "rotation": [
+            "5.28*math.cos(q.life_time*675.9298-180)",
+            "5.689*math.cos(q.life_time*548.4352-360)",
+            0
+          ]
+        },
+        "taclejointI_2": {
+          "rotation": [
+            "8.841*math.cos(q.life_time*125.5907-360)",
+            "10.748*math.cos(q.life_time*125.8903-180)",
+            0
+          ]
+        },
+        "hair_jointNCC_2": {
+          "rotation": [
+            "5.231*math.cos(q.life_time*765.3112-180)",
+            "5.28*math.cos(q.life_time*675.9298-360)",
+            0
+          ]
+        },
+        "jointNA_2": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*102.972-180)",
+            0,
+            "5.722*math.cos(q.life_time*77.7618)"
+          ]
+        },
+        "jointNA_1": {
+          "rotation": [
+            "5.329*math.cos(q.life_time*90.069-180)",
+            0,
+            "5.722*math.cos(q.life_time*77.7618)"
+          ]
+        },
+        "taclejointJ_2": {
+          "rotation": [
+            "12.045*math.cos(q.life_time*100.3683-180)",
+            "8.841*math.cos(q.life_time*125.5907-360)",
+            0
+          ]
+        },
+        "taclejointH": {
+          "rotation": [
+            "8.841*math.cos(q.life_time*125.5907-180)",
+            "12.045*math.cos(q.life_time*100.3683)",
+            0
+          ]
+        },
+        "jointNC_1": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*102.972)",
+            0,
+            "5.329*math.cos(q.life_time*90.069-180)"
+          ]
+        },
+        "hair_jointNAA_2": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*790.5213-180)",
+            "5.328*math.cos(q.life_time*663.0267-360)",
+            0
+          ]
+        },
+        "taclejointA_2": {
+          "rotation": [
+            "8.841*math.cos(q.life_time*125.5907-360)",
+            "12.045*math.cos(q.life_time*100.3683)",
+            0
+          ]
+        },
+        "jointNCMC": {
+          "rotation": [
+            "18.174*math.cos(q.life_time*61.807)",
+            0,
+            0
+          ]
+        },
+        "taclejointI": {
+          "rotation": [
+            "8.841*math.cos(q.life_time*125.5907-360)",
+            "12.045*math.cos(q.life_time*100.3683-180)",
+            0
+          ]
+        },
+        "taclejointB": {
+          "rotation": [
+            "10.748*math.cos(q.life_time*125.8903-180)",
+            "8.841*math.cos(q.life_time*125.5907-360)",
+            0
+          ]
+        },
+        "hair_jointNAC_2": {
+          "rotation": [
+            "5.722*math.cos(q.life_time*536.1281-180)",
+            "5.248*math.cos(q.life_time*790.5213-360)",
+            0
+          ]
+        },
+        "taclejointE": {
+          "rotation": [
+            "8.841*math.cos(q.life_time*125.5907-180)",
+            "12.045*math.cos(q.life_time*100.3683)",
+            0
+          ]
+        },
+        "hair_jointNBA_2": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*790.5213-360)",
+            "5.328*math.cos(q.life_time*663.0267-180)",
+            0
+          ]
+        },
+        "jointNBMB": {
+          "rotation": [
+            0,
+            0,
+            "27.044*math.cos(q.life_time*50.052-180)"
+          ]
+        },
+        "jointNBMD": {
+          "rotation": [
+            "27.044*math.cos(q.life_time*50.052-360)",
+            0,
+            0
+          ]
+        },
+        "hair_jointNAB": {
+          "rotation": [
+            "5.722*math.cos(q.life_time*536.1281)",
+            "5.328*math.cos(q.life_time*663.0267-180)",
+            0
+          ]
+        },
+        "taclejointA": {
+          "rotation": [
+            "12.045*math.cos(q.life_time*100.3683)",
+            "10.748*math.cos(q.life_time*125.8903-180)",
+            0
+          ]
+        },
+        "hair_jointNCB_2": {
+          "rotation": [
+            "5.28*math.cos(q.life_time*675.9298-360)",
+            "5.689*math.cos(q.life_time*548.4352-360)",
+            0
+          ]
+        },
+        "taclejointC": {
+          "rotation": [
+            "12.045*math.cos(q.life_time*100.3683)",
+            "10.748*math.cos(q.life_time*125.8903-360)",
+            0
+          ]
+        },
+        "jointNB_1": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*102.972)",
+            0,
+            "5.329*math.cos(q.life_time*90.069-180)"
+          ]
+        },
+        "taclejointG_2": {
+          "rotation": [
+            "10.748*math.cos(q.life_time*125.8903-180)",
+            "8.841*math.cos(q.life_time*125.5907-360)",
+            0
+          ]
+        },
+        "jointNA": {
+          "rotation": [
+            "5.329*math.cos(q.life_time*90.069)",
+            0,
+            "5.248*math.cos(q.life_time*102.972-180)"
+          ]
+        },
+        "taclejointC_2": {
+          "rotation": [
+            "8.841*math.cos(q.life_time*125.5907-180)",
+            "12.045*math.cos(q.life_time*100.3683)",
+            0
+          ]
+        },
+        "hair_jointNBB_2": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*790.5213-180)",
+            "5.328*math.cos(q.life_time*663.0267-180)",
+            0
+          ]
+        },
+        "taclejointG": {
+          "rotation": [
+            "12.045*math.cos(q.life_time*100.3683)",
+            "8.841*math.cos(q.life_time*125.5907-180)",
+            0
+          ]
+        },
+        "jointNCMB": {
+          "rotation": [
+            0,
+            0,
+            "18.174*math.cos(q.life_time*61.807)"
+          ]
+        },
+        "taclejointG_4": {
+          "rotation": [
+            "10.748*math.cos(q.life_time*125.8903-360)",
+            "8.841*math.cos(q.life_time*125.5907-180)",
+            0
+          ]
+        },
+        "hair_jointNBB": {
+          "rotation": [
+            "5.722*math.cos(q.life_time*536.1281-180)",
+            "5.328*math.cos(q.life_time*663.0267-360)",
+            0
+          ]
+        },
+        "hair_jointNCB": {
+          "rotation": [
+            "5.231*math.cos(q.life_time*765.3112-360)",
+            "5.689*math.cos(q.life_time*548.4352-180)",
+            0
+          ]
+        },
+        "hair_jointNAB_2": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*790.5213-360)",
+            "5.328*math.cos(q.life_time*663.0267-360)",
+            0
+          ]
+        },
+        "taclejointH_2": {
+          "rotation": [
+            "10.748*math.cos(q.life_time*125.8903-360)",
+            "12.045*math.cos(q.life_time*100.3683-180)",
+            0
+          ]
+        },
+        "jointNCMA": {
+          "rotation": [
+            0,
+            0,
+            "18.174*math.cos(q.life_time*61.807-180)"
+          ]
+        },
+        "jointNC": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*102.972-180)",
+            0,
+            "5.722*math.cos(q.life_time*77.7618)"
+          ]
+        },
+        "jointNAMA": {
+          "rotation": [
+            0,
+            0,
+            "23.904*math.cos(q.life_time*56.5714-180)"
+          ]
+        },
+        "jointNB": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*102.972-180)",
+            0,
+            "5.722*math.cos(q.life_time*77.7618)"
+          ]
+        },
+        "jointNAMD": {
+          "rotation": [
+            "23.904*math.cos(q.life_time*56.5714-180)",
+            0,
+            0
+          ]
+        },
+        "jointNAMB": {
+          "rotation": [
+            0,
+            0,
+            "23.904*math.cos(q.life_time*56.5714-360)"
+          ]
+        },
+        "jointNCMD": {
+          "rotation": [
+            "18.174*math.cos(q.life_time*61.807-180)",
+            0,
+            0
+          ]
+        },
+        "jointNAMC": {
+          "rotation": [
+            "23.904*math.cos(q.life_time*56.5714-360)",
+            0,
+            0
+          ]
+        },
+        "jointNBMC": {
+          "rotation": [
+            "27.044*math.cos(q.life_time*50.052-180)",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.srp.modeldodsiii.idle": {
+      "loop": true,
+      "bones": {
+        "hair_jointNBC": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*790.5213-360)",
+            "5.328*math.cos(q.life_time*663.0267-180)",
+            0
+          ]
+        },
+        "hair_jointNCA": {
+          "rotation": [
+            "5.689*math.cos(q.life_time*548.4352-360)",
+            "5.231*math.cos(q.life_time*765.3112-360)",
+            0
+          ]
+        },
+        "jointNB": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*102.972-180)",
+            0,
+            "5.722*math.cos(q.life_time*77.7618)"
+          ]
+        },
+        "taclejointA_2": {
+          "rotation": [
+            "8.841*math.cos(q.life_time*125.5907-360)",
+            "12.045*math.cos(q.life_time*100.3683)",
+            0
+          ]
+        },
+        "taclejointF_2": {
+          "rotation": [
+            "12.045*math.cos(q.life_time*100.3683)",
+            "10.748*math.cos(q.life_time*125.8903-360)",
+            0
+          ]
+        },
+        "taclejointD_2": {
+          "rotation": [
+            "8.841*math.cos(q.life_time*125.5907-360)",
+            "12.045*math.cos(q.life_time*100.3683-180)",
+            0
+          ]
+        },
+        "jointNA": {
+          "rotation": [
+            "5.329*math.cos(q.life_time*90.069)",
+            0,
+            "5.248*math.cos(q.life_time*102.972-180)"
+          ]
+        },
+        "jointNCMD": {
+          "rotation": [
+            "18.174*math.cos(q.life_time*61.807-180)",
+            0,
+            0
+          ]
+        },
+        "jointNAMB": {
+          "rotation": [
+            0,
+            0,
+            "23.904*math.cos(q.life_time*56.5714-360)"
+          ]
+        },
+        "taclejointJ_4": {
+          "rotation": [
+            "12.045*math.cos(q.life_time*100.3683)",
+            "8.841*math.cos(q.life_time*125.5907-180)",
+            0
+          ]
+        },
+        "hair_jointNCA_2": {
+          "rotation": [
+            "5.28*math.cos(q.life_time*675.9298-180)",
+            "5.689*math.cos(q.life_time*548.4352-360)",
+            0
+          ]
+        },
+        "taclejointI_4": {
+          "rotation": [
+            "8.841*math.cos(q.life_time*125.5907-180)",
+            "10.748*math.cos(q.life_time*125.8903-360)",
+            0
+          ]
+        },
+        "taclejointE_2": {
+          "rotation": [
+            "8.841*math.cos(q.life_time*125.5907-360)",
+            "10.748*math.cos(q.life_time*125.8903-180)",
+            0
+          ]
+        },
+        "hair_jointNAA": {
+          "rotation": [
+            "5.328*math.cos(q.life_time*663.0267-360)",
+            "5.722*math.cos(q.life_time*536.1281)",
+            0
+          ]
+        },
+        "hair_jointNBA": {
+          "rotation": [
+            "5.328*math.cos(q.life_time*663.0267-180)",
+            "5.722*math.cos(q.life_time*536.1281-180)",
+            0
+          ]
+        },
+        "hair_jointNAC_2": {
+          "rotation": [
+            "5.722*math.cos(q.life_time*536.1281-180)",
+            "5.248*math.cos(q.life_time*790.5213-360)",
+            0
+          ]
+        },
+        "hair_jointNAC": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*790.5213-180)",
+            "5.328*math.cos(q.life_time*663.0267-360)",
+            0
+          ]
+        },
+        "jointNAMC": {
+          "rotation": [
+            "23.904*math.cos(q.life_time*56.5714-360)",
+            0,
+            0
+          ]
+        },
+        "jointNBMD": {
+          "rotation": [
+            "27.044*math.cos(q.life_time*50.052-360)",
+            0,
+            0
+          ]
+        },
+        "taclejointH_4": {
+          "rotation": [
+            "10.748*math.cos(q.life_time*125.8903-180)",
+            "12.045*math.cos(q.life_time*100.3683)",
+            0
+          ]
+        },
+        "hair_jointNCB_2": {
+          "rotation": [
+            "5.28*math.cos(q.life_time*675.9298-360)",
+            "5.689*math.cos(q.life_time*548.4352-360)",
+            0
+          ]
+        },
+        "hair_jointNCC_2": {
+          "rotation": [
+            "5.231*math.cos(q.life_time*765.3112-180)",
+            "5.28*math.cos(q.life_time*675.9298-360)",
+            0
+          ]
+        },
+        "taclejointJ_2": {
+          "rotation": [
+            "12.045*math.cos(q.life_time*100.3683-180)",
+            "8.841*math.cos(q.life_time*125.5907-360)",
+            0
+          ]
+        },
+        "jointNCMA": {
+          "rotation": [
+            0,
+            0,
+            "18.174*math.cos(q.life_time*61.807-180)"
+          ]
+        },
+        "taclejointC_2": {
+          "rotation": [
+            "8.841*math.cos(q.life_time*125.5907-180)",
+            "12.045*math.cos(q.life_time*100.3683)",
+            0
+          ]
+        },
+        "taclejointH": {
+          "rotation": [
+            "8.841*math.cos(q.life_time*125.5907-180)",
+            "12.045*math.cos(q.life_time*100.3683)",
+            0
+          ]
+        },
+        "hair_jointNBC_2": {
+          "rotation": [
+            "5.722*math.cos(q.life_time*536.1281)",
+            "5.248*math.cos(q.life_time*790.5213-180)",
+            0
+          ]
+        },
+        "taclejointE": {
+          "rotation": [
+            "8.841*math.cos(q.life_time*125.5907-180)",
+            "12.045*math.cos(q.life_time*100.3683)",
+            0
+          ]
+        },
+        "jointNCMC": {
+          "rotation": [
+            "18.174*math.cos(q.life_time*61.807)",
+            0,
+            0
+          ]
+        },
+        "jointNBMA": {
+          "rotation": [
+            0,
+            0,
+            "27.044*math.cos(q.life_time*50.052-360)"
+          ]
+        },
+        "jointNC": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*102.972-180)",
+            0,
+            "5.722*math.cos(q.life_time*77.7618)"
+          ]
+        },
+        "hair_jointNBB": {
+          "rotation": [
+            "5.722*math.cos(q.life_time*536.1281-180)",
+            "5.328*math.cos(q.life_time*663.0267-360)",
+            0
+          ]
+        },
+        "taclejointH_2": {
+          "rotation": [
+            "10.748*math.cos(q.life_time*125.8903-360)",
+            "12.045*math.cos(q.life_time*100.3683-180)",
+            0
+          ]
+        },
+        "taclejointC": {
+          "rotation": [
+            "12.045*math.cos(q.life_time*100.3683)",
+            "10.748*math.cos(q.life_time*125.8903-360)",
+            0
+          ]
+        },
+        "hair_jointNCC": {
+          "rotation": [
+            "5.28*math.cos(q.life_time*675.9298-180)",
+            "5.689*math.cos(q.life_time*548.4352-360)",
+            0
+          ]
+        },
+        "taclejointG": {
+          "rotation": [
+            "12.045*math.cos(q.life_time*100.3683)",
+            "8.841*math.cos(q.life_time*125.5907-180)",
+            0
+          ]
+        },
+        "jointNC_1": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*102.972)",
+            0,
+            "5.329*math.cos(q.life_time*90.069-180)"
+          ]
+        },
+        "hair_jointNAB": {
+          "rotation": [
+            "5.722*math.cos(q.life_time*536.1281)",
+            "5.328*math.cos(q.life_time*663.0267-180)",
+            0
+          ]
+        },
+        "hair_jointNCB": {
+          "rotation": [
+            "5.231*math.cos(q.life_time*765.3112-360)",
+            "5.689*math.cos(q.life_time*548.4352-180)",
+            0
+          ]
+        },
+        "jointNAMA": {
+          "rotation": [
+            0,
+            0,
+            "23.904*math.cos(q.life_time*56.5714-180)"
+          ]
+        },
+        "taclejointD": {
+          "rotation": [
+            "10.748*math.cos(q.life_time*125.8903-360)",
+            "12.045*math.cos(q.life_time*100.3683-180)",
+            0
+          ]
+        },
+        "hair_jointNAB_2": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*790.5213-360)",
+            "5.328*math.cos(q.life_time*663.0267-360)",
+            0
+          ]
+        },
+        "taclejointG_4": {
+          "rotation": [
+            "10.748*math.cos(q.life_time*125.8903-360)",
+            "8.841*math.cos(q.life_time*125.5907-180)",
+            0
+          ]
+        },
+        "jointNA_2": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*102.972-180)",
+            0,
+            "5.722*math.cos(q.life_time*77.7618)"
+          ]
+        },
+        "jointNB_1": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*102.972)",
+            0,
+            "5.329*math.cos(q.life_time*90.069-180)"
+          ]
+        },
+        "taclejointF": {
+          "rotation": [
+            "10.748*math.cos(q.life_time*125.8903-180)",
+            "8.841*math.cos(q.life_time*125.5907-180)",
+            0
+          ]
+        },
+        "jointNAMD": {
+          "rotation": [
+            "23.904*math.cos(q.life_time*56.5714-180)",
+            0,
+            0
+          ]
+        },
+        "taclejointI": {
+          "rotation": [
+            "8.841*math.cos(q.life_time*125.5907-360)",
+            "12.045*math.cos(q.life_time*100.3683-180)",
+            0
+          ]
+        },
+        "hair_jointNBB_2": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*790.5213-180)",
+            "5.328*math.cos(q.life_time*663.0267-180)",
+            0
+          ]
+        },
+        "hair_jointNBA_2": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*790.5213-360)",
+            "5.328*math.cos(q.life_time*663.0267-180)",
+            0
+          ]
+        },
+        "taclejointA": {
+          "rotation": [
+            "12.045*math.cos(q.life_time*100.3683)",
+            "10.748*math.cos(q.life_time*125.8903-180)",
+            0
+          ]
+        },
+        "taclejointI_2": {
+          "rotation": [
+            "8.841*math.cos(q.life_time*125.5907-360)",
+            "10.748*math.cos(q.life_time*125.8903-180)",
+            0
+          ]
+        },
+        "jointNBMB": {
+          "rotation": [
+            0,
+            0,
+            "27.044*math.cos(q.life_time*50.052-180)"
+          ]
+        },
+        "jointNA_1": {
+          "rotation": [
+            "5.329*math.cos(q.life_time*90.069-180)",
+            0,
+            "5.722*math.cos(q.life_time*77.7618)"
+          ]
+        },
+        "jointNBMC": {
+          "rotation": [
+            "27.044*math.cos(q.life_time*50.052-180)",
+            0,
+            0
+          ]
+        },
+        "taclejointB_2": {
+          "rotation": [
+            "12.045*math.cos(q.life_time*100.3683-180)",
+            "8.841*math.cos(q.life_time*125.5907-360)",
+            0
+          ]
+        },
+        "taclejointJ": {
+          "rotation": [
+            "10.748*math.cos(q.life_time*125.8903-360)",
+            "8.841*math.cos(q.life_time*125.5907-180)",
+            0
+          ]
+        },
+        "jointNCMB": {
+          "rotation": [
+            0,
+            0,
+            "18.174*math.cos(q.life_time*61.807)"
+          ]
+        },
+        "taclejointG_2": {
+          "rotation": [
+            "10.748*math.cos(q.life_time*125.8903-180)",
+            "8.841*math.cos(q.life_time*125.5907-360)",
+            0
+          ]
+        },
+        "hair_jointNAA_2": {
+          "rotation": [
+            "5.248*math.cos(q.life_time*790.5213-180)",
+            "5.328*math.cos(q.life_time*663.0267-360)",
+            0
+          ]
+        },
+        "taclejointB": {
+          "rotation": [
+            "10.748*math.cos(q.life_time*125.8903-180)",
+            "8.841*math.cos(q.life_time*125.5907-360)",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

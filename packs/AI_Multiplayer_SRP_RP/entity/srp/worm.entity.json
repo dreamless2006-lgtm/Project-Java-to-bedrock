@@ -1,0 +1,37 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "srp:worm",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/srp/rof"
+      },
+      "geometry": {
+        "default": "geometry.srp.modelrof"
+      },
+      "animations": {
+        "move": "animation.srp.modelrof.move",
+        "idle": "animation.srp.modelrof.idle",
+        "ctrl.move": "controller.animation.srp.move",
+        "attack": "animation.srp.modelrof.attack",
+        "ctrl.attack": "controller.animation.srp.attack"
+      },
+      "scripts": {
+        "animate": [
+          "ctrl.move",
+          "ctrl.attack"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.srp.default"
+      ],
+      "spawn_egg": {
+        "base_color": "#4A1A1A",
+        "overlay_color": "#B8860B"
+      }
+    }
+  }
+}

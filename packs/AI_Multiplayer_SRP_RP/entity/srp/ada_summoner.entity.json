@@ -1,0 +1,38 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "srp:ada_summoner",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/srp/canraa",
+        "skin5": "textures/entity/srp/canraav",
+        "skin6": "textures/entity/srp/canraab",
+        "skin7": "textures/entity/srp/canraah"
+      },
+      "geometry": {
+        "default": "geometry.srp.modelcanraadapted"
+      },
+      "animations": {
+        "move": "animation.srp.modelcanraadapted.move",
+        "idle": "animation.srp.modelcanraadapted.idle",
+        "ctrl.move": "controller.animation.srp.move",
+        "always": "animation.srp.modelcanraadapted.always"
+      },
+      "scripts": {
+        "animate": [
+          "ctrl.move",
+          "always"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.srp.ada_summoner"
+      ],
+      "spawn_egg": {
+        "texture": "srp_egg_canraadapted"
+      }
+    }
+  }
+}

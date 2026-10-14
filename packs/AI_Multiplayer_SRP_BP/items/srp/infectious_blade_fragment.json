@@ -1,0 +1,20 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:item": {
+    "description": {
+      "identifier": "srp:infectious_blade_fragment",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "texture": "srp_infectious_blade_fragment"
+      },
+      "minecraft:display_name": {
+        "value": "§eInfectious Blade Fragment"
+      },
+      "minecraft:max_stack_size": 64
+    }
+  }
+}
