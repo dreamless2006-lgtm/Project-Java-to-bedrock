@@ -51,8 +51,18 @@ export function playerVisuals(/** @type {PlayerRecord} */ record) {
 }
 
 /** Writes the visuals to the player's entity properties, only the ones that changed. */
+/** Forces the client state for `ticks` (the debug command). */
+export function debugPose(/** @type {PlayerRecord} */ record, /** @type {string} */ pose, /** @type {number} */ kick, ticks = 200) {
+  record.debugUntil = system.currentTick + ticks;
+  record.player.setProperty('minepreggo:pose', pose);
+  record.player.setProperty('minepreggo:kick', kick);
+  if (Number(record.player.getProperty('minepreggo:phase')) < 0) record.player.setProperty('minepreggo:phase', 5);
+  record.sentVisuals = {};
+}
+
 export function syncBody(/** @type {PlayerRecord} */ record) {
   const { player } = record;
+  if ((record.debugUntil ?? 0) > system.currentTick) return;
   const state = playerVisuals(record);
   const sent = (record.sentVisuals ??= {});
   try {

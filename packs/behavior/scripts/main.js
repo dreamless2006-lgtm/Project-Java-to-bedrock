@@ -5,6 +5,7 @@ import './world/leaf_lemons.js';
 import './world/banner.js';
 import './world/brains.js';
 import './world/guide.js';
+import './world/debug.js';
 import './player/gender.js';
 import './player/body.js';
 import './pregnancy/index.js';

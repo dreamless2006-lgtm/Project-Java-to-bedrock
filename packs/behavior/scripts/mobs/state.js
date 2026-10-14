@@ -69,6 +69,8 @@ export class MobRecord {
     this.moving = false;
     /** system.currentTick of the last pregnancy-pain damage, which must not hurt the pregnancy itself */
     this.selfHurtTick = -1;
+    /** while in the future, the debug command owns the client properties */
+    this.debugUntil = 0;
   }
 
   save() {

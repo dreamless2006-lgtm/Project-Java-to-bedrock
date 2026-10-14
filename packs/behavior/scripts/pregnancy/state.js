@@ -125,6 +125,8 @@ export class PlayerRecord {
     this.moving = false;
     /** system.currentTick of the last pregnancy-pain damage, which must not hurt the pregnancy itself */
     this.selfHurtTick = -1;
+    /** while in the future, the debug command owns the entity properties */
+    this.debugUntil = 0;
   }
 
   isFemale() {

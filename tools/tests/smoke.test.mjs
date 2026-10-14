@@ -273,7 +273,7 @@ test('every entity, item and block the scripts name exists in the pack', () => {
   const named = new Set(scripts.match(/minepreggo:[a-z0-9_]+/g));
   const known = new Set([...ItemTypes.getAll(), ...BlockTypes.getAll(), ...EntityTypes.getAll()].map((t) => t.id));
   // Properties, dynamic properties, events, components, sounds and command ids are not game objects.
-  const notObjects = /^minepreggo:(phase|pose|kick|growth|gender|skin|savage|age|mob|crop|food_effects|impregnation_potion|pregnancy_acceleration|gradual_pregnancy_acceleration|breast_milk|pregnancy|female|pending|set_|on_tame|become_savage|calm_down|spawn_natural|hostile|tamed|tameable|fetal_movement_inducer|guide_given|belly_touch|stomach_growls|pregnant_preggo_mob_death|player_|preggo_mob|loaded|selfcheck|hud|gender_)/;
+  const notObjects = /^minepreggo:(phase|pose|kick|growth|gender|skin|savage|age|mob|crop|food_effects|impregnation_potion|pregnancy_acceleration|gradual_pregnancy_acceleration|breast_milk|pregnancy|female|pending|set_|on_tame|become_savage|calm_down|spawn_natural|hostile|tamed|tameable|fetal_movement_inducer|guide_given|debug|belly_touch|stomach_growls|pregnant_preggo_mob_death|player_|preggo_mob|loaded|selfcheck|hud|gender_)/;
   const missing = [...named].filter((id) => !notObjects.test(id) && !known.has(id) && !id.startsWith('minepreggo:baby_'));
   assert.deepEqual(missing, [], 'ids used by the scripts that no JSON defines');
 });
@@ -409,4 +409,30 @@ test('every phase component group carries the variant the render controller sele
   for (const bone of laborGeometry.bones) {
     if (['head', 'body', 'rightArm', 'leftArm', 'rightLeg', 'leftLeg'].includes(bone.name)) assert.equal(bone.parent, undefined, `${bone.name} is a root bone like the mod's models`);
   }
+});
+
+test('the debug command forces a kick the client renders from and reports the properties', () => {
+  const tester = new Player('Tester');
+  tester.location = { x: 50, y: 64, z: 50 };
+  world.players.push(tester);
+  const mob = new Mob('minepreggo:zombie_girl', { tamed: true });
+  mob.location = { x: 51, y: 64, z: 50 };
+  overworld.entities.push(mob);
+  const out = command(tester, 'minepreggo:debug', 'kick');
+  assert.match(out, /forced for 10 s/);
+  assert.equal(tester.getProperty('minepreggo:pose'), 'fetal_movement');
+  assert.equal(tester.getProperty('minepreggo:kick'), 2);
+  assert.equal(mob.getProperty('minepreggo:pose'), 'fetal_movement');
+  system.tick(20);
+  assert.equal(tester.getProperty('minepreggo:pose'), 'fetal_movement', 'the sync loop leaves the forced pose alone');
+  assert.equal(mob.getProperty('minepreggo:kick'), 2);
+  assert.match(command(tester, 'minepreggo:debug', ''), /you: minecraft:player: phase=\d+ pose=\\"fetal_movement\\" kick=2/);
+  system.tick(200);
+  assert.equal(tester.getProperty('minepreggo:pose'), 'none', 'back to the real state after 10 s');
+  for (const file of readdirSync(join(RP, 'entity'))) {
+    const entity = json(join(RP, 'entity', file))['minecraft:client_entity'].description;
+    assert.ok(Object.values(entity.animations).includes('animation.minepreggo.fetal_push'), `${file} plays the strong fetal movement`);
+    assert.ok(Object.values(entity.animations).includes('animation.minepreggo.birth_push'), `${file} plays the birth push`);
+  }
+  world.players.pop();
 });

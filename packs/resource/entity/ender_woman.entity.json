@@ -50,6 +50,7 @@
           "v.aggressive = q.has_target;",
           "v.kicking = v.pose == 'fetal_movement' || v.pose == 'kicking_sit' || v.pose == 'incapacitated' || v.pose == 'prebirth' || v.pose == 'birth';",
           "v.kick = v.pose == 'incapacitated' ? 1 : v.kick;",
+          "v.kl = 1.0 + v.kick;",
           "v.belly_growth = (v.phase <= 2 ? 1.0 : (v.phase <= 4 ? 0.9 : (v.phase == 5 ? 0.8 : (v.phase <= 7 ? 0.7 : 0.6)))) * q.property('minepreggo:growth');",
           "v.carrying = q.is_carrying_block;",
           "v.shake_x = v.aggressive ? math.random(-0.32, 0.32) : 0.0;",
@@ -233,6 +234,12 @@
           },
           {
             "navel_birth": "v.pose == 'birth'"
+          },
+          {
+            "fetal_push": "v.kicking"
+          },
+          {
+            "birth_push": "v.pose == 'birth'"
           }
         ]
       },
@@ -290,7 +297,9 @@
         "jiggle": "animation.minepreggo.jiggle",
         "belly_hidden": "animation.minepreggo.belly_hidden",
         "navel_prebirth": "animation.minepreggo.navel_prebirth",
-        "navel_birth": "animation.minepreggo.navel_birth"
+        "navel_birth": "animation.minepreggo.navel_birth",
+        "fetal_push": "animation.minepreggo.fetal_push",
+        "birth_push": "animation.minepreggo.birth_push"
       },
       "render_controllers": [
         "controller.render.minepreggo.preggo_mob",

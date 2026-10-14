@@ -137,6 +137,7 @@ The same for the nearest preggo mob within 16 blocks:
 /scriptevent minepreggo:mob phase <0-9> | days <n> | labor | miscarry | feed | starve
 /scriptevent minepreggo:mob pain morning_sickness|fetal_movement|contraction|back_pain
 /scriptevent minepreggo:mob induce <0-4>
+/scriptevent minepreggo:debug [kick|birth|off]          # shows the rendered properties; forces a 10 s kick/birth on you and the nearest mob
 /scriptevent minepreggo:mob symptom craving|milking|belly_rubs
 ```
 

@@ -661,8 +661,17 @@ function clientState(/** @type {MobRecord} */ record) {
   return { pose, kick, growth: Math.round(growth * 100) / 100 };
 }
 
+/** Forces the client state for `ticks` (the debug command), e.g. a strong fetal movement. */
+export function debugPose(/** @type {MobRecord} */ record, /** @type {string} */ pose, /** @type {number} */ kick, ticks = 200) {
+  record.debugUntil = system.currentTick + ticks;
+  record.entity.setProperty('minepreggo:pose', pose);
+  record.entity.setProperty('minepreggo:kick', kick);
+  record.sent = {};
+}
+
 function syncClient(/** @type {MobRecord} */ record) {
   const { entity, sent } = record;
+  if ((record.debugUntil ?? 0) > system.currentTick) return;
   const state = clientState(record);
   if (sent.pose !== state.pose) entity.setProperty('minepreggo:pose', (sent.pose = state.pose));
   if (sent.kick !== state.kick) entity.setProperty('minepreggo:kick', (sent.kick = state.kick));

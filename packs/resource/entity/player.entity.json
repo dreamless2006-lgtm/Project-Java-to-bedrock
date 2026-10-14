@@ -115,6 +115,7 @@
           "variable.mp_pregnant = variable.mp_female && variable.mp_phase >= 0;",
           "variable.mp_labor = variable.mp_female && (variable.mp_pose == 'water_breaking' || variable.mp_pose == 'prebirth' || variable.mp_pose == 'birth' || variable.mp_pose == 'postbirth' || variable.mp_pose == 'miscarriage');",
           "variable.kicking = variable.mp_pose == 'fetal_movement' || variable.mp_pose == 'kicking_sit' || variable.mp_pose == 'prebirth' || variable.mp_pose == 'birth';",
+          "v.kl = 1.0 + variable.mp_kick;",
           "variable.belly_growth = (variable.mp_phase <= 2 ? 1.0 : (variable.mp_phase <= 4 ? 0.9 : (variable.mp_phase == 5 ? 0.8 : (variable.mp_phase <= 7 ? 0.7 : 0.6)))) * query.property('minepreggo:growth');",
           "v.jdt = math.clamp(q.delta_time, 0.0, 0.1);",
           "v.jf = v.jdt / 0.05;",
@@ -347,6 +348,12 @@
           },
           {
             "minepreggo_navel_birth": "variable.mp_pregnant && variable.mp_navel && variable.mp_pose == 'birth'"
+          },
+          {
+            "minepreggo_fetal_push": "variable.mp_pregnant && variable.kicking"
+          },
+          {
+            "minepreggo_birth_push": "variable.mp_pregnant && variable.mp_pose == 'birth'"
           }
         ],
         "variables": {
@@ -485,7 +492,9 @@
         "minepreggo_labor_postbirth": "animation.minepreggo.player.labor_postbirth",
         "minepreggo_labor_miscarriage": "animation.minepreggo.player.labor_miscarriage",
         "minepreggo_navel_prebirth": "animation.minepreggo.navel_prebirth",
-        "minepreggo_navel_birth": "animation.minepreggo.navel_birth"
+        "minepreggo_navel_birth": "animation.minepreggo.navel_birth",
+        "minepreggo_fetal_push": "animation.minepreggo.fetal_push",
+        "minepreggo_birth_push": "animation.minepreggo.birth_push"
       },
       "render_controllers": [
         {
