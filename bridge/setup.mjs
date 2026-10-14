@@ -11,12 +11,12 @@ import { fileURLToPath } from "node:url";
 const HERE = dirname(fileURLToPath(import.meta.url));
 
 const CHOICES = [
-    { id: "player2", label: "Player2 app (free, no key: install it from player2.game, log in, leave it running on this computer)", needsKey: false },
-    { id: "anthropic", label: "Claude (needs an Anthropic API key from console.anthropic.com)", needsKey: true, hint: "sk-ant-..." },
-    { id: "openai", label: "ChatGPT (needs an OpenAI API key from platform.openai.com)", needsKey: true, hint: "sk-..." },
-    { id: "xai", label: "Grok (needs an xAI API key from console.x.ai)", needsKey: true, hint: "xai-..." },
-    { id: "gemini", label: "Gemini (needs a Google AI Studio key from aistudio.google.com)", needsKey: true, hint: "AIza..." },
-    { id: "openrouter", label: "OpenRouter (one key for many models, openrouter.ai)", needsKey: true, hint: "sk-or-..." },
+    { id: "gemini", label: "Gemini (has a free tier: aistudio.google.com > Get API key > Create API key; easiest to start with)", needsKey: true, hint: "AIza..." },
+    { id: "anthropic", label: "Claude (API key from console.anthropic.com; paid per use)", needsKey: true, hint: "sk-ant-..." },
+    { id: "openai", label: "ChatGPT (API key from platform.openai.com; paid per use)", needsKey: true, hint: "sk-..." },
+    { id: "xai", label: "Grok (API key from console.x.ai; paid per use)", needsKey: true, hint: "xai-..." },
+    { id: "openrouter", label: "OpenRouter (one key for many models, some free; openrouter.ai)", needsKey: true, hint: "sk-or-..." },
+    { id: "player2", label: "Player2 app (free, no key; Windows/Mac only: install from player2.game, log in, leave it running here)", needsKey: false },
     { id: "ollama", label: "Ollama running on this computer (free, local models)", needsKey: false },
 ];
 
