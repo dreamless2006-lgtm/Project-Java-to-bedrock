@@ -36,6 +36,27 @@ residents think with each. `!ai status` shows who runs on what, and
 `!ai thoughts on` prints every bot's reasoning and chosen actions to nearby
 players so you can watch the decisions being made.
 
+## An inner life, not a script
+
+Each AI player carries slow-moving drives (company, rest, curiosity, safety,
+restlessness, purpose) that the game updates from what actually happens and
+the model reads as feelings: "You feel lonely" or "restless and bored of
+standing around" are real reasons to go find someone, sleep, explore or start
+a project. Every so often a bot gets a reflection turn: it looks back over
+what happened, turns it into lasting facts, rewrites a short "self" (who it
+is becoming, what it cares about) and keeps an ordered plan for the coming
+days. At dawn every bot is nudged to plan its day. Bots notice the weather
+turning, a stranger breaking blocks at their home, other bots' chat, and a
+pressing feeling shortens the time to their next decision. Self, plans,
+drives and memory persist across reloads. `!ai memory <Name>` shows a bot's
+self and plans; `!ai thoughts on` shows the decisions as they happen.
+
+The bridge account's own player plays too. The account that carries the
+other players' thinking stands in the world as a real player, so it gets a
+brain of its own: it walks by stepping its real body, builds, mines and
+fights through the same actions as everyone else, and its chat goes out as
+genuine chat from that account. Turn it off with `!ai bridgeplays off`.
+
 ## Who lives in your world
 
 Eight named AI players live in the world by default (`Behavior` tab or
@@ -160,7 +181,7 @@ account: [docs/SETUP-DEDICATED-SERVER.md](docs/SETUP-DEDICATED-SERVER.md). Desig
   `/realai:talk Ellie "hi"` whispers.
 * `!ai status` lists the residents and every thinking bot; `!ai memory Ellie`,
   `!ai pause`, `!ai budget`.
-* Operators: `!ai players 8`, `!ai thoughts on`, `!ai mix on`,
+* Operators: `!ai players 8`, `!ai thoughts on`, `!ai mix on`, `!ai bridgeplays on`,
   `!ai provider anthropic`, `!ai model claude-haiku-5-5`, `!ai volume 2`,
   `!ai rules Speak Spanish`, `!ai callbyname on`,
   `!ai companiondeath permadeath`.

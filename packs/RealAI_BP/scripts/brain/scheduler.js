@@ -22,6 +22,10 @@ export const EVENT_PRIORITY = {
     night: 1,
     death: 3,
     request: 3,           // UI request (job, follow, trade) from a player
+    dawn: 2,              // a new day: plan it
+    weather: 1,
+    home_touched: 3,      // someone changed blocks at the bot's home
+    reflect: 1,
 };
 
 export function createSchedulerState() {
@@ -54,12 +58,13 @@ export function shouldThink(state, nowTick, level = "ok", opts = {}) {
 }
 
 /** Called when a think starts: drain events, compute the next regular slot. */
-export function beginThink(state, nowTick, level = "ok") {
+export function beginThink(state, nowTick, level = "ok", factor = 1) {
     const events = state.pending.splice(0);
     state.inFlight = true;
     state.lastThink = nowTick;
     const c = CADENCE[level] || CADENCE.ok;
-    state.nextThink = nowTick + (state.active ? c.active : c.idle);
+    const gap = state.active ? c.active : c.idle;
+    state.nextThink = nowTick + (Number.isFinite(gap) ? Math.round(gap * (factor > 0 ? factor : 1)) : gap);
     return events;
 }
 

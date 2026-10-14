@@ -11,10 +11,13 @@ export const MEMORY_LIMITS = {
     factChars: 160,
     episodeChars: 140,
     chatChars: 200,
+    selfChars: 400,
+    maxPlans: 6,
+    planChars: 100,
 };
 
 export function createMemory() {
-    return { v: 1, facts: [], episodes: [], chat: [], people: {}, goal: null, home: null, created: 0 };
+    return { v: 1, facts: [], episodes: [], chat: [], people: {}, goal: null, home: null, created: 0, self: "", plans: [], drives: null };
 }
 
 export function loadMemory(raw) {
@@ -43,6 +46,21 @@ export function forgetFact(mem, substring) {
     const before = mem.facts.length;
     mem.facts = mem.facts.filter(f => !f.text.toLowerCase().includes(needle));
     return before - mem.facts.length;
+}
+
+/** The bot's own short account of who it is and what it cares about (rewritten by the model when it reflects). */
+export function setSelf(mem, text) {
+    const s = String(text || "").trim().slice(0, MEMORY_LIMITS.selfChars);
+    if (!s) return false;
+    mem.self = s;
+    return true;
+}
+
+/** Replace the multi-day plan (ordered steps). An empty list clears it. */
+export function setPlans(mem, list) {
+    if (!Array.isArray(list)) return false;
+    mem.plans = list.filter(p => typeof p === "string" && p.trim()).map(p => p.trim().slice(0, MEMORY_LIMITS.planChars)).slice(0, MEMORY_LIMITS.maxPlans);
+    return true;
 }
 
 export function addEpisode(mem, text, t) {
@@ -78,6 +96,7 @@ export function saveMemory(mem, maxBytes = MEMORY_LIMITS.maxBytes) {
     let guard = 0;
     while (byteLength(s) > maxBytes && guard++ < 200) {
         if (mem.chat.length > 4) mem.chat.shift();
+        else if (mem.self && mem.self.length > 200) mem.self = mem.self.slice(0, 200);
         else if (mem.episodes.length > 4) mem.episodes.shift();
         else if (mem.facts.length > 8) mem.facts.shift();
         else {
@@ -103,6 +122,11 @@ export function byteLength(s) {
 export function renderMemory(mem, now, limits = {}) {
     const L = { facts: 20, episodes: 10, chat: 12, people: 8, ...limits };
     const lines = [];
+    if (mem.self) lines.push("Who I am: " + mem.self);
+    if (mem.plans && mem.plans.length) {
+        lines.push("My plans:");
+        mem.plans.forEach((p, i) => lines.push(`${i + 1}. ${p}`));
+    }
     if (mem.facts.length) {
         lines.push("Things I know:");
         for (const f of mem.facts.slice(-L.facts)) lines.push("- " + f.text);

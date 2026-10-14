@@ -29,6 +29,9 @@ export const DEFAULTS = Object.freeze({
     wildSpawns: false,          // the original addon's random bot spawner (extra nameless bots far from players)
     mixProviders: true,         // spread residents across every provider that has a key (Claude, GPT, Grok, Gemini...)
     showThoughts: false,        // show each bot's reasoning and chosen actions to nearby players
+    innerLife: true,            // drives, self-narrative, plans, reflection and dawn planning
+    bridgePlays: true,          // the bridge account's own player gets a brain and plays too (walks, builds, chats as itself)
+    reflectEvery: 20,           // every N thinks a bot looks back and updates memory, self and plans
     autonomy: "full",           // full | companions_only | off
     freeBuild: true,            // place blocks without inventory (like the original addon)
     keepAlive: true,            // ticking areas around bot homes when nobody is online (BDS)
@@ -78,7 +81,7 @@ function applyServerOverrides(cfg) {
         "realai.maxTokens": "maxTokens", "realai.maxBrains": "maxBrains", "realai.autonomy": "autonomy", "realai.chatVolume": "chatVolume",
         "realai.callByName": "callByName", "realai.freeBuild": "freeBuild", "realai.keepAlive": "keepAlive", "realai.serverRules": "serverRules",
         "realai.thinkIdleSec": "thinkIdleSec", "realai.thinkActiveSec": "thinkActiveSec", "realai.enabled": "enabled", "realai.bridgeName": "bridgeName",
-        "realai.worldPlayers": "worldPlayers", "realai.wildSpawns": "wildSpawns", "realai.mixProviders": "mixProviders", "realai.showThoughts": "showThoughts",
+        "realai.worldPlayers": "worldPlayers", "realai.wildSpawns": "wildSpawns", "realai.mixProviders": "mixProviders", "realai.showThoughts": "showThoughts", "realai.innerLife": "innerLife", "realai.reflectEvery": "reflectEvery", "realai.bridgePlays": "bridgePlays",
     };
     for (const [varName, key] of Object.entries(map)) {
         const v = readVariable(varName);

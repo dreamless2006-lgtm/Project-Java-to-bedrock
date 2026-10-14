@@ -267,7 +267,17 @@ export class Bridge {
                 break;
             case "pong":
                 break;
+            case "chat_out": {
+                const text = String(msg.text || "").replace(/[\r\n]+/g, " ").slice(0, 400);
+                if (!text || !this.client) break;
+                if (msg.to) { this.outQueue.push(`/tell "${String(msg.to).replace(/"/g, "")}" ${text}`); break; }
+                try {
+                    this.client.queue("text", { type: "chat", needs_translation: false, category: "authored", source_name: this.client.username, message: text, xuid: "", platform_chat_id: "", has_filtered_message: false, filtered_message: "" });
+                } catch (e) { log("warn", "chat failed:", e?.message || e); }
+                break;
+            }
             case "anchor":
+                if (msg.off) { this.anchorTarget = null; break; }
                 this.anchorTarget = msg;
                 break;
             case "think":

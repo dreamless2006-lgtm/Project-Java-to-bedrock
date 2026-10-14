@@ -32,8 +32,43 @@ function blockAt(dim, x, y, z) { try { return dim.getBlock({ x: Math.floor(x), y
 function near(bot, target, r) { return dist(bot.location, target) <= r; }
 // Block.isSolid is beta-only; "not air and not liquid" is what we need for footing/placement.
 function solid(b) { return !!b && !b.isAir && !b.isLiquid; }
-function goTo(bot, target, mode = "sprint", prio = PRIO, enterWater = false) { requestMove(bot, target, { priority: prio, source: SOURCE, mode, ttl: STEP * 3, enterWater }); }
-function stopMoving(bot) { releaseMove(bot, SOURCE); }
+// A real player (the bridge account) has no scripted physics: the script cannot push it, so it
+// walks by stepping its position a little every tick along the ground.
+const walkers = new Map();   // player id -> { bot, target, mode, enterWater, until }
+let walkerTimer = null;
+export function isPlayerBody(bot) { try { return bot.typeId === "minecraft:player"; } catch (e) { return false; } }
+function goTo(bot, target, mode = "sprint", prio = PRIO, enterWater = false) {
+    if (isPlayerBody(bot)) {
+        walkers.set(bot.id, { bot, target: { x: target.x, y: target.y, z: target.z }, mode, enterWater, until: system.currentTick + STEP * 3 });
+        if (walkerTimer === null) walkerTimer = system.runInterval(() => { const now = system.currentTick; for (const w of [...walkers.values()]) { try { if (!w.bot.isValid) walkers.delete(w.bot.id); else stepPlayerBody(w.bot, now); } catch (e) { /* ignore */ } } }, 1);
+        return;
+    }
+    requestMove(bot, target, { priority: prio, source: SOURCE, mode, ttl: STEP * 3, enterWater });
+}
+function stopMoving(bot) { if (isPlayerBody(bot)) { walkers.delete(bot.id); return; } releaseMove(bot, SOURCE); }
+export function stepPlayerBody(bot, now) {
+    const w = walkers.get(bot.id);
+    if (!w) return;
+    if (now > w.until) { walkers.delete(bot.id); return; }
+    const loc = bot.location;
+    const dx = w.target.x - loc.x, dz = w.target.z - loc.z;
+    const flat = Math.hypot(dx, dz);
+    if (flat < 0.3) { walkers.delete(bot.id); return; }
+    const step = Math.min(w.mode === "sprint" ? 0.28 : 0.2, flat);
+    const nx = loc.x + dx / flat * step, nz = loc.z + dz / flat * step;
+    let ny = loc.y;
+    try {
+        const dim = bot.dimension, fx = Math.floor(nx), fz = Math.floor(nz), feet = Math.floor(loc.y);
+        for (const y of [feet, feet + 1, feet - 1, feet - 2, feet - 3]) {
+            const below = dim.getBlock({ x: fx, y: y - 1, z: fz }), at = dim.getBlock({ x: fx, y, z: fz }), head = dim.getBlock({ x: fx, y: y + 1, z: fz });
+            if (!below || !at || !head) continue;
+            if ((solid(below) || (w.enterWater && /water/.test(below.typeId))) && !solid(at) && !solid(head)) { ny = y; break; }
+        }
+    } catch (e) { /* unloaded chunk: keep the height */ }
+    const yaw = Math.atan2(-dx, dz) * 180 / Math.PI;
+    try { bot.teleport({ x: nx, y: ny, z: nz }, { rotation: { x: 0, y: yaw } }); }
+    catch (e) { try { bot.teleport({ x: nx, y: ny, z: nz }); } catch (e2) { /* ignore */ } }
+}
 function lookAt(bot, target) { try { faceBlock(bot, target); } catch (e) { /* ignore */ } }
 function cfg() { return getWorldConfig(); }
 
@@ -892,7 +927,7 @@ H.emote = {
         const bot = ctx.bot;
         const n = String(a.name).toLowerCase();
         try {
-            if (n === "jump") jump(bot);
+            if (n === "jump") { try { jump(bot); } catch (e) { /* players cannot be pushed */ } }
             else if (n === "sneak" || n === "sit") { bot.isSneaking = true; system.runTimeout(() => { try { bot.isSneaking = false; } catch (e) { /* ignore */ } }, 60); }
             else if (n === "swing") bot.playAnimation("set_block");
             else bot.playAnimation("animation.humanoid.celebrating");

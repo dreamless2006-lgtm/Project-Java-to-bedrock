@@ -18,7 +18,7 @@ const HELP = [
     "§b!ai talk <Name> <message>§r - whisper to a bot (works without the beta chat API)",
     "§b!ai memory <Name>§r | §b!ai forget <Name>§r - read or wipe a bot's memory",
     "§b!ai pause|resume [Name]§r - pause thinking (all bots or one)",
-    "§7operator: §b!ai provider <id>§r, §b!ai model <name>§r, §b!ai transport auto|direct|bridge§r, §b!ai volume 0-3§r, §b!ai budget soft|hard <tokens>|reset§r, §b!ai rules <text>§r, §b!ai callbyname on|off§r, §b!ai freebuild on|off§r, §b!ai debug on|off§r, §b!ai fakechat on|off§r, §b!ai players 0-16§r, §b!ai thoughts on|off§r, §b!ai mix on|off§r, §b!ai wildspawns on|off§r, §b!ai companiondeath respawn|permadeath§r, §b!ai jointeleport on|off§r, §b!ai content§r",
+    "§7operator: §b!ai provider <id>§r, §b!ai model <name>§r, §b!ai transport auto|direct|bridge§r, §b!ai volume 0-3§r, §b!ai budget soft|hard <tokens>|reset§r, §b!ai rules <text>§r, §b!ai callbyname on|off§r, §b!ai freebuild on|off§r, §b!ai debug on|off§r, §b!ai fakechat on|off§r, §b!ai players 0-16§r, §b!ai thoughts on|off§r, §b!ai mix on|off§r, §b!ai bridgeplays on|off§r, §b!ai wildspawns on|off§r, §b!ai companiondeath respawn|permadeath§r, §b!ai jointeleport on|off§r, §b!ai content§r",
 ];
 
 function reply(player, lines) { for (const l of [].concat(lines)) { try { player.sendMessage(l); } catch (e) { /* ignore */ } } }
@@ -135,6 +135,7 @@ export function handleCommand(player, message) {
         case "bridgename": updateWorldConfig({ bridgeName: rest[0] || "" }); return reply(player, rest[0] ? `§aonly ${rest[0]} may act as the bridge` : "§aany operator account may act as the bridge");
         case "players": { const n = Number(rest[0]); if (!(n >= 0 && n <= 16)) return reply(player, "§cusage: !ai players 0-16 (named AI players living in this world)"); updateWorldConfig({ worldPlayers: n }); manager.populate("command", player); return reply(player, `§a${n} AI players will live in this world`); }
         case "wildspawns": updateWorldConfig({ wildSpawns: rest[0] === "on" }); return reply(player, `§awild bot spawns ${rest[0] === "on" ? "on" : "off"}`);
+        case "bridgeplays": updateWorldConfig({ bridgePlays: rest[0] === "on" }); manager.discover(); return reply(player, rest[0] === "on" ? "§athe bridge account's player now plays with its own brain" : "§athe bridge account's player is a plain relay again");
         case "thoughts": updateWorldConfig({ showThoughts: rest[0] === "on" }); return reply(player, rest[0] === "on" ? "§aevery bot's reasoning and chosen actions are now shown to nearby players" : "§athoughts hidden");
         case "mix": updateWorldConfig({ mixProviders: rest[0] === "on" }); manager.populate("command", player); return reply(player, rest[0] === "on" ? "§aresidents are spread across every provider with a key" : "§aall residents use the world's default provider");
         case "companiondeath": { const v = rest[0]; if (!["respawn", "permadeath"].includes(v)) return reply(player, "§cusage: !ai companiondeath respawn|permadeath"); updateWorldConfig({ companionDeath: v }); return reply(player, `§acompanions now ${v === "respawn" ? "respawn next to their owner after dying" : "stay dead (permadeath)"}`); }

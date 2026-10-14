@@ -6,11 +6,13 @@ import { ALL_AI_CACHE } from "../greeting.js";
 import { recordBotMessage } from "../ai_conversations.js";
 import { registerBrain, unregisterBrain, getBrain, allBrains, setBrainEnabled, isBrainEnabled } from "./gate.js";
 import { getWorldConfig, updateWorldConfig, callConfigFor, readBotSettings, writeBotSettings, patchBotSettings, configuredProviders, MEMORY_KEY, BUDGET_KEY } from "./config.js";
-import { loadMemory, saveMemory, addFact, forgetFact, addEpisode, addChat, notePerson, createMemory } from "./memory.js";
+import { loadMemory, saveMemory, addFact, forgetFact, addEpisode, addChat, notePerson, createMemory, setSelf, setPlans } from "./memory.js";
+import { createDrives, updateDrives, renderDrives, cadenceFactor } from "./drives.js";
+import { timeLabel } from "./perception.js";
 import { buildSystemStable, buildTurn, promptHash } from "./prompt.js";
 import { createSchedulerState, noteEvent, shouldThink, beginThink, endThink, CADENCE } from "./scheduler.js";
 import { observe, dist, fmtPos } from "./perception.js";
-import { Actuator, findPlayer, findSafeSpot } from "./actuator.js";
+import { Actuator, findPlayer, findSafeSpot, isPlayerBody } from "./actuator.js";
 import { think as transportThink, bridge, transportInfo } from "./transport.js";
 import { hasDirectHttp, EDITION } from "./net_impl.js";
 import { BudgetLedger } from "./budget.js";
@@ -28,6 +30,7 @@ const POPULATE_GAP = 600;          // re-check the resident roster every 30 s
 // Providers worth spreading residents over: hosted chat models with a key. Local servers
 // (Ollama, LM Studio, the Player2 app) and "custom" are only used when chosen explicitly.
 const MIX_PROVIDERS = new Set(["anthropic", "openai", "xai", "gemini", "openrouter", "player2cloud"]);
+function nameOfBlock(block) { try { return String(block.typeId || "block").replace(/^minecraft:/, "").replace(/_/g, " "); } catch (e) { return "a block"; } }
 const PROVIDER_LABELS = { anthropic: "Claude", openai: "ChatGPT", xai: "Grok", gemini: "Gemini", player2: "Player2", player2cloud: "Player2", openrouter: "OpenRouter", ollama: "Ollama", lmstudio: "LM Studio", custom: "custom" };
 
 // Engine-level goals: with a brain attached the body keeps only "fight back when hit";
@@ -98,6 +101,11 @@ export class BotBrain {
         this.pendingTrade = null;
         this.paused = this.settings.mode === "paused";
         this.lastSay = "";
+        this.lastReplyIdle = false;
+        this.progressSince = 0;
+        this.sleptSince = false;
+        this.lastPlace = "";
+        if (!this.memory.drives) this.memory.drives = createDrives(Date.now());
     }
 
     get name() { try { return this.bot.nameTag || "Player"; } catch (e) { return "Player"; } }
@@ -167,7 +175,7 @@ export class BotBrain {
         const mentioned = mentionsName(text, this.name);
         if (opts.fromBot && !mentioned) {
             // bot-to-bot chatter: hear it, but only sometimes wake up for it
-            if (system.currentTick - this.lastBotReplyTick < 20 * 60 || Math.random() > 0.3) { addChat(this.memory, from, text, Date.now()); return; }
+            if (system.currentTick - this.lastBotReplyTick < 20 * 40 || Math.random() > 0.5) { addChat(this.memory, from, text, Date.now()); return; }
             this.lastBotReplyTick = system.currentTick;
         }
         addChat(this.memory, from, text, Date.now(), { whisper: !!opts.whisper });
@@ -175,7 +183,7 @@ export class BotBrain {
         if (this.chatBuffer.length > 8) this.chatBuffer.shift();
         if (opts.whisper || mentioned) this.noteEvent("chat_mention", `${from}: ${text}`);
         else if (!cfg.callByName) this.noteEvent("chat_nearby", `${from}: ${text}`);
-        if (!opts.fromBot && from) notePerson(this.memory, from, {}, Date.now());
+        if (from) notePerson(this.memory, from, opts.fromBot ? { bot: 1 } : {}, Date.now());
         if (this.pendingTrade) this.checkTrade(from, text);
     }
 
@@ -199,6 +207,13 @@ export class BotBrain {
         this.lastSay = line;
         this.lastSayTick = system.currentTick;
         if (cfg.chatVolume === 0) return;
+        if (this.settings.mode === "bridge" && isPlayerBody(this.bot)) {
+            // a real account: the words go out as real chat through the bridge
+            try { bridge.send({ t: "chat_out", text: line, to: to || "" }); } catch (e) { /* ignore */ }
+            addChat(this.memory, this.name, line, Date.now(), { self: true, whisper: !!to });
+            if (!to) manager.onBotSaid(this, line);
+            return;
+        }
         if (to) {
             const p = findPlayer(to);
             if (p) { try { p.sendMessage(`§7(${this.name} whispers) §r${line}`); } catch (e) { /* ignore */ } addChat(this.memory, this.name, line, Date.now(), { self: true, whisper: true }); return; }
@@ -224,18 +239,38 @@ export class BotBrain {
 
     async think(now) {
         const cfg = callConfigFor(this);
+        const wcfg = getWorldConfig();
         const level = budget.level();
-        const events = beginThink(this.sched, now, level);
+        const inner = wcfg.innerLife !== false;
+        const events = beginThink(this.sched, now, level, inner ? cadenceFactor(this.memory.drives) : 1);
         const lastActions = this.actuator.drainResults();
+        const newChat = this.chatBuffer.splice(0);
         const obs = observe(this.bot, this, {
             events: events.filter(e => e.type !== "chat_nearby" && e.type !== "chat_mention").map(e => e.text),
-            newChat: this.chatBuffer.splice(0),
+            newChat,
             lastActions,
             problems: this.problems.splice(0),
             requests: this.requests.splice(0),
         });
+        let nudge = null;
+        if (inner) {
+            // the inner life: drives move with what happened, and the model reads them as feelings
+            const nowMs = Date.now();
+            const place = `${obs.dimension}|${obs.biome || ""}`;
+            const talked = newChat.length > 0 || (system.currentTick - (this.lastSayTick || 0)) < 20 * 90;
+            let night = false; try { night = /night/.test(timeLabel(world.getTimeOfDay())); } catch (e) { /* ignore */ }
+            const health = typeof obs.health === "number" && obs.maxHealth ? obs.health / obs.maxHealth : 1;
+            updateDrives(this.memory.drives, { talked, night, slept: this.sleptSince, threats: (obs.hostiles || []).length, health, hasGoal: !!obs.goal, newPlace: !!this.lastPlace && place !== this.lastPlace, idle: this.lastReplyIdle, progressed: lastActions.some(r => /: (finished|reached|collected|crafted|placed|smelted|travelled|done)/.test(r)) }, nowMs);
+            this.lastPlace = place; this.sleptSince = false;
+            obs.feelings = renderDrives(this.memory.drives);
+            const every = Math.max(3, Number(wcfg.reflectEvery) || 20);
+            if (this.thinks > 0 && this.thinks % every === 0 && (this.memory.episodes.length >= 2 || this.memory.chat.length >= 4 || this.memory.facts.length >= 3)) {
+                nudge = "Reflection time. Look back over 'Recently' and the chat: turn what matters into lasting facts (remember), drop facts that are stale (forget), rewrite 'self' in one or two sentences about who you are becoming and what you care about, and set 'plans' (up to 6 ordered steps) for the coming days. Then carry on as usual.";
+                this.reflections = (this.reflections || 0) + 1;
+            }
+        }
         const systemStable = this.systemPrompt();
-        const turn = buildTurn({ systemStable, memory: this.memory, now: Date.now(), obs, history: this.history });
+        const turn = buildTurn({ systemStable, memory: this.memory, now: Date.now(), obs, history: this.history, nudge });
         turn.sysHash = this.systemCache.hash;
         const started = Date.now();
         const res = await transportThink(this.id, cfg, turn);
@@ -290,6 +325,10 @@ export class BotBrain {
         }
         for (const f of reply.remember) addFact(this.memory, f, Date.now());
         for (const f of reply.forget) forgetFact(this.memory, f);
+        if (reply.self) setSelf(this.memory, reply.self);
+        if (reply.plans) setPlans(this.memory, reply.plans);
+        this.lastReplyIdle = !reply.say && (reply.actions.length === 0 || reply.actions.every(a => a.type === "wait"));
+        if (reply.actions.some(a => a.type === "sleep")) this.sleptSince = true;
         if (reply.say) {
             const quiet = cfg.chatVolume === 1 && !reply.sayTo && !this.chatBuffer.length && Math.random() < 0.5;
             if (!quiet) this.sayNow(reply.say, reply.sayTo);
@@ -298,7 +337,7 @@ export class BotBrain {
     }
 
     status() {
-        return { name: this.name, id: this.id, thinks: this.thinks, failures: this.failures, lastError: this.lastError, paused: this.paused, current: this.actuator.describeCurrent(), goal: this.memory.goal, owner: this.settings.owner || null, provider: callConfigFor(this).provider, model: callConfigFor(this).model || "(default)", facts: this.memory.facts.length, nextThinkIn: Math.max(0, Math.round((this.sched.nextThink - system.currentTick) / 20)) };
+        return { name: this.name, id: this.id, thinks: this.thinks, failures: this.failures, lastError: this.lastError, paused: this.paused, current: this.actuator.describeCurrent(), goal: this.memory.goal, owner: this.settings.owner || null, provider: callConfigFor(this).provider, model: callConfigFor(this).model || "(default)", feelings: renderDrives(this.memory.drives), self: this.memory.self || "", plans: (this.memory.plans || []).slice(), facts: this.memory.facts.length, nextThinkIn: Math.max(0, Math.round((this.sched.nextThink - system.currentTick) / 20)) };
     }
 }
 
@@ -335,6 +374,7 @@ class BrainManager {
         system.runTimeout(() => this.discover(), 40);
         system.runTimeout(() => this.populate("start"), 100);
         system.runInterval(() => this.populate("periodic"), POPULATE_GAP);
+        system.runInterval(() => this.dayWatch(), 100);
         console.warn(`[RealAI] brain system started (build ${EDITION}, direct http: ${hasDirectHttp})`);
     }
 
@@ -370,9 +410,24 @@ class BrainManager {
             try { if (e && e.isValid && !seen.has(e.id)) { seen.add(e.id); bots.push(e); } } catch (e2) { /* ignore */ }
         }
         const players = (() => { try { return world.getAllPlayers(); } catch (e) { return []; } })();
+        // The bridge account is a real player; with bridgePlays it lives here like everyone else.
+        try {
+            const bp = this.bridgePlayer();
+            if (bp && cfg.bridgePlays && !brains.has(bp.id)) {
+                const settings = patchBotSettings(bp, { mode: "bridge", persona: { name: bp.name, description: "You are playing in person through the account that also carries the other AI players' thinking. You are a full member of this world, not a helper: live your own life here.", personality: PERSONALITIES[hashStr(bp.name) % PERSONALITIES.length], voice: VOICES[(hashStr(bp.name) >> 3) % VOICES.length] } });
+                try { bp.setDynamicProperty(PID_KEY, "bridge-" + bp.name); } catch (e) { /* ignore */ }
+                const b = new BotBrain(bp);
+                b.settings = settings;
+                registerBrain(bp.id, b);
+                b.request("you are here in person now; say hello and start living your own life in this world");
+                console.warn(`[RealAI] brain started for the bridge account ${bp.name}: it plays in person now`);
+            }
+            if (bp && !cfg.bridgePlays && brains.has(bp.id)) { try { brains.get(bp.id).saveMemory(); } catch (e) { /* ignore */ } unregisterBrain(bp.id); }
+            if (bp && cfg.bridgePlays && brains.has(bp.id) && !seen.has(bp.id)) { seen.add(bp.id); bots.push(bp); }
+        } catch (e) { /* ignore */ }
         const score = (e) => {
             const s = readBotSettings(e);
-            if (s.mode === "companion" || s.owner) return -1e9;
+            if (s.mode === "companion" || s.owner || s.mode === "bridge") return -1e9;
             if (s.mode === "resident") return -1e8;
             if (cfg.autonomy === "companions_only") return Infinity;
             let best = 1e9;
@@ -458,6 +513,35 @@ class BrainManager {
                 system.runTimeout(() => { try { this.gatherCompanions(player); } catch (e) { /* ignore */ } }, 60);
                 system.runTimeout(() => { try { this.populate("join", player); } catch (e) { console.warn("[RealAI] populate failed", e); } }, 40);
             });
+            // The world around them: a new day, the weather, and anyone touching their home.
+            try {
+                world.afterEvents.weatherChange.subscribe(ev => {
+                    try {
+                        const what = ev.newWeather === "Clear" ? "the sky cleared" : ev.newWeather === "Thunder" ? "a thunderstorm started" : "it started raining";
+                        for (const [, br] of allBrains()) { try { if (br.bot.dimension.id === "minecraft:overworld") br.noteEvent("weather", what); } catch (e) { /* ignore */ } }
+                    } catch (e) { /* ignore */ }
+                });
+            } catch (e) { /* older API */ }
+            const touched = (player, block, verb) => {
+                try {
+                    const name = nameOfBlock(block);
+                    for (const [, br] of allBrains()) {
+                        try {
+                            const home = br.memory?.home;
+                            if (!home || (home.dim && home.dim !== block.dimension.id) || dist(home, block.location) > 12) continue;
+                            if (br.settings.owner === player.id) continue;
+                            const key = player.id + "|" + verb;
+                            br._touchRate = br._touchRate || new Map();
+                            if ((br._touchRate.get(key) || 0) > system.currentTick - 400) continue;
+                            br._touchRate.set(key, system.currentTick);
+                            br.noteEvent("home_touched", `${player.name} ${verb} ${name} at your home (${Math.round(dist(home, block.location))}m from its centre)`);
+                            notePerson(br.memory, player.name, { note: `${verb} blocks at my home` }, Date.now());
+                        } catch (e) { /* ignore */ }
+                    }
+                } catch (e) { /* ignore */ }
+            };
+            try { world.afterEvents.playerBreakBlock.subscribe(ev => touched(ev.player, ev.block, "broke")); } catch (e) { /* ignore */ }
+            try { world.afterEvents.playerPlaceBlock.subscribe(ev => touched(ev.player, ev.block, "placed")); } catch (e) { /* ignore */ }
             // A stale body of a resident (left behind in a far chunk when a fresh one was
             // spawned next to a joining player) is removed the moment it loads again.
             world.afterEvents.entityLoad.subscribe(ev => {
@@ -521,7 +605,9 @@ class BrainManager {
             } catch (e) { /* ignore */ }
         }
         clusters.sort((a, b) => (b.owned - a.owned) || (b.n - a.n));
-        if (clusters.length) try { bridge.send({ t: "anchor", x: clusters[0].x, y: clusters[0].y, z: clusters[0].z, dim: clusters[0].dim.id }); } catch (e) { /* ignore */ }
+        const bridgeBrained = (() => { try { const bp = this.bridgePlayer(); return !!(bp && cfg.bridgePlays && allBrains().has(bp.id)); } catch (e) { return false; } })();
+        if (bridgeBrained) { try { bridge.send({ t: "anchor", off: true }); } catch (e) { /* ignore */ } }
+        else if (clusters.length) try { bridge.send({ t: "anchor", x: clusters[0].x, y: clusters[0].y, z: clusters[0].z, dim: clusters[0].dim.id }); } catch (e) { /* ignore */ }
         if (!cfg.keepAlive) { this.clearTickingAreas(); return; }
         const players = (() => { try { return world.getAllPlayers().filter(p => !p.hasTag("realai_bridge")); } catch (e) { return []; } })();
         // Script ticking areas (stable API, no cheats needed): 3x3 chunks around up to four clusters.
@@ -649,6 +735,14 @@ class BrainManager {
         return { x: Math.floor(x) + 0.5, y: Math.floor(yHint), z: Math.floor(z) + 0.5 };
     }
 
+    bridgePlayer() {
+        try {
+            const t = transportInfo();
+            if (!t.bridgeConnected || !t.bridgePlayer) return null;
+            return world.getAllPlayers().find(p => p.isValid && p.name === t.bridgePlayer) || null;
+        } catch (e) { return null; }
+    }
+
     // The relay account is a player in the list but never an anchor for residents.
     isBridgeAccount(p) {
         try {
@@ -729,6 +823,18 @@ class BrainManager {
             delay += RESIDENT_SPAWN_GAP;
             i++;
         }
+    }
+
+    // Dawn: every bot gets a moment to plan its day.
+    dayWatch() {
+        try {
+            const label = timeLabel(world.getTimeOfDay());
+            const wasNight = /night|dusk/.test(this.lastTimeLabel || "");
+            if (wasNight && (label === "dawn" || label === "morning")) {
+                for (const [, br] of allBrains()) { try { br.noteEvent("dawn", "a new day begins; think about what you want from it"); } catch (e) { /* ignore */ } }
+            }
+            this.lastTimeLabel = label;
+        } catch (e) { /* ignore */ }
     }
 
     residentsStatus() {

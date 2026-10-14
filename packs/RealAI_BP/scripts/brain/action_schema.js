@@ -71,6 +71,8 @@ export const REPLY_SCHEMA = {
         },
         remember: { type: "array", items: { type: "string" }, maxItems: 4, description: "New long-term facts worth keeping." },
         forget: { type: "array", items: { type: "string" }, maxItems: 4, description: "Facts (substring) that are no longer true." },
+        self: { type: "string", description: "One or two sentences about who you are becoming and what you care about; empty string = unchanged." },
+        plans: { type: "array", items: { type: "string" }, maxItems: 6, description: "Your ordered plan for the coming days; replaces the old list; empty array = unchanged." },
     },
     required: ["actions"],
     additionalProperties: false,
@@ -97,7 +99,7 @@ export function renderActionDocs() {
  */
 export function normalizeReply(raw) {
     const problems = [];
-    const out = { thought: "", say: null, sayTo: null, mood: null, goal: null, actions: [], remember: [], forget: [], problems };
+    const out = { thought: "", say: null, sayTo: null, mood: null, goal: null, actions: [], remember: [], forget: [], self: null, plans: null, problems };
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
         problems.push("reply was not a JSON object");
         return out;
@@ -114,6 +116,8 @@ export function normalizeReply(raw) {
             out[key] = raw[key].filter(s => typeof s === "string" && s.trim()).map(s => s.trim().slice(0, 160)).slice(0, 4);
         }
     }
+    if (typeof raw.self === "string" && raw.self.trim()) out.self = raw.self.trim().slice(0, 400);
+    if (Array.isArray(raw.plans) && raw.plans.length) out.plans = raw.plans.filter(s => typeof s === "string" && s.trim()).map(s => s.trim().slice(0, 100)).slice(0, 6);
     const acts = Array.isArray(raw.actions) ? raw.actions : (raw.action ? [raw.action] : []);
     for (const a of acts) {
         if (out.actions.length >= MAX_ACTIONS) { problems.push(`more than ${MAX_ACTIONS} actions; extras dropped`); break; }

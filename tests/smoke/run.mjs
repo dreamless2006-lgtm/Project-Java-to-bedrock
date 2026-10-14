@@ -42,17 +42,19 @@ const IDLE = JSON.stringify({ thought: "nothing to do", say: "", say_to: "", moo
 let wanted = null;   // (msg) => boolean ; the think we are waiting for
 let captured = null;
 const seenThinks = [];
+const otherMsgs = [];
 function pump() {
     for (const m of relay.messages.splice(0)) {
         const got = reasm.push(m); if (!got) continue;
-        const msg = unpackMessage(got.text); if (!msg || msg.t !== "think") continue;
+        const msg = unpackMessage(got.text); if (!msg) continue;
+        if (msg.t !== "think") { otherMsgs.push(msg); continue; }
         seenThinks.push(msg);
         if (wanted && !captured && wanted(msg)) { captured = msg; continue; }
         fromBridge({ t: "result", turnId: msg.turnId, ok: true, text: IDLE, usage: { input: 500, output: 30 }, model: "mock", provider: "anthropic", attempts: 1 });
     }
 }
 async function run(ticks, step = 5, until = () => false) { for (let i = 0; i < ticks; i += step) { await advanceTicksAsync(step); pump(); if (until()) return true; } return false; }
-async function waitThink(pred, ticks = 400) { wanted = pred; captured = null; await run(ticks, 5, () => !!captured); wanted = null; return captured; }
+async function waitThink(pred, ticks = 400) { wanted = pred; captured = null; await run(ticks, 5, () => !!captured); wanted = null; const got = captured; captured = null; return got; }
 const thinkMsg = await waitThink(msg => msg.messages?.some(m => String(m.content).includes("build us a house")));
 check(!!thinkMsg, "addon sent a think request to the bridge");
 if (thinkMsg) {
@@ -186,6 +188,66 @@ await run(260);
 const reborn = residents().find(b => b.name === firstName);
 check(!!reborn && reborn !== firstAgain && reborn.bot.getDynamicProperty("rg:p_id") === firstPid, "dead resident respawned with the same identity");
 check(residents().length === 8, "still 8 residents after the respawn: " + residents().length);
+// Fifth cycle: the inner life. Feelings reach the model, a reflection turn comes round, and the
+// model's "self" and "plans" land in memory and come back in the next prompt.
+{
+    const { updateWorldConfig: upd } = await import("../../packs/RealAI_BP/scripts/brain/config.js");
+    upd({ reflectEvery: 3 });
+    const r0 = residents()[0];
+    const { addEpisode: ep } = await import("../../packs/RealAI_BP/scripts/brain/memory.js");
+    ep(r0.memory, "helped Steve carry logs", Date.now()); ep(r0.memory, "saw a creeper near the river", Date.now()); ep(r0.memory, "started a wall by the oak", Date.now());
+    const seenBefore = seenThinks.length;
+    captured = null;
+    let reflectMsg = null, feelingsMsg = null;
+    wanted = msg => { if (msg.bot !== r0.id) return false; const obs = msg.messages[msg.messages.length - 1].content; if (!feelingsMsg && obs.includes("You feel")) feelingsMsg = msg; if (obs.includes("Reflection time")) { reflectMsg = msg; return true; } return false; };
+    for (let i = 0; i < 8 && !reflectMsg; i++) { r0.request("tell me what you are up to"); await run(120, 5, () => !!captured); if (captured) { reflectMsg = captured; captured = null; } }
+    wanted = null;
+    check(!!feelingsMsg, "a resident's observation reports its feelings");
+    check(!!reflectMsg, "a reflection turn was asked for after a few thinks: " + (seenThinks.length - seenBefore) + " thinks");
+    if (reflectMsg) {
+        fromBridge({ t: "result", turnId: reflectMsg.turnId, ok: true, text: JSON.stringify({ thought: "looking back", say: "", say_to: "", mood: "focused", goal: "", actions: [{ type: "wait", seconds: 5 }], remember: ["Steve is the person who runs this place"], forget: [], self: "I am the quiet one who builds things properly and keeps an eye on Steve.", plans: ["finish a proper house", "find iron", "make a farm with the others"] }), usage: { input: 900, output: 120 }, model: "mock", provider: "anthropic", attempts: 1 });
+        await run(40);
+        check(r0.memory.self.includes("quiet one") && r0.memory.plans.length === 3, "self and plans stored from the reflection: " + r0.memory.self);
+        let nextObs = null;
+        wanted = msg => msg.bot === r0.id;
+        r0.request("say hi"); await run(200, 5, () => !!captured); nextObs = captured; captured = null; wanted = null;
+        check(!!nextObs && nextObs.messages[nextObs.messages.length - 1].content.includes("Who I am: I am the quiet one") && nextObs.messages[nextObs.messages.length - 1].content.includes("1. finish a proper house"), "the next prompt carries the self-narrative and the plan");
+        if (nextObs) fromBridge({ t: "result", turnId: nextObs.turnId, ok: true, text: IDLE, usage: { input: 1, output: 1 }, model: "mock", provider: "anthropic", attempts: 1 });
+    }
+    // a stranger breaks a block at a resident's home -> the resident notices
+    const r1 = residents()[1];
+    r1.memory.home = { x: Math.floor(r1.bot.location.x), y: 64, z: Math.floor(r1.bot.location.z), dim: "minecraft:overworld" };
+    const stranger = spawnPlayer("Alex", { x: r1.memory.home.x + 2, y: 64, z: r1.memory.home.z });
+    const blk = overworld.getBlock({ x: r1.memory.home.x + 1, y: 64, z: r1.memory.home.z });
+    world.afterEvents.playerBreakBlock.emit({ player: stranger, block: blk, brokenBlockPermutation: {}, dimension: overworld });
+    check(r1.sched.pending.some(e => e.type === "home_touched" && e.text.includes("Alex broke")), "a resident notices someone breaking a block at its home");
+    world.afterEvents.weatherChange.emit({ dimension: "minecraft:overworld", newWeather: "Rain", previousWeather: "Clear" });
+    check(r1.sched.pending.some(e => e.type === "weather"), "weather changes are noticed");
+    // dawn after a night: everyone gets a moment to plan the day
+    world.setTimeOfDay(14000); await run(120); world.setTimeOfDay(500); await run(120);
+    check(residents().every(b => b.sched.pending.some(e => e.type === "dawn") || b.sched.inFlight || b.thinks > 0), "dawn prompts a plan for the day");
+    upd({ reflectEvery: 20 });
+}
+// Sixth cycle: the bridge account's own player is a player too. It gets a brain, walks by
+// stepping its real body, and its words go out as real chat through the bridge.
+{
+    await run(200);
+    const bb = gate.getBrain(relay.id);
+    check(!!bb && bb.settings.mode === "bridge", "the bridge account's player has a brain of its own");
+    if (bb) {
+        relay.location = { x: 30, y: 64, z: 30 };
+        const before = Math.hypot(relay.location.x - steve.location.x, relay.location.z - steve.location.z);
+        bb.actuator.enqueue([{ type: "go_to_player", name: "Steve" }]);
+        await run(400, 10, () => !bb.actuator.current && !bb.actuator.queue.length);
+        const after = Math.hypot(relay.location.x - steve.location.x, relay.location.z - steve.location.z);
+        check(after < 4 && before > 20, `the bridge player walked to Steve (${before.toFixed(0)}m -> ${after.toFixed(1)}m)`);
+        const chatOutBefore = otherMsgs.filter(m => m.t === "chat_out").length;
+        bb.sayNow("hello from the account itself");
+        pump();
+        check(otherMsgs.filter(m => m.t === "chat_out").length > chatOutBefore && otherMsgs.some(m => m.t === "chat_out" && m.text === "hello from the account itself"), "its chat goes out as real chat through the bridge");
+        check(!log.chat.some(l => l.includes("hello from the account itself")), "and not as a fake <name> line");
+    }
+}
 check(log.errors.length === 0, "no engine-level errors after lifecycle: " + log.errors.slice(0, 3).join(" | "));
 const lateWarnings = log.warnings.filter(w => /\[RealAI\]/.test(w) && !/started|connected|unavailable/.test(w));
 check(lateWarnings.length === 0, "no late [RealAI] warnings: " + lateWarnings.slice(0, 3).join(" | "));

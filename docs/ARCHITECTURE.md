@@ -36,6 +36,35 @@ not need to be called every tick. Think cadence: ~12 s while active, ~45 s
 idle, immediately when addressed in chat, hurt, or a player comes close;
 slower under a soft budget limit, paused under a hard one (`scheduler.js`).
 
+## Inner life
+
+`drives.js` (pure) keeps six 0..100 drives per bot inside its memory
+(`memory.drives`): social, rest, curiosity, safety, boredom, purpose. Each
+think updates them from what happened (talked, slept, night, threats,
+health, a new place, an idle turn, finished work) and renders them as one
+"You feel ..." line in the observation; a pressing drive shortens the next
+think (`cadenceFactor` → `beginThink` factor). The reply contract gained
+`self` (one or two sentences the bot keeps about itself, `memory.self`) and
+`plans` (an ordered list, `memory.plans`), both rendered at the top of the
+memory block. Every `reflectEvery` thinks (20) the turn carries a reflection
+nudge asking the model to consolidate facts, rewrite self and update plans.
+The manager fires `dawn` events when night turns to day, `weather` events
+from `weatherChange`, and `home_touched` events when a non-owner breaks or
+places blocks within 12 blocks of a bot's home (`playerBreakBlock` /
+`playerPlaceBlock`). Bot-to-bot chatter wakes a listener half the time.
+
+## The bridge account plays
+
+With `bridgePlays` (default on) the manager finds the bridge's player
+(`transportInfo().bridgePlayer`) and gives it a `BotBrain` with mode
+`bridge`. Scripts cannot push a real player, so `actuator.js` moves a player
+body by stepping its position along the ground every tick
+(`stepPlayerBody`, 0.2 to 0.28 blocks per tick, snapping to standable
+blocks). Its chat is sent to the bridge as `chat_out`, which the bridge
+turns into a real `text` packet from the account (whispers become `/tell`).
+While the bridge player has a brain the addon sends `anchor {off: true}`
+so the bridge stops teleporting itself around.
+
 ## Residents: the people who live here
 
 `roster.js` + `BrainManager.populate()` keep a persistent list of named AI
