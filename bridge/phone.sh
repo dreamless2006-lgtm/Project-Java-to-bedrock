@@ -17,7 +17,12 @@ else
     git clone --depth 1 -b "$BRANCH" "$REPO" "$DIR"
 fi
 cd "$DIR/bridge"
-[ -d node_modules ] || npm install --no-audit --no-fund --omit=optional || npm install --no-audit --no-fund
+# No C++ compiler on a phone: skip native builds (raknet-native); the bridge uses the JavaScript RakNet.
+if [ ! -f node_modules/.realai-ok ]; then
+    rm -rf node_modules
+    npm install --ignore-scripts --no-audit --no-fund
+    touch node_modules/.realai-ok
+fi
 echo
 echo "Real AI bridge is installed in $DIR. Starting it (first run asks a few questions)..."
 echo "Next time, just run:  bash ~/real-ai/bridge/phone.sh"

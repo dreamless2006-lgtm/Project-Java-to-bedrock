@@ -126,10 +126,13 @@ export class Bridge {
         log("info", `connecting (${c.mode || "realm"}) as ${opts.username} ...`);
         // raknet-native is a compiled module that may not build on phones (Termux) or odd setups;
         // bedrock-protocol can run on the pure-JavaScript RakNet instead.
+        if (c.raknetBackend) opts.raknetBackend = c.raknetBackend;
         if (!opts.raknetBackend) {
-            try { createRequire(import.meta.url).resolve("raknet-native"); opts.raknetBackend = "raknet-native"; }
+            // actually load it: on a phone the package is present but its compiled binary is not
+            try { createRequire(import.meta.url)("raknet-native"); opts.raknetBackend = "raknet-native"; }
             catch (e) { opts.raknetBackend = "jsp-raknet"; log("info", "raknet-native not available, using the JavaScript RakNet"); }
         }
+        opts.useNativeRaknet = opts.raknetBackend === "raknet-native";
         const client = bedrock.createClient(opts);
         this.client = client;
         client.on("start_game", p => { try { this.entityId = BigInt(p.runtime_entity_id ?? p.entity_id ?? 0); } catch (e) { this.entityId = 0n; } });
