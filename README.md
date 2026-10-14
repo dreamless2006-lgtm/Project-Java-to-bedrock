@@ -92,6 +92,34 @@ Then import `Real-AI-<version>.mcaddon` on your device, activate the Real AI
 behavior pack on the world, join, and the eight residents walk in a few
 seconds after the bridge connects.
 
+### No Node.js yet?
+
+* **Windows or Mac:** go to https://nodejs.org, click the big "LTS" download,
+  run the installer with its defaults (on Windows leave "Add to PATH"
+  ticked), then download this repository as a ZIP (green "Code" button on
+  GitHub, "Download ZIP"), unzip it, open the `bridge` folder and
+  double-click `start.bat` (Windows) or run `start.sh` (Mac, in Terminal).
+  The first run installs what it needs and starts the setup questions.
+* **Only an Android phone:** install Termux (from F-Droid or its GitHub
+  releases, not the old Play Store build), open it and type:
+
+  ```
+  pkg install nodejs-lts git
+  git clone -b ccr-72baab68-lqswgf https://github.com/dreamless2006-lgtm/Project-Java-to-bedrock.git
+  cd Project-Java-to-bedrock/bridge
+  npm install
+  termux-wake-lock
+  node index.mjs
+  ```
+
+  The bridge falls back to a pure-JavaScript network layer when the native
+  one cannot be built on a phone. Keep Termux open while you play; the phone
+  must stay on and online.
+* **No computer that stays on:** rent a Bedrock Dedicated Server from a host
+  that lets you edit the server files, and use the `--variant server` build,
+  where the server calls the AI itself and nothing else needs to run
+  ([docs/SETUP-DEDICATED-SERVER.md](docs/SETUP-DEDICATED-SERVER.md)).
+
 ## Quick start
 
 ```bash

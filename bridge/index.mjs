@@ -10,6 +10,7 @@
 // loaded while the humans are offline, and can teleport itself near the bots
 // so their chunks keep ticking ("anchor").
 import { readFileSync, existsSync } from "node:fs";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { randomUUID } from "node:crypto";
@@ -123,6 +124,12 @@ export class Bridge {
         }
         if (c.version) opts.version = c.version;
         log("info", `connecting (${c.mode || "realm"}) as ${opts.username} ...`);
+        // raknet-native is a compiled module that may not build on phones (Termux) or odd setups;
+        // bedrock-protocol can run on the pure-JavaScript RakNet instead.
+        if (!opts.raknetBackend) {
+            try { createRequire(import.meta.url).resolve("raknet-native"); opts.raknetBackend = "raknet-native"; }
+            catch (e) { opts.raknetBackend = "jsp-raknet"; log("info", "raknet-native not available, using the JavaScript RakNet"); }
+        }
         const client = bedrock.createClient(opts);
         this.client = client;
         client.on("start_game", p => { try { this.entityId = BigInt(p.runtime_entity_id ?? p.entity_id ?? 0); } catch (e) { this.entityId = 0n; } });
