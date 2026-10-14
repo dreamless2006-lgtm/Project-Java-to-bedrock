@@ -34,19 +34,14 @@
           ]
         }
       },
-      "geometry": "Array.geometries[q.property('minepreggo:phase') + 1]",
+      "geometry": "Array.geometries[q.variant]",
       "materials": [
         {
           "*": "Material.default"
         }
       ],
       "textures": [
-        "Array.skins[q.property('minepreggo:phase') + 1]"
-      ],
-      "part_visibility": [
-        {
-          "belly": "q.property('minepreggo:pose') != 'postbirth'"
-        }
+        "Array.skins[q.variant]"
       ],
       "overlay_color": {
         "r": "v.flash > 0.0 ? 1.0 : this",
@@ -73,7 +68,7 @@
           ]
         }
       },
-      "geometry": "Array.geometries[q.property('minepreggo:phase') + 1]",
+      "geometry": "Array.geometries[q.variant]",
       "materials": [
         {
           "*": "Material.charged"
@@ -81,11 +76,6 @@
       ],
       "textures": [
         "Texture.charged"
-      ],
-      "part_visibility": [
-        {
-          "belly": "q.property('minepreggo:pose') != 'postbirth'"
-        }
       ],
       "overlay_color": {
         "r": 1,

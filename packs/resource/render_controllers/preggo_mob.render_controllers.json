@@ -42,11 +42,6 @@
       ],
       "textures": [
         "Array.skins[q.variant]"
-      ],
-      "part_visibility": [
-        {
-          "belly": "v.belly_visible"
-        }
       ]
     }
   }

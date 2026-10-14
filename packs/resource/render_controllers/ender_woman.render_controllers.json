@@ -30,7 +30,7 @@
           ]
         }
       },
-      "geometry": "Array.geometries[q.property('minepreggo:phase') + 1]",
+      "geometry": "Array.geometries[q.variant]",
       "materials": [
         {
           "*": "Material.eyes"
@@ -38,14 +38,6 @@
       ],
       "textures": [
         "Array.eyes[v.eyes]"
-      ],
-      "part_visibility": [
-        {
-          "*": false
-        },
-        {
-          "head": true
-        }
       ],
       "uv_anim": {
         "offset": [
@@ -69,7 +61,15 @@
         "b": 0.0,
         "a": 0.0
       },
-      "ignore_lighting": true
+      "ignore_lighting": true,
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "head": true
+        }
+      ]
     }
   }
 }

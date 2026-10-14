@@ -38,11 +38,10 @@
         "pre_animation": [
           "v.phase = q.property('minepreggo:phase');",
           "v.pose = q.property('minepreggo:pose');",
-          "v.belly_visible = v.pose != 'postbirth';",
           "v.kick = q.property('minepreggo:kick');",
           "v.savage = q.property('minepreggo:savage');",
           "v.aggressive = q.has_target;",
-          "v.kicking = v.pose == 'fetal_movement' || v.pose == 'kicking_sit' || v.pose == 'incapacitated';",
+          "v.kicking = v.pose == 'fetal_movement' || v.pose == 'kicking_sit' || v.pose == 'incapacitated' || v.pose == 'prebirth' || v.pose == 'birth';",
           "v.kick = v.pose == 'incapacitated' ? 1 : v.kick;",
           "v.belly_growth = (v.phase <= 2 ? 1.0 : (v.phase <= 4 ? 0.9 : (v.phase == 5 ? 0.8 : (v.phase <= 7 ? 0.7 : 0.6)))) * q.property('minepreggo:growth');",
           "v.fuse_ticks = v.phase <= 2 ? 30 : (v.phase <= 5 ? 38 : (v.phase <= 7 ? 46 : 62));",
@@ -214,6 +213,9 @@
           },
           {
             "jiggle": "true"
+          },
+          {
+            "belly_hidden": "v.pose == 'postbirth'"
           }
         ]
       },
@@ -265,7 +267,8 @@
         "fetal_p9_i": "animation.minepreggo.belly.fetal_movement_p9_i",
         "fetal_p9_ii": "animation.minepreggo.belly.fetal_movement_p9_ii",
         "fetal_p9_iii": "animation.minepreggo.belly.fetal_movement_p9_iii",
-        "jiggle": "animation.minepreggo.jiggle"
+        "jiggle": "animation.minepreggo.jiggle",
+        "belly_hidden": "animation.minepreggo.belly_hidden"
       },
       "render_controllers": [
         "controller.render.minepreggo.humanoid_creeper_girl",

@@ -110,7 +110,7 @@
           ],
           "transitions": [
             {
-              "default": "v.pose != 'morning_sickness'"
+              "default": "!(v.pose == 'morning_sickness')"
             }
           ],
           "blend_transition": 0.2
@@ -121,7 +121,7 @@
           ],
           "transitions": [
             {
-              "default": "v.pose != 'kicking_sit'"
+              "default": "!(v.pose == 'kicking_sit')"
             }
           ],
           "blend_transition": 0.2
@@ -132,7 +132,7 @@
           ],
           "transitions": [
             {
-              "default": "v.pose != 'contraction'"
+              "default": "!(v.pose == 'contraction')"
             }
           ],
           "blend_transition": 0.2
@@ -144,7 +144,7 @@
           ],
           "transitions": [
             {
-              "default": "v.pose != 'back_pain'"
+              "default": "!(v.pose == 'back_pain')"
             }
           ],
           "blend_transition": 0.2
@@ -155,7 +155,7 @@
           ],
           "transitions": [
             {
-              "default": "v.pose != 'water_breaking'"
+              "default": "!(v.pose == 'water_breaking')"
             }
           ],
           "blend_transition": 0.2
@@ -166,7 +166,7 @@
           ],
           "transitions": [
             {
-              "default": "v.pose != 'prebirth'"
+              "default": "!(v.pose == 'prebirth')"
             }
           ],
           "blend_transition": 0.2
@@ -177,7 +177,7 @@
           ],
           "transitions": [
             {
-              "default": "v.pose != 'birth'"
+              "default": "!(v.pose == 'birth')"
             }
           ],
           "blend_transition": 0.2
@@ -188,7 +188,7 @@
           ],
           "transitions": [
             {
-              "default": "v.pose != 'postbirth'"
+              "default": "!(v.pose == 'postbirth')"
             }
           ],
           "blend_transition": 0.2
@@ -199,7 +199,7 @@
           ],
           "transitions": [
             {
-              "default": "v.pose != 'miscarriage'"
+              "default": "!(v.pose == 'miscarriage')"
             }
           ],
           "blend_transition": 0.2
@@ -218,7 +218,7 @@
           ],
           "transitions": [
             {
-              "default": "v.pose != 'belly_rubs'"
+              "default": "!(v.pose == 'belly_rubs')"
             }
           ],
           "blend_transition": 0.2
@@ -229,7 +229,7 @@
           ],
           "transitions": [
             {
-              "default": "v.pose != 'incapacitated'"
+              "default": "!(v.pose == 'incapacitated')"
             }
           ],
           "blend_transition": 0.2

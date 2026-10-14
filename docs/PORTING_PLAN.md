@@ -129,6 +129,18 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   Slimes (fall cushioning) effects plus `calculateExtraFallDamageMultiplier`, the species diets
   (`CRAVING_ITEM`: the species' foods are edible only for a mother carrying that species and
   satisfy her cravings) and species milk (`MILK_ITEM`). Baby mobs are still not spawned.
+- ✅ Every mob render controller (the creeper girls and the ender woman have their own, which the
+  first variant fix missed) selects geometry and texture with `query.variant`; no render controller
+  reads a property, compares strings or uses `part_visibility` for the belly any more (the belly is
+  hidden after birth by a scale-0 animation). The belly texture pixels exist only in the per-phase
+  textures, so geometry and texture must switch together.
+- ✅ Player labor poses: the mod's own humanoid creeper girl Blockbench animations (water breaking,
+  pre-birth, birth, post-birth, miscarriage) play on a flat-hierarchy player geometry
+  (`geometry.minepreggo.player_labor`, vanilla skin layout) while the vanilla geometry is hidden,
+  so the pose matches the mobs exactly; the belly and chest layers follow the same bones. The
+  procedural Java player animations remain for back pain, belly rubbing and heavy walking.
+- ✅ Pre-birth and birth play the strongest fetal movement animation (III) on the belly, for
+  players and mobs; first-person chest and belly show from a 15° downward look.
 - ✅ Mob belly geometry is selected with `query.variant` (the `minepreggo:phase_N` component
   groups carry `minecraft:variant` N+1), the vanilla mechanism, instead of `query.property`
   inside the render controller; belly visibility comes from a pre_animation variable. The pose

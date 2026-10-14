@@ -198,6 +198,8 @@ const ANIMATIONS = {
 const animationOut = join(RP, 'animations', MOD_ID);
 rmSync(animationOut, { recursive: true, force: true });
 let animationCount = 0;
+/** @type {Record<string, any>} */
+let humanoidAnimations = {};
 for (const [javaClass, id] of Object.entries(ANIMATIONS)) {
   const animations = {};
   for (const [field, animation] of Object.entries(models.animations(ANIMATION_PACKAGE + javaClass))) {
@@ -213,7 +215,23 @@ for (const [javaClass, id] of Object.entries(ANIMATIONS)) {
     animationCount++;
   }
   writeFile(join(animationOut, `${id}.animation.json`), JSON.stringify({ format_version: '1.8.0', animations }, null, 2) + '\n');
+  if (id === 'humanoid_creeper_girl') humanoidAnimations = animations;
 }
+
+// The player's labor poses are the humanoid creeper girl's Blockbench animations (the mod's own
+// labor poses for a humanoid body) on a flat-hierarchy player geometry (models/entity/player_labor):
+// the same bones under the vanilla player bone names.
+const PLAYER_BONES = { right_arm: 'rightArm', left_arm: 'leftArm', right_leg: 'rightLeg', left_leg: 'leftLeg' };
+const laborAnimations = {};
+for (const pose of ['water_breaking', 'prebirth', 'birth', 'postbirth', 'miscarriage']) {
+  const source = humanoidAnimations[`animation.${MOD_ID}.humanoid_creeper_girl.${pose}`];
+  if (!source) continue;
+  const bones = {};
+  for (const [bone, channels] of Object.entries(source.bones)) bones[PLAYER_BONES[bone] ?? bone] = channels;
+  laborAnimations[`animation.${MOD_ID}.player.labor_${pose}`] = { ...source, bones };
+  animationCount++;
+}
+writeFile(join(animationOut, 'player_labor.animation.json'), JSON.stringify({ format_version: '1.8.0', animations: laborAnimations }, null, 2) + '\n');
 
 // Pack icons.
 const logo = files['logo.png'];

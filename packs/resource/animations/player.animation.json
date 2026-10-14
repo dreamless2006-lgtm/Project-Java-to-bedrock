@@ -618,6 +618,18 @@
           ]
         }
       }
+    },
+    "animation.minepreggo.player.belly_hidden": {
+      "loop": true,
+      "bones": {
+        "belly": {
+          "scale": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
     }
   }
 }

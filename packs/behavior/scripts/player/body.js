@@ -39,7 +39,7 @@ export function playerVisuals(/** @type {PlayerRecord} */ record) {
   // shows the belly animation; pains map to the labor/pain body animations.
   const pose = pain ? POSE_OF_PAIN[pain.type] ?? 'none' : record.bellyRubTicks > 0 ? 'rubbing' : p.symptoms.BELLY_RUBS !== undefined ? 'belly_rubs' : 'none';
   // FetalMovement.getAnimation: severity 0 -> I, 1-2 -> II, 3+ -> III
-  const severity = pain?.severity ?? 0;
+  const severity = pain?.type === 'PREBIRTH' || pain?.type === 'BIRTH' ? 4 : pain?.severity ?? 0; // hardest kicks on the way out
   const kick = severity <= 0 ? 0 : severity < 3 ? 1 : 2;
   const days = p.daysByPhase[p.phase] || 1;
   const growth = Math.min(1, (p.daysPassed + p.timer / CONFIG.ticksPerPregnancyDay) / days);

@@ -627,8 +627,8 @@ function clientState(/** @type {MobRecord} */ record) {
   const pain = /** @type {(PainInstance & { incapacitating?: boolean }) | null} */ (p.pain);
   let pose = pain ? POSE_OF_PAIN[pain.type] : p.symptoms.BELLY_RUBS !== undefined ? 'belly_rubs' : 'none';
   if (pain?.type === 'FETAL_MOVEMENT' && pain.incapacitating) pose = 'kicking_sit';
-  // FetalMovement.getAnimation: severity 0 -> I, 1-2 -> II, 3+ -> III
-  const severity = pain?.severity ?? 0;
+  // FetalMovement.getAnimation: severity 0 -> I, 1-2 -> II, 3+ -> III; the babies kick hardest on their way out
+  const severity = pain?.type === 'PREBIRTH' || pain?.type === 'BIRTH' ? 4 : pain?.severity ?? 0;
   const kick = severity <= 0 ? 0 : severity < 3 ? 1 : 2;
   const days = p.daysByPhase[p.phase] || 1;
   const growth = Math.min(1, (p.daysPassed + p.timer / CONFIG.ticksPerPregnancyDay) / days);

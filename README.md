@@ -33,9 +33,10 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
   starts labor when the birth phase is complete; a **Potion of Gradual Pregnancy Acceleration**
   makes the pregnancy run 120–600 times faster for three minutes. Both also work on a pregnant
   mob when used on her.
-- During water breaking, pre-birth, birth, post-birth, a miscarriage and back pain your body plays
-  the mod's own animations (ported from `PlayerAnimations`: lying down in birth, doubled over
-  before it); rubbing your belly plays the per-phase arm animation and from P4 you walk heavily.
+- During water breaking, pre-birth, birth, post-birth and a miscarriage your body takes the mod's
+  labor poses (the same Blockbench animations the humanoid mobs use: doubled over, then lying on
+  your back with the babies kicking hard); back pain, belly rubbing and heavy walking from P4 use
+  the mod's player animations.
 - Fetal movements start on their own from P3 (the mod's per-phase chances: on average one every
   minute or two in P3-P4, more often later). The action bar says "You feel the baby move". While one lasts, the
   belly plays the mod's kick animation for the phase and intensity (I, II or III); late in the

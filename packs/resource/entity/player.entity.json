@@ -81,7 +81,8 @@
         "minepreggo_body_custom_p9": "geometry.minepreggo.player_body_custom_p9",
         "minepreggo_body_predefined_p9": "geometry.minepreggo.player_body_predefined_p9",
         "minepreggo_boobs_custom": "geometry.minepreggo.player_boobs_custom",
-        "minepreggo_boobs_predefined": "geometry.minepreggo.player_boobs_predefined"
+        "minepreggo_boobs_predefined": "geometry.minepreggo.player_boobs_predefined",
+        "minepreggo_labor": "geometry.minepreggo.player_labor"
       },
       "scripts": {
         "scale": "0.9375",
@@ -105,13 +106,13 @@
           "variable.riding_y_offset = query.is_riding_any_entity_of_type('minecraft:minecart', 'minecraft:boat', 'minecraft:chest_boat', 'minecraft:strider') ? -3.0 : 0.0;",
           "variable.mp_phase = query.property('minepreggo:phase');",
           "variable.mp_pose = query.property('minepreggo:pose');",
-          "variable.mp_belly_visible = variable.mp_pose != 'postbirth';",
           "variable.mp_kick = query.property('minepreggo:kick');",
           "variable.mp_female = query.property('minepreggo:gender') == 'female';",
           "variable.mp_skin = query.property('minepreggo:skin');",
-          "variable.mp_predefined = variable.mp_female && variable.mp_skin != 'custom';",
+          "variable.mp_predefined = variable.mp_female && !(variable.mp_skin == 'custom');",
           "variable.mp_pregnant = variable.mp_female && variable.mp_phase >= 0;",
-          "variable.kicking = variable.mp_pose == 'fetal_movement' || variable.mp_pose == 'kicking_sit';",
+          "variable.mp_labor = variable.mp_female && (variable.mp_pose == 'water_breaking' || variable.mp_pose == 'prebirth' || variable.mp_pose == 'birth' || variable.mp_pose == 'postbirth' || variable.mp_pose == 'miscarriage');",
+          "variable.kicking = variable.mp_pose == 'fetal_movement' || variable.mp_pose == 'kicking_sit' || variable.mp_pose == 'prebirth' || variable.mp_pose == 'birth';",
           "variable.belly_growth = (variable.mp_phase <= 2 ? 1.0 : (variable.mp_phase <= 4 ? 0.9 : (variable.mp_phase == 5 ? 0.8 : (variable.mp_phase <= 7 ? 0.7 : 0.6)))) * query.property('minepreggo:growth');",
           "v.jdt = math.clamp(q.delta_time, 0.0, 0.1);",
           "v.jf = v.jdt / 0.05;",
@@ -271,21 +272,6 @@
             "minepreggo_jiggle": "variable.mp_female"
           },
           {
-            "minepreggo_player_birth": "!variable.is_first_person && variable.mp_female && variable.mp_pose == 'birth'"
-          },
-          {
-            "minepreggo_player_postbirth": "!variable.is_first_person && variable.mp_female && variable.mp_pose == 'postbirth'"
-          },
-          {
-            "minepreggo_player_miscarriage": "!variable.is_first_person && variable.mp_female && variable.mp_pose == 'miscarriage'"
-          },
-          {
-            "minepreggo_player_water_breaking": "!variable.is_first_person && variable.mp_female && variable.mp_pose == 'water_breaking'"
-          },
-          {
-            "minepreggo_player_prebirth": "!variable.is_first_person && variable.mp_female && variable.mp_pose == 'prebirth'"
-          },
-          {
             "minepreggo_player_back_pain": "!variable.is_first_person && variable.mp_female && variable.mp_pose == 'back_pain'"
           },
           {
@@ -335,6 +321,24 @@
           },
           {
             "minepreggo_player_walking_heavy_p9": "!variable.is_first_person && variable.mp_female && variable.mp_phase == 9 && variable.mp_pose == 'none' && query.modified_move_speed > 0.05 && query.is_on_ground"
+          },
+          {
+            "minepreggo_belly_hidden": "variable.mp_pose == 'postbirth'"
+          },
+          {
+            "minepreggo_labor_water_breaking": "variable.mp_labor && variable.mp_pose == 'water_breaking'"
+          },
+          {
+            "minepreggo_labor_prebirth": "variable.mp_labor && variable.mp_pose == 'prebirth'"
+          },
+          {
+            "minepreggo_labor_birth": "variable.mp_labor && variable.mp_pose == 'birth'"
+          },
+          {
+            "minepreggo_labor_postbirth": "variable.mp_labor && variable.mp_pose == 'postbirth'"
+          },
+          {
+            "minepreggo_labor_miscarriage": "variable.mp_labor && variable.mp_pose == 'miscarriage'"
           }
         ],
         "variables": {
@@ -449,11 +453,6 @@
         "minepreggo_fetal_p9_ii": "animation.minepreggo.belly.fetal_movement_p9_ii",
         "minepreggo_fetal_p9_iii": "animation.minepreggo.belly.fetal_movement_p9_iii",
         "minepreggo_jiggle": "animation.minepreggo.jiggle",
-        "minepreggo_player_birth": "animation.minepreggo.player.birth",
-        "minepreggo_player_postbirth": "animation.minepreggo.player.postbirth",
-        "minepreggo_player_miscarriage": "animation.minepreggo.player.miscarriage",
-        "minepreggo_player_water_breaking": "animation.minepreggo.player.water_breaking",
-        "minepreggo_player_prebirth": "animation.minepreggo.player.prebirth",
         "minepreggo_player_back_pain": "animation.minepreggo.player.back_pain",
         "minepreggo_player_belly_rubbing_p0": "animation.minepreggo.player.belly_rubbing_p0",
         "minepreggo_player_belly_rubbing_p1": "animation.minepreggo.player.belly_rubbing_p1",
@@ -470,7 +469,13 @@
         "minepreggo_player_walking_heavy_p6": "animation.minepreggo.player.walking_heavy_p6",
         "minepreggo_player_walking_heavy_p7": "animation.minepreggo.player.walking_heavy_p7",
         "minepreggo_player_walking_heavy_p8": "animation.minepreggo.player.walking_heavy_p8",
-        "minepreggo_player_walking_heavy_p9": "animation.minepreggo.player.walking_heavy_p9"
+        "minepreggo_player_walking_heavy_p9": "animation.minepreggo.player.walking_heavy_p9",
+        "minepreggo_belly_hidden": "animation.minepreggo.player.belly_hidden",
+        "minepreggo_labor_water_breaking": "animation.minepreggo.player.labor_water_breaking",
+        "minepreggo_labor_prebirth": "animation.minepreggo.player.labor_prebirth",
+        "minepreggo_labor_birth": "animation.minepreggo.player.labor_birth",
+        "minepreggo_labor_postbirth": "animation.minepreggo.player.labor_postbirth",
+        "minepreggo_labor_miscarriage": "animation.minepreggo.player.labor_miscarriage"
       },
       "render_controllers": [
         {
@@ -483,22 +488,25 @@
           "controller.render.player.first_person": "variable.is_first_person && !query.is_spectator"
         },
         {
-          "controller.render.player.third_person": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && !variable.mp_predefined"
+          "controller.render.player.third_person": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && !variable.mp_predefined && !variable.mp_labor"
         },
         {
           "controller.render.player.map": "variable.map_face_icon"
         },
         {
-          "controller.render.minepreggo.player_skin": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.mp_predefined"
+          "controller.render.minepreggo.player_skin": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.mp_predefined && !variable.mp_labor"
         },
         {
-          "controller.render.minepreggo.player_boobs": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 25.0)) && variable.mp_female && !variable.mp_pregnant"
+          "controller.render.minepreggo.player_boobs": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_female && !variable.mp_pregnant"
         },
         {
-          "controller.render.minepreggo.player_belly_custom": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 25.0)) && variable.mp_pregnant && !variable.mp_predefined"
+          "controller.render.minepreggo.player_belly_custom": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && !variable.mp_predefined"
         },
         {
-          "controller.render.minepreggo.player_belly_predefined": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 25.0)) && variable.mp_pregnant && variable.mp_predefined"
+          "controller.render.minepreggo.player_belly_predefined": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && variable.mp_predefined"
+        },
+        {
+          "controller.render.minepreggo.player_labor": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.mp_labor"
         }
       ],
       "enable_attachables": true

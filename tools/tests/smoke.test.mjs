@@ -388,7 +388,25 @@ test('every phase component group carries the variant the render controller sele
       if (phase) assert.equal(components['minecraft:variant']?.value, Number(phase[1]) + 1, `${path} ${group}`);
     }
   }
-  const controller = json(join(RP, 'render_controllers/preggo_mob.render_controllers.json')).render_controllers['controller.render.minepreggo.preggo_mob'];
-  assert.equal(controller.geometry, 'Array.geometries[q.variant]');
-  assert.deepEqual(controller.textures, ['Array.skins[q.variant]']);
+  // Every mob render controller selects by query.variant; none reads a property or compares strings.
+  for (const file of readdirSync(join(RP, 'render_controllers'))) {
+    if (file.startsWith('player')) continue;
+    for (const [name, controller] of Object.entries(json(join(RP, 'render_controllers', file)).render_controllers)) {
+      const text = JSON.stringify(controller);
+      assert.doesNotMatch(text, /q(uery)?\.property/, `${name} reads a property`);
+      assert.doesNotMatch(text, /!= '/, `${name} compares strings`);
+      if (typeof controller.geometry === 'string' && controller.geometry.startsWith('Array.')) assert.match(controller.geometry, /\[q\.variant\]$/, name);
+    }
+  }
+  // The player's labor poses are the mod's humanoid animations on the flat labor geometry.
+  const labor = json(join(RP, 'animations/minepreggo/player_labor.animation.json')).animations;
+  for (const pose of ['water_breaking', 'prebirth', 'birth', 'postbirth', 'miscarriage']) {
+    assert.ok(labor[`animation.minepreggo.player.labor_${pose}`], pose);
+  }
+  const player = json(join(RP, 'entity/player.entity.json'))['minecraft:client_entity'].description;
+  assert.equal(player.geometry.minepreggo_labor, 'geometry.minepreggo.player_labor');
+  const laborGeometry = json(join(RP, 'models/entity/player_labor.geo.json'))['minecraft:geometry'][0];
+  for (const bone of laborGeometry.bones) {
+    if (['head', 'body', 'rightArm', 'leftArm', 'rightLeg', 'leftLeg'].includes(bone.name)) assert.equal(bone.parent, undefined, `${bone.name} is a root bone like the mod's models`);
+  }
 });
