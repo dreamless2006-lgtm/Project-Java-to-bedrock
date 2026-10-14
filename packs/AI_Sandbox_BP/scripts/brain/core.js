@@ -38,10 +38,25 @@ const VOICES = ["short casual sentences, lowercase, some slang", "full sentences
 
 function hashStr(s) { let h = 7; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
 
-export const budget = new BudgetLedger({
-    get: () => { try { return world.getDynamicProperty(BUDGET_KEY); } catch (e) { return undefined; } },
-    set: (s) => { try { world.setDynamicProperty(BUDGET_KEY, s); } catch (e) { /* ignore */ } },
-}, () => Date.now(), getWorldConfig().budget);
+// Created lazily: world dynamic properties are not readable during early execution (module load).
+let budgetLedger = null;
+export function getBudget() {
+    if (!budgetLedger) {
+        budgetLedger = new BudgetLedger({
+            get: () => { try { return world.getDynamicProperty(BUDGET_KEY); } catch (e) { return undefined; } },
+            set: (s) => { try { world.setDynamicProperty(BUDGET_KEY, s); } catch (e) { /* ignore */ } },
+        }, () => Date.now(), getWorldConfig().budget);
+    }
+    return budgetLedger;
+}
+export const budget = {
+    level: () => getBudget().level(),
+    record: (...a) => getBudget().record(...a),
+    status: () => getBudget().status(),
+    reset: () => getBudget().reset(),
+    setLimits: (l) => getBudget().setLimits(l),
+    window: () => getBudget().window(),
+};
 
 export class BotBrain {
     constructor(entity) {
