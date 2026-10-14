@@ -145,6 +145,8 @@ function showBehavior(player) {
     f.dropdown("Autonomy", ["Full (every bot thinks)", "Companions only", "Off"], { defaultValueIndex: ["full", "companions_only", "off"].indexOf(cfg.autonomy) });
     f.slider("AI players living in this world (they join when you do)", 0, 16, { valueStep: 1, defaultValue: cfg.worldPlayers });
     f.toggle("Extra wild bots far from players (original spawner)", { defaultValue: !!cfg.wildSpawns });
+    f.toggle("Spread residents across every provider with a key", { defaultValue: !!cfg.mixProviders });
+    f.toggle("Show bots' thoughts and chosen actions in chat", { defaultValue: !!cfg.showThoughts });
     f.slider("Max thinking bots", 0, 30, { valueStep: 1, defaultValue: cfg.maxBrains });
     f.slider("Idle think interval (s)", 10, 180, { valueStep: 5, defaultValue: cfg.thinkIdleSec });
     f.toggle("Free building (blocks without inventory)", { defaultValue: !!cfg.freeBuild });
@@ -156,8 +158,8 @@ function showBehavior(player) {
     f.show(player).then(r => {
         if (r.canceled) return;
         if (!op) return player.sendMessage("§coperator permission required");
-        const [vol, cbn, auto, worldPlayers, wild, maxBrains, idle, freeBuild, keepAlive, fake, death, joinTp, rules] = r.formValues;
-        updateWorldConfig({ chatVolume: Number(vol), callByName: !!cbn, autonomy: ["full", "companions_only", "off"][Number(auto)], worldPlayers: Number(worldPlayers), wildSpawns: !!wild, maxBrains: Number(maxBrains), thinkIdleSec: Number(idle), freeBuild: !!freeBuild, keepAlive: !!keepAlive, legacyFakeChat: !!fake, companionDeath: Number(death) === 1 ? "permadeath" : "respawn", companionJoinTeleport: !!joinTp, serverRules: String(rules || "").slice(0, 600) });
+        const [vol, cbn, auto, worldPlayers, wild, mix, thoughts, maxBrains, idle, freeBuild, keepAlive, fake, death, joinTp, rules] = r.formValues;
+        updateWorldConfig({ chatVolume: Number(vol), callByName: !!cbn, autonomy: ["full", "companions_only", "off"][Number(auto)], worldPlayers: Number(worldPlayers), wildSpawns: !!wild, mixProviders: !!mix, showThoughts: !!thoughts, maxBrains: Number(maxBrains), thinkIdleSec: Number(idle), freeBuild: !!freeBuild, keepAlive: !!keepAlive, legacyFakeChat: !!fake, companionDeath: Number(death) === 1 ? "permadeath" : "respawn", companionJoinTeleport: !!joinTp, serverRules: String(rules || "").slice(0, 600) });
         for (const [, b] of allBrains()) b.systemCache = null;
         manager.refreshEnabled();
         manager.populate("menu", player);

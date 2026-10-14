@@ -1,6 +1,7 @@
 import { world, system, Entity } from "@minecraft/server";
 import { ALL_AI_CACHE } from "./greeting.js";
 
+import { brainActive } from "./brain/gate.js";
 // ====================================================================
 // Constants and dependencies
 // ====================================================================
@@ -268,6 +269,7 @@ export function startAttackPermissionBehavior(excludeTags = []) {
         const idleAis = everyai.filter(ai => {
             // Ensure entity is valid
             if (!ai.isValid) return false;
+            if (brainActive(ai)) return false;   // a brain-driven bot hunts only when the model says so
 
             // Check if contains any busy tags
             for (const tag of BUSY_TAGS) {

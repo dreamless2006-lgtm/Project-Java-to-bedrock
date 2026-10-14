@@ -1,6 +1,7 @@
 import { world, system, WeatherType } from "@minecraft/server";
 import { requestMove, NAV } from "./ai_navigation.js";
 
+import { brainActive } from "./brain/gate.js";
 const WEATHER_SOURCE = "weather";
 
 const ai_player_id = "rg:bot";
@@ -223,8 +224,8 @@ export function startEnvironmentBehavior() {
                     continue;
                 }
 
-                // 2. Weather Sheltering
-                if (isRaining() && weatherstartd) {
+                // 2. Weather Sheltering (the model decides for brain-driven bots)
+                if (!brainActive(bot) && isRaining() && weatherstartd) {
                     // Check if bot is exposed to sky using manual scan
                     const isExposed = isExposedToSky(overworld, botLoc);
 

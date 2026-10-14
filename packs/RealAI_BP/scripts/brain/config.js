@@ -27,6 +27,8 @@ export const DEFAULTS = Object.freeze({
     maxBrains: 12,              // bots with a live brain at once (companions, then residents, then the closest wild bots)
     worldPlayers: 8,            // named AI players that live in this world and join when you do
     wildSpawns: false,          // the original addon's random bot spawner (extra nameless bots far from players)
+    mixProviders: true,         // spread residents across every provider that has a key (Claude, GPT, Grok, Gemini...)
+    showThoughts: false,        // show each bot's reasoning and chosen actions to nearby players
     autonomy: "full",           // full | companions_only | off
     freeBuild: true,            // place blocks without inventory (like the original addon)
     keepAlive: true,            // ticking areas around bot homes when nobody is online (BDS)
@@ -76,7 +78,7 @@ function applyServerOverrides(cfg) {
         "realai.maxTokens": "maxTokens", "realai.maxBrains": "maxBrains", "realai.autonomy": "autonomy", "realai.chatVolume": "chatVolume",
         "realai.callByName": "callByName", "realai.freeBuild": "freeBuild", "realai.keepAlive": "keepAlive", "realai.serverRules": "serverRules",
         "realai.thinkIdleSec": "thinkIdleSec", "realai.thinkActiveSec": "thinkActiveSec", "realai.enabled": "enabled", "realai.bridgeName": "bridgeName",
-        "realai.worldPlayers": "worldPlayers", "realai.wildSpawns": "wildSpawns",
+        "realai.worldPlayers": "worldPlayers", "realai.wildSpawns": "wildSpawns", "realai.mixProviders": "mixProviders", "realai.showThoughts": "showThoughts",
     };
     for (const [varName, key] of Object.entries(map)) {
         const v = readVariable(varName);

@@ -967,7 +967,7 @@ export class Actuator {
     cancelFollow() { this.follow = null; }
 
     cancelJob() {
-        try { this.bot.setDynamicProperty("rg:friend_task", null); this.bot.setDynamicProperty("rg:task_owner", null); this.bot.setDynamicProperty("rg:task_until", 0); this.bot.triggerEvent("rg:job_off"); } catch (e) { /* ignore */ }
+        try { this.bot.setDynamicProperty("rg:friend_task", null); this.bot.setDynamicProperty("rg:task_owner", null); this.bot.setDynamicProperty("rg:task_until", 0); this.bot.triggerEvent("rg:job_off"); this.bot.triggerEvent("realai:brain_on"); } catch (e) { /* ignore */ }
     }
 
     stopAll() {

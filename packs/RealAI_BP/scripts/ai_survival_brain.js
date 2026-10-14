@@ -3,6 +3,7 @@ import { ALL_AI_CACHE } from "./greeting.js";
 import { botSay } from "./ai_conversations.js";
 import { requestMove, NAV } from "./ai_navigation.js";
 
+import { brainActive } from "./brain/gate.js";
 const BRAIN_SOURCE = "brain";
 
 const SCAN_GAP = 10;
@@ -237,10 +238,14 @@ function think(ai) {
         return;
     }
 
+    // Brain-driven bots keep only the split-second physical reflexes above and the lava
+    // check below; fleeing, eating and repositioning are decisions the model makes.
+    const brained = brainActive(ai);
+
     // 2b. Swarmed: a player does not stand in the middle of a mob of zombies
     //     and box them, he runs. The panic pace is just above the engine's
     //     chase speed, otherwise the hurt target goal dragged him back in.
-    if (!fighting && hostiles.length >= 3) {
+    if (!brained && !fighting && hostiles.length >= 3) {
         const nearest = hostiles.slice().sort(
             (a, b) => dist(a.location, ai.location) - dist(b.location, ai.location))[0];
         fleeFrom(ai, nearest.location, "panic");
@@ -269,8 +274,8 @@ function think(ai) {
                     return (b && LAVA.includes(b.typeId)) || (below && LAVA.includes(below.typeId));
                 })();
 
-                if (onJob && !lavaAhead) {
-                    // a hill is not a hazard while he is working
+                if ((onJob || brained) && !lavaAhead) {
+                    // a hill is not a hazard while he is working (or when the model is steering)
                 } else {
                     sidestep(ai);
                     if (lavaAhead) {
@@ -284,6 +289,8 @@ function think(ai) {
             }
         }
     }
+
+    if (brained) return;
 
     // 4. Hurt: eat, and run when it is genuinely bad
     if (hp < 0.5 && hostiles.length > 0 && !ai.hasTag("on_eat") && !ai.hasTag("no_food")) {

@@ -2,6 +2,7 @@ import { world, system } from "@minecraft/server";
 import { ALL_AI_CACHE } from "./greeting.js";
 import { isNightTime } from "./ai_mood.js";
 
+import { brainActive } from "./brain/gate.js";
 // ============================================================================
 // CONFIG
 // ============================================================================
@@ -86,6 +87,7 @@ export function startTorchPlacement() {
 
         for (const ai of everyai) {
             if (!ai.isValid) continue;
+            if (brainActive(ai)) continue;   // place_torch is a model action
 
             // Skip busy or submerged bots
             if (ai.isInWater || ai.isFalling) continue;

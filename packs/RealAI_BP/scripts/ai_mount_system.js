@@ -1,6 +1,7 @@
 import { world, system, EntityComponentTypes } from "@minecraft/server";
 import { REAL_PLAYERS_CACHE } from "./rgstart.js";
 
+import { brainActive } from "./brain/gate.js";
 const ai_player_id = "rg:bot";
 const MOUNT_CHECK_GAP = 40; // Check every 2 seconds
 const MOUNT_SEARCH_RADIUS = 32;
@@ -163,6 +164,7 @@ export function startMountSystem() {
             
             for (const ai of nearbyAI) {
                 if (!ai.isValid) continue;
+                if (brainActive(ai)) continue;   // riding is a model decision (interact with the mount)
                 
                 const hasTarget = !!ai.getDynamicProperty("rg:current_target");
                 const isMounted = ai.hasTag(MOUNTED_TAG);

@@ -16,6 +16,20 @@
       }
     },
     "component_groups": {
+      "realai_brain": {
+        "minecraft:behavior.hurt_by_target": {
+          "priority": 3,
+          "entity_types": {
+            "filters": {
+              "all_of": [
+                { "test": "is_family", "subject": "other", "operator": "!=", "value": "creeper" },
+                { "test": "is_family", "subject": "other", "operator": "!=", "value": "snowgolem" },
+                { "test": "is_family", "subject": "other", "operator": "!=", "value": "bot" }
+              ]
+            }
+          }
+        }
+      },
       "no_swimming_box": {
         "minecraft:collision_box": {
           "width": 0.6,
@@ -6225,6 +6239,19 @@
       }
     },
     "events": {
+      "realai:brain_on": {
+        "remove": { "component_groups": ["good", "bad", "crazy", "good_no_follow_players", "bad_no_follow_players", "follow_players", "walk_stroll", "run_stroll", "go_to_cook", "go_to_work"] },
+        "add": { "component_groups": ["realai_brain"] }
+      },
+      "realai:brain_off": {
+        "sequence": [
+          { "remove": { "component_groups": ["realai_brain"] } },
+          { "filters": { "test": "has_tag", "subject": "self", "value": "good" }, "add": { "component_groups": ["good", "good_no_follow_players"] } },
+          { "filters": { "test": "has_tag", "subject": "self", "value": "bad" }, "add": { "component_groups": ["bad", "bad_no_follow_players"] } },
+          { "filters": { "test": "has_tag", "subject": "self", "value": "crazy" }, "add": { "component_groups": ["crazy"] } },
+          { "add": { "component_groups": ["walk_stroll", "can_pick"] } }
+        ]
+      },
       "minecraft:entity_spawned": {
         "sequence": [
           {

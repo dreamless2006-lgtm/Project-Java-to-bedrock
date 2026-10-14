@@ -5,6 +5,7 @@ import { botSay } from "./ai_conversations.js";
 import { getSettings } from "./ai_settings.js";
 import { hasJob } from "./ai_task_worker.js";
 
+import { brainActive } from "./brain/gate.js";
 const WATCH_GAP = 10;
 const FEUD_SCAN_GAP = 200;
 const DUEL_TICKS = 20 * 30;          // 30 seconds of swinging
@@ -168,6 +169,7 @@ function scanForFeuds() {
 
     for (const ai of ALL_AI_CACHE || []) {
         if (!ai.isValid || ai.getDynamicProperty(DUEL_WITH_KEY)) continue;
+        if (brainActive(ai)) continue;   // the model challenges people with the duel action
         if (ai.getDynamicProperty("rg:current_target") || ai.hasTag("is_sleeping")) continue;
         // A duel pulls him away from a job he was hired for; feud after
         if (hasJob(ai)) continue;

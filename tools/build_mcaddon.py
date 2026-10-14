@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 """Package packs/RealAI_BP + packs/RealAI_RP into one dist/Real-AI-<version>.mcaddon.
 
-The addon uses the stable @minecraft/server API (no experiments), so the same
-file works on Realms, friend worlds, LAN and dedicated servers. Models are
-reached through the Real AI bridge (bridge/), which joins the world as a player.
+The checked-in manifest declares the same script modules the original AI
+Multiplayer addon shipped with (@minecraft/server 2.11.0-beta, server-ui 2.0.0,
+engine 1.26.30), so the file loads wherever that addon loaded: enable the Beta
+APIs experiment on the world. The same file works on Realms, friend worlds,
+LAN and dedicated servers; models are reached through the Real AI bridge
+(bridge/), which joins the world as a player.
 
-Optional variant for Bedrock Dedicated Server admins who prefer the server to
-call the model providers itself (no bridge account needed):
+Variants:
+    --variant stable   @minecraft/server 2.10.0 + server-ui 2.2.0, no experiments,
+                       needs game 1.26.50 or newer (chat reaches bots via the bridge relay)
+    --variant server   beta modules + @minecraft/server-net/@minecraft/server-admin with
+                       scripts/brain/net_impl.js swapped for direct HTTP: Bedrock Dedicated
+                       Server admins who do not want a bridge account
 
-    python3 tools/build_mcaddon.py --variant server
-
-It adds the @minecraft/server-net and @minecraft/server-admin dependencies
-(beta modules that only a dedicated server can load) and swaps
-scripts/brain/net_impl.js for the direct HTTP implementation.
-
-Usage: python3 tools/build_mcaddon.py [--variant standard|server|all] [--name Real-AI]
+Usage: python3 tools/build_mcaddon.py [--variant standard|stable|server|all] [--name Real-AI]
 """
 import argparse, json, os, sys, zipfile
 
@@ -28,7 +29,10 @@ NET_DEPS = [
     {"module_name": "@minecraft/server-net", "version": "1.0.0-beta"},
     {"module_name": "@minecraft/server-admin", "version": "1.0.0-beta"},
 ]
-BETA_SERVER_VERSION = "2.11.0-beta"   # the -beta module that ships with 1.26.50
+BETA_SERVER_VERSION = "2.11.0-beta"   # what the checked-in manifest declares
+STABLE_SERVER_VERSION = "2.10.0"      # stable module in 1.26.50+
+STABLE_UI_VERSION = "2.2.0"
+STABLE_MIN_ENGINE = [1, 26, 50]
 
 
 def strip_comments(text):
@@ -68,7 +72,19 @@ def transform(pack_dir, rel, data, variant):
     rel = rel.replace(os.sep, "/")
     if rel == "manifest.json":
         m = json.loads(strip_comments(data.decode("utf-8-sig")))
-        if any(mod.get("type") == "script" for mod in m.get("modules", [])):
+        is_script = any(mod.get("type") == "script" for mod in m.get("modules", []))
+        if variant == "stable":
+            m["header"]["min_engine_version"] = STABLE_MIN_ENGINE
+            if is_script:
+                for d in m.get("dependencies", []):
+                    if d.get("module_name") == "@minecraft/server":
+                        d["version"] = STABLE_SERVER_VERSION
+                    if d.get("module_name") == "@minecraft/server-ui":
+                        d["version"] = STABLE_UI_VERSION
+                m["header"]["name"] = m["header"]["name"] + " (Stable API)"
+                m["header"]["description"] = m["header"]["description"].replace("Enable the Beta APIs experiment on the world;", "Stable API build (no experiments, game 1.26.50+);")
+            return json.dumps(m, indent=2).encode("utf-8")
+        if is_script:
             deps = m.setdefault("dependencies", [])
             for d in deps:
                 if d.get("module_name") == "@minecraft/server":
@@ -80,7 +96,7 @@ def transform(pack_dir, rel, data, variant):
             m["header"]["name"] = m["header"]["name"] + " (Dedicated Server)"
             m["header"]["description"] = "Dedicated Server variant: the server calls the model providers itself through @minecraft/server-net (keys in secrets.json). " + m["header"]["description"]
             return json.dumps(m, indent=2).encode("utf-8")
-    if rel == "scripts/brain/net_impl.js":
+    if variant == "server" and rel == "scripts/brain/net_impl.js":
         with open(os.path.join(pack_dir, "scripts", "brain", "net_impl.bds.js"), "rb") as f:
             return f.read()
     return data
@@ -102,17 +118,17 @@ def add_tree(zf, pack_dir, prefix, variant):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--name", default="Real-AI")
-    ap.add_argument("--variant", default="standard", choices=["standard", "server", "all"])
+    ap.add_argument("--variant", default="standard", choices=["standard", "stable", "server", "all"])
     ap.add_argument("--mcpacks", action="store_true", help="also write one .mcpack per pack")
     args = ap.parse_args()
-    variants = ["standard", "server"] if args.variant == "all" else [args.variant]
+    variants = ["standard", "stable", "server"] if args.variant == "all" else [args.variant]
     packs = sorted(d for d in os.listdir(PACKS) if os.path.isdir(os.path.join(PACKS, d)) and os.path.exists(os.path.join(PACKS, d, "manifest.json")))
     if not packs:
         print("no packs found", file=sys.stderr); sys.exit(1)
     os.makedirs(DIST, exist_ok=True)
     for variant in variants:
         ver = pack_version(os.path.join(PACKS, packs[0]))[0]
-        suffix = "" if variant == "standard" else "-server"
+        suffix = "" if variant == "standard" else "-" + variant
         if args.mcpacks:
             for p in packs:
                 out = os.path.join(DIST, f"{p}-{ver}{suffix}.mcpack")

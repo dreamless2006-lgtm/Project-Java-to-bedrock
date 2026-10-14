@@ -6,8 +6,9 @@ like on a Realm: install it and run the bridge (see
 
 This page is the alternative for server admins who do not want a bridge
 account: a server-only build where the server calls the model over HTTPS
-itself. It needs beta script modules, so it loads only on a Bedrock
-Dedicated Server with the Beta APIs experiment.
+itself. It adds the server-net modules, which only a Bedrock Dedicated
+Server can load; the Beta APIs experiment is needed as with the standard
+build.
 
 ## 1. Build and install the server variant
 
@@ -97,6 +98,8 @@ Any of these override what operators set in the in-game menu:
   "realai.effort": "low",
   "realai.worldPlayers": 8,
   "realai.wildSpawns": false,
+  "realai.mixProviders": true,
+  "realai.showThoughts": false,
   "realai.maxBrains": 12,
   "realai.autonomy": "full",
   "realai.chatVolume": 2,

@@ -2,6 +2,7 @@ import { world, system, EntityDamageCause, Player, ItemStack } from "@minecraft/
 import { REAL_PLAYERS_CACHE } from "./rgstart.js";
 import { botSay } from "./ai_conversations.js";
 
+import { brainActive } from "./brain/gate.js";
 const ai_player_id = "rg:bot";
 const AFFINITY_PROPERTY_PREFIX = "rg:affinity_";
 
@@ -112,6 +113,7 @@ export function startSocialMemory() {
 
             for (const ai of nearbyAI) {
                 if (!ai.isValid) continue;
+                if (brainActive(ai)) continue;   // gifts and grudges live in the model's own memory
 
                 let currentAffinity = ai.getDynamicProperty(AFFINITY_PROPERTY_PREFIX + player.name) || 0;
 

@@ -3,6 +3,7 @@ import { ALL_AI_CACHE } from "./greeting.js";
 import { botSay } from "./ai_conversations.js";
 import { isNightTime } from "./ai_mood.js";
 
+import { brainActive } from "./brain/gate.js";
 // ============================================================================
 // CONFIG
 // ============================================================================
@@ -180,6 +181,7 @@ export function startReactionSystem() {
 
         for (const ai of everyai) {
             if (!ai.isValid || !ai.isOnGround || ai.isInWater || ai.isFalling) continue;
+            if (brainActive(ai)) continue;   // grouping up is a model decision
 
             // Skip only if actively busy
             if (ai.hasTag("is_busy_building") || ai.hasTag("on_eat") ||
@@ -246,6 +248,7 @@ export function startReactionSystem() {
 
         for (const ai of everyai) {
             if (!ai.isValid || !ai.isOnGround || ai.isInWater) continue;
+            if (brainActive(ai)) continue;   // going home at night is a model decision (go_home)
 
             // Skip busy bots
             if (ai.hasTag("is_busy_building") || ai.hasTag("on_eat") || ai.hasTag("is_sleeping")) continue;

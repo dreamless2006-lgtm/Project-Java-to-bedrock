@@ -2,6 +2,7 @@ import { world, system } from "@minecraft/server";
 import { botSay } from "./ai_conversations.js";
 import { onItemReceived } from "./ai_bot_quests.js";
 
+import { brainActive } from "./brain/gate.js";
 // ============================================================================
 // CONFIG
 // ============================================================================
@@ -159,6 +160,7 @@ export function startItemPickup() {
 
                 for (const bot of candidates) {
                     if (!bot.isValid || bot.isInWater) continue;
+                    if (brainActive(bot)) continue;   // the model decides what to pick up and who to give it to
 
                     const dx   = bot.location.x - entity.location.x;
                     const dy   = bot.location.y - entity.location.y;

@@ -3,6 +3,7 @@ import { REAL_PLAYERS_CACHE } from "./rgstart.js";
 
 
 
+import { brainActive } from "./brain/gate.js";
 export let ALL_AI_CACHE = [];
 const AI_CACHE_REFRESH_GAP_TICKS = 200;
 const ai_player_id = "rg:bot";
@@ -43,7 +44,7 @@ export function startGreetingBehavior() {
 function startAutoGreetingLoop() {
     system.runInterval(() => {
         const everyai = ALL_AI_CACHE;
-        const idleAis = everyai.filter(ai => ai.isValid && !ai.getDynamicProperty("rg:current_target"));
+        const idleAis = everyai.filter(ai => ai.isValid && !brainActive(ai) && !ai.getDynamicProperty("rg:current_target"));
         for (const ai of idleAis) {
             if (!aiStates.has(ai.id)) {
                 aiStates.set(ai.id, { isGreeting: false, greetingTargetId: undefined, viewLockIntervalId: undefined });
@@ -106,6 +107,7 @@ function findNearbyIdleAIToGreetBack(playerToDoGreeting) {
     });
 
     for (const ai of nearbyAis) {
+        if (brainActive(ai)) continue;   // the model greets people itself
         if (ai.isOnGround && !ai.isInWater && !ai.isFalling && !ai.getDynamicProperty("rg:current_target") && !aiGreetingCooldown.has(ai.id)) {
             aiGreetingCooldown.add(ai.id);
             system.runTimeout(() => {

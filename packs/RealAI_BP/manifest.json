@@ -2,7 +2,7 @@
   "format_version": 2,
   "header": {
     "name": "Real AI",
-    "description": "Real AI players (Claude, ChatGPT, Grok, Gemini, Player2 or local models) that talk, build, mine, craft, fight, trade and travel dimensions in your world. Works on Realms, worlds and servers with the Real AI bridge; no experiments needed.",
+    "description": "Real AI players (Claude, ChatGPT, Grok, Gemini, Player2 or local models) that talk, build, mine, craft, fight, trade and travel dimensions in your world. Every decision is made by the model. Enable the Beta APIs experiment on the world; works on Realms, worlds and servers with the Real AI bridge.",
     "uuid": "5f1b8c2e-7a3d-4e91-b6c4-2d8e9f0a1b37",
     "version": [
       2,
@@ -12,7 +12,7 @@
     "min_engine_version": [
       1,
       26,
-      50
+      30
     ]
   },
   "modules": [
@@ -42,11 +42,11 @@
   "dependencies": [
     {
       "module_name": "@minecraft/server",
-      "version": "2.10.0"
+      "version": "2.11.0-beta"
     },
     {
       "module_name": "@minecraft/server-ui",
-      "version": "2.2.0"
+      "version": "2.0.0"
     },
     {
       "uuid": "3d7f2b9a-1e6c-4f08-a5d3-9b2c8e7f1a40",

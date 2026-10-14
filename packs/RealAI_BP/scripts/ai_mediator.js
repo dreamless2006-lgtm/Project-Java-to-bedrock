@@ -1,6 +1,7 @@
 import { world, system } from "@minecraft/server";
 import { botSay } from "./ai_conversations.js";
 
+import { brainActive } from "./brain/gate.js";
 const ai_player_id = "rg:bot";
 const PEACE_KEYWORDS = ["stop fighting", "stop", "don't fight", "stop", "dont hit", "don't hit", "do not hit"];
 const SEARCH_RADIUS = 32;
@@ -34,6 +35,7 @@ export function startmediatorBehavior() {
 
         let aggressorAI = undefined;
         for (const ai of nearbyAis) {
+            if (brainActive(ai)) continue;   // a brain-driven bot talks its own way out of a fight
             const targetId = ai.getDynamicProperty("rg:current_target");
             if (targetId && targetId === player.id) {
                 aggressorAI = ai;

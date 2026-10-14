@@ -5,7 +5,7 @@ import { world, system, EntityDamageCause } from "@minecraft/server";
 import { ALL_AI_CACHE } from "../greeting.js";
 import { recordBotMessage } from "../ai_conversations.js";
 import { registerBrain, unregisterBrain, getBrain, allBrains, setBrainEnabled, isBrainEnabled } from "./gate.js";
-import { getWorldConfig, callConfigFor, readBotSettings, writeBotSettings, patchBotSettings, MEMORY_KEY, BUDGET_KEY } from "./config.js";
+import { getWorldConfig, updateWorldConfig, callConfigFor, readBotSettings, writeBotSettings, patchBotSettings, configuredProviders, MEMORY_KEY, BUDGET_KEY } from "./config.js";
 import { loadMemory, saveMemory, addFact, forgetFact, addEpisode, addChat, notePerson, createMemory } from "./memory.js";
 import { buildSystemStable, buildTurn, promptHash } from "./prompt.js";
 import { createSchedulerState, noteEvent, shouldThink, beginThink, endThink, CADENCE } from "./scheduler.js";
@@ -25,6 +25,16 @@ const BOT_TYPE = "rg:bot";
 const STEP = 10;                 // ticks between brain steps per bot
 const DISCOVER_GAP = 100;
 const POPULATE_GAP = 600;          // re-check the resident roster every 30 s
+// Providers worth spreading residents over: hosted chat models with a key. Local servers
+// (Ollama, LM Studio, the Player2 app) and "custom" are only used when chosen explicitly.
+const MIX_PROVIDERS = new Set(["anthropic", "openai", "xai", "gemini", "openrouter", "player2cloud"]);
+const PROVIDER_LABELS = { anthropic: "Claude", openai: "ChatGPT", xai: "Grok", gemini: "Gemini", player2: "Player2", player2cloud: "Player2", openrouter: "OpenRouter", ollama: "Ollama", lmstudio: "LM Studio", custom: "custom" };
+
+// Engine-level goals: with a brain attached the body keeps only "fight back when hit";
+// target picking, wandering, following and work trips become the model's decisions.
+export function setBrainMode(entity, on) {
+    try { entity.triggerEvent(on ? "realai:brain_on" : "realai:brain_off"); } catch (e) { /* ignore */ }
+}
 const RESIDENT_SPAWN_GAP = 40;     // residents trickle in two seconds apart, like players joining
 const KEEPALIVE_GAP = 600;
 const HISTORY_TURNS = 2;         // previous user/assistant pairs kept in the prompt
@@ -121,7 +131,8 @@ export class BotBrain {
 
     systemPrompt() {
         const cfg = getWorldConfig();
-        const extra = [cfg.serverRules, cfg.callByName ? "Only reply in chat when someone says your name or whispers to you; otherwise stay quiet unless something important happens." : null].filter(Boolean).join("\n");
+        const cc = callConfigFor(this);
+        const extra = [cfg.serverRules, `Your mind runs on the ${PROVIDER_LABELS[cc.provider] || cc.provider} model${cc.model ? ` (${cc.model})` : ""}. Keep playing as a person; if someone sincerely asks which AI you are, you may tell them.`, cfg.callByName ? "Only reply in chat when someone says your name or whispers to you; otherwise stay quiet unless something important happens." : null].filter(Boolean).join("\n");
         const key = JSON.stringify([this.persona(), extra, worldContent().counts]);
         if (this.systemCache && this.systemCache.key === key) return this.systemCache.text;
         const text = buildSystemStable({ persona: this.persona(), worldContent: worldContent().text, extraRules: extra });
@@ -253,6 +264,20 @@ export class BotBrain {
         endThink(this.sched, nowTick, true, active);
         this.saveMemory();
         if (manager.debug) console.warn(`[RealAI] ${this.name} (${res.provider}/${res.model}, ${Date.now() - started}ms): ${reply.thought} | say=${reply.say} | ${reply.actions.map(a => a.type).join(",")}`);
+        if (getWorldConfig().showThoughts) this.showThought(reply, res);
+    }
+
+    // Let nearby players watch the decision: the model's own reasoning plus what it chose to do.
+    showThought(reply, res) {
+        try {
+            const cfg = getWorldConfig();
+            const what = [reply.thought ? reply.thought.slice(0, 160) : "", reply.actions.length ? "-> " + reply.actions.map(a => a.type + (a.name ? " " + a.name : a.preset ? " " + a.preset : a.item ? " " + a.item : "")).join(", ") : (reply.say ? "" : "-> (nothing new)")].filter(Boolean).join(" ");
+            if (!what) return;
+            const line = `§8[${this.name} §7thinks via ${res?.provider || callConfigFor(this).provider}§8] ${what}`;
+            for (const p of world.getAllPlayers()) {
+                try { if (p.dimension.id === this.bot.dimension.id && dist(p.location, this.bot.location) <= (Number(cfg.hearingRange) || 48)) p.sendMessage(line); } catch (e) { /* ignore */ }
+            }
+        } catch (e) { /* ignore */ }
     }
 
     apply(reply) {
@@ -273,7 +298,7 @@ export class BotBrain {
     }
 
     status() {
-        return { name: this.name, id: this.id, thinks: this.thinks, failures: this.failures, lastError: this.lastError, paused: this.paused, current: this.actuator.describeCurrent(), goal: this.memory.goal, owner: this.settings.owner || null, provider: callConfigFor(this).provider, facts: this.memory.facts.length, nextThinkIn: Math.max(0, Math.round((this.sched.nextThink - system.currentTick) / 20)) };
+        return { name: this.name, id: this.id, thinks: this.thinks, failures: this.failures, lastError: this.lastError, paused: this.paused, current: this.actuator.describeCurrent(), goal: this.memory.goal, owner: this.settings.owner || null, provider: callConfigFor(this).provider, model: callConfigFor(this).model || "(default)", facts: this.memory.facts.length, nextThinkIn: Math.max(0, Math.round((this.sched.nextThink - system.currentTick) / 20)) };
     }
 }
 
@@ -301,7 +326,7 @@ class BrainManager {
         this.refreshEnabled();
         try { bridge.subscribe(); } catch (e) { console.warn("[RealAI] bridge subscribe failed", e); }
         bridge.onChat((from, text, whisper) => this.intakeChat(from, text, { whisper, viaBridge: true }));
-        bridge.onHello(info => { console.warn(`[RealAI] bridge connected: ${info.name} v${info.version}, providers: ${(info.providers || []).join(", ")}`); this.refreshEnabled(); this.announce(`§a[Real AI] Bridge "${info.name}" connected. Bots are thinking through it.`); system.runTimeout(() => { try { this.populate("bridge"); } catch (e) { /* ignore */ } }, 20); });
+        bridge.onHello(info => { this.bridgeProviders = Array.isArray(info.providers) ? info.providers.filter(p => typeof p === "string") : []; this.adoptProvider(); console.warn(`[RealAI] bridge connected: ${info.name} v${info.version}, providers: ${(info.providers || []).join(", ")}`); this.refreshEnabled(); this.announce(`§a[Real AI] Bridge "${info.name}" connected. Bots are thinking through it.`); system.runTimeout(() => { try { this.populate("bridge"); } catch (e) { /* ignore */ } }, 20); });
         this.subscribeEvents();
         system.runInterval(() => this.discover(), DISCOVER_GAP);
         system.runInterval(() => this.step(), 1);
@@ -361,9 +386,10 @@ class BrainManager {
             if (!brains.has(e.id)) {
                 try { registerBrain(e.id, new BotBrain(e)); } catch (err) { console.warn(`[RealAI] attach failed: ${err}`); }
             }
+            setBrainMode(e, true);   // cheap to repeat: the legacy job-off event re-adds the engine's own goals
         }
         for (const [id, b] of [...brains]) {
-            if (!keep.has(id)) { try { b.saveMemory(); b.actuator.stopAll(); } catch (e) { /* ignore */ } unregisterBrain(id); }
+            if (!keep.has(id)) { try { b.saveMemory(); b.actuator.stopAll(); setBrainMode(b.bot, false); } catch (e) { /* ignore */ } unregisterBrain(id); }
         }
     }
 
@@ -604,6 +630,7 @@ class BrainManager {
                 if (episode) addEpisode(brain.memory, episode, Date.now());
                 brain.saveMemory();
                 registerBrain(bot.id, brain);
+                setBrainMode(bot, true);
                 if (greeting) brain.request(greeting);
                 if (announceJoin) this.announceRaw({ translate: "multiplayer.player.joined", with: [name] });
                 if (onReady) onReady(bot, brain);
@@ -656,7 +683,8 @@ class BrainManager {
             return;
         }
         const wanted = Math.max(0, Math.min(Number(cfg.worldPlayers) || 0, Number(cfg.maxBrains) || 0));
-        const { roster, changed } = ensureRoster(this.roster(), wanted, { names: { prefix: name_prefix, nouns: name_Nouns, suffix: name_suffix, preset: presetNames }, personalities: PERSONALITIES, voices: VOICES, now: Date.now() });
+        let { roster, changed } = ensureRoster(this.roster(), wanted, { names: { prefix: name_prefix, nouns: name_Nouns, suffix: name_suffix, preset: presetNames }, personalities: PERSONALITIES, voices: VOICES, now: Date.now() });
+        if (this.assignProviders(roster)) changed = true;
         if (changed) this.saveRoster(roster);
         const players = (() => { try { return world.getAllPlayers().filter(p => p.isValid && !this.isBridgeAccount(p)); } catch (e) { return []; } })();
         if (!players.length) return;
@@ -668,7 +696,15 @@ class BrainManager {
         let delay = 20;
         let i = 0;
         for (const r of roster) {
-            if (present.has(r.pid)) continue;
+            if (present.has(r.pid)) {
+                // a body is already here: keep its brain's provider in step with the roster
+                try {
+                    const body = this.loadedBots().find(e => e.getDynamicProperty(PID_KEY) === r.pid);
+                    const b = body && getBrain(body);
+                    if (b && (b.settings.provider || "") !== (r.provider || "")) { b.settings = patchBotSettings(body, { provider: r.provider || undefined }); b.systemCache = null; }
+                } catch (e) { /* ignore */ }
+                continue;
+            }
             const pendingUntil = this.pendingSpawns.get(r.pid);
             if (pendingUntil && pendingUntil > now) continue;
             const anchor = (joiningPlayer && joiningPlayer.isValid) ? joiningPlayer : players[i % players.length];
@@ -681,7 +717,7 @@ class BrainManager {
                     const hasMemory = (() => { try { return !!world.getDynamicProperty("realai:mem:" + member.pid); } catch (e) { return false; } })();
                     this.spawnBody({
                         name: member.name, pid: member.pid, persona: member.persona,
-                        settings: { mode: "resident", resident: true, persona: member.persona },
+                        settings: { mode: "resident", resident: true, persona: member.persona, provider: member.provider || undefined },
                         player: anchor,
                         episode: hasMemory ? `joined the game again near ${anchor.name}` : `first day on this server; ${anchor.name} is online`,
                         greeting: hasMemory ? `you just logged back in near ${anchor.name}; greet them briefly and pick up where you left off` : `you just joined this server for the first time; say hi to ${anchor.name} and start making a life here`,
@@ -699,7 +735,52 @@ class BrainManager {
         const roster = this.roster();
         const present = new Set();
         for (const e of this.loadedBots()) { try { const pid = e.getDynamicProperty(PID_KEY); if (pid) present.add(pid); } catch (e2) { /* ignore */ } }
-        return { total: roster.length, online: roster.filter(r => present.has(r.pid)).length, names: roster.map(r => r.name) };
+        return { total: roster.length, online: roster.filter(r => present.has(r.pid)).length, names: roster.map(r => r.name), providers: roster.map(r => r.provider || getWorldConfig().provider) };
+    }
+
+    // The world's default provider must be one that can actually answer. If it is not (a fresh
+    // world defaults to Claude but the bridge only has an OpenAI key), switch to one that can.
+    adoptProvider() {
+        try {
+            const cfg = getWorldConfig();
+            const avail = this.availableProviders();
+            if (!avail.length || avail.includes(cfg.provider)) return;
+            const pick = avail.find(p => MIX_PROVIDERS.has(p)) || avail[0];
+            updateWorldConfig({ provider: pick, model: "" });
+            for (const [, b] of allBrains()) b.systemCache = null;
+            this.announce(`§e[Real AI] No key for "${cfg.provider}"; bots now think with ${PROVIDER_LABELS[pick] || pick}.`);
+        } catch (e) { /* ignore */ }
+    }
+
+    // Which providers can answer a think right now: the server's own keys, or what the bridge said it has.
+    availableProviders() {
+        try {
+            if (hasDirectHttp) return configuredProviders().filter(p => p.hasKey).map(p => p.id);
+            if (bridge.isConnected()) return (this.bridgeProviders || []).slice();
+        } catch (e) { /* ignore */ }
+        return [];
+    }
+
+    // Spread the residents over every provider that has a key, so the world is literally
+    // Claude, GPT, Grok and Gemini playing side by side. Returns true if the roster changed.
+    assignProviders(roster) {
+        const cfg = getWorldConfig();
+        let avail = this.availableProviders().filter(p => MIX_PROVIDERS.has(p));
+        if (!cfg.mixProviders) avail = [];
+        let changed = false;
+        if (!avail.length) {
+            for (const r of roster) if (r.provider) { delete r.provider; changed = true; }
+            return changed;
+        }
+        const counts = new Map(avail.map(p => [p, 0]));
+        for (const r of roster) if (r.provider && counts.has(r.provider)) counts.set(r.provider, counts.get(r.provider) + 1);
+        for (const r of roster) {
+            if (r.provider && counts.has(r.provider)) continue;
+            let best = avail[0];
+            for (const p of avail) if (counts.get(p) < counts.get(best)) best = p;
+            r.provider = best; counts.set(best, counts.get(best) + 1); changed = true;
+        }
+        return changed;
     }
 
     // A bot with a brain that dies comes back like a player respawning (companions next to

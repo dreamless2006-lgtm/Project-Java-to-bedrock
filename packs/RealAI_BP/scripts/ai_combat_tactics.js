@@ -1,6 +1,7 @@
 import { world, system, EntityComponentTypes, ItemStack, EquipmentSlot, EntityDamageCause } from "@minecraft/server";
 import { REAL_PLAYERS_CACHE } from "./rgstart.js";
 
+import { brainActive } from "./brain/gate.js";
 const ai_player_id = "rg:bot";
 const ACTIVATION_GAP = 20;
 const PROXIMITY_RADIUS = 32;
@@ -77,6 +78,7 @@ export function startCombatTactics() {
         // 2. Apply Tactics
         for (const ai of activeAIinCombat) {
             if (!ai.isValid) continue;
+            if (brainActive(ai)) continue;   // retreating, healing and calling for help are the model's calls
             
             const target = getCurrentTarget(ai);
             if (!target || !target.isValid) continue;

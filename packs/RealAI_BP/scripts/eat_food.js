@@ -14,6 +14,7 @@ const UPGRADING_TAG = "is_upgrading";
 const NO_FOOD_TAG = "no_food";
 const EATING_ANIM_TAG = "is_eating";
 import { ALL_AI_CACHE } from "./greeting.js";
+import { brainActive } from "./brain/gate.js";
 const COOKING_EXCLUDE_TAGS = ["wooden", EATING_TAG, BUILDING_TAG, UPGRADING_TAG, COOKING_TAG];
 
 // ====================================================================
@@ -795,8 +796,8 @@ export function startFoodSystem() {
                 processFoodTransfer(ai, codeToIdMap, scoreboard);
             }
 
-            // === RANDOM EATING: 5% chance per tick ===
-            if (!ai.hasTag(EATING_TAG) && 
+            // === RANDOM EATING: 5% chance per tick === (not for brain-driven bots: eating is the model's decision)
+            if (!brainActive(ai) && !ai.hasTag(EATING_TAG) && 
                 !ai.hasTag(NO_FOOD_TAG) && 
                 !ai.hasTag(BUILDING_TAG) && 
                 !ai.hasTag(UPGRADING_TAG) &&
@@ -834,8 +835,8 @@ export function startFoodSystem() {
             const maxHealth = healthComp?.maxValue || 20;
             const healthPercent = currentHealth / maxHealth;
 
-            // C. FLEE LOGIC: If health < 30% AND surrounded by 2+ threats, RUN
-            if (healthPercent < 0.3 && threatCount >= 2 && !ai.hasTag('is_fleeing')) {
+            // C. FLEE LOGIC: If health < 30% AND surrounded by 2+ threats, RUN (the model decides for brain-driven bots)
+            if (!brainActive(ai) && healthPercent < 0.3 && threatCount >= 2 && !ai.hasTag('is_fleeing')) {
                 ai.addTag('is_fleeing');
                 try {
                     ai.addEffect('speed', 2 * 20, { amplifier: 2, showParticles: false });
@@ -887,6 +888,7 @@ export function startFoodSystem() {
 
         for (const ai of cookableAis) {
             if (!ai.isValid) continue;
+            if (brainActive(ai)) continue;   // trips to the furnace are the model's decision (smelt action)
 
             handleAiCooking(ai);
         }

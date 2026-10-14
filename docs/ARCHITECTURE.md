@@ -116,29 +116,54 @@ is told what is missing).
 
 | Build | `@minecraft/server` | Where it loads | Chat input |
 |---|---|---|---|
-| standard (default) | `2.10.0` stable, no experiments | Realms, any world, any server | bridge relay, `!ai talk`, hub "Talk", sneak+interact |
-| `--variant server` | `2.11.0-beta` + server-net/server-admin | Bedrock Dedicated Server only | direct chat events |
+| standard (default) | `2.11.0-beta` + server-ui `2.0.0`, engine 1.26.30 (what the original addon shipped with); Beta APIs experiment on | Realms, any world, any server | direct chat events, plus bridge relay, `!ai talk`, hub "Talk", sneak+interact |
+| `--variant stable` | `2.10.0` stable + server-ui `2.2.0`, engine 1.26.50, no experiments | game 1.26.50+ | bridge relay, `!ai talk`, hub "Talk", sneak+interact |
+| `--variant server` | standard + server-net/server-admin | Bedrock Dedicated Server only | direct chat events |
 
-The checked-in manifest is the stable one; the builder rewrites the
-dependency versions and swaps `net_impl.js` for the server variant. Beta
-module versions do not auto-upgrade across game releases, so
-`BETA_SERVER_VERSION` in the builder must be bumped when a new major Bedrock
-release ships.
+The checked-in manifest is the standard one; the builder rewrites the
+dependency versions for the other two and swaps `net_impl.js` for the
+server variant. Beta module versions do not auto-upgrade across game
+releases, so `BETA_SERVER_VERSION` in the builder must be bumped when a new
+major Bedrock release ships.
 
-## How legacy behaviour and the brain coexist
+## Who decides: the model, not the script
 
-`gate.js` tracks which bots have a brain. When a bot is brain-driven:
+`gate.js` tracks which bots have a brain. When a bot is brain-driven, the
+model makes every decision and the original addon's scripted decision-making
+is switched off for that bot:
 
+* **Engine goals.** `core.js` fires the entity event `realai:brain_on`, which
+  removes the `good`/`bad`/`crazy` groups (nearest-attackable-target, avoid
+  mob), the follow and stroll groups and the furnace/work trips, and adds
+  `realai_brain`, which keeps only `hurt_by_target` (fight back in the
+  instant after being hit; the model is told and can `flee` or `stop`). It
+  is re-applied every discover cycle and after a job ends, and
+  `realai:brain_off` restores the original groups when a brain is removed.
+* **Scripted loops gated with `brainActive()`:** target tactics (retreat,
+  heal, call for help), food hunting, random eating and flee logic, furnace
+  trips, swarm/low-health fleeing and drifting in `ai_survival_brain`,
+  item pickup gifting, torch placing, stroll switching, mounting, shelter
+  building, rain sheltering, affinity gifts and grudges, feud scanning,
+  mediation, greetings, grouping up and going home at night, plus the
+  earlier set: random talkers, mood evaluator, goal assigner, idle builder,
+  night camp, mischief, quests, friendship proposals, fake chat, faction
+  broadcasts.
+* **Reflexes that stay on** (a human hand's split-second moves, all
+  reported back to the model as impulses or events): water escape, burning
+  (find water), a creeper about to explode, lava directly ahead, TNT nearby,
+  hole escape, obstacle breaking while walking a path the model asked for,
+  shield/weapon handling while executing a model-ordered fight, gear tiers.
 * every canned chat line that used to go through `botSay()` becomes an
   *impulse* the model may voice ("you feel like saying: ...") instead of a
-  broadcast;
-* the random talkers, mood evaluator, goal assigner, idle builder, night
-  camp, mischief, quests and friendship proposals skip that bot;
-* reflexes stay on: water escape, fleeing fire/creepers, hole escape,
-  obstacle breaking, engine combat (fake-melee projectiles, bows, shields),
-  hunger/eating, gear tiers, friend UI, trades, duels;
-* the fake "other players" chat simulator and faction recruit broadcasts are
-  off unless re-enabled in Behavior.
+  broadcast; the fake "other players" chat simulator and faction recruit
+  broadcasts are off unless re-enabled in Behavior.
+
+Residents are spread across every hosted provider that has a key
+(`mixProviders`), each think carries that bot's provider to the bridge or
+the HTTP layer, the system prompt tells the bot which model it runs on, and
+`showThoughts` prints each decision (reasoning plus chosen actions) to
+nearby players. If the world's default provider has no key but another
+does, the manager adopts the one that works when the bridge connects.
 
 Bots without a brain (beyond `maxBrains`, or when no transport exists) keep
 behaving exactly like the original addon.

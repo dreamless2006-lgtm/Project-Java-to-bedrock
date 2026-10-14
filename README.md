@@ -16,6 +16,26 @@ This repo combines two projects and adds the brain:
   ported to Bedrock menus and commands.
 * **The brain** (`packs/RealAI_BP/scripts/brain/`): observe, think, act.
 
+## Who is really playing
+
+Every resident and companion is driven, turn by turn, by the model you
+configured. There is no scripted personality underneath: each turn the bot
+receives what it sees, hears and remembers, and the model answers with what
+to say, how it feels, what its goal is and which actions to take. The body
+only executes those actions and keeps a few split-second reflexes a human
+player's hands would have (not drowning, stepping back from lava, running
+from a creeper that is about to blow, fighting back for the instant after
+being hit). Everything else that the original addon used to decide by script
+(picking fights, wandering, hunting, eating, building shelters, placing
+torches, riding, greeting, duelling, giving gifts, going home at night) is
+switched off for brain-driven bots and left to the model.
+
+With more than one key configured, the residents are spread across the
+providers: in a world with Claude, ChatGPT, Grok and Gemini keys, two
+residents think with each. `!ai status` shows who runs on what, and
+`!ai thoughts on` prints every bot's reasoning and chosen actions to nearby
+players so you can watch the decisions being made.
+
 ## Who lives in your world
 
 Eight named AI players live in the world by default (`Behavior` tab or
@@ -55,7 +75,9 @@ python3 tools/build_mcaddon.py
 ```
 
 That writes `dist/Real-AI-<version>.mcaddon`. Import it on any world, Realm
-or server (no experiments needed), then run the bridge with your API key:
+or server, turn on the **Beta APIs** experiment for that world (the same
+requirement the original AI Multiplayer addon had; it is what lets bots hear
+chat directly), then run the bridge with your API key:
 
 ```bash
 cd bridge && npm install && cp config.example.json config.json
@@ -66,8 +88,10 @@ node index.mjs
 The bridge is a small Node program that joins the world as a player and
 carries the bots' thinking to the model, because Bedrock scripts cannot make
 HTTP calls on Realms or client worlds. Full steps:
-[docs/SETUP-REALM-BRIDGE.md](docs/SETUP-REALM-BRIDGE.md). Dedicated server
-admins can instead build a variant where the server calls the model itself:
+[docs/SETUP-REALM-BRIDGE.md](docs/SETUP-REALM-BRIDGE.md). Two optional
+builds exist: `--variant stable` needs no experiments but only loads on game
+1.26.50 or newer, and `--variant server` lets a Bedrock Dedicated Server
+call the model itself without a bridge account:
 [docs/SETUP-DEDICATED-SERVER.md](docs/SETUP-DEDICATED-SERVER.md). Design:
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Providers and model ids:
 [docs/PROVIDERS.md](docs/PROVIDERS.md).
@@ -80,9 +104,10 @@ admins can instead build a variant where the server calls the model itself:
   `/realai:talk Ellie "hi"` whispers.
 * `!ai status` lists the residents and every thinking bot; `!ai memory Ellie`,
   `!ai pause`, `!ai budget`.
-* Operators: `!ai players 8`, `!ai provider anthropic`,
-  `!ai model claude-haiku-5-5`, `!ai volume 2`, `!ai rules Speak Spanish`,
-  `!ai callbyname on`, `!ai companiondeath permadeath`.
+* Operators: `!ai players 8`, `!ai thoughts on`, `!ai mix on`,
+  `!ai provider anthropic`, `!ai model claude-haiku-5-5`, `!ai volume 2`,
+  `!ai rules Speak Spanish`, `!ai callbyname on`,
+  `!ai companiondeath permadeath`.
 
 Sneak + use the Friend List item also opens the hub; sneak + interact with a
 bot opens its card.

@@ -1,5 +1,6 @@
 import { world, system } from "@minecraft/server";
 import { ALL_AI_CACHE } from "./greeting.js";
+import { brainActive } from "./brain/gate.js";
 const ai_player_id = "rg:bot";
 const EVENT_NAME_TO_TRIGGER = "stroll_switch";
 
@@ -52,6 +53,10 @@ export function startStrollSwitcherBehavior() {
         for (const ai of everyai) {
             // [Micro-optimization] Ensure AI is valid, avoid Map overflow and unnecessary processing
             if (!ai.isValid) {
+                trackedAis.delete(ai.id);
+                continue;
+            }
+            if (brainActive(ai)) {   // no engine strolling for a brain-driven bot
                 trackedAis.delete(ai.id);
                 continue;
             }

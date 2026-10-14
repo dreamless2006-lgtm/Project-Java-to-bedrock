@@ -13,8 +13,11 @@ python3 tools/build_mcaddon.py
 ```
 
 Import `dist/Real-AI-<version>.mcaddon` (double-click it, or open it from
-the game) and enable both packs on the world, then upload or "Replace World"
-on your Realm. No experiments are required.
+the game), enable both packs on the world and turn on the **Beta APIs**
+experiment in the world settings (same as the original AI Multiplayer
+addon). Then upload or "Replace World" on your Realm; the experiment travels
+with the world. If your game is 1.26.50 or newer and you would rather avoid
+experiments, build `--variant stable` instead.
 
 ## 2. Prepare a second Microsoft account for the bridge
 
@@ -61,7 +64,10 @@ role).
 Join the world. Within a few seconds of the bridge connecting you will see
 "<Name> joined the game" lines as the resident AI players arrive next to
 you (eight by default). `!ai status` shows `bridge (<gamertag>)` as the
-transport and lists the residents. If you joined before the bridge was up,
+transport and lists the residents with the provider and model each one
+thinks with. Put several keys in `config.json` and the residents are spread
+across them (two on Claude, two on ChatGPT, two on Grok, two on Gemini with
+four keys). `!ai thoughts on` shows their reasoning and decisions in chat. If you joined before the bridge was up,
 the game tells you what is missing and the residents join as soon as the
 bridge connects.
 

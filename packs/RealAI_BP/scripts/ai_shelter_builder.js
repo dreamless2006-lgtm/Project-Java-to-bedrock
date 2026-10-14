@@ -3,6 +3,7 @@ import { ALL_AI_CACHE } from "./greeting.js";
 import { isNightTime } from "./ai_mood.js";
 import { hasJob } from "./ai_task_worker.js";
 
+import { brainActive } from "./brain/gate.js";
 const SHELTER_CHECK_GAP = 200;  // Every 10s
 const SHELTER_TAG = "has_shelter";
 const BUILDING_SHELTER_TAG = "building_shelter";
@@ -152,6 +153,7 @@ export function startShelterBuilder() {
 
         for (const bot of ALL_AI_CACHE || []) {
             if (!bot.isValid) continue;
+            if (brainActive(bot)) continue;   // the model builds its own shelter when it decides to
             if (bot.hasTag(SHELTER_TAG)) continue;
             if (bot.hasTag(BUILDING_SHELTER_TAG)) continue;
 

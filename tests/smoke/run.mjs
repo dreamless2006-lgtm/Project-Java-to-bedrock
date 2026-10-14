@@ -21,7 +21,7 @@ const gate = await import("../../packs/RealAI_BP/scripts/brain/gate.js");
 
 // Bridge handshake: the relay account runs /scriptevent realai:in <frames>
 function fromBridge(obj) { for (const f of encodeFrames("b" + Math.random().toString(36).slice(2, 6), packMessage(obj), DEFAULT_CHUNK)) system.afterEvents.scriptEventReceive.emit({ id: "realai:in", message: f, sourceType: "Entity", sourceEntity: relay }); }
-fromBridge({ t: "hello", v: 1, name: "RealAIBridge", version: "0.1.0", providers: ["anthropic"] });
+fromBridge({ t: "hello", v: 1, name: "RealAIBridge", version: "0.1.0", providers: ["anthropic", "openai", "xai", "gemini", "ollama", "lmstudio", "player2"] });
 await advanceTicksAsync(250);
 check(gate.isBrainEnabled(), "brains enabled after bridge hello");
 check(bot.nameTag && bot.nameTag.length > 0, "bot got a name: " + bot.nameTag);
@@ -142,6 +142,23 @@ const rosterNames = residents().map(b => b.name).sort();
 const rosterPids = residents().map(b => b.bot.getDynamicProperty("rg:p_id")).sort();
 check(new Set(rosterNames).size === 8 && rosterNames.every(n => n && n.length > 0), "resident names are unique: " + rosterNames.join(", "));
 check(residents().every(b => Math.hypot(b.bot.location.x - steve.location.x, b.bot.location.z - steve.location.z) <= 15), "residents spawned within 15 blocks of Steve");
+// every resident is driven by a real model: providers are spread over what the bridge has keys for
+const provs = residents().map(b => b.settings.provider);
+check(provs.every(p => ["anthropic", "openai", "xai", "gemini"].includes(p)) && new Set(provs).size === 4 && provs.filter(p => p === "anthropic").length === 2, "residents spread across Claude, ChatGPT, Grok and Gemini: " + provs.join(","));
+check(residents().every(b => b.systemPrompt().includes("Your mind runs on the")), "each resident's prompt names the model it runs on");
+check(residents().every(b => b.bot.events.includes("realai:brain_on")), "engine targeting/wandering goals switched off for every brain-driven bot");
+// their thinks go out tagged with their own provider
+const residentThinks = seenThinks.filter(t => residents().some(b => b.id === t.bot));
+check(new Set(residentThinks.map(t => t.bot)).size === 8, "every resident asked the model for its first decision: " + new Set(residentThinks.map(t => t.bot)).size);
+check(residentThinks.every(t => residents().find(b => b.id === t.bot)?.settings.provider === t.cfg?.provider), "each think goes to that resident's own provider");
+// thoughts can be shown to nearby players
+const { updateWorldConfig } = await import("../../packs/RealAI_BP/scripts/brain/config.js");
+updateWorldConfig({ showThoughts: true });
+const r0 = residents()[0]; r0.request("say something");
+const before = steve.messages.length;
+await run(300, 5, () => steve.messages.slice(before).some(m => m.includes("thinks via")));
+check(steve.messages.slice(before).some(m => m.includes("thinks via")), "Steve can watch a resident's reasoning: " + (steve.messages.slice(before).find(m => m.includes("thinks via")) || "none"));
+updateWorldConfig({ showThoughts: false });
 check(world.getDimension("overworld").getEntities({ type: "rg:bot" }).filter(e => !e.getDynamicProperty("rg:p_id")).length <= 1, "no wild bots from the legacy spawner (wildSpawns off)");
 // the world unloads (bodies vanish without dying), Steve rejoins: same people come back
 const first = residents()[0];
