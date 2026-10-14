@@ -136,18 +136,21 @@ export class Bridge {
         const client = bedrock.createClient(opts);
         this.client = client;
         client.on("start_game", p => { try { this.entityId = BigInt(p.runtime_entity_id ?? p.entity_id ?? 0); } catch (e) { this.entityId = 0n; } });
+        this.spawned = false;
         client.on("spawn", () => {
             log("info", "spawned in the world; announcing to the addon");
+            this.spawned = true;
+            this.outQueue.length = 0;
             this.reconnectDelay = 5000;
             this.sendToAddon({ t: "hello", v: 1, name: opts.username, version: VERSION, providers: Object.keys(PROVIDERS).filter(id => !PROVIDERS[id].needsKey || this.cfg.providers[id]?.apiKey) });
         });
         client.on("text", p => this.onText(p));
-        client.on("disconnect", p => { log("warn", "disconnected:", p?.message || p?.reason || ""); this.scheduleReconnect(); });
-        client.on("close", () => { log("warn", "connection closed"); this.scheduleReconnect(); });
+        client.on("disconnect", p => { this.spawned = false; log("warn", "disconnected:", p?.message || p?.reason || ""); this.scheduleReconnect(); });
+        client.on("close", () => { this.spawned = false; log("warn", "connection closed"); this.scheduleReconnect(); });
         client.on("error", e => log("error", "client error:", e?.message || e));
         client.on("kick", p => log("warn", "kicked:", p?.message || JSON.stringify(p)));
         this.pumpTimer = setInterval(() => this.pump(), 60);
-        this.pingTimer = setInterval(() => this.sendToAddon({ t: "ping" }), 30_000);
+        this.pingTimer = setInterval(() => { if (this.spawned) this.sendToAddon({ t: "ping" }); }, 30_000);
         this.anchorTimer = setInterval(() => this.anchor(), 5000);
     }
 
@@ -245,7 +248,7 @@ export class Bridge {
 
     // One command per pump so we never trip anti-spam.
     pump() {
-        if (!this.client || !this.outQueue.length) return;
+        if (!this.client || !this.spawned || !this.outQueue.length) return;
         const command = this.outQueue.shift();
         this.runCommand(command);
     }
@@ -265,7 +268,7 @@ export class Bridge {
 
     anchor() {
         const a = this.cfg.anchor || {};
-        if (!a.enabled || !this.anchorTarget || !this.client) return;
+        if (!a.enabled || !this.anchorTarget || !this.client || !this.spawned) return;
         const gap = (a.intervalSeconds || 120) * 1000;
         if (Date.now() - this.lastAnchor < gap) return;
         this.lastAnchor = Date.now();

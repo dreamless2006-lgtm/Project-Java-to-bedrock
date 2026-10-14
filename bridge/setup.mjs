@@ -11,11 +11,11 @@ import { fileURLToPath } from "node:url";
 const HERE = dirname(fileURLToPath(import.meta.url));
 
 const CHOICES = [
-    { id: "gemini", label: "Gemini (has a free tier: aistudio.google.com > Get API key > Create API key; easiest to start with)", needsKey: true, hint: "AIza..." },
-    { id: "anthropic", label: "Claude (API key from console.anthropic.com; paid per use)", needsKey: true, hint: "sk-ant-..." },
-    { id: "openai", label: "ChatGPT (API key from platform.openai.com; paid per use)", needsKey: true, hint: "sk-..." },
-    { id: "xai", label: "Grok (API key from console.x.ai; paid per use)", needsKey: true, hint: "xai-..." },
-    { id: "openrouter", label: "OpenRouter (one key for many models, some free; openrouter.ai)", needsKey: true, hint: "sk-or-..." },
+    { id: "gemini", label: "Gemini (has a free tier: aistudio.google.com > Get API key > Create API key; easiest to start with)", needsKey: true, hint: "AIza...", re: /^AIza[0-9A-Za-z_-]{20,}$/ },
+    { id: "anthropic", label: "Claude (API key from console.anthropic.com; paid per use)", needsKey: true, hint: "sk-ant-...", re: /^sk-ant-[0-9A-Za-z_-]{20,}$/ },
+    { id: "openai", label: "ChatGPT (API key from platform.openai.com; paid per use)", needsKey: true, hint: "sk-...", re: /^sk-[0-9A-Za-z_-]{20,}$/ },
+    { id: "xai", label: "Grok (API key from console.x.ai; paid per use)", needsKey: true, hint: "xai-...", re: /^xai-[0-9A-Za-z_-]{20,}$/ },
+    { id: "openrouter", label: "OpenRouter (one key for many models, some free; openrouter.ai)", needsKey: true, hint: "sk-or-...", re: /^sk-or-[0-9A-Za-z_-]{20,}$/ },
     { id: "player2", label: "Player2 app (free, no key; Windows/Mac only: install from player2.game, log in, leave it running here)", needsKey: false },
     { id: "ollama", label: "Ollama running on this computer (free, local models)", needsKey: false },
 ];
@@ -36,13 +36,18 @@ export async function runSetup({ configPath = join(HERE, "config.json"), example
     let picked = [];
     while (!picked.length) {
         const ans = await ask("Type one or more numbers separated by spaces", "1");
-        picked = ans.split(/[\s,]+/).map(n => CHOICES[Number(n) - 1]).filter(Boolean);
+        if (!/^[\d\s,]+$/.test(ans)) continue;
+        picked = [...new Set(ans.split(/[\s,]+/).map(n => CHOICES[Number(n) - 1]).filter(Boolean))];
     }
     for (const c of picked) {
         cfg.providers[c.id] = cfg.providers[c.id] || {};
         if (c.needsKey) {
-            let key = "";
-            while (!key) key = await ask(`   Paste your ${c.id} API key (${c.hint}); it is only stored in config.json on this computer`);
+            let key = "", tries = 0;
+            while (!key) {
+                const v = (await ask(`   Paste ONLY your ${c.id} API key (one line, looks like ${c.hint}); it is stored in config.json on this device only`)).trim();
+                if (c.re.test(v)) key = v;
+                else if (v && ++tries % 3 === 1) console.log(`   That is not a key (a key is one line starting with ${c.hint.replace("...", "")}). On the key page copy the key itself, not the code sample. Try again.`);
+            }
             cfg.providers[c.id].apiKey = key;
         }
     }
@@ -61,15 +66,26 @@ export async function runSetup({ configPath = join(HERE, "config.json"), example
     } else {
         cfg.connect.mode = "realm";
         cfg.connect.realm = cfg.connect.realm || {};
-        const invite = await ask("   Realm invite link or code (leave empty to use the first Realm this account can join)", cfg.connect.realm.invite || "");
-        cfg.connect.realm.invite = invite.replace(/^.*realms\.gg\//, "").trim();
+        let invite = null;
+        while (invite === null) {
+            const v = (await ask("   Realm invite link or code (leave empty to use the first Realm this account can join)", cfg.connect.realm.invite || "")).trim();
+            const code = v.replace(/^.*realms\.gg\//i, "").replace(/[?#].*$/, "").trim();
+            if (!code || /^[A-Za-z0-9_-]{4,24}$/.test(code)) invite = code;
+            else console.log("   That does not look like an invite (realms.gg/XXXXX or just the code). Try again or leave it empty.");
+        }
+        cfg.connect.realm.invite = invite;
         cfg.connect.realm.pickFirst = !cfg.connect.realm.invite;
     }
 
     console.log("\n3) The bridge signs in with a Microsoft account of its own (it uses a player slot, so do not use");
     console.log("   the account you play with). Make that account an operator on the world. On first start a");
     console.log("   sign-in code is shown; open the link on any device and enter it.");
-    cfg.connect.username = await ask("   Gamertag to show for the bridge player", cfg.connect.username || "RealAIBridge");
+    let tag = "";
+    while (!tag) {
+        const v = (await ask("   Gamertag to show for the bridge player", cfg.connect.username || "RealAIBridge")).trim();
+        if (/^[A-Za-z0-9 _-]{3,16}$/.test(v)) tag = v; else console.log("   3 to 16 letters, digits or spaces. Try again.");
+    }
+    cfg.connect.username = tag;
 
     writeFileSync(configPath, JSON.stringify(cfg, null, 2) + "\n");
     rl.close();
