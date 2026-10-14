@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 const HERE = dirname(fileURLToPath(import.meta.url));
 
 const CHOICES = [
-    { id: "gemini", label: "Gemini (has a free tier: aistudio.google.com > Get API key > Create API key; easiest to start with)", needsKey: true, hint: "AIza...", re: /^AIza[0-9A-Za-z_-]{20,}$/ },
+    { id: "gemini", label: "Gemini (has a free tier: aistudio.google.com > Get API key > Create API key; easiest to start with)", needsKey: true, hint: "AIza... or AQ....", re: /^(AIza[0-9A-Za-z_-]{20,}|AQ\.[0-9A-Za-z_.-]{20,})$/ },
     { id: "anthropic", label: "Claude (API key from console.anthropic.com; paid per use)", needsKey: true, hint: "sk-ant-...", re: /^sk-ant-[0-9A-Za-z_-]{20,}$/ },
     { id: "openai", label: "ChatGPT (API key from platform.openai.com; paid per use)", needsKey: true, hint: "sk-...", re: /^sk-[0-9A-Za-z_-]{20,}$/ },
     { id: "xai", label: "Grok (API key from console.x.ai; paid per use)", needsKey: true, hint: "xai-...", re: /^xai-[0-9A-Za-z_-]{20,}$/ },
@@ -45,8 +45,8 @@ export async function runSetup({ configPath = join(HERE, "config.json"), example
             let key = "", tries = 0;
             while (!key) {
                 const v = (await ask(`   Paste ONLY your ${c.id} API key (one line, looks like ${c.hint}); it is stored in config.json on this device only`)).trim();
-                if (c.re.test(v)) key = v;
-                else if (v && ++tries % 3 === 1) console.log(`   That is not a key (a key is one line starting with ${c.hint.replace("...", "")}). On the key page copy the key itself, not the code sample. Try again.`);
+                if (c.re.test(v) || /^[0-9A-Za-z._-]{20,}$/.test(v)) key = v;
+                else if (v && ++tries % 3 === 1) console.log(`   That is not a key (a key is one line with no spaces, usually starting with ${c.hint.replace("...", "")}). On the key page copy the key itself, not the code sample. Try again.`);
             }
             cfg.providers[c.id].apiKey = key;
         }
