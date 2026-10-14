@@ -11,6 +11,7 @@ import './player/body.js';
 import './pregnancy/index.js';
 import './pregnancy/items.js';
 import './pregnancy/species.js';
+import './pregnancy/attacks.js';
 import './pregnancy/commands.js';
 import './mobs/index.js';
 import './mobs/commands.js';

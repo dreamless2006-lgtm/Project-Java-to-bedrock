@@ -296,9 +296,12 @@ export class Mob {
     const self = this;
     this.components = { 'minecraft:health': attribute(26, 26) };
     this.dimension = {
+      id: 'minecraft:overworld',
       playSound: () => {},
       spawnParticle: () => {},
       spawnItem: (stack) => self.dropped.push(stack.typeId),
+      getEntities: (options) => world.getDimension('minecraft:overworld').getEntities(options),
+      getBlock: (location) => world.getDimension('minecraft:overworld').getBlock(location),
     };
   }
   getComponent(id) {

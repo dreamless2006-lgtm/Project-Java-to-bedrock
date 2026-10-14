@@ -32,6 +32,7 @@ import { FULLNESS } from './families.js';
  * @property {{ endTick: number, amplifier: number } | null} pending pending impregnation from a potion
  * @property {number} moveTimer ticks walked since the last back pain (P4+)
  * @property {number} hurtCooldown pregnancy pain damage cooldown
+ * @property {number} courting ticks a vanilla counterpart has been next to her
  */
 
 const KEY = 'minepreggo:mob';
@@ -51,6 +52,7 @@ export function newMobData() {
     pending: null,
     moveTimer: 0,
     hurtCooldown: 0,
+    courting: 0,
   };
 }
 

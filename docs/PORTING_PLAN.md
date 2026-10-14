@@ -129,6 +129,9 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   Slimes (fall cushioning) effects plus `calculateExtraFallDamageMultiplier`, the species diets
   (`CRAVING_ITEM`: the species' foods are edible only for a mother carrying that species and
   satisfy her cravings) and species milk (`MILK_ITEM`). Baby mobs are still not spawned.
+- ✅ Impregnation by vanilla mobs: `PlayerHelper.tryImpregnateByMobAttack` ported (hits counted per
+  species, 65 % roll, fertility cycle not ported) and, as a Bedrock addition, a vanilla
+  counterpart next to a free female mob for 3 s impregnates her.
 - ✅ The phase property of a mob is written with `Entity.setProperty` on every change (the
   client never showed the value the JSON events set, while the pose written by the script did);
   wild pregnant spawns are recognised from the `minecraft:variant` their spawn event's component

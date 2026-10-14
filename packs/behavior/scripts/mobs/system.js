@@ -12,7 +12,7 @@ import { EntityDamageCause, ItemStack, system, world } from '@minecraft/server';
 import { BABIES_BY_FINAL_PHASE, BELLY_RUBS_TICKS, CONFIG, CRAVING_TICKS, MAX_LEVEL, MILKING_TICKS, PHASES, TICKS } from '../pregnancy/data.js';
 import { accelerationDays, advancePhases, babiesFromPotion, createCommonPain, daysByPhase, gradualAccelerationSpeed, pregnancyDamage, randomCraving, sigmoid, symptomSeverity } from '../pregnancy/math.js';
 import { clampLevel, newPregnancy } from '../pregnancy/state.js';
-import { FAMILIES, FULLNESS, birthTicks, hungerTicks, postBirthTicks } from './families.js';
+import { COURTERS, COURTING_RANGE, COURTING_TICKS, FAMILIES, FULLNESS, birthTicks, hungerTicks, postBirthTicks } from './families.js';
 import { MobRecord } from './state.js';
 
 /** @typedef {import('@minecraft/server').Entity} Entity */
@@ -693,6 +693,36 @@ function updateMovement(/** @type {MobRecord} */ record) {
   record.lastPosition = { x, z };
 }
 
+/** A vanilla counterpart (zombie, creeper, enderman, slime) next to her for 3 s gets her pregnant. */
+function tickCourting(/** @type {MobRecord} */ record) {
+  const { entity, data } = record;
+  const family = familyOf(entity);
+  if (!family) return;
+  let near = false;
+  for (const type of COURTERS[family.species] ?? []) {
+    try {
+      if (entity.dimension.getEntities({ type, location: entity.location, maxDistance: COURTING_RANGE }).some((m) => !m.getComponent('minecraft:is_baby'))) {
+        near = true;
+        break;
+      }
+    } catch {
+      // unloaded
+    }
+  }
+  if (!near) {
+    data.courting = 0;
+    return;
+  }
+  data.courting = (data.courting ?? 0) + STEP;
+  if (data.courting % 20 === 0) particles(entity, 'minecraft:heart_particle', 1);
+  if (data.courting < COURTING_TICKS) return;
+  data.courting = 0;
+  data.pending = { endTick: system.currentTick + 300, amplifier: Math.random() < 0.5 ? 0 : 1 };
+  particles(entity, 'minecraft:heart_particle', 6);
+  tellOwner(record, 'minepreggo.mob_courted');
+  record.save();
+}
+
 /** One update of a loaded preggo mob. */
 export function tickMob(/** @type {Entity} */ entity) {
   const record = getRecord(entity);
@@ -713,6 +743,7 @@ export function tickMob(/** @type {Entity} */ entity) {
     record.dirty = true;
     startPregnancy(record, babiesFromPotion(amplifier));
   }
+  if (!data.pregnancy && !data.wild && !data.post && !data.pending) tickCourting(record);
   if (data.wild) tickWild(record);
   if (isTamed(entity)) tickTamed(record);
   if (data.pregnancy) tickPregnancy(record);

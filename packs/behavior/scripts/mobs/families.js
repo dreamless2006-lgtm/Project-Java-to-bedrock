@@ -127,6 +127,16 @@ for (const [species, table] of /** @type {[string, { foods: Record<string, numbe
   for (const item of Object.keys(table.foods)) if (item.startsWith('minepreggo:')) SPECIES_FOODS[item] = species;
 }
 
+/** Vanilla mobs that get a free female of the species pregnant by standing next to her (COURTING_TICKS). */
+export const COURTERS = /** @type {Record<MobSpecies, string[]>} */ ({
+  ZOMBIE: ['minecraft:zombie', 'minecraft:husk', 'minecraft:drowned', 'minecraft:zombie_villager', 'minecraft:zombie_villager_v2'],
+  CREEPER: ['minecraft:creeper'],
+  ENDER: ['minecraft:enderman'],
+  SLIME: ['minecraft:slime'],
+});
+export const COURTING_TICKS = 60;
+export const COURTING_RANGE = 2;
+
 /** @type {Record<string, Family>} */
 export const FAMILIES = {
   'minepreggo:zombie_girl': {

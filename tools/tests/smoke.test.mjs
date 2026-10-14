@@ -273,7 +273,7 @@ test('every entity, item and block the scripts name exists in the pack', () => {
   const named = new Set(scripts.match(/minepreggo:[a-z0-9_]+/g));
   const known = new Set([...ItemTypes.getAll(), ...BlockTypes.getAll(), ...EntityTypes.getAll()].map((t) => t.id));
   // Properties, dynamic properties, events, components, sounds and command ids are not game objects.
-  const notObjects = /^minepreggo:(phase|pose|kick|growth|gender|skin|savage|age|mob|crop|food_effects|impregnation_potion|pregnancy_acceleration|gradual_pregnancy_acceleration|breast_milk|pregnancy|female|pending|set_|on_tame|become_savage|calm_down|spawn_natural|hostile|tamed|tameable|fetal_movement_inducer|guide_given|debug|belly_touch|stomach_growls|pregnant_preggo_mob_death|player_|preggo_mob|loaded|selfcheck|hud|gender_)/;
+  const notObjects = /^minepreggo:(phase|pose|kick|growth|gender|skin|savage|age|mob|crop|food_effects|impregnation_potion|pregnancy_acceleration|gradual_pregnancy_acceleration|breast_milk|pregnancy|female|pending|set_|on_tame|become_savage|calm_down|spawn_natural|hostile|tamed|tameable|fetal_movement_inducer|guide_given|debug|attack_impregnation|mob_courted|belly_touch|stomach_growls|pregnant_preggo_mob_death|player_|preggo_mob|loaded|selfcheck|hud|gender_)/;
   const missing = [...named].filter((id) => !notObjects.test(id) && !known.has(id) && !id.startsWith('minepreggo:baby_'));
   assert.deepEqual(missing, [], 'ids used by the scripts that no JSON defines');
 });
@@ -435,4 +435,33 @@ test('the debug command forces a kick the client renders from and reports the pr
     assert.ok(Object.values(entity.animations).includes('animation.minepreggo.birth_push'), `${file} plays the birth push`);
   }
   world.players.pop();
+});
+
+test('vanilla attackers impregnate a female player after enough hits, and a counterpart next to a mob', async () => {
+  const { onAttacked, HITS_NEEDED } = await import('../../packs/behavior/scripts/pregnancy/attacks.js');
+  const victim = new Player('Victim');
+  victim.location = { x: 100, y: 64, z: 100 };
+  world.players.push(victim);
+  const record = getRecord(victim);
+  record.setGender('female');
+  const zombie = { typeId: 'minecraft:zombie', getComponent: () => undefined };
+  for (let i = 1; i < HITS_NEEDED.ZOMBIE; i++) assert.equal(onAttacked(record, /** @type {any} */ (zombie), () => 0), false);
+  assert.equal(onAttacked(record, /** @type {any} */ (zombie), () => 0), true, 'the eighth zombie hit');
+  assert.equal(record.pending?.father, 'ZOMBIE');
+  world.setAbsoluteTime(world.getAbsoluteTime() + 300);
+  system.tick(20);
+  assert.equal(record.pregnancy?.father, 'ZOMBIE');
+  world.players.pop();
+
+  const girl = new Mob('minepreggo:zombie_girl', { tamed: true });
+  girl.location = { x: 200, y: 64, z: 200 };
+  overworld.entities.push(girl);
+  const suitor = { typeId: 'minecraft:zombie', id: 'vanilla-1', isValid: true, location: { x: 201, y: 64, z: 200 }, getComponent: () => undefined };
+  overworld.entities.push(/** @type {any} */ (suitor));
+  system.tick(80);
+  const girlRecord = getMobRecord(girl);
+  assert.ok(girlRecord.data.pending, 'three seconds next to a zombie');
+  system.tick(320);
+  assert.ok(girlRecord.data.pregnancy, 'pregnant 15 seconds later');
+  assert.equal(girl.getProperty('minepreggo:phase'), 0);
 });

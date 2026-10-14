@@ -41,3 +41,5 @@ minepreggo.species_food.zombie=Only a woman carrying zombie babies can stomach t
 minepreggo.species_food.creeper=Only a woman carrying creeper babies can stomach this.
 minepreggo.species_food.ender=Only a woman carrying ender babies can stomach this.
 minepreggo.species_food.slime=Only a woman carrying slime babies can stomach this.
+minepreggo.attack_impregnation=The %s got you pregnant.
+minepreggo.mob_courted=%s has been with one of her own kind; she will be pregnant soon.

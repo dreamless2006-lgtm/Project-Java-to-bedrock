@@ -47,7 +47,7 @@ export const CHAPTERS = [
   {
     title: 'Other species',
     body:
-      'Potions of Zombie, Creeper, Ender, Slime and Villager Impregnation give a litter of that species.\n\n' +
+      'Potions of Zombie, Creeper, Ender, Slime and Villager Impregnation give a litter of that species. The monsters themselves can do it too: zombies (8 hits), creepers (2), endermen (10) and slimes (6) that hit a female character get her pregnant with their species, and a zombie, creeper, enderman or slime that stands next to a free female mob of its kind for a few seconds gets her pregnant.\n\n' +
       'Zombie: you burn in daylight without a helmet. Creeper: dying from P3 on explodes. Ender: now and then the babies teleport you. Slime: the babies cushion your falls. Villager: nothing special.\n\n' +
       'Any pregnancy makes falls hurt more from P3, and dying from P3 on leaves a dead fetus per baby.\n\n' +
       'The babies also decide the diet: zombie babies crave brains (villager, illager and witch brains, and brain with chocolate, salt, hot sauce or sour brain), creeper babies activated gunpowder, ender babies ender slime jelly and chorus fruit, slime babies rotten flesh and spider eyes, each in the sweet, salty, sour and spicy variants. Those foods only agree with a mother carrying that species. Her milk is that species\' milk too.',

@@ -127,6 +127,8 @@ export class PlayerRecord {
     this.selfHurtTick = -1;
     /** while in the future, the debug command owns the entity properties */
     this.debugUntil = 0;
+    /** hits taken from each vanilla species since the last impregnation (attacks.js) */
+    this.attacks = /** @type {Partial<Record<string, number>>} */ ({});
   }
 
   isFemale() {

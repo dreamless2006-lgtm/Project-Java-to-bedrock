@@ -83,6 +83,13 @@ craving. Those foods only agree with a mother carrying that species; anyone else
 no food from them. While pregnant with another species, a glass bottle fills with that species'
 breast milk.
 
+### Without potions
+
+As in the mod, the monsters do it themselves: a zombie (8 hits), creeper (2), enderman (10) or
+slime (6) that hits a female character gets her pregnant with its species, 15 seconds later. A
+zombie, creeper, enderman or slime that stands next to a free female mob of its own kind for
+three seconds gets her pregnant too (hearts show while he is there).
+
 ### Navel birth (ender babies)
 
 Ender babies come out through the navel: during pre-birth they push the belly button outward
