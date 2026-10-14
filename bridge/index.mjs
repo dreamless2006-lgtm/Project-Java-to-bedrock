@@ -170,7 +170,15 @@ class Bridge {
             return;
         }
         if (this.cfg.chatRelay !== false && p.type === "chat" && p.source_name && p.source_name !== this.client?.username) {
-            this.sendToAddon({ t: "chat_in", from: String(p.source_name).slice(0, 32), text: String(message).slice(0, 400) });
+            const from = String(p.source_name).slice(0, 32);
+            const text = String(message).slice(0, 400);
+            if (text.startsWith("!ai")) {
+                // Chat commands still work on the stable API: the bridge runs them for the sender.
+                const safe = `${from}|${text.slice(3).trim()}`.replace(/\s+/g, " ").slice(0, 420);
+                this.outQueue.push(`/scriptevent aisb:cmdfor ${safe}`);
+                return;
+            }
+            this.sendToAddon({ t: "chat_in", from, text });
         }
     }
 

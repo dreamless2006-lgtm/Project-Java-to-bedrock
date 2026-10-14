@@ -28,6 +28,8 @@ function eye(bot) { return { x: bot.location.x, y: bot.location.y + 1.62, z: bot
 function center(p) { return { x: Math.floor(p.x) + 0.5, y: Math.floor(p.y) + 0.5, z: Math.floor(p.z) + 0.5 }; }
 function blockAt(dim, x, y, z) { try { return dim.getBlock({ x: Math.floor(x), y: Math.floor(y), z: Math.floor(z) }); } catch (e) { return undefined; } }
 function near(bot, target, r) { return dist(bot.location, target) <= r; }
+// Block.isSolid is beta-only; "not air and not liquid" is what we need for footing/placement.
+function solid(b) { return !!b && !b.isAir && !b.isLiquid; }
 function goTo(bot, target, mode = "sprint", prio = PRIO, enterWater = false) { requestMove(bot, target, { priority: prio, source: SOURCE, mode, ttl: STEP * 3, enterWater }); }
 function stopMoving(bot) { releaseMove(bot, SOURCE); }
 function lookAt(bot, target) { try { faceBlock(bot, target); } catch (e) { /* ignore */ } }
@@ -199,7 +201,7 @@ function findSafeSpot(dim, x, z, yHint) {
     for (let y = start; y >= 2; y--) {
         const b = blockAt(dim, x, y, z), a1 = blockAt(dim, x, y + 1, z), a2 = blockAt(dim, x, y + 2, z);
         if (!b || !a1 || !a2) continue;
-        if (b.isSolid && !b.isLiquid && a1.isAir && a2.isAir && !/lava/.test(b.typeId)) return { x: Math.floor(x) + 0.5, y: y + 1, z: Math.floor(z) + 0.5 };
+        if (solid(b) && a1.isAir && a2.isAir && !/lava/.test(b.typeId)) return { x: Math.floor(x) + 0.5, y: y + 1, z: Math.floor(z) + 0.5 };
     }
     return null;
 }
@@ -535,7 +537,7 @@ H.place_torch = {
         const bx = Math.floor(bot.location.x), by = Math.floor(bot.location.y), bz = Math.floor(bot.location.z);
         for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1]]) {
             const spot = blockAt(bot.dimension, bx + dx, by, bz + dz), below = blockAt(bot.dimension, bx + dx, by - 1, bz + dz);
-            if (spot && below && spot.isAir && below.isSolid) { const r = placeBlock(bot, { x: bx + dx, y: by, z: bz + dz }, "minecraft:torch"); return { done: true, result: r.ok ? "placed a torch" : "could not place a torch: " + r.reason }; }
+            if (spot && below && spot.isAir && solid(below)) { const r = placeBlock(bot, { x: bx + dx, y: by, z: bz + dz }, "minecraft:torch"); return { done: true, result: r.ok ? "placed a torch" : "could not place a torch: " + r.reason }; }
         }
         return { done: true, result: "no good spot for a torch here" };
     },

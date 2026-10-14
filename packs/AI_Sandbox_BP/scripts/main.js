@@ -4,8 +4,10 @@ import "./srp/main.js";
 import "./rgstart.js";
 import { system } from "@minecraft/server";
 import { startBrainSystem } from "./brain/core.js";
-import { startCommands } from "./brain/commands.js";
+import { startCommands, registerSlashCommands } from "./brain/commands.js";
 import { startHubUI } from "./brain/ui.js";
+
+registerSlashCommands();   // must subscribe to system.beforeEvents.startup during module load
 
 // The legacy modules boot 100 ticks after load; the brain attaches to their caches a little later.
 system.runTimeout(() => {

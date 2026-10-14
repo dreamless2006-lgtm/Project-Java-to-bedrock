@@ -17,6 +17,7 @@ import { BudgetLedger } from "./budget.js";
 import { worldContent } from "./world_content.js";
 import { clip } from "./json_util.js";
 import { cleanChat } from "./action_schema.js";
+import { playerAllowed } from "./ui.js";
 import * as srpState from "../srp/state.js";
 import { cure as srpCure, COTH_TAG } from "../srp/infection.js";
 
@@ -415,6 +416,7 @@ class BrainManager {
         if (this.recentChat.some(r => r.key === key)) return;       // same line via chat event and bridge relay
         this.recentChat.push({ key, t: now });
         const cfg = getWorldConfig();
+        if (!playerAllowed(from)) return;        // access lists (blacklist/whitelist)
         const player = opts.player || findPlayer(from);
         for (const [, b] of allBrains()) {
             try {
@@ -447,23 +449,35 @@ class BrainManager {
         for (const [, b] of allBrains()) {
             try {
                 if (!b.bot.isValid) continue;
-                const loc = b.bot.location, dim = b.bot.dimension.id;
-                const c = clusters.find(c => c.dim === dim && dist(c, loc) < 48);
-                if (c) { c.n++; c.x += (loc.x - c.x) / c.n; c.z += (loc.z - c.z) / c.n; c.y = loc.y; }
+                const loc = b.bot.location, dim = b.bot.dimension;
+                const c = clusters.find(c => c.dim.id === dim.id && dist(c, loc) < 48);
+                if (c) { c.n++; c.x += (loc.x - c.x) / c.n; c.z += (loc.z - c.z) / c.n; c.y = loc.y; c.owned = c.owned || !!b.settings.owner; }
                 else clusters.push({ x: loc.x, y: loc.y, z: loc.z, dim, n: 1, owned: !!b.settings.owner });
             } catch (e) { /* ignore */ }
         }
         clusters.sort((a, b) => (b.owned - a.owned) || (b.n - a.n));
-        if (clusters.length) try { bridge.send({ t: "anchor", x: clusters[0].x, y: clusters[0].y, z: clusters[0].z, dim: clusters[0].dim }); } catch (e) { /* ignore */ }
-        if (!cfg.keepAlive || !hasDirectHttp) return;
+        if (clusters.length) try { bridge.send({ t: "anchor", x: clusters[0].x, y: clusters[0].y, z: clusters[0].z, dim: clusters[0].dim.id }); } catch (e) { /* ignore */ }
+        if (!cfg.keepAlive) { this.clearTickingAreas(); return; }
         const players = (() => { try { return world.getAllPlayers().filter(p => !p.hasTag("aisb_bridge")); } catch (e) { return []; } })();
+        // Script ticking areas (stable API, no cheats needed): 3x3 chunks around up to four clusters.
+        const mgr = world.tickingAreaManager;
+        if (!mgr) return;
+        const wanted = clusters.filter(c => players.length === 0 || c.owned).slice(0, 4);
         for (let i = 0; i < 4; i++) {
-            const c = clusters[i];
             const name = "aisb_" + i;
-            try { world.getDimension("minecraft:overworld").runCommand(`tickingarea remove ${name}`); } catch (e) { /* none */ }
-            if (!c || players.length > 0 && !c.owned) continue;
-            try { world.getDimension(c.dim).runCommand(`tickingarea add circle ${Math.floor(c.x)} ${Math.floor(c.y)} ${Math.floor(c.z)} 3 ${name}`); } catch (e) { /* ignore */ }
+            const c = wanted[i];
+            try { if (mgr.hasTickingArea(name)) mgr.removeTickingArea(name); } catch (e) { /* ignore */ }
+            if (!c) continue;
+            const cx = Math.floor(c.x / 16), cz = Math.floor(c.z / 16);
+            const opts = { dimension: c.dim, from: { x: (cx - 1) * 16, y: 0, z: (cz - 1) * 16 }, to: { x: (cx + 1) * 16 + 15, y: 0, z: (cz + 1) * 16 + 15 } };
+            try { if (mgr.hasCapacity(opts)) mgr.createTickingArea(name, opts).catch(() => { /* ignore */ }); } catch (e) { /* ignore */ }
         }
+    }
+
+    clearTickingAreas() {
+        const mgr = world.tickingAreaManager;
+        if (!mgr) return;
+        for (let i = 0; i < 4; i++) { try { if (mgr.hasTickingArea("aisb_" + i)) mgr.removeTickingArea("aisb_" + i); } catch (e) { /* ignore */ } }
     }
 
     // ---- companions (Player2NPC-style summon) ----

@@ -1,5 +1,5 @@
 // Chat commands for operators and players: !ai ...
-import { world, system } from "@minecraft/server";
+import { world, system, CommandPermissionLevel, CustomCommandParamType, CustomCommandStatus } from "@minecraft/server";
 import { manager, isOperator, budget } from "./core.js";
 import { getBrain, allBrains } from "./gate.js";
 import { getWorldConfig, updateWorldConfig, patchBotSettings, configuredProviders, serverConfigSummary } from "./config.js";
@@ -8,7 +8,7 @@ import { formatUsd } from "./budget.js";
 import { findPlayer, findEntityByName } from "./actuator.js";
 import { renderMemory } from "./memory.js";
 import { worldContent } from "./world_content.js";
-import { showHub } from "./ui.js";
+import { showHub, playerAllowed } from "./ui.js";
 
 const HELP = [
     "§b!ai§r - open the AI Sandbox menu",
@@ -147,12 +147,45 @@ export function handleCommand(player, message) {
     }
 }
 
+// Real slash commands work on the stable API without cheats or a bridge.
+export function registerSlashCommands() {
+    try {
+        system.beforeEvents.startup.subscribe(ev => {
+            const reg = ev.customCommandRegistry;
+            const player = origin => { const e = origin.sourceEntity; return e && e.typeId === "minecraft:player" ? e : null; };
+            const ok = (message) => ({ status: CustomCommandStatus.Success, message });
+            const fail = (message) => ({ status: CustomCommandStatus.Failure, message });
+            reg.registerCommand({ name: "aisb:talk", description: "Whisper to an AI bot: /aisb:talk <bot> \"message\"", permissionLevel: CommandPermissionLevel.Any, cheatsRequired: false, mandatoryParameters: [{ name: "bot", type: CustomCommandParamType.String }, { name: "message", type: CustomCommandParamType.String }] }, (origin, bot, message) => {
+                const p = player(origin); if (!p) return fail("players only");
+                system.run(() => handleCommand(p, `!ai talk ${bot} ${message}`));
+                return ok("");
+            });
+            reg.registerCommand({ name: "aisb:menu", description: "Open the AI Sandbox menu", permissionLevel: CommandPermissionLevel.Any, cheatsRequired: false }, (origin) => {
+                const p = player(origin); if (!p) return fail("players only");
+                system.run(() => showHub(p));
+                return ok("");
+            });
+            reg.registerCommand({ name: "aisb:summon", description: "Summon an AI companion bound to you", permissionLevel: CommandPermissionLevel.Any, cheatsRequired: false, mandatoryParameters: [{ name: "name", type: CustomCommandParamType.String }], optionalParameters: [{ name: "description", type: CustomCommandParamType.String }] }, (origin, name, description) => {
+                const p = player(origin); if (!p) return fail("players only");
+                system.run(() => handleCommand(p, `!ai summon ${name} ${description || ""}`));
+                return ok("");
+            });
+            reg.registerCommand({ name: "aisb:ai", description: "Any !ai command: /aisb:ai \"status\"", permissionLevel: CommandPermissionLevel.Any, cheatsRequired: false, mandatoryParameters: [{ name: "args", type: CustomCommandParamType.String }] }, (origin, args) => {
+                const p = player(origin); if (!p) return fail("players only");
+                system.run(() => handleCommand(p, `!ai ${args}`));
+                return ok("");
+            });
+        });
+    } catch (e) { console.warn("[AISB] custom commands unavailable", e); }
+}
+
 export function startCommands() {
     const handler = ev => {
         try {
             if (!ev.message.startsWith("!ai")) return;
             if (ev.cancel !== undefined) ev.cancel = true;
             const p = ev.sender;
+            if (!playerAllowed(p.name)) return;
             system.run(() => { try { handleCommand(p, ev.message); } catch (e) { console.warn("[AISB] command failed", e); try { p.sendMessage("§ccommand failed: " + e); } catch (e2) { /* ignore */ } } });
         } catch (e) { /* ignore */ }
     };
@@ -162,9 +195,21 @@ export function startCommands() {
     if (!subscribed) console.warn("[AISB] chat commands unavailable without the beta chat API; use the menu item or /scriptevent aisb:cmd");
     // Always-available path: /scriptevent aisb:cmd <text>  (operators, any API level)
     system.afterEvents.scriptEventReceive.subscribe(ev => {
-        if (ev.id !== "aisb:cmd") return;
         const p = ev.sourceEntity;
         if (!p || p.typeId !== "minecraft:player") return;
-        try { handleCommand(p, "!ai " + ev.message); } catch (e) { console.warn("[AISB] scriptevent command failed", e); }
+        if (ev.id === "aisb:cmd") {
+            try { handleCommand(p, "!ai " + ev.message); } catch (e) { console.warn("[AISB] scriptevent command failed", e); }
+            return;
+        }
+        if (ev.id === "aisb:cmdfor") {
+            // The bridge account relays "!ai ..." typed by a player (stable API has no chat events).
+            try { if (!p.hasTag("aisb_bridge")) return; } catch (e) { return; }
+            const bar = ev.message.indexOf("|");
+            if (bar < 0) return;
+            const sender = findPlayer(ev.message.slice(0, bar).trim());
+            if (!sender) return;
+            if (!playerAllowed(sender.name)) return;
+            try { handleCommand(sender, "!ai " + ev.message.slice(bar + 1).trim()); } catch (e) { console.warn("[AISB] relayed command failed", e); }
+        }
     }, { namespaces: ["aisb"] });
 }
