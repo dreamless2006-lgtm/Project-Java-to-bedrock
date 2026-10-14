@@ -66,7 +66,8 @@ function extraLines(locale) {
   const dir = join(ROOT, 'tools/lang');
   const file = [join(dir, `${locale}.lang`), join(dir, 'en_US.lang')].find(existsSync);
   if (!file) return [];
-  return readFileSync(file, 'utf8').split(/\r?\n/).filter((line) => line && !line.startsWith('##'));
+  const version = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version;
+  return readFileSync(file, 'utf8').split(/\r?\n/).filter((line) => line && !line.startsWith('##')).map((line) => line.replaceAll('{RP_VERSION}', version));
 }
 
 function toLangLine(key, value) {
@@ -198,6 +199,51 @@ const FAMILY_TEXTURES = {
   monster_slime_girl: 'mobs/slime/monster/monster_slime_girl',
 };
 const readGeometry = (/** @type {string} */ id) => JSON.parse(readFileSync(join(modelOut, `${id}.geo.json`), 'utf8'));
+
+/**
+ * The render controller shows one belly: every bone of belly_pN (the group and its descendants, the
+ * kick bones included) is visible only while the phase is N. part_visibility is how the game itself
+ * shows and hides bones (armor, the player's skin layers), so no animation scale is involved.
+ * @param {{ bones: { name: string, parent?: string }[] }} geometry
+ * @param {string} phaseVariable
+ */
+function bellyVisibility(geometry, phaseVariable) {
+  const children = (/** @type {string} */ name) => geometry.bones.filter((b) => b.parent === name).map((b) => b.name);
+  const subtree = (/** @type {string} */ name) => [name, ...children(name).flatMap(subtree)];
+  /** @type {Record<string, string | boolean>[]} */
+  const entries = [{ '*': true }];
+  for (let phase = 0; phase <= 9; phase++) {
+    for (const bone of subtree(`belly_p${phase}`)) entries.push({ [bone]: `${phaseVariable} == ${phase}` });
+  }
+  return entries;
+}
+
+/**
+ * Writes `entries` as the part_visibility of the named controllers of a render controller file.
+ * @param {string} file
+ * @param {string[]} names
+ * @param {Record<string, string | boolean>[]} entries
+ */
+function setPartVisibility(file, names, entries) {
+  const doc = JSON.parse(readFileSync(file, 'utf8'));
+  for (const name of names) {
+    if (!doc.render_controllers[name]) throw new Error(`${file}: no ${name}`);
+    doc.render_controllers[name].part_visibility = entries;
+  }
+  writeFile(file, JSON.stringify(doc, null, 2) + '\n');
+}
+
+/** The family's render controllers (every controller of its file but the ender woman's eyes) show the belly of the phase. */
+function writeBellyVisibility(/** @type {string} */ family, /** @type {{ bones: { name: string, parent?: string }[] }} */ geometry, /** @type {string} */ phaseVariable) {
+  const file = join(RP, `render_controllers/${family}.render_controllers.json`);
+  const main = `controller.render.${MOD_ID}.${family}`;
+  const doc = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : { format_version: '1.10.0', render_controllers: {} };
+  // The family's main controller (a plain geometry + texture) is created when the file only holds extra layers (the ender woman's eyes).
+  doc.render_controllers[main] ??= { geometry: 'Geometry.default', materials: [{ '*': 'Material.default' }], textures: ['Texture.default'] };
+  writeFile(file, JSON.stringify(doc, null, 2) + '\n');
+  const names = Object.keys(doc.render_controllers).filter((name) => !name.endsWith('_eyes'));
+  setPartVisibility(file, names, bellyVisibility(geometry, phaseVariable));
+}
 const readTexture = (/** @type {string} */ path) => (existsSync(join(textureOut, `${path}.png`)) ? decodePng(new Uint8Array(readFileSync(join(textureOut, `${path}.png`)))) : null);
 let mergedCount = 0;
 for (const [family, texture] of Object.entries(FAMILY_TEXTURES)) {
@@ -209,6 +255,7 @@ for (const [family, texture] of Object.entries(FAMILY_TEXTURES)) {
   });
   writeFile(join(modelOut, `${family}_all.geo.json`), JSON.stringify({ ...merged.geometry, 'minecraft:geometry': [{ ...merged.geometry['minecraft:geometry'][0], description: { ...merged.geometry['minecraft:geometry'][0].description, identifier: `geometry.${MOD_ID}.${family}_all` } }] }, null, 2) + '\n');
   if (merged.texture) writeFile(join(textureOut, `${texture}_all.png`), encodePng(merged.texture));
+  writeBellyVisibility(family, merged.geometry['minecraft:geometry'][0], 'v.phase');
   mergedCount++;
 }
 // The player's belly layers: the custom one keeps its skin UVs (every phase maps onto the skin),
@@ -227,6 +274,7 @@ for (const [kind, texture, relocate] of [['custom', null, false], ['predefined',
   g.description.identifier = `geometry.${MOD_ID}.player_belly_${kind}`;
   writeFile(join(modelOut, `player_belly_${kind}.geo.json`), JSON.stringify(merged.geometry, null, 2) + '\n');
   if (merged.texture && texture) writeFile(join(textureOut, `${texture}_extra_all.png`), encodePng(merged.texture));
+  setPartVisibility(join(RP, 'render_controllers/player.render_controllers.json'), [`controller.render.minepreggo.player_belly_${kind}`], bellyVisibility(g, 'variable.mp_phase'));
   mergedCount++;
 }
 

@@ -49,10 +49,12 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
 
 ### Updating the add-on in an existing world
 
-A world pins the pack version it was created with. After importing a newer `.mcaddon`, open the
-world's settings → **Behavior Packs**, remove Minepreggo from the active packs and add it again,
-so the world picks up the new version (the join message shows which version is running). Without
-this step, new items such as the fetal movement and species potions stay missing.
+A world keeps the pack versions it was created with, and Bedrock keeps older imports next to the
+new one. After importing a newer `.mcaddon`, open the world's settings and, under **Behavior
+Packs** *and* **Resource Packs**, remove Minepreggo from the active packs and add it again. The
+join message shows both versions (`[Minepreggo 0.3.4, resources 0.3.4]`); while the resources
+version lags behind, the models, bellies and animations are the old ones, whatever the scripts do.
+Old versions can be deleted in Settings → Storage.
 
 ### Potions
 

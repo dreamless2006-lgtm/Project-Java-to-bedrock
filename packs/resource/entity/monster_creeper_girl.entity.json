@@ -109,9 +109,6 @@
         "scaleZ": "v.scale_xz",
         "animate": [
           {
-            "belly_select": "true"
-          },
-          {
             "look_at_target": "!q.is_sitting && (v.pose == 'none' || v.pose == 'belly_rubs')"
           },
           "loop_controller",
@@ -271,8 +268,7 @@
         "fetal_push": "animation.minepreggo.fetal_push_monster",
         "birth_push": "animation.minepreggo.birth_push_monster",
         "navel_prebirth": "animation.minepreggo.navel_prebirth",
-        "navel_birth": "animation.minepreggo.navel_birth",
-        "belly_select": "animation.minepreggo.belly_select"
+        "navel_birth": "animation.minepreggo.navel_birth"
       },
       "render_controllers": [
         "controller.render.minepreggo.monster_creeper_girl",

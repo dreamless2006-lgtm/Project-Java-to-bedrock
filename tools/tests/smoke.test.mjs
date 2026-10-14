@@ -385,16 +385,23 @@ test('a potion used on a mob is not also drunk, and species foods only agree wit
   world.players.pop();
 });
 
-test('one model per female carries every belly size, textured, selected by animation, no render-time switching', () => {
+test('one model per female carries every belly size, textured, shown by the render controller, no render-time switching', () => {
   const families = { zombie_girl: 'mobs/zombie/zombie_girl', humanoid_creeper_girl: 'mobs/creeper/humanoid/humanoid_creeper_girl', monster_creeper_girl: 'mobs/creeper/monster/monster_creeper_girl', ender_woman: 'mobs/ender/ender_woman', humanoid_slime_girl: 'mobs/slime/humanoid/humanoid_slime_girl', monster_slime_girl: 'mobs/slime/monster/monster_slime_girl' };
-  const select = json(join(RP, 'animations/preggo_mob.animation.json')).animations['animation.minepreggo.belly_select'];
+  assert.ok(!json(join(RP, 'animations/preggo_mob.animation.json')).animations['animation.minepreggo.belly_select'], 'no belly animation switch');
   for (const [family, texture] of Object.entries(families)) {
     const entity = json(join(RP, 'entity', `${family}.entity.json`))['minecraft:client_entity'].description;
     assert.equal(entity.geometry.default, `geometry.minepreggo.${family}_all`, `${family} renders one model`);
     assert.equal(entity.textures.default, `textures/minepreggo/${texture}_all`, `${family} renders one texture`);
-    assert.ok(entity.scripts.animate.some((a) => a.belly_select === 'true'), `${family} selects the belly by animation`);
+    assert.ok(!JSON.stringify(entity).includes('belly_select'), `${family}: the belly is not an animation switch`);
+    assert.ok(entity.render_controllers.includes(`controller.render.minepreggo.${family}`), `${family} renders through its own controller`);
+    const controllers = json(join(RP, 'render_controllers', `${family}.render_controllers.json`)).render_controllers;
+    const main = controllers[`controller.render.minepreggo.${family}`];
+    assert.deepEqual(main.part_visibility[0], { '*': true }, `${family}: everything visible but the other bellies`);
+    for (const [name, controller] of Object.entries(controllers)) if (!name.endsWith('_eyes')) assert.deepEqual(controller.part_visibility, main.part_visibility, `${name} shows the same belly`);
+    const visibility = Object.assign({}, ...main.part_visibility);
     const geometry = json(join(RP, 'models/entity/minepreggo', `${family}_all.geo.json`))['minecraft:geometry'][0];
     const bones = new Map(geometry.bones.map((b) => [b.name, b]));
+    const subtree = (/** @type {string} */ name) => [name, ...[...bones.values()].filter((b) => b.parent === name).flatMap((b) => subtree(b.name))];
     assert.ok(bones.has('belly'), `${family}: belly parent bone`);
     const image = png(join(RP, `textures/minepreggo/${texture}_all.png`));
     assert.equal(geometry.description.texture_width, image.width);
@@ -404,7 +411,8 @@ test('one model per female carries every belly size, textured, selected by anima
       const cubes = group.flatMap((b) => b.cubes ?? []);
       assert.ok(cubes.length > 0, `${family} P${phase}: belly cubes`);
       assert.equal(bones.get(`belly_p${phase}`).parent, 'belly');
-      assert.deepEqual(select.bones[`belly_p${phase}`].scale, [`v.phase == ${phase} ? 1.0 : 0.0`, `v.phase == ${phase} ? 1.0 : 0.0`, `v.phase == ${phase} ? 1.0 : 0.0`]);
+      // every bone of the belly group, kick bones included, is visible in its phase only (part_visibility is per bone)
+      for (const bone of subtree(`belly_p${phase}`)) assert.equal(visibility[bone], `v.phase == ${phase}`, `${family} ${bone} is visible in P${phase} only`);
       // the belly's front faces have their texture pixels in the composite (the mod leaves a few
       // small cubes of the slime girls untextured, so the check is per phase, not per cube)
       let opaque = 0, total = 0;

@@ -338,9 +338,6 @@
           },
           {
             "minepreggo_birth_push": "variable.mp_pregnant && variable.mp_pose == 'birth'"
-          },
-          {
-            "minepreggo_belly_select": "variable.mp_pregnant"
           }
         ],
         "variables": {
@@ -481,8 +478,7 @@
         "minepreggo_navel_prebirth": "animation.minepreggo.navel_prebirth",
         "minepreggo_navel_birth": "animation.minepreggo.navel_birth",
         "minepreggo_fetal_push": "animation.minepreggo.fetal_push",
-        "minepreggo_birth_push": "animation.minepreggo.birth_push",
-        "minepreggo_belly_select": "animation.minepreggo.player.belly_select"
+        "minepreggo_birth_push": "animation.minepreggo.birth_push"
       },
       "render_controllers": [
         {

@@ -16,7 +16,177 @@
         "g": "v.flash > 0.0 ? 1.0 : this",
         "b": "v.flash > 0.0 ? 1.0 : this",
         "a": "v.flash > 0.0 ? v.flash : this"
-      }
+      },
+      "part_visibility": [
+        {
+          "*": true
+        },
+        {
+          "belly_p0": "v.phase == 0"
+        },
+        {
+          "belly_p1": "v.phase == 1"
+        },
+        {
+          "belly_p2": "v.phase == 2"
+        },
+        {
+          "belly_p3": "v.phase == 3"
+        },
+        {
+          "front_kick_p3": "v.phase == 3"
+        },
+        {
+          "right_kick_p3": "v.phase == 3"
+        },
+        {
+          "left_kick_p3": "v.phase == 3"
+        },
+        {
+          "belly_p4": "v.phase == 4"
+        },
+        {
+          "front_kick_p4": "v.phase == 4"
+        },
+        {
+          "right_kick_p4": "v.phase == 4"
+        },
+        {
+          "left_kick_p4": "v.phase == 4"
+        },
+        {
+          "belly_p5": "v.phase == 5"
+        },
+        {
+          "left_kick_p5": "v.phase == 5"
+        },
+        {
+          "right_kick_p5": "v.phase == 5"
+        },
+        {
+          "front_kick_p5": "v.phase == 5"
+        },
+        {
+          "belly_p6": "v.phase == 6"
+        },
+        {
+          "bellyCube6_r1_p6": "v.phase == 6"
+        },
+        {
+          "bellyCube5_r1_p6": "v.phase == 6"
+        },
+        {
+          "bellyCube4_r1_p6": "v.phase == 6"
+        },
+        {
+          "bellyCube3_r1_p6": "v.phase == 6"
+        },
+        {
+          "top_kick_p6": "v.phase == 6"
+        },
+        {
+          "bottom_kick_p6": "v.phase == 6"
+        },
+        {
+          "front_kick_p6": "v.phase == 6"
+        },
+        {
+          "right_kick_p6": "v.phase == 6"
+        },
+        {
+          "left_kick_p6": "v.phase == 6"
+        },
+        {
+          "belly_p7": "v.phase == 7"
+        },
+        {
+          "bellyCube7_r1_p7": "v.phase == 7"
+        },
+        {
+          "bellyCube6_r1_p7": "v.phase == 7"
+        },
+        {
+          "bellyCube5_r1_p7": "v.phase == 7"
+        },
+        {
+          "bellyCube4_r1_p7": "v.phase == 7"
+        },
+        {
+          "left_kick_p7": "v.phase == 7"
+        },
+        {
+          "right_kick_p7": "v.phase == 7"
+        },
+        {
+          "front_kick_p7": "v.phase == 7"
+        },
+        {
+          "bottom_kick_p7": "v.phase == 7"
+        },
+        {
+          "top_kick_p7": "v.phase == 7"
+        },
+        {
+          "belly_p8": "v.phase == 8"
+        },
+        {
+          "bellyCube8_r1_p8": "v.phase == 8"
+        },
+        {
+          "bellyCube7_r1_p8": "v.phase == 8"
+        },
+        {
+          "bellyCube6_r1_p8": "v.phase == 8"
+        },
+        {
+          "bellyCube5_r1_p8": "v.phase == 8"
+        },
+        {
+          "right_kick_p8": "v.phase == 8"
+        },
+        {
+          "left_kick_p8": "v.phase == 8"
+        },
+        {
+          "front_kick_p8": "v.phase == 8"
+        },
+        {
+          "bottom_kick_p8": "v.phase == 8"
+        },
+        {
+          "top_kick_p8": "v.phase == 8"
+        },
+        {
+          "belly_p9": "v.phase == 9"
+        },
+        {
+          "bellyCube8_r1_p9": "v.phase == 9"
+        },
+        {
+          "bellyCube7_r1_p9": "v.phase == 9"
+        },
+        {
+          "bellyCube6_r1_p9": "v.phase == 9"
+        },
+        {
+          "bellyCube5_r1_p9": "v.phase == 9"
+        },
+        {
+          "right_kick_p9": "v.phase == 9"
+        },
+        {
+          "left_kick_p9": "v.phase == 9"
+        },
+        {
+          "front_kick_p9": "v.phase == 9"
+        },
+        {
+          "bottom_kick_p9": "v.phase == 9"
+        },
+        {
+          "top_kick_p9": "v.phase == 9"
+        }
+      ]
     },
     "controller.render.minepreggo.humanoid_creeper_girl_charged": {
       "geometry": "Geometry.default",
@@ -45,7 +215,177 @@
         ]
       },
       "light_color_multiplier": 0.5,
-      "ignore_lighting": true
+      "ignore_lighting": true,
+      "part_visibility": [
+        {
+          "*": true
+        },
+        {
+          "belly_p0": "v.phase == 0"
+        },
+        {
+          "belly_p1": "v.phase == 1"
+        },
+        {
+          "belly_p2": "v.phase == 2"
+        },
+        {
+          "belly_p3": "v.phase == 3"
+        },
+        {
+          "front_kick_p3": "v.phase == 3"
+        },
+        {
+          "right_kick_p3": "v.phase == 3"
+        },
+        {
+          "left_kick_p3": "v.phase == 3"
+        },
+        {
+          "belly_p4": "v.phase == 4"
+        },
+        {
+          "front_kick_p4": "v.phase == 4"
+        },
+        {
+          "right_kick_p4": "v.phase == 4"
+        },
+        {
+          "left_kick_p4": "v.phase == 4"
+        },
+        {
+          "belly_p5": "v.phase == 5"
+        },
+        {
+          "left_kick_p5": "v.phase == 5"
+        },
+        {
+          "right_kick_p5": "v.phase == 5"
+        },
+        {
+          "front_kick_p5": "v.phase == 5"
+        },
+        {
+          "belly_p6": "v.phase == 6"
+        },
+        {
+          "bellyCube6_r1_p6": "v.phase == 6"
+        },
+        {
+          "bellyCube5_r1_p6": "v.phase == 6"
+        },
+        {
+          "bellyCube4_r1_p6": "v.phase == 6"
+        },
+        {
+          "bellyCube3_r1_p6": "v.phase == 6"
+        },
+        {
+          "top_kick_p6": "v.phase == 6"
+        },
+        {
+          "bottom_kick_p6": "v.phase == 6"
+        },
+        {
+          "front_kick_p6": "v.phase == 6"
+        },
+        {
+          "right_kick_p6": "v.phase == 6"
+        },
+        {
+          "left_kick_p6": "v.phase == 6"
+        },
+        {
+          "belly_p7": "v.phase == 7"
+        },
+        {
+          "bellyCube7_r1_p7": "v.phase == 7"
+        },
+        {
+          "bellyCube6_r1_p7": "v.phase == 7"
+        },
+        {
+          "bellyCube5_r1_p7": "v.phase == 7"
+        },
+        {
+          "bellyCube4_r1_p7": "v.phase == 7"
+        },
+        {
+          "left_kick_p7": "v.phase == 7"
+        },
+        {
+          "right_kick_p7": "v.phase == 7"
+        },
+        {
+          "front_kick_p7": "v.phase == 7"
+        },
+        {
+          "bottom_kick_p7": "v.phase == 7"
+        },
+        {
+          "top_kick_p7": "v.phase == 7"
+        },
+        {
+          "belly_p8": "v.phase == 8"
+        },
+        {
+          "bellyCube8_r1_p8": "v.phase == 8"
+        },
+        {
+          "bellyCube7_r1_p8": "v.phase == 8"
+        },
+        {
+          "bellyCube6_r1_p8": "v.phase == 8"
+        },
+        {
+          "bellyCube5_r1_p8": "v.phase == 8"
+        },
+        {
+          "right_kick_p8": "v.phase == 8"
+        },
+        {
+          "left_kick_p8": "v.phase == 8"
+        },
+        {
+          "front_kick_p8": "v.phase == 8"
+        },
+        {
+          "bottom_kick_p8": "v.phase == 8"
+        },
+        {
+          "top_kick_p8": "v.phase == 8"
+        },
+        {
+          "belly_p9": "v.phase == 9"
+        },
+        {
+          "bellyCube8_r1_p9": "v.phase == 9"
+        },
+        {
+          "bellyCube7_r1_p9": "v.phase == 9"
+        },
+        {
+          "bellyCube6_r1_p9": "v.phase == 9"
+        },
+        {
+          "bellyCube5_r1_p9": "v.phase == 9"
+        },
+        {
+          "right_kick_p9": "v.phase == 9"
+        },
+        {
+          "left_kick_p9": "v.phase == 9"
+        },
+        {
+          "front_kick_p9": "v.phase == 9"
+        },
+        {
+          "bottom_kick_p9": "v.phase == 9"
+        },
+        {
+          "top_kick_p9": "v.phase == 9"
+        }
+      ]
     }
   }
 }

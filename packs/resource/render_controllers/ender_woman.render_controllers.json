@@ -26,25 +26,25 @@
       ],
       "uv_anim": {
         "offset": [
-          0.0,
-          0.0
+          0,
+          0
         ],
         "scale": [
-          1.0,
-          1.0
+          1,
+          1
         ]
       },
       "is_hurt_color": {
-        "r": 0.0,
-        "g": 0.0,
-        "b": 0.0,
-        "a": 0.0
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
       },
       "on_fire_color": {
-        "r": 0.0,
-        "g": 0.0,
-        "b": 0.0,
-        "a": 0.0
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
       },
       "ignore_lighting": true,
       "part_visibility": [
@@ -53,6 +53,235 @@
         },
         {
           "head": true
+        }
+      ]
+    },
+    "controller.render.minepreggo.ender_woman": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "part_visibility": [
+        {
+          "*": true
+        },
+        {
+          "belly_p0": "v.phase == 0"
+        },
+        {
+          "belly_p1": "v.phase == 1"
+        },
+        {
+          "belly_p2": "v.phase == 2"
+        },
+        {
+          "belly_p3": "v.phase == 3"
+        },
+        {
+          "main_r1_p3": "v.phase == 3"
+        },
+        {
+          "main_r2_p3": "v.phase == 3"
+        },
+        {
+          "right_kick_p3": "v.phase == 3"
+        },
+        {
+          "front_kick_p3": "v.phase == 3"
+        },
+        {
+          "left_kick_p3": "v.phase == 3"
+        },
+        {
+          "belly_p4": "v.phase == 4"
+        },
+        {
+          "main_r1_p4": "v.phase == 4"
+        },
+        {
+          "extra1_r1_p4": "v.phase == 4"
+        },
+        {
+          "main_r2_p4": "v.phase == 4"
+        },
+        {
+          "front_kick_p4": "v.phase == 4"
+        },
+        {
+          "right_kick_p4": "v.phase == 4"
+        },
+        {
+          "left_kick_p4": "v.phase == 4"
+        },
+        {
+          "belly_p5": "v.phase == 5"
+        },
+        {
+          "main_r1_p5": "v.phase == 5"
+        },
+        {
+          "extra1_r1_p5": "v.phase == 5"
+        },
+        {
+          "main_r2_p5": "v.phase == 5"
+        },
+        {
+          "left_kick_p5": "v.phase == 5"
+        },
+        {
+          "right_kick_p5": "v.phase == 5"
+        },
+        {
+          "front_kick_p5": "v.phase == 5"
+        },
+        {
+          "belly_p6": "v.phase == 6"
+        },
+        {
+          "main_r1_p6": "v.phase == 6"
+        },
+        {
+          "extra5_r1_p6": "v.phase == 6"
+        },
+        {
+          "extra4_r1_p6": "v.phase == 6"
+        },
+        {
+          "extra3_r1_p6": "v.phase == 6"
+        },
+        {
+          "extra1_r1_p6": "v.phase == 6"
+        },
+        {
+          "bottom_kick_p6": "v.phase == 6"
+        },
+        {
+          "top_kick_p6": "v.phase == 6"
+        },
+        {
+          "front_kick_p6": "v.phase == 6"
+        },
+        {
+          "right_kick_p6": "v.phase == 6"
+        },
+        {
+          "left_kick_p6": "v.phase == 6"
+        },
+        {
+          "belly_p7": "v.phase == 7"
+        },
+        {
+          "main_r1_p7": "v.phase == 7"
+        },
+        {
+          "extra5_r1_p7": "v.phase == 7"
+        },
+        {
+          "extra4_r1_p7": "v.phase == 7"
+        },
+        {
+          "extra3_r1_p7": "v.phase == 7"
+        },
+        {
+          "extra2_r1_p7": "v.phase == 7"
+        },
+        {
+          "extra1_r1_p7": "v.phase == 7"
+        },
+        {
+          "left_kick_p7": "v.phase == 7"
+        },
+        {
+          "right_kick_p7": "v.phase == 7"
+        },
+        {
+          "front_kick_p7": "v.phase == 7"
+        },
+        {
+          "bottom_kick_p7": "v.phase == 7"
+        },
+        {
+          "top_kick_p7": "v.phase == 7"
+        },
+        {
+          "belly_p8": "v.phase == 8"
+        },
+        {
+          "main_r1_p8": "v.phase == 8"
+        },
+        {
+          "extra5_r1_p8": "v.phase == 8"
+        },
+        {
+          "extra4_r1_p8": "v.phase == 8"
+        },
+        {
+          "extra3_r1_p8": "v.phase == 8"
+        },
+        {
+          "extra2_r3_p8": "v.phase == 8"
+        },
+        {
+          "extra1_r3_p8": "v.phase == 8"
+        },
+        {
+          "top_kick_p8": "v.phase == 8"
+        },
+        {
+          "bottom_kick_p8": "v.phase == 8"
+        },
+        {
+          "front_kick_p8": "v.phase == 8"
+        },
+        {
+          "left_kick_p8": "v.phase == 8"
+        },
+        {
+          "right_kick_p8": "v.phase == 8"
+        },
+        {
+          "belly_p9": "v.phase == 9"
+        },
+        {
+          "main_r1_p9": "v.phase == 9"
+        },
+        {
+          "extra5_r1_p9": "v.phase == 9"
+        },
+        {
+          "extra4_r1_p9": "v.phase == 9"
+        },
+        {
+          "extra3_r1_p9": "v.phase == 9"
+        },
+        {
+          "extra2_r3_p9": "v.phase == 9"
+        },
+        {
+          "extra1_r3_p9": "v.phase == 9"
+        },
+        {
+          "main_r2_p9": "v.phase == 9"
+        },
+        {
+          "top_kick_p9": "v.phase == 9"
+        },
+        {
+          "bottom_kick_p9": "v.phase == 9"
+        },
+        {
+          "front_kick_p9": "v.phase == 9"
+        },
+        {
+          "left_kick_p9": "v.phase == 9"
+        },
+        {
+          "right_kick_p9": "v.phase == 9"
         }
       ]
     }

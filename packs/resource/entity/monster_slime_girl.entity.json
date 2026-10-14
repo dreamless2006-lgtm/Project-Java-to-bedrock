@@ -104,9 +104,6 @@
         "scaleZ": "1.2 * v.squish_lateral",
         "animate": [
           {
-            "belly_select": "true"
-          },
-          {
             "look_at_target": "!q.is_sitting && (v.pose == 'none' || v.pose == 'belly_rubs')"
           },
           "hop_controller",
@@ -261,15 +258,14 @@
         "jiggle": "animation.minepreggo.jiggle",
         "belly_hidden": "animation.minepreggo.belly_hidden",
         "fetal_push": "animation.minepreggo.fetal_push_monster",
-        "birth_push": "animation.minepreggo.birth_push_monster",
-        "belly_select": "animation.minepreggo.belly_select"
+        "birth_push": "animation.minepreggo.birth_push_monster"
       },
       "sound_effects": {
         "jump": "mob.slime.jump",
         "squish": "mob.slime.squish"
       },
       "render_controllers": [
-        "controller.render.minepreggo.preggo_mob"
+        "controller.render.minepreggo.monster_slime_girl"
       ],
       "spawn_egg": {
         "texture": "minepreggo_monster_slime_girl_spawn_egg"

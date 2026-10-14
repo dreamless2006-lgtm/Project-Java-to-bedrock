@@ -8,7 +8,7 @@
           "rotation": [
             "((-90.0)) - this",
             "((-1.0 + (1.0 - (-1.0)) * (math.sin((q.anim_time * 20 * 0.065 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
-            0.0
+            0
           ],
           "position": [
             "0 - this",
@@ -22,7 +22,7 @@
           },
           "rotation": [
             "((-90.0) + (-7.5)) - this",
-            0.0,
+            0,
             "((-7.5 + (7.5 - (-7.5)) * (math.sin((q.anim_time * 20 * 0.075 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
           ]
         },
@@ -83,7 +83,7 @@
           "rotation": [
             "((-90.0)) - this",
             "((-1.0 + (1.0 - (-1.0)) * (math.sin((q.anim_time * 20 * 0.065 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
-            0.0
+            0
           ],
           "position": [
             "0 - this",
@@ -97,7 +97,7 @@
           },
           "rotation": [
             "((-90.0) + (-7.5)) - this",
-            0.0,
+            0,
             "((-7.5 + (7.5 - (-7.5)) * (math.sin((q.anim_time * 20 * 0.075 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
           ]
         },
@@ -156,28 +156,28 @@
       "bones": {
         "rightArm": {
           "rotation": [
-            0.0,
+            0,
             "((15.0 + (17.5 - (15.0)) * (math.sin((q.anim_time * 20 * 0.092 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
             "((17.5 + (20.0 - (17.5)) * (math.sin((q.anim_time * 20 * 0.092 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
           ]
         },
         "leftArm": {
           "rotation": [
-            0.0,
+            0,
             "((-15.0 + (-17.5 - (-15.0)) * (math.sin((q.anim_time * 20 * 0.092 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
             "((-17.5 + (-20.0 - (-17.5)) * (math.sin((q.anim_time * 20 * 0.092 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
           ]
         },
         "rightLeg": {
           "rotation": [
-            0.0,
+            0,
             "((30.0 + (32.5 - (30.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
             "((15.0 + (17.5 - (15.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
           ]
         },
         "leftLeg": {
           "rotation": [
-            0.0,
+            0,
             "((-30.0 + (-32.5 - (-30.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
             "((-15.0 + (-17.5 - (-15.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
           ]
@@ -190,8 +190,8 @@
         "body": {
           "rotation": [
             "((15.0 + (16.5 - (15.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5))",
-            0.0,
-            0.0
+            0,
+            0
           ],
           "position": [
             "0 - this",
@@ -201,28 +201,28 @@
         },
         "rightArm": {
           "rotation": [
-            0.0,
+            0,
             "((15.0 + (17.5 - (15.0)) * (math.sin((q.anim_time * 20 * 0.092 + 0.0) * 57.2958) + 1.0) * 0.5))",
             "((17.5 + (20.0 - (17.5)) * (math.sin((q.anim_time * 20 * 0.092 + 0.0) * 57.2958) + 1.0) * 0.5))"
           ]
         },
         "leftArm": {
           "rotation": [
-            0.0,
+            0,
             "((-15.0 + (-17.5 - (-15.0)) * (math.sin((q.anim_time * 20 * 0.092 + 0.0) * 57.2958) + 1.0) * 0.5))",
             "((-17.5 + (-20.0 - (-17.5)) * (math.sin((q.anim_time * 20 * 0.092 + 0.0) * 57.2958) + 1.0) * 0.5))"
           ]
         },
         "rightLeg": {
           "rotation": [
-            0.0,
+            0,
             "((10.0 + (12.5 - (10.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5))",
             "((5.0 + (6.5 - (5.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5))"
           ]
         },
         "leftLeg": {
           "rotation": [
-            0.0,
+            0,
             "((-10.0 + (-12.5 - (-10.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5))",
             "((-5.0 + (-6.5 - (-5.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5))"
           ]
@@ -235,8 +235,8 @@
         "body": {
           "rotation": [
             "((15.0 + (16.5 - (15.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
-            0.0,
-            0.0
+            0,
+            0
           ],
           "position": [
             "0 - this",
@@ -250,34 +250,34 @@
           },
           "rotation": [
             "((-27.5 + (29.0 - (-27.5)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
-            0.0,
-            0.0
+            0,
+            0
           ]
         },
         "rightArm": {
           "rotation": [
-            0.0,
+            0,
             "((15.0 + (17.5 - (15.0)) * (math.sin((q.anim_time * 20 * 0.02 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
             "((17.5 + (20.0 - (17.5)) * (math.sin((q.anim_time * 20 * 0.02 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
           ]
         },
         "leftArm": {
           "rotation": [
-            0.0,
+            0,
             "((-15.0 + (-17.5 - (-15.0)) * (math.sin((q.anim_time * 20 * 0.02 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
             "((-17.5 + (-20.0 - (-17.5)) * (math.sin((q.anim_time * 20 * 0.02 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
           ]
         },
         "rightLeg": {
           "rotation": [
-            0.0,
+            0,
             "((30.0 + (32.5 - (30.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
             "((15.0 + (17.5 - (15.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
           ]
         },
         "leftLeg": {
           "rotation": [
-            0.0,
+            0,
             "((-30.0 + (-32.5 - (-30.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
             "((-15.0 + (-17.5 - (-15.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
           ]
@@ -465,14 +465,14 @@
       "bones": {
         "rightLeg": {
           "rotation": [
-            0.0,
+            0,
             "(-6.0)",
             "(6.0)"
           ]
         },
         "leftLeg": {
           "rotation": [
-            0.0,
+            0,
             "(6.0)",
             "(-6.0)"
           ]
@@ -484,14 +484,14 @@
       "bones": {
         "rightLeg": {
           "rotation": [
-            0.0,
+            0,
             "(-6.427)",
             "(6.427)"
           ]
         },
         "leftLeg": {
           "rotation": [
-            0.0,
+            0,
             "(6.427)",
             "(-6.427)"
           ]
@@ -503,14 +503,14 @@
       "bones": {
         "rightLeg": {
           "rotation": [
-            0.0,
+            0,
             "(-7.427)",
             "(7.427)"
           ]
         },
         "leftLeg": {
           "rotation": [
-            0.0,
+            0,
             "(7.427)",
             "(-7.427)"
           ]
@@ -522,14 +522,14 @@
       "bones": {
         "rightLeg": {
           "rotation": [
-            0.0,
+            0,
             "(-7.854)",
             "(7.854)"
           ]
         },
         "leftLeg": {
           "rotation": [
-            0.0,
+            0,
             "(7.854)",
             "(-7.854)"
           ]
@@ -541,14 +541,14 @@
       "bones": {
         "rightLeg": {
           "rotation": [
-            0.0,
+            0,
             "(-8.281)",
             "(8.281)"
           ]
         },
         "leftLeg": {
           "rotation": [
-            0.0,
+            0,
             "(8.281)",
             "(-8.281)"
           ]
@@ -560,14 +560,14 @@
       "bones": {
         "rightLeg": {
           "rotation": [
-            0.0,
+            0,
             "(-8.854)",
             "(8.854)"
           ]
         },
         "leftLeg": {
           "rotation": [
-            0.0,
+            0,
             "(8.854)",
             "(-8.854)"
           ]
@@ -580,8 +580,8 @@
         "body": {
           "rotation": [
             "((-10.0 + (-11.5 - (-10.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5))",
-            0.0,
-            0.0
+            0,
+            0
           ],
           "position": [
             "0 - this",
@@ -592,8 +592,8 @@
         "rightArm": {
           "rotation": [
             "(-6.0)",
-            0.0,
-            0.0
+            0,
+            0
           ]
         },
         "leftArm": {
@@ -606,14 +606,14 @@
         "rightLeg": {
           "rotation": [
             "(6.0)",
-            0.0,
+            0,
             "(6.0)"
           ]
         },
         "leftLeg": {
           "rotation": [
             "(6.0)",
-            0.0,
+            0,
             "(-6.0)"
           ]
         }
@@ -624,84 +624,9 @@
       "bones": {
         "belly": {
           "scale": [
-            0.0,
-            0.0,
-            0.0
-          ]
-        }
-      }
-    },
-    "animation.minepreggo.player.belly_select": {
-      "loop": true,
-      "bones": {
-        "belly_p0": {
-          "scale": [
-            "variable.mp_phase == 0 ? 1.0 : 0.0",
-            "variable.mp_phase == 0 ? 1.0 : 0.0",
-            "variable.mp_phase == 0 ? 1.0 : 0.0"
-          ]
-        },
-        "belly_p1": {
-          "scale": [
-            "variable.mp_phase == 1 ? 1.0 : 0.0",
-            "variable.mp_phase == 1 ? 1.0 : 0.0",
-            "variable.mp_phase == 1 ? 1.0 : 0.0"
-          ]
-        },
-        "belly_p2": {
-          "scale": [
-            "variable.mp_phase == 2 ? 1.0 : 0.0",
-            "variable.mp_phase == 2 ? 1.0 : 0.0",
-            "variable.mp_phase == 2 ? 1.0 : 0.0"
-          ]
-        },
-        "belly_p3": {
-          "scale": [
-            "variable.mp_phase == 3 ? 1.0 : 0.0",
-            "variable.mp_phase == 3 ? 1.0 : 0.0",
-            "variable.mp_phase == 3 ? 1.0 : 0.0"
-          ]
-        },
-        "belly_p4": {
-          "scale": [
-            "variable.mp_phase == 4 ? 1.0 : 0.0",
-            "variable.mp_phase == 4 ? 1.0 : 0.0",
-            "variable.mp_phase == 4 ? 1.0 : 0.0"
-          ]
-        },
-        "belly_p5": {
-          "scale": [
-            "variable.mp_phase == 5 ? 1.0 : 0.0",
-            "variable.mp_phase == 5 ? 1.0 : 0.0",
-            "variable.mp_phase == 5 ? 1.0 : 0.0"
-          ]
-        },
-        "belly_p6": {
-          "scale": [
-            "variable.mp_phase == 6 ? 1.0 : 0.0",
-            "variable.mp_phase == 6 ? 1.0 : 0.0",
-            "variable.mp_phase == 6 ? 1.0 : 0.0"
-          ]
-        },
-        "belly_p7": {
-          "scale": [
-            "variable.mp_phase == 7 ? 1.0 : 0.0",
-            "variable.mp_phase == 7 ? 1.0 : 0.0",
-            "variable.mp_phase == 7 ? 1.0 : 0.0"
-          ]
-        },
-        "belly_p8": {
-          "scale": [
-            "variable.mp_phase == 8 ? 1.0 : 0.0",
-            "variable.mp_phase == 8 ? 1.0 : 0.0",
-            "variable.mp_phase == 8 ? 1.0 : 0.0"
-          ]
-        },
-        "belly_p9": {
-          "scale": [
-            "variable.mp_phase == 9 ? 1.0 : 0.0",
-            "variable.mp_phase == 9 ? 1.0 : 0.0",
-            "variable.mp_phase == 9 ? 1.0 : 0.0"
+            0,
+            0,
+            0
           ]
         }
       }

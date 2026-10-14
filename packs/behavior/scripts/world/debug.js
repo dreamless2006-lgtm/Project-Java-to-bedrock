@@ -79,6 +79,7 @@ export function report(/** @type {Player} */ player) {
     `[Minepreggo ${VERSION}] you: ${describe(player)}`,
     ...(isFemale(player) ? [] : ['your character is not female, so nothing shows on you: choose the female body (/scriptevent minepreggo:gender female or the Debug tools in the guide book)']),
     mob ? `nearest mob ${describe(mob)}` : 'no preggo mob within 16 blocks',
+    `the join message must say resources ${VERSION} too; if not, remove Minepreggo (Resources) from the world's Resource Packs and add it again`,
   ];
 }
 

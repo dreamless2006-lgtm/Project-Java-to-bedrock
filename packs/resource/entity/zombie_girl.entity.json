@@ -97,9 +97,6 @@
         ],
         "animate": [
           {
-            "belly_select": "true"
-          },
-          {
             "look_at_target": "!q.is_sitting && (v.pose == 'none' || v.pose == 'belly_rubs')"
           },
           "loop_controller",
@@ -251,11 +248,10 @@
         "jiggle": "animation.minepreggo.jiggle",
         "belly_hidden": "animation.minepreggo.belly_hidden",
         "fetal_push": "animation.minepreggo.fetal_push",
-        "birth_push": "animation.minepreggo.birth_push",
-        "belly_select": "animation.minepreggo.belly_select"
+        "birth_push": "animation.minepreggo.birth_push"
       },
       "render_controllers": [
-        "controller.render.minepreggo.preggo_mob"
+        "controller.render.minepreggo.zombie_girl"
       ],
       "spawn_egg": {
         "texture": "minepreggo_hostile_zombie_girl_spawn_egg"

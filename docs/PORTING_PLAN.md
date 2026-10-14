@@ -143,6 +143,12 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   when hers is small). The client falls back to `q.variant` and to the pose when the phase
   property is unknown, and the mob system rewrites the phase property every tick (records from
   versions that only set it through entity events, wild mobs that only kept the variant).
+- ✅ **Belly shown by the render controller (0.3.4).** The belly group of the phase is selected with
+  `part_visibility` (every bone of `belly_pN`, kick bones included, visible only while
+  `v.phase == N`), generated per family from the merged model by the importer, which is how the
+  game itself shows and hides bones; the scale-to-zero `belly_select` animation is gone. Each
+  family has its own render controller file. The join message names the resource pack's version
+  next to the scripts', since a world keeps running an older resource pack until it is re-added.
 - ✅ **Every non-sexual potion of the mod, with feedback (0.3.3).** `pregnancy/potions.js` ports
   PregnancyDelay (distributeExtraDays), BabyDuplication (duplicateRandomBaby, the new birth phase
   and day map; the sigmoid growth jump is approximated by a third of the phases left),
