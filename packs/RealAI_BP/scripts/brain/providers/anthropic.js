@@ -4,7 +4,7 @@
 // system as an array of text blocks so the big stable block can carry
 // cache_control, structured output via output_config.format (json_schema).
 
-const DEFAULT_MODEL = "claude-opus-5-5";      // the current Opus, Anthropic's default
+const DEFAULT_MODEL = "claude-haiku-5-5";     // the fast one: decisions in a second or two
 export const ANTHROPIC_MODELS = {
     best: "claude-opus-5-5",
     fast: "claude-haiku-5-5",

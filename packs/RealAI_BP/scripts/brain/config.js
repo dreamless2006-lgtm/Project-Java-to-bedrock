@@ -17,13 +17,13 @@ export const DEFAULTS = Object.freeze({
     model: "",
     transport: "auto",          // auto | direct | bridge
     effort: "low",              // anthropic effort / openai reasoning hint
-    maxTokens: 700,
+    maxTokens: 600,
     temperature: null,
     chatVolume: 2,              // 0 silent, 1 quiet, 2 normal, 3 chatty
     callByName: false,          // Player2NPC "call-by-name chat": only answer when addressed
     hearingRange: 48,
-    thinkIdleSec: 45,
-    thinkActiveSec: 12,
+    thinkIdleSec: 20,           // seconds between decisions while nothing is going on
+    thinkActiveSec: 6,          // seconds between decisions while busy (events and chat interrupt sooner)
     maxBrains: 12,              // bots with a live brain at once (companions, then residents, then the closest wild bots)
     worldPlayers: 0,            // extra named AI players (residents) that join when you do; 0 = only the bridge account plays
     wildSpawns: false,          // the original addon's random bot spawner (extra nameless bots far from players)

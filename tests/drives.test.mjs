@@ -32,6 +32,11 @@ test("feelings render only what is notable and shorten the cadence", () => {
     const s = createSchedulerState();
     beginThink(s, 1000, "ok", 0.5);
     assert.equal(s.nextThink, 1000 + CADENCE.ok.idle / 2);
+    const s2 = createSchedulerState();
+    beginThink(s2, 1000, "ok", 1, { idle: 20 * 8, active: 20 * 3 });
+    assert.equal(s2.nextThink, 1000 + 160, "the world's configured cadence is used");
+    s2.active = true; beginThink(s2, 2000, "soft", 1, { idle: 20 * 8, active: 20 * 3 });
+    assert.equal(s2.nextThink, 2000 + 180, "soft budget stretches it");
 });
 
 test("self and plans live in memory and survive a save/load", () => {

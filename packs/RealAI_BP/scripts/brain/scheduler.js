@@ -5,8 +5,8 @@
 // (someone spoke to them, they were hurt, a player came close, a job ended).
 
 export const CADENCE = {
-    ok:    { idle: 20 * 45, active: 20 * 12, chat: 20 * 2 },   // ticks between thinks
-    soft:  { idle: 20 * 120, active: 20 * 30, chat: 20 * 4 },
+    ok:    { idle: 20 * 20, active: 20 * 6, chat: 20 * 1 },    // ticks between thinks (overridden by the world's thinkIdleSec/thinkActiveSec)
+    soft:  { idle: 20 * 60, active: 20 * 18, chat: 20 * 3 },
     hard:  { idle: Infinity, active: Infinity, chat: Infinity },
 };
 
@@ -58,12 +58,16 @@ export function shouldThink(state, nowTick, level = "ok", opts = {}) {
 }
 
 /** Called when a think starts: drain events, compute the next regular slot. */
-export function beginThink(state, nowTick, level = "ok", factor = 1) {
+export function beginThink(state, nowTick, level = "ok", factor = 1, gaps = null) {
     const events = state.pending.splice(0);
     state.inFlight = true;
     state.lastThink = nowTick;
     const c = CADENCE[level] || CADENCE.ok;
-    const gap = state.active ? c.active : c.idle;
+    let gap = state.active ? c.active : c.idle;
+    if (gaps && level !== "hard") {
+        const g = state.active ? gaps.active : gaps.idle;
+        if (Number.isFinite(g) && g > 0) gap = level === "soft" ? g * 3 : g;
+    }
     state.nextThink = nowTick + (Number.isFinite(gap) ? Math.round(gap * (factor > 0 ? factor : 1)) : gap);
     return events;
 }

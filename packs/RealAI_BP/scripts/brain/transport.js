@@ -28,7 +28,7 @@ async function limitedSend(req) {
     if (inFlight >= MAX_IN_FLIGHT) await new Promise(resolve => waiters.push(resolve));
     inFlight++;
     try {
-        return await httpSend({ ...req, timeoutSec: req.timeoutSec || 90 });
+        return await httpSend({ ...req, timeoutSec: req.timeoutSec || 40 });
     } finally {
         inFlight--;
         const next = waiters.shift();

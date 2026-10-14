@@ -269,7 +269,8 @@ export class BotBrain {
         const wcfg = getWorldConfig();
         const level = budget.level();
         const inner = wcfg.innerLife !== false;
-        const events = beginThink(this.sched, now, level, inner ? cadenceFactor(this.memory.drives) : 1);
+        const gaps = { idle: Math.max(3, Number(wcfg.thinkIdleSec) || 20) * 20, active: Math.max(2, Number(wcfg.thinkActiveSec) || 6) * 20 };
+        const events = beginThink(this.sched, now, level, inner ? cadenceFactor(this.memory.drives) : 1, gaps);
         const lastActions = this.actuator.drainResults();
         const newChat = this.chatBuffer.splice(0);
         const obs = observe(this.bot, this, {
@@ -308,6 +309,8 @@ export class BotBrain {
         const res = await transportThink(this.id, cfg, turn);
         const nowTick = system.currentTick;
         this.lastThinkAt = nowTick;
+        this.lastLatencyMs = Date.now() - started;
+        this.avgLatencyMs = this.avgLatencyMs ? Math.round(this.avgLatencyMs * 0.7 + this.lastLatencyMs * 0.3) : this.lastLatencyMs;
         if (!this.bot.isValid) return;
         if (res.usage) budget.record(res.provider || cfg.provider, res.model || cfg.model, res.usage, this.name);
         if (!res.ok) {
@@ -369,7 +372,7 @@ export class BotBrain {
     }
 
     status() {
-        return { name: this.name, id: this.id, thinks: this.thinks, failures: this.failures, lastError: this.lastError, paused: this.paused, current: this.actuator.describeCurrent(), goal: this.memory.goal, owner: this.settings.owner || null, provider: callConfigFor(this).provider, model: callConfigFor(this).model || "(default)", feelings: renderDrives(this.memory.drives), self: this.memory.self || "", plans: (this.memory.plans || []).slice(), mission: getWorldConfig().mission === "beat_the_game" ? (() => { try { return assessMission(inventoryMap(this.bot), this.memory.mission); } catch (e) { return null; } })() : null, facts: this.memory.facts.length, nextThinkIn: Math.max(0, Math.round((this.sched.nextThink - system.currentTick) / 20)) };
+        return { name: this.name, id: this.id, thinks: this.thinks, failures: this.failures, lastError: this.lastError, paused: this.paused, latencyMs: this.avgLatencyMs || 0, current: this.actuator.describeCurrent(), goal: this.memory.goal, owner: this.settings.owner || null, provider: callConfigFor(this).provider, model: callConfigFor(this).model || "(default)", feelings: renderDrives(this.memory.drives), self: this.memory.self || "", plans: (this.memory.plans || []).slice(), mission: getWorldConfig().mission === "beat_the_game" ? (() => { try { return assessMission(inventoryMap(this.bot), this.memory.mission); } catch (e) { return null; } })() : null, facts: this.memory.facts.length, nextThinkIn: Math.max(0, Math.round((this.sched.nextThink - system.currentTick) / 20)) };
     }
 }
 
@@ -453,7 +456,9 @@ class BrainManager {
                 b.settings = settings;
                 registerBrain(bp.id, b);
                 b.request("you are here in person now; say hello and start living your own life in this world");
+                const cc = callConfigFor(b);
                 console.warn(`[RealAI] brain started for the bridge account ${bp.name}: it plays in person now`);
+                this.announce(`§a[Real AI] ${bp.name} is now playing in person, deciding with ${PROVIDER_LABELS[cc.provider] || cc.provider}${cc.model ? " (" + cc.model + ")" : ""}; a new decision every few seconds.`);
             }
             if (bp && !cfg.bridgePlays && brains.has(bp.id)) { try { brains.get(bp.id).saveMemory(); } catch (e) { /* ignore */ } unregisterBrain(bp.id); }
             if (bp && cfg.bridgePlays && brains.has(bp.id) && !seen.has(bp.id)) { seen.add(bp.id); bots.push(bp); }

@@ -36,6 +36,18 @@ residents think with each. `!ai status` shows who runs on what, and
 `!ai thoughts on` prints every bot's reasoning and chosen actions to nearby
 players so you can watch the decisions being made.
 
+## Quick decisions, real models
+
+Every decision is one call to the model you configured (Gemini, Claude,
+ChatGPT or Grok). While busy the player decides every 6 seconds, every 20
+when idle, and immediately when spoken to, hurt, or when something happens;
+a pressing feeling brings the next decision sooner. Defaults favour fast
+models (Gemini Flash Lite, Claude Haiku, GPT mini), replies are capped
+short, and a slow answer times out after 40 seconds so the body never
+freezes. `!ai status` shows each player's model and how long its decisions
+take; `!ai thoughts on` shows them as they happen. Tune with
+`thinkActiveSec` / `thinkIdleSec` in the Behavior tab.
+
 ## The mission: beat the game
 
 The AI player is free to do anything the game allows, and its long-term

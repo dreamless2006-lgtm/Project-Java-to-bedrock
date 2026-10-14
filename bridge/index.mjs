@@ -54,7 +54,7 @@ function log(level, ...args) {
 }
 
 // ---------------------------------------------------------- provider call ---
-export async function callProvider(cfg, botCfg, turn, timeoutSeconds = 60) {
+export async function callProvider(cfg, botCfg, turn, timeoutSeconds = 40) {
     const id = botCfg.provider || cfg.defaults.provider || "anthropic";
     const provider = getProvider(id);
     if (!provider) return { ok: false, error: `unknown provider '${id}'`, type: "config" };
@@ -323,7 +323,7 @@ export class Bridge {
         this.inFlight++;
         const started = Date.now();
         try {
-            const res = await callProvider(this.cfg, botCfg, { systemStable: sys.text, systemDynamic: null, messages }, this.cfg.requestTimeoutSeconds || 60);
+            const res = await callProvider(this.cfg, botCfg, { systemStable: sys.text, systemDynamic: null, messages }, this.cfg.requestTimeoutSeconds || 40);
             const ms = Date.now() - started;
             if (res.ok) log("info", `${bot}: ${res.provider}/${res.model} ok in ${ms}ms (${res.usage?.input ?? "?"} in / ${res.usage?.output ?? "?"} out)`);
             else log("warn", `${bot}: think failed: ${res.error}`);

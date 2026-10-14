@@ -19,7 +19,7 @@ export const SCRIPT_EVENT_ID = "realai:in";
 export const BRIDGE_TAG = "realai_bridge";
 const OUT_CHUNK = 900;              // server->client chat lines can be longer than 512
 const HELLO_TIMEOUT_TICKS = 20 * 90;
-const THINK_TIMEOUT_TICKS = 20 * 120;
+const THINK_TIMEOUT_TICKS = 20 * 60;
 
 export class BridgeChannel {
     constructor() {

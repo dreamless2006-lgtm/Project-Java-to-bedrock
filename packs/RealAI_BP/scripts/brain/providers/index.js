@@ -5,7 +5,7 @@ import { buildOpenAICompatRequest, parseOpenAICompatResponse, OPENAI_COMPAT_PRES
 import { buildGeminiRequest, parseGeminiResponse, GEMINI_MODELS } from "./gemini.js";
 
 export const PROVIDERS = {
-    anthropic:  { label: "Claude (Anthropic)",   build: buildAnthropicRequest,    parse: parseAnthropicResponse,    defaultModel: ANTHROPIC_MODELS.best, needsKey: true },
+    anthropic:  { label: "Claude (Anthropic)",   build: buildAnthropicRequest,    parse: parseAnthropicResponse,    defaultModel: ANTHROPIC_MODELS.fast, needsKey: true },
     openai:     { label: "ChatGPT (OpenAI)",     build: buildOpenAICompatRequest, parse: parseOpenAICompatResponse, defaultModel: OPENAI_COMPAT_PRESETS.openai.model, needsKey: true },
     xai:        { label: "Grok (xAI)",           build: buildOpenAICompatRequest, parse: parseOpenAICompatResponse, defaultModel: OPENAI_COMPAT_PRESETS.xai.model, needsKey: true },
     gemini:     { label: "Gemini (Google)",      build: buildGeminiRequest,       parse: parseGeminiResponse,       defaultModel: GEMINI_MODELS.fast, needsKey: true },

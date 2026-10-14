@@ -8,7 +8,7 @@ come from the server's `secrets.json` or the bridge's `config.json`.
 
 | id | Service | Default model | Key | Notes |
 |---|---|---|---|---|
-| `anthropic` | Claude (Anthropic Messages API) | `claude-opus-5-5` | `x-api-key` | Best quality. `claude-haiku-5-5` is ~40x cheaper and plenty for bots. Stable system prompt is cached (`cache_control`); JSON enforced with structured outputs. |
+| `anthropic` | Claude (Anthropic Messages API) | `claude-haiku-5-5` | `x-api-key` | Fast and cheap, the default for quick decisions; `claude-opus-5-5` is the strongest and plenty for bots. Stable system prompt is cached (`cache_control`); JSON enforced with structured outputs. |
 | `openai` | ChatGPT (OpenAI chat completions) | `gpt-5.4-mini` | Bearer | `gpt-5.4-nano` is cheaper. JSON enforced with `response_format: json_schema`. |
 | `xai` | Grok (xAI, OpenAI-compatible) | `grok-4.3` | Bearer | Cheaper fast variants exist; set the model id you see in the xAI console. |
 | `gemini` | Gemini (Google generateContent) | `gemini-flash-lite-latest` | `x-goog-api-key` | Aliases follow Google's latest; pin e.g. `gemini-3.6-flash` if you want a fixed model. JSON via `responseSchema`. |
