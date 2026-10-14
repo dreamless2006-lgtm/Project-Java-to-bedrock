@@ -1,6 +1,7 @@
 // Google Gemini generateContent builder.
 
-export const GEMINI_MODELS = { best: "gemini-2.5-pro", fast: "gemini-2.5-flash" };
+// Aliases survive model retirements; pin an explicit id (e.g. gemini-3.6-flash) in the menu if you prefer.
+export const GEMINI_MODELS = { best: "gemini-pro-latest", fast: "gemini-flash-lite-latest" };
 
 export function buildGeminiRequest(cfg, req) {
     const model = cfg.model || GEMINI_MODELS.fast;

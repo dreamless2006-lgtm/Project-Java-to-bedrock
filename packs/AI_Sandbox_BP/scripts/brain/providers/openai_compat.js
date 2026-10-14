@@ -2,9 +2,9 @@
 // OpenRouter, Player2, Ollama, LM Studio and any other /v1/chat/completions server.
 
 export const OPENAI_COMPAT_PRESETS = {
-    openai:     { baseUrl: "https://api.openai.com/v1",       model: "gpt-5-mini",   jsonMode: "json_schema" },
-    xai:        { baseUrl: "https://api.x.ai/v1",             model: "grok-4-fast",  jsonMode: "json_schema" },
-    openrouter: { baseUrl: "https://openrouter.ai/api/v1",    model: "openai/gpt-5-mini", jsonMode: "json_object" },
+    openai:     { baseUrl: "https://api.openai.com/v1",       model: "gpt-5.4-mini", jsonMode: "json_schema" },
+    xai:        { baseUrl: "https://api.x.ai/v1",             model: "grok-4.3",     jsonMode: "json_schema" },
+    openrouter: { baseUrl: "https://openrouter.ai/api/v1",    model: "openai/gpt-5.4-mini", jsonMode: "json_object" },
     player2:    { baseUrl: "http://127.0.0.1:4315/v1",        model: "",             jsonMode: "none", authHeader: "player2-game-key" },
     ollama:     { baseUrl: "http://127.0.0.1:11434/v1",       model: "llama3.1",     jsonMode: "json_object" },
     lmstudio:   { baseUrl: "http://127.0.0.1:1234/v1",        model: "",             jsonMode: "json_object" },

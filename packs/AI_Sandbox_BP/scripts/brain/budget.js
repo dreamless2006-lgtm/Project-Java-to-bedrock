@@ -16,9 +16,10 @@ export const PRICES = {
         "claude-fable-5-1":  [10.00, 50.00, 0.25],
         default:             [4.00, 20.00, 0.20],
     },
-    openai:     { default: [0.25, 2.00, 0.025] },
-    xai:        { default: [0.20, 0.50, 0.05] },
-    gemini:     { "gemini-2.5-pro": [1.25, 10.00, 0.31], default: [0.30, 2.50, 0.075] },
+    // Non-Anthropic prices are approximate list prices seen in 2026; adjust in PRICES if your invoice differs.
+    openai:     { "gpt-5.4-mini": [0.75, 4.50, 0.075], "gpt-5.4-nano": [0.20, 1.20, 0.02], "gpt-5.5": [5.00, 30.00, 0.50], "gpt-5-mini": [0.25, 2.00, 0.025], default: [0.75, 4.50, 0.075] },
+    xai:        { "grok-4.3": [1.25, 2.50, 0.20], "grok-4.5": [2.00, 6.00, 0.20], "grok-4.6": [2.00, 6.00, 0.20], default: [1.25, 2.50, 0.20] },
+    gemini:     { "gemini-2.5-pro": [1.25, 10.00, 0.31], "gemini-2.5-flash": [0.30, 2.50, 0.075], "gemini-3.6-flash": [0.75, 3.75, 0.19], "gemini-flash-lite-latest": [0.30, 1.50, 0.05], default: [0.75, 3.75, 0.19] },
     openrouter: { default: [0.50, 2.00, 0.5] },
     player2:    { default: [0, 0, 0] },
     ollama:     { default: [0, 0, 0] },
