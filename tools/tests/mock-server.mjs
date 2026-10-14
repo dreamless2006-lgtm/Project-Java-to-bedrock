@@ -143,6 +143,12 @@ export class Player {
     this.entityProperties = new Map([['minepreggo:phase', -1], ['minepreggo:pose', 'none'], ['minepreggo:kick', 0], ['minepreggo:growth', 0], ['minepreggo:gender', 'unset'], ['minepreggo:skin', 'custom'], ['minepreggo:navel', false]]);
     /** what the player picks on the next form (undefined = closes it) */
     this.formSelection = undefined;
+    /** choices for a run of forms, used up one per form before formSelection */
+    this.formSelections = [];
+    /** every form shown to the player: { title, body, buttons } */
+    this.forms = [];
+    /** CommandPermissionLevel: operators can use the debug tools */
+    this.commandPermissionLevel = 1;
     /** @type {ItemStack | undefined} */
     this.held = undefined;
     this.isSneaking = false;

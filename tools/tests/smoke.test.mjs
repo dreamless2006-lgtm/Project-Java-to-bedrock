@@ -280,7 +280,7 @@ test('every entity, item and block the scripts name exists in the pack', () => {
   const named = new Set(scripts.match(/minepreggo:[a-z0-9_]+/g));
   const known = new Set([...ItemTypes.getAll(), ...BlockTypes.getAll(), ...EntityTypes.getAll()].map((t) => t.id));
   // Properties, dynamic properties, events, components, sounds and command ids are not game objects.
-  const notObjects = /^minepreggo:(phase|pose|kick|growth|gender|skin|savage|age|mob|crop|food_effects|impregnation_potion|pregnancy_acceleration|gradual_pregnancy_acceleration|breast_milk|pregnancy|female|pending|set_|on_tame|become_savage|calm_down|spawn_natural|hostile|tamed|tameable|fetal_movement_inducer|guide_given|debug|attack_impregnation|mob_courted|belly_touch|stomach_growls|pregnant_preggo_mob_death|player_|preggo_mob|loaded|selfcheck|hud|gender_)/;
+  const notObjects = /^minepreggo:(phase|pose|kick|growth|gender|skin|savage|age|mob|crop|food_effects|impregnation_potion|pregnancy_acceleration|gradual_pregnancy_acceleration|breast_milk|pregnancy|female|pending|set_|on_tame|become_savage|calm_down|spawn_natural|hostile|tamed|tameable|fetal_movement_inducer|guide_given|guide$|forced|debug|attack_impregnation|mob_courted|belly_touch|stomach_growls|pregnant_preggo_mob_death|player_|preggo_mob|loaded|selfcheck|hud|gender_)/;
   const missing = [...named].filter((id) => !notObjects.test(id) && !known.has(id) && !id.startsWith('minepreggo:baby_'));
   assert.deepEqual(missing, [], 'ids used by the scripts that no JSON defines');
 });
@@ -528,7 +528,7 @@ test('the belly follows the real phase every tick, and the debug command can for
   // Any belly size, and the output names the version so a stale pack is recognisable.
   const out = command(tester, 'minepreggo:debug', 'belly 9');
   assert.match(out, /belly P9 forced for 10 s on you and the nearest mob/);
-  assert.match(out, new RegExp(`\\[Minepreggo debug ${VERSION.replaceAll('.', '\\.')}\\] you:`));
+  assert.match(out, new RegExp(`\\[Minepreggo ${VERSION.replaceAll('.', '\\.')}\\] you:`));
   assert.equal(girl.getProperty('minepreggo:phase'), 9);
   assert.equal(tester.getProperty('minepreggo:phase'), 9);
   assert.match(command(tester, 'minepreggo:debug', 'belly 42'), /belly P9 forced/);
@@ -562,6 +562,19 @@ test('the belly follows the real phase every tick, and the debug command can for
   delete wildRecord.data.wild.phase;
   system.tick(STEP + 1);
   assert.equal(wild.getProperty('minepreggo:phase'), 5, 'recovered from the variant');
+
+  // A forced belly never makes a mob wild pregnant, not even when her record is lost during the
+  // window (chunk unload, rejoin): the forced flag persists with her and the next tick restores her.
+  const stray = new Mob('minepreggo:zombie_girl', { tamed: true });
+  stray.location = { x: 300.2, y: 64, z: 300 };
+  overworld.entities.push(stray);
+  command(tester, 'minepreggo:debug', 'kick');
+  assert.equal(stray.getProperty('minepreggo:phase'), 7);
+  mobs.forgetRecord(stray.id);
+  system.tick(STEP + 1);
+  assert.equal(getMobRecord(stray).data.wild, null, 'a lost record does not make her wild pregnant');
+  assert.equal(stray.getProperty('minepreggo:phase'), -1, 'the real phase is back');
+  assert.equal(stray.getDynamicProperty('minepreggo:forced'), undefined);
   world.players.pop();
 });
 
@@ -582,4 +595,73 @@ test('the client renders a belly even when the phase property never arrives', ()
       assert.ok(pre.slice(0, i).some((/** @type {string} */ line) => line.startsWith('v.pose =')));
     }
   }
+});
+
+test('the guide book has working debug tools: belly sizes, phase jumps and the real state, for operators', async () => {
+  const { CHAPTERS, DEBUG_MENU } = await import('../../packs/behavior/scripts/world/guide.js');
+  const debugChapter = CHAPTERS.findIndex((chapter) => chapter.debug);
+  assert.ok(debugChapter > 0, 'the last chapter is the debug tools');
+  const reader = new Player('Operator');
+  reader.location = { x: 400, y: 64, z: 400 };
+  world.players.push(reader);
+  const girl = new Mob('minepreggo:zombie_girl', { tamed: true });
+  girl.location = { x: 401, y: 64, z: 400 };
+  overworld.entities.push(girl);
+  const open = async (/** @type {number[]} */ choices) => {
+    reader.forms.length = 0;
+    reader.formSelections = choices;
+    const event = { itemStack: new ItemStack('minepreggo:guide_book'), source: reader, cancel: false };
+    emit(world.beforeEvents.itemUse, event);
+    for (let i = 0; i < 8; i++) await flush();
+  };
+
+  // Debug tools -> Show a belly size -> P7: a P7 belly on the reader and on the mob, result shown in the book.
+  const bellyMenu = DEBUG_MENU.findIndex((item) => /belly size/i.test(item.label));
+  await open([debugChapter, bellyMenu, 7]);
+  assert.equal(reader.getProperty('minepreggo:phase'), 7);
+  assert.equal(girl.getProperty('minepreggo:phase'), 7);
+  const result = reader.forms.find((form) => /belly P7 forced for 30 s/.test(form.body));
+  assert.ok(result, `the result page: ${JSON.stringify(reader.forms.map((form) => form.body))}`);
+  assert.deepEqual(result.buttons, ['Back']);
+  assert.equal(reader.forms.at(-1)?.title, 'P7 (big)', 'closing the result page closes the book, so the player can look at the belly');
+
+  // Nearest mob -> Start a pregnancy, then Jump to a phase -> P5: real pregnancy state, not a forced one.
+  const mobMenu = DEBUG_MENU.findIndex((item) => item.label === 'Nearest mob');
+  const mobItems = DEBUG_MENU[mobMenu].menu ?? [];
+  await open([debugChapter, mobMenu, mobItems.findIndex((item) => /1 baby/.test(item.label))]);
+  const record = getMobRecord(girl);
+  assert.ok(record.data.pregnancy, 'pregnant from the book');
+  await open([debugChapter, mobMenu, mobItems.findIndex((item) => /Jump/.test(item.label)), 4]); // one baby: birth at P4
+  assert.equal(record.data.pregnancy?.phase, 4);
+  await open([debugChapter, DEBUG_MENU.findIndex((item) => /Stop forcing/.test(item.label))]);
+  assert.equal(girl.getProperty('minepreggo:phase'), 4, 'the real phase shows once forcing stops');
+
+  // My pregnancy -> female body, start, jump to P3.
+  const myMenu = DEBUG_MENU.findIndex((item) => item.label === 'My pregnancy');
+  const myItems = DEBUG_MENU[myMenu].menu ?? [];
+  await open([debugChapter, myMenu, myItems.findIndex((item) => /female/.test(item.label))]);
+  await open([debugChapter, myMenu, myItems.findIndex((item) => /1 baby/.test(item.label))]);
+  await open([debugChapter, myMenu, myItems.findIndex((item) => /Jump/.test(item.label)), 3]);
+  assert.equal(getRecord(reader).pregnancy?.phase, 3);
+  system.tick(40); // the body sync runs on its own interval
+  assert.equal(reader.getProperty('minepreggo:phase'), 3, 'the real P3 reaches the client, nothing forced is left');
+
+  // The render report names the version; every menu ends with Back.
+  await open([debugChapter, DEBUG_MENU.findIndex((item) => /renders from/.test(item.label))]);
+  assert.ok(reader.forms.some((form) => form.body.includes(`[Minepreggo ${VERSION}] you:`)));
+  for (const form of reader.forms) if (form.title !== 'Minepreggo guide') assert.equal(form.buttons.at(-1), 'Back', form.title);
+
+  // Without operator rights the chapter only explains how to get them.
+  reader.commandPermissionLevel = 0;
+  await open([debugChapter]);
+  const denial = reader.forms.find((form) => /need an operator/.test(form.body));
+  assert.ok(denial, 'the chapter explains how to become an operator');
+  assert.deepEqual(denial.buttons, ['Back to chapters']);
+  assert.ok(!reader.forms.some((form) => form.body === 'Choose an action.'), 'no debug menu for a non-operator');
+
+  // The book again on request.
+  const books = reader.inventory.filter((item) => item === 'minepreggo:guide_book').length;
+  assert.match(command(reader, 'minepreggo:guide', ''), /Guide book given/);
+  assert.equal(reader.inventory.filter((item) => item === 'minepreggo:guide_book').length, books + 1);
+  world.players.pop();
 });

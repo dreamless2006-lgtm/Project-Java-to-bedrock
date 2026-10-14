@@ -3,10 +3,16 @@
 
 import { ItemStack, Player, system, world } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
+import { runMobCommand } from '../mobs/commands.js';
+import { runPregnancyCommand } from '../pregnancy/commands.js';
+import { getRecord } from '../pregnancy/system.js';
+import { forceBelly, forcePose, report, stopForcing } from './debug.js';
 
 const GUIDE = 'minepreggo:guide_book';
+/** A forced state started from the book lasts long enough to close the book and look (30 s). */
+const BOOK_TICKS = 600;
 
-/** @type {{ title: string, body: string }[]} */
+/** @type {{ title: string, body: string, debug?: boolean }[]} */
 export const CHAPTERS = [
   {
     title: 'Getting started',
@@ -66,9 +72,127 @@ export const CHAPTERS = [
       'minepreggo:pregnancy start|potion|phase <n>|days <n>|labor|miscarry|accelerate <0-4>|induce <0-4>|pain <name>|symptom <name>|status|end\n' +
       'minepreggo:mob (nearest mob) status|start|potion|phase|labor|induce|feed|starve|...\n' +
       'minepreggo:gender female|male, minepreggo:skin custom|alex|steve\n' +
-      'minepreggo:debug belly <0-9> shows that belly size on you and the nearest mob for 10 s; minepreggo:debug kick|birth forces the kicks or a birth.',
+      'minepreggo:debug belly <0-9> shows that belly size on you and the nearest mob for 10 s; minepreggo:debug kick|birth forces the kicks or a birth.\n' +
+      'minepreggo:guide gives this book again.\n\n' +
+      'The Debug tools chapter of this book runs all of this with buttons.',
+  },
+  {
+    title: 'Debug tools',
+    body:
+      'Buttons that run the test commands on you and on the nearest female mob (within 16 blocks): show any belly size, force the kicks or a birth, start a pregnancy, jump to a phase, start labor, see what the game renders from. Operators only (cheats on).',
+    debug: true,
   },
 ];
+
+/**
+ * @typedef {object} DebugItem
+ * @property {string} label
+ * @property {(player: Player) => string} [run] what the button does; the result is shown
+ * @property {DebugItem[]} [menu] a sub-menu instead
+ */
+
+const PHASES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+/** @param {(player: Player, phase: number) => string} action */
+const phaseMenu = (action) => PHASES.map((n) => ({ label: `P${n}${n <= 1 ? ' (flat)' : n >= 7 ? ' (big)' : ''}`, run: (/** @type {Player} */ player) => action(player, n) }));
+
+/** @type {DebugItem[]} The Debug tools chapter. */
+export const DEBUG_MENU = [
+  { label: 'Show a belly size for 30 s (me + nearest mob)', menu: phaseMenu((player, n) => forceBelly(player, n, BOOK_TICKS)) },
+  { label: 'Force fetal movement for 30 s', run: (player) => forcePose(player, 'kick', BOOK_TICKS) },
+  { label: 'Force a birth push for 30 s', run: (player) => forcePose(player, 'birth', BOOK_TICKS) },
+  { label: 'Stop forcing, show the real state', run: stopForcing },
+  {
+    label: 'My pregnancy',
+    menu: [
+      { label: 'Give me the female body', run: (player) => (getRecord(player).setGender('female'), 'Your character is female now.') },
+      { label: 'Start a pregnancy (1 baby)', run: (player) => runPregnancyCommand(player, 'start 1') },
+      { label: 'Start a pregnancy (3 babies)', run: (player) => runPregnancyCommand(player, 'start 3') },
+      { label: 'Jump to a phase', menu: phaseMenu((player, n) => runPregnancyCommand(player, `phase ${n}`)) },
+      { label: 'Induce kicks (III)', run: (player) => runPregnancyCommand(player, 'induce 2') },
+      { label: 'Accelerate (potion IV)', run: (player) => runPregnancyCommand(player, 'accelerate 3') },
+      { label: 'Start labor', run: (player) => runPregnancyCommand(player, 'labor') },
+      { label: 'End the pregnancy', run: (player) => runPregnancyCommand(player, 'end') },
+      { label: 'Status', run: (player) => runPregnancyCommand(player, 'status') },
+    ],
+  },
+  {
+    label: 'Nearest mob',
+    menu: [
+      { label: 'Start a pregnancy (1 baby)', run: (player) => runMobCommand(player, 'start 1') },
+      { label: 'Start a pregnancy (3 babies)', run: (player) => runMobCommand(player, 'start 3') },
+      { label: 'Jump to a phase', menu: phaseMenu((player, n) => runMobCommand(player, `phase ${n}`)) },
+      { label: 'Induce kicks (III)', run: (player) => runMobCommand(player, 'induce 2') },
+      { label: 'Accelerate (potion IV)', run: (player) => runMobCommand(player, 'accelerate 3') },
+      { label: 'Start labor', run: (player) => runMobCommand(player, 'labor') },
+      { label: 'Feed her', run: (player) => runMobCommand(player, 'feed') },
+      { label: 'End the pregnancy', run: (player) => runMobCommand(player, 'end') },
+      { label: 'Status', run: (player) => runMobCommand(player, 'status') },
+    ],
+  },
+  { label: 'What the game renders from (me + nearest mob)', run: (player) => report(player).join('\n') },
+];
+
+/** The debug tools need an operator, like /scriptevent; an API without the level lets everyone in. */
+export function canDebug(/** @type {Player} */ player) {
+  try {
+    const level = Number(player.commandPermissionLevel);
+    return Number.isNaN(level) || level >= 1;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Shows a debug menu; a button runs its action and shows the result, or opens its sub-menu.
+ * @param {Player} player
+ * @param {string} title
+ * @param {DebugItem[]} items
+ * @param {() => void} back what the last button does
+ */
+function openDebugMenu(player, title, items, back) {
+  const menu = new ActionFormData().title(title).body('Choose an action.');
+  for (const item of items) menu.button(item.label);
+  menu.button('Back');
+  menu.show(player).then((response) => {
+    if (response.canceled || response.selection === undefined || !player.isValid) return;
+    const item = items[response.selection];
+    if (!item) return back();
+    if (item.menu) return openDebugMenu(player, item.label, item.menu, () => openDebugMenu(player, title, items, back));
+    let result = 'Done.';
+    try {
+      result = item.run?.(player) || result;
+    } catch (error) {
+      result = `Failed: ${error}`;
+    }
+    new ActionFormData()
+      .title(item.label)
+      .body(result)
+      .button('Back')
+      .show(player)
+      .then((page) => {
+        if (!page.canceled && player.isValid) openDebugMenu(player, title, items, back);
+      });
+  });
+}
+
+/** The Debug tools chapter: the menu for operators, an explanation for everyone else. */
+export function openDebugTools(/** @type {Player} */ player, /** @type {() => void} */ back) {
+  if (canDebug(player)) return openDebugMenu(player, 'Debug tools', DEBUG_MENU, back);
+  new ActionFormData()
+    .title('Debug tools')
+    .body('The debug tools need an operator: turn cheats on in the world settings (or ask the host to make you an operator), then open this chapter again.')
+    .button('Back to chapters')
+    .show(player)
+    .then((page) => {
+      if (!page.canceled && player.isValid) back();
+    });
+}
+
+/** Puts a guide book in the player's inventory (or drops it at her feet when it is full). */
+export function giveGuide(/** @type {Player} */ player) {
+  const leftover = player.getComponent('minecraft:inventory')?.container.addItem(new ItemStack(GUIDE, 1));
+  if (leftover) player.dimension.spawnItem(leftover, player.location);
+}
 
 /** @param {Player} player */
 export function openGuide(player) {
@@ -77,6 +201,8 @@ export function openGuide(player) {
   menu.show(player).then((response) => {
     if (response.canceled || response.selection === undefined) return;
     const chapter = CHAPTERS[response.selection];
+    if (!chapter) return;
+    if (chapter.debug) return openDebugTools(player, () => openGuide(player));
     new ActionFormData()
       .title(chapter.title)
       .body(chapter.body)
@@ -98,6 +224,12 @@ world.beforeEvents.itemUse.subscribe((event) => {
 world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
   if (!initialSpawn || player.getDynamicProperty('minepreggo:guide_given')) return;
   player.setDynamicProperty('minepreggo:guide_given', true);
-  const leftover = player.getComponent('minecraft:inventory')?.container.addItem(new ItemStack(GUIDE, 1));
-  if (leftover) player.dimension.spawnItem(leftover, player.location);
+  giveGuide(player);
+});
+
+// /scriptevent minepreggo:guide: the book again (lost, or joined before it existed).
+system.afterEvents.scriptEventReceive.subscribe(({ id, sourceEntity }) => {
+  if (id !== 'minepreggo:guide' || !(sourceEntity instanceof Player)) return;
+  giveGuide(sourceEntity);
+  sourceEntity.sendMessage('[Minepreggo] Guide book given. Use it to read the chapters or to open the Debug tools.');
 });

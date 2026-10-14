@@ -143,6 +143,12 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   when hers is small). The client falls back to `q.variant` and to the pose when the phase
   property is unknown, and the mob system rewrites the phase property every tick (records from
   versions that only set it through entity events, wild mobs that only kept the variant).
+- ✅ **Debug tools in the guide book (0.3.2).** The book's last chapter is a button menu for
+  operators (`commandPermissionLevel` >= 1) that runs the debug and test commands on the player
+  and the nearest mob: belly sizes and forced kicks/birth for 30 s, pregnancy start, phase jumps,
+  inducement, acceleration, labor, feeding, ending, status and the render report. The command
+  runners of `pregnancy/commands.js` and `mobs/commands.js` are exported for it, and
+  `/scriptevent minepreggo:guide` gives the book again.
 - ✅ The non-pregnant models have no belly cubes at all, so a pregnant model that is never
   selected shows nothing to animate. The model index is now `max(phase property + 1, variant)`
   computed in pre_animation (the vanilla ghast pattern with a variable); the phase property is

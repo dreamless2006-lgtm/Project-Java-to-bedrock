@@ -4,11 +4,15 @@ export const FormCancelationReason = { UserBusy: 'UserBusy', UserClosed: 'UserCl
 export class ActionFormData {
   constructor() {
     this.buttons = [];
+    this.titleText = '';
+    this.bodyText = '';
   }
-  title() {
+  title(text) {
+    this.titleText = text;
     return this;
   }
-  body() {
+  body(text) {
+    this.bodyText = text;
     return this;
   }
   button(label) {
@@ -17,7 +21,8 @@ export class ActionFormData {
   }
   /** Resolves with the player's scripted choice, which is used up (a second form in a row is closed). */
   show(player) {
-    const selection = player.formSelection;
+    player.forms?.push({ title: this.titleText, body: this.bodyText, buttons: [...this.buttons] });
+    const selection = player.formSelections?.length ? player.formSelections.shift() : player.formSelection;
     player.formSelection = undefined;
     return Promise.resolve(selection === undefined ? { canceled: true, cancelationReason: FormCancelationReason.UserClosed } : { canceled: false, selection });
   }

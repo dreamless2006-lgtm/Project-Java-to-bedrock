@@ -123,6 +123,8 @@ function run(player, message) {
   return USAGE;
 }
 
+export { run as runMobCommand };
+
 system.afterEvents.scriptEventReceive.subscribe(({ id, message, sourceEntity }) => {
   if (id !== 'minepreggo:mob' || !(sourceEntity instanceof Player)) return;
   sourceEntity.sendMessage(run(sourceEntity, message));

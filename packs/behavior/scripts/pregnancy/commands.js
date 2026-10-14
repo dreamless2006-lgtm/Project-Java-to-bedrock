@@ -118,6 +118,8 @@ function run(player, message) {
   }
 }
 
+export { run as runPregnancyCommand };
+
 system.afterEvents.scriptEventReceive.subscribe(({ id, message, sourceEntity }) => {
   if (!(sourceEntity instanceof Player)) return;
   if (id === 'minepreggo:pregnancy') {

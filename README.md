@@ -53,6 +53,14 @@ world's settings → **Behavior Packs**, remove Minepreggo from the active packs
 so the world picks up the new version (the join message shows which version is running). Without
 this step, new items such as the fetal movement and species potions stay missing.
 
+### Debug tools in the guide book
+
+The guide book (given on the first join, or with `/scriptevent minepreggo:guide`) has a **Debug
+tools** chapter for operators: buttons that show any belly size for 30 s on you and the nearest
+female mob, force the kicks or a birth push, start a pregnancy, jump to a phase, induce kicks,
+accelerate, start labor, feed or end, and print what the game renders from (with the running
+version). Everything the `/scriptevent` commands do, usable from a controller.
+
 ### If no belly shows
 
 A new pregnancy starts at P0, and the mod's P0 and P1 bellies are flat (a 1-pixel-deep cube flush
@@ -155,6 +163,7 @@ The same for the nearest preggo mob within 16 blocks:
 /scriptevent minepreggo:mob phase <0-9> | days <n> | labor | miscarry | feed | starve
 /scriptevent minepreggo:mob pain morning_sickness|fetal_movement|contraction|back_pain
 /scriptevent minepreggo:mob induce <0-4>
+/scriptevent minepreggo:guide                           # gives the guide book again; its "Debug tools" chapter runs all of this with buttons
 /scriptevent minepreggo:debug belly <0-9>               # shows that belly size for 10 s on you and the nearest mob (P0/P1 are flat by design)
 /scriptevent minepreggo:debug [kick|birth|off]          # shows the rendered properties and the version; forces a 10 s kick/birth (on a P7 belly if hers is small)
 /scriptevent minepreggo:mob symptom craving|milking|belly_rubs

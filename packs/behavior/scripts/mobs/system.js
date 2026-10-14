@@ -681,13 +681,22 @@ export function debugPose(/** @type {MobRecord} */ record, /** @type {string} */
   // one for the duration; syncClient restores the real phase afterwards.
   if (phase >= 0) setPhaseProperty(record.entity, phase);
   else if (phaseProperty(record.entity) < 3) setPhaseProperty(record.entity, 7);
+  // The forced phase is persisted with the entity; this flag survives a lost record (chunk unload,
+  // rejoin) so the next tick restores the real phase instead of taking her for a wild pregnant mob.
+  record.entity.setDynamicProperty(FORCED, true);
   record.sent = {};
 }
+
+/** Dynamic property set while a debug command forces the client state. */
+const FORCED = 'minepreggo:forced';
 
 /** Ends a forced client state: the real phase comes back at once (the wild-spawn detection reads it). */
 export function clearDebug(/** @type {MobRecord} */ record) {
   record.debugUntil = 0;
-  if (record.entity.isValid) setPhaseProperty(record.entity, expectedPhase(record));
+  if (record.entity.isValid) {
+    record.entity.setDynamicProperty(FORCED, undefined);
+    setPhaseProperty(record.entity, expectedPhase(record));
+  }
   record.sent = {};
 }
 
@@ -697,8 +706,8 @@ function expectedPhase(/** @type {MobRecord} */ record) {
   if (data.pregnancy) return data.pregnancy.phase;
   if (!data.wild) return -1;
   if (data.wild.phase === undefined) {
-    // Wild data saved before the phase was recorded: the property or the variant still carries it.
-    data.wild.phase = Math.max(0, phaseProperty(entity), variantOf(entity) - 1);
+    // Wild data saved before the phase was recorded: the variant (never forced) or the property still carries it.
+    data.wild.phase = variantOf(entity) > 0 ? variantOf(entity) - 1 : Math.max(0, phaseProperty(entity));
     record.dirty = true;
   }
   return data.wild.phase;
@@ -769,7 +778,8 @@ export function tickMob(/** @type {Entity} */ entity) {
   const { data } = record;
   if (!familyOf(entity)) return record;
   updateMovement(record);
-  if (record.debugUntil && record.debugUntil <= system.currentTick) clearDebug(record);
+  // A debug window that ended, or one whose record was lost meanwhile (the flag outlived it).
+  if (record.debugUntil ? record.debugUntil <= system.currentTick : entity.getDynamicProperty(FORCED)) clearDebug(record);
 
   // A mob that spawned pregnant (natural spawn) gets her hostile pregnancy data once. Her spawn
   // event added a phase component group, whose variant is phase + 1. (Not while the debug command
