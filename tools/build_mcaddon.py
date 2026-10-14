@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """Package packs/RealAI_BP + packs/RealAI_RP into one dist/Real-AI-<version>.mcaddon.
 
-The checked-in manifest declares the same script modules the original AI
-Multiplayer addon shipped with (@minecraft/server 2.11.0-beta, server-ui 2.0.0,
-engine 1.26.30), so the file loads wherever that addon loaded: enable the Beta
-APIs experiment on the world. The same file works on Realms, friend worlds,
-LAN and dedicated servers; models are reached through the Real AI bridge
-(bridge/), which joins the world as a player.
+The checked-in manifest uses the stable script modules (@minecraft/server 2.10.0,
+server-ui 2.2.0): no experiments, loads on any game that has those modules (1.26.50+).
+The same file works on Realms, friend worlds, LAN and dedicated servers; models
+are reached through the Real AI bridge (bridge/), which joins the world as a
+player, which also relays chat to the bots.
 
 Variants:
-    --variant stable   @minecraft/server 2.10.0 + server-ui 2.2.0, no experiments,
-                       needs game 1.26.50 or newer (chat reaches bots via the bridge relay)
+    --variant beta     @minecraft/server 2.11.0-beta + server-ui 2.0.0, engine 1.26.30
+                       (the module set the original AI Multiplayer addon shipped with);
+                       needs the Beta APIs experiment; bots hear chat directly
     --variant server   beta modules + @minecraft/server-net/@minecraft/server-admin with
                        scripts/brain/net_impl.js swapped for direct HTTP: Bedrock Dedicated
                        Server admins who do not want a bridge account
 
-Usage: python3 tools/build_mcaddon.py [--variant standard|stable|server|all] [--name Real-AI]
+Usage: python3 tools/build_mcaddon.py [--variant standard|beta|server|all] [--name Real-AI]
 """
 import argparse, json, os, sys, zipfile
 
@@ -29,10 +29,9 @@ NET_DEPS = [
     {"module_name": "@minecraft/server-net", "version": "1.0.0-beta"},
     {"module_name": "@minecraft/server-admin", "version": "1.0.0-beta"},
 ]
-BETA_SERVER_VERSION = "2.11.0-beta"   # what the checked-in manifest declares
-STABLE_SERVER_VERSION = "2.10.0"      # stable module in 1.26.50+
-STABLE_UI_VERSION = "2.2.0"
-STABLE_MIN_ENGINE = [1, 26, 50]
+BETA_SERVER_VERSION = "2.11.0-beta"   # the -beta module current in 1.26.30 .. 1.26.5x
+BETA_UI_VERSION = "2.0.0"
+BETA_MIN_ENGINE = [1, 26, 30]
 
 
 def strip_comments(text):
@@ -73,29 +72,27 @@ def transform(pack_dir, rel, data, variant):
     if rel == "manifest.json":
         m = json.loads(strip_comments(data.decode("utf-8-sig")))
         is_script = any(mod.get("type") == "script" for mod in m.get("modules", []))
-        if variant == "stable":
-            m["header"]["min_engine_version"] = STABLE_MIN_ENGINE
-            if is_script:
-                for d in m.get("dependencies", []):
-                    if d.get("module_name") == "@minecraft/server":
-                        d["version"] = STABLE_SERVER_VERSION
-                    if d.get("module_name") == "@minecraft/server-ui":
-                        d["version"] = STABLE_UI_VERSION
-                m["header"]["name"] = m["header"]["name"] + " (Stable API)"
-                m["header"]["description"] = m["header"]["description"].replace("Enable the Beta APIs experiment on the world;", "Stable API build (no experiments, game 1.26.50+);")
-            return json.dumps(m, indent=2).encode("utf-8")
+        m["header"]["min_engine_version"] = BETA_MIN_ENGINE
         if is_script:
             deps = m.setdefault("dependencies", [])
             for d in deps:
                 if d.get("module_name") == "@minecraft/server":
                     d["version"] = BETA_SERVER_VERSION
-            names = {d.get("module_name") for d in deps}
-            for d in NET_DEPS:
-                if d["module_name"] not in names:
-                    deps.append(d)
-            m["header"]["name"] = m["header"]["name"] + " (Dedicated Server)"
-            m["header"]["description"] = "Dedicated Server variant: the server calls the model providers itself through @minecraft/server-net (keys in secrets.json). " + m["header"]["description"]
-            return json.dumps(m, indent=2).encode("utf-8")
+                if d.get("module_name") == "@minecraft/server-ui":
+                    d["version"] = BETA_UI_VERSION
+            if variant == "server":
+                names = {d.get("module_name") for d in deps}
+                for d in NET_DEPS:
+                    if d["module_name"] not in names:
+                        deps.append(d)
+                m["header"]["name"] = m["header"]["name"] + " (Dedicated Server)"
+                m["header"]["description"] = "Dedicated Server variant: the server calls the model providers itself through @minecraft/server-net (keys in secrets.json); Beta APIs experiment required. " + m["header"]["description"]
+            else:
+                m["header"]["name"] = m["header"]["name"] + " (Beta API)"
+                m["header"]["description"] = m["header"]["description"].replace("No experiments needed;", "Beta API build: enable the Beta APIs experiment on the world (bots hear chat directly);")
+        else:
+            m["header"]["name"] = m["header"]["name"] + (" (Dedicated Server)" if variant == "server" else " (Beta API)")
+        return json.dumps(m, indent=2).encode("utf-8")
     if variant == "server" and rel == "scripts/brain/net_impl.js":
         with open(os.path.join(pack_dir, "scripts", "brain", "net_impl.bds.js"), "rb") as f:
             return f.read()
@@ -118,10 +115,10 @@ def add_tree(zf, pack_dir, prefix, variant):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--name", default="Real-AI")
-    ap.add_argument("--variant", default="standard", choices=["standard", "stable", "server", "all"])
+    ap.add_argument("--variant", default="standard", choices=["standard", "beta", "server", "all"])
     ap.add_argument("--mcpacks", action="store_true", help="also write one .mcpack per pack")
     args = ap.parse_args()
-    variants = ["standard", "stable", "server"] if args.variant == "all" else [args.variant]
+    variants = ["standard", "beta", "server"] if args.variant == "all" else [args.variant]
     packs = sorted(d for d in os.listdir(PACKS) if os.path.isdir(os.path.join(PACKS, d)) and os.path.exists(os.path.join(PACKS, d, "manifest.json")))
     if not packs:
         print("no packs found", file=sys.stderr); sys.exit(1)

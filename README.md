@@ -75,9 +75,9 @@ python3 tools/build_mcaddon.py
 ```
 
 That writes `dist/Real-AI-<version>.mcaddon`. Import it on any world, Realm
-or server, turn on the **Beta APIs** experiment for that world (the same
-requirement the original AI Multiplayer addon had; it is what lets bots hear
-chat directly), then run the bridge with your API key:
+or server (game 1.26.50 or newer, no experiments needed), activate the
+behavior pack on the world (its resource pack comes with it), then run the
+bridge with your API key:
 
 ```bash
 cd bridge && npm install && cp config.example.json config.json
@@ -89,10 +89,10 @@ The bridge is a small Node program that joins the world as a player and
 carries the bots' thinking to the model, because Bedrock scripts cannot make
 HTTP calls on Realms or client worlds. Full steps:
 [docs/SETUP-REALM-BRIDGE.md](docs/SETUP-REALM-BRIDGE.md). Two optional
-builds exist: `--variant stable` needs no experiments but only loads on game
-1.26.50 or newer, and `--variant server` lets a Bedrock Dedicated Server
-call the model itself without a bridge account:
-[docs/SETUP-DEDICATED-SERVER.md](docs/SETUP-DEDICATED-SERVER.md). Design:
+builds exist: `--variant beta` uses the beta script modules (Beta APIs
+experiment on, bots hear chat without the relay), and `--variant server`
+lets a Bedrock Dedicated Server call the model itself without a bridge
+account: [docs/SETUP-DEDICATED-SERVER.md](docs/SETUP-DEDICATED-SERVER.md). Design:
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Providers and model ids:
 [docs/PROVIDERS.md](docs/PROVIDERS.md).
 

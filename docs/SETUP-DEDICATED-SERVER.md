@@ -6,9 +6,9 @@ like on a Realm: install it and run the bridge (see
 
 This page is the alternative for server admins who do not want a bridge
 account: a server-only build where the server calls the model over HTTPS
-itself. It adds the server-net modules, which only a Bedrock Dedicated
-Server can load; the Beta APIs experiment is needed as with the standard
-build.
+itself. It adds the server-net modules (beta modules that only a Bedrock
+Dedicated Server can load), so unlike the standard build it needs the Beta
+APIs experiment on the world.
 
 ## 1. Build and install the server variant
 
@@ -29,7 +29,7 @@ Scripts may only use `@minecraft/server-net` when the server allows it. Create
 ```
 bedrock-server/
   config/
-    e2a9d4c1-6f3b-4a87-8d25-1c7e0b9f4a63/
+    a294f652-accc-488c-93d0-20c6201bd9d0/
       permissions.json
       variables.json      (optional)
       secrets.json

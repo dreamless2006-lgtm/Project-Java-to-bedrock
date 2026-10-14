@@ -116,13 +116,15 @@ is told what is missing).
 
 | Build | `@minecraft/server` | Where it loads | Chat input |
 |---|---|---|---|
-| standard (default) | `2.11.0-beta` + server-ui `2.0.0`, engine 1.26.30 (what the original addon shipped with); Beta APIs experiment on | Realms, any world, any server | direct chat events, plus bridge relay, `!ai talk`, hub "Talk", sneak+interact |
-| `--variant stable` | `2.10.0` stable + server-ui `2.2.0`, engine 1.26.50, no experiments | game 1.26.50+ | bridge relay, `!ai talk`, hub "Talk", sneak+interact |
-| `--variant server` | standard + server-net/server-admin | Bedrock Dedicated Server only | direct chat events |
+| standard (default) | `2.10.0` stable + server-ui `2.2.0`, engine 1.26.50, no experiments | game 1.26.50+: Realms, any world, any server | bridge relay, `!ai talk`, hub "Talk", sneak+interact |
+| `--variant beta` | `2.11.0-beta` + server-ui `2.0.0`, engine 1.26.30 (the original addon's module set); Beta APIs experiment on | worlds with the experiment | direct chat events, plus everything above |
+| `--variant server` | beta + server-net/server-admin | Bedrock Dedicated Server only | direct chat events |
 
 The checked-in manifest is the standard one; the builder rewrites the
 dependency versions for the other two and swaps `net_impl.js` for the
-server variant. Beta module versions do not auto-upgrade across game
+server variant. The resource pack declares no dependencies (a resource pack
+cannot depend on a behavior pack; the behavior pack depends on the resource
+pack so it is activated with it). Beta module versions do not auto-upgrade across game
 releases, so `BETA_SERVER_VERSION` in the builder must be bumped when a new
 major Bedrock release ships.
 

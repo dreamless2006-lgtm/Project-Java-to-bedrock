@@ -13,11 +13,11 @@ python3 tools/build_mcaddon.py
 ```
 
 Import `dist/Real-AI-<version>.mcaddon` (double-click it, or open it from
-the game), enable both packs on the world and turn on the **Beta APIs**
-experiment in the world settings (same as the original AI Multiplayer
-addon). Then upload or "Replace World" on your Realm; the experiment travels
-with the world. If your game is 1.26.50 or newer and you would rather avoid
-experiments, build `--variant stable` instead.
+the game) and activate the **Real AI** behavior pack on the world; the
+resource pack is activated with it. No experiments are needed (game 1.26.50
+or newer). Then upload or "Replace World" on your Realm. If an older
+"Real AI" or "AI Sandbox" pack is still installed on the device, remove it
+first in Settings > Storage so only one copy exists.
 
 ## 2. Prepare a second Microsoft account for the bridge
 
