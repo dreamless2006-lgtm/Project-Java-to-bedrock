@@ -576,57 +576,15 @@
           },
           {
             "weight": 20,
-            "add": {
-              "component_groups": [
-                "minepreggo:hostile",
-                "minepreggo:phase_3",
-                "minepreggo:hostile_pregnant_p3"
-              ]
-            },
-            "set_property": {
-              "minepreggo:phase": 3
-            },
-            "remove": {
-              "component_groups": [
-                "minepreggo:tameable"
-              ]
-            }
+            "trigger": "minepreggo:spawn_pregnant_3"
           },
           {
             "weight": 20,
-            "add": {
-              "component_groups": [
-                "minepreggo:hostile",
-                "minepreggo:phase_5",
-                "minepreggo:hostile_pregnant_p5"
-              ]
-            },
-            "set_property": {
-              "minepreggo:phase": 5
-            },
-            "remove": {
-              "component_groups": [
-                "minepreggo:tameable"
-              ]
-            }
+            "trigger": "minepreggo:spawn_pregnant_5"
           },
           {
             "weight": 20,
-            "add": {
-              "component_groups": [
-                "minepreggo:hostile",
-                "minepreggo:phase_7",
-                "minepreggo:hostile_pregnant_p7"
-              ]
-            },
-            "set_property": {
-              "minepreggo:phase": 7
-            },
-            "remove": {
-              "component_groups": [
-                "minepreggo:tameable"
-              ]
-            }
+            "trigger": "minepreggo:spawn_pregnant_7"
           }
         ]
       },
@@ -1097,6 +1055,57 @@
         "add": {
           "component_groups": [
             "minepreggo:size_massive"
+          ]
+        }
+      },
+      "minepreggo:spawn_pregnant_3": {
+        "add": {
+          "component_groups": [
+            "minepreggo:hostile",
+            "minepreggo:phase_3",
+            "minepreggo:hostile_pregnant_p3"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 3
+        },
+        "remove": {
+          "component_groups": [
+            "minepreggo:tameable"
+          ]
+        }
+      },
+      "minepreggo:spawn_pregnant_5": {
+        "add": {
+          "component_groups": [
+            "minepreggo:hostile",
+            "minepreggo:phase_5",
+            "minepreggo:hostile_pregnant_p5"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 5
+        },
+        "remove": {
+          "component_groups": [
+            "minepreggo:tameable"
+          ]
+        }
+      },
+      "minepreggo:spawn_pregnant_7": {
+        "add": {
+          "component_groups": [
+            "minepreggo:hostile",
+            "minepreggo:phase_7",
+            "minepreggo:hostile_pregnant_p7"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 7
+        },
+        "remove": {
+          "component_groups": [
+            "minepreggo:tameable"
           ]
         }
       }

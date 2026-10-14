@@ -1,9 +1,20 @@
 // Minimal stand-in for @minecraft/server so the pregnancy engine can run under `node --test`.
 // Only what the engine touches is modelled; anything else throws loudly.
 
+/** An event signal. `subscribe(fn, { entityTypes })` filters like the game does. */
 const signal = () => {
   const listeners = [];
-  return { listeners, subscribe: (fn) => (listeners.push(fn), fn), unsubscribe() {} };
+  const filters = new Map();
+  return {
+    listeners,
+    filters,
+    subscribe(fn, options) {
+      listeners.push(fn);
+      if (options?.entityTypes) filters.set(fn, options.entityTypes);
+      return fn;
+    },
+    unsubscribe() {},
+  };
 };
 
 /** Scheduled jobs of system.runTimeout / runInterval; `system.tick()` advances the clock and runs them. */
@@ -43,8 +54,14 @@ export const system = {
   afterEvents: { scriptEventReceive: signal() },
 };
 
-/** Fires an event signal: every listener is called with `event`. */
-export const emit = (sig, event) => sig.listeners.forEach((fn) => fn(event));
+/** Fires an event signal: every listener whose entity-type filter matches is called with `event`. */
+export const emit = (sig, event) =>
+  sig.listeners.forEach((fn) => {
+    const types = sig.filters?.get(fn);
+    const entity = event?.deadEntity ?? event?.hurtEntity ?? event?.entity ?? event?.target;
+    if (types && entity && !types.includes(entity.typeId)) return;
+    fn(event);
+  });
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -83,7 +100,7 @@ export const world = {
   beforeEvents: new Proxy({}, { get: (t, k) => (t[k] ??= signal()) }),
 };
 
-export const EntityDamageCause = { magic: 'magic', entityExplosion: 'entityExplosion', blockExplosion: 'blockExplosion' };
+export const EntityDamageCause = { magic: 'magic', entityExplosion: 'entityExplosion', blockExplosion: 'blockExplosion', fall: 'fall', entityAttack: 'entityAttack' };
 export const EquipmentSlot = { Mainhand: 'Mainhand', Offhand: 'Offhand', Chest: 'Chest' };
 export const GameMode = { Survival: 'Survival', Creative: 'Creative', Adventure: 'Adventure', Spectator: 'Spectator' };
 export const InputButton = { Jump: 'Jump', Sneak: 'Sneak' };
@@ -151,12 +168,17 @@ export class Player {
         setEquipment: (slot, stack) => (slot === EquipmentSlot.Mainhand ? ((self.held = stack), true) : true),
       },
     };
+    this.isInWater = false;
+    this.fireSeconds = 0;
+    this.teleports = [];
     this.dimension = {
       id: 'minecraft:overworld',
       playSound: () => {},
       spawnParticle: () => {},
       spawnItem: (stack) => self.dropped.push(stack.typeId),
       getEntities: (options) => world.getDimension('minecraft:overworld').getEntities(options),
+      getBlock: (location) => world.getDimension('minecraft:overworld').getBlock(location),
+      createExplosion: (location, radius, options) => world.getDimension('minecraft:overworld').createExplosion(location, radius, options),
     };
     this.onScreenDisplay = { setActionBar: (m) => self.messages.push(m) };
   }
@@ -207,6 +229,14 @@ export class Player {
   getViewDirection() {
     return { x: 0, y: 0, z: 1 };
   }
+  setOnFire(seconds) {
+    this.fireSeconds = seconds;
+    return true;
+  }
+  teleport(location) {
+    this.teleports.push(location);
+    this.location = { ...location };
+  }
 }
 
 let nextEntityId = 1;
@@ -220,6 +250,10 @@ world.getDimension = (id) => {
       playSound: () => {},
       spawnParticle: () => {},
       spawnItem: (stack) => dimension.spawned.push(stack.typeId),
+      explosions: [],
+      createExplosion: (location, radius, options) => dimension.explosions.push({ location, radius, options }),
+      /** A flat world: solid ground at y < 64, air above, full skylight. */
+      getBlock: ({ x, y, z }) => ({ x, y, z, isAir: y >= 64, isLiquid: false, typeId: y >= 64 ? 'minecraft:air' : 'minecraft:stone', getSkyLightLevel: () => 15, getLightLevel: () => 15 }),
       /** Supports the query options the scripts use: type, location + maxDistance, closest. */
       getEntities(options = {}) {
         let found = dimension.entities.filter((e) => e.isValid);

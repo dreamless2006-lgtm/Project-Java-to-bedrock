@@ -1,6 +1,6 @@
 // Item components of the pregnancy system.
 //
-// "minepreggo:impregnation_potion": { "amplifier": 0-5 }
+// "minepreggo:impregnation_potion": { "amplifier": 0-5, "species": "HUMAN" | "ZOMBIE" | "CREEPER" | "ENDER" | "SLIME" | "VILLAGER" }
 //   Java's Potion of Impregnation gives a 15 s Impregnation effect; when it ends the drinker
 //   becomes pregnant (world/effect/Impregnantion + PlayerHelper.tryToStartPregnancyThroughPotion).
 //   The amplifier picks the number of babies.
@@ -16,6 +16,7 @@
 
 import { system, world, Player } from '@minecraft/server';
 import { promptGender } from '../player/gender.js';
+import { POTION_SPECIES } from './data.js';
 import { accelerate, accelerateGradually, actionbar, getRecord, induceFetalMovement } from './system.js';
 
 const IMPREGNATION_TICKS = 300;
@@ -37,7 +38,9 @@ system.beforeEvents.startup.subscribe(({ itemComponentRegistry }) => {
         return;
       }
       if (!record.isFemale() || record.pregnancy || record.female.post) return;
-      record.pending = { amplifier: numberParam(params, 'amplifier'), father: 'HUMAN', endTime: world.getAbsoluteTime() + IMPREGNATION_TICKS };
+      const species = /** @type {Record<string, unknown> | undefined} */ (params)?.species;
+      const father = POTION_SPECIES.find((s) => s === species) ?? 'HUMAN';
+      record.pending = { amplifier: numberParam(params, 'amplifier'), father, endTime: world.getAbsoluteTime() + IMPREGNATION_TICKS };
       record.save();
     },
   });

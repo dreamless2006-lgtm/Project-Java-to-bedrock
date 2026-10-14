@@ -21,7 +21,9 @@ import { accelerate, accelerateGradually, calmDown, familyOf, getRecord, induceF
 /** @typedef {import('./state.js').MobRecord} MobRecord */
 
 const IMPREGNATION_TICKS = 300;
-const POTION = /^minepreggo:impregnation_potion_(\d)$/;
+const POTION = /^minepreggo:(?:(zombie|creeper|ender|slime|villager)_)?impregnation_potion_(\d)$/;
+/** Which species potion a family accepts besides the human one (Java: the potion converts her own species only). */
+const POTION_SPECIES = { ZOMBIE: 'zombie', CREEPER: 'creeper', ENDER: 'ender', SLIME: 'slime' };
 const ACCELERATION = /^minepreggo:(gradual_)?pregnancy_acceleration_potion_(\d)$/;
 const INDUCER = /^minepreggo:fetal_movement_inducer_potion_(\d)$/;
 
@@ -162,7 +164,14 @@ export function chooseAction(player, target, item) {
   const potion = id?.match(POTION);
   if (potion) {
     if (data.pregnancy || data.wild || data.post || data.pending) return undefined;
-    return () => givePotion(record, player, Number(potion[1]));
+    if (potion[1] && potion[1] !== POTION_SPECIES[family.species]) {
+      return () => {
+        consumeHeld(player, 'minecraft:glass_bottle');
+        target.applyDamage(1);
+        particles(target, 'minecraft:villager_angry', 2);
+      };
+    }
+    return () => givePotion(record, player, Number(potion[2]));
   }
   const acceleration = id?.match(ACCELERATION);
   if (acceleration) {

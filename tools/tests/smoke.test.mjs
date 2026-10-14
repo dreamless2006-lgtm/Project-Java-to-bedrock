@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { BlockTypes, EntityTypes, ItemStack, ItemTypes, Mob, Player, customComponents, customComponentsOf, emit, startup, system, world } from './mock-server.mjs';
+import { BlockTypes, EntityDamageCause, EntityTypes, ItemStack, ItemTypes, Mob, Player, customComponents, customComponentsOf, emit, startup, system, world } from './mock-server.mjs';
 import '../../packs/behavior/scripts/main.js';
 import { selfCheck } from '../../packs/behavior/scripts/world/banner.js';
 import { getRecord } from '../../packs/behavior/scripts/pregnancy/system.js';
@@ -273,7 +273,67 @@ test('every entity, item and block the scripts name exists in the pack', () => {
   const named = new Set(scripts.match(/minepreggo:[a-z0-9_]+/g));
   const known = new Set([...ItemTypes.getAll(), ...BlockTypes.getAll(), ...EntityTypes.getAll()].map((t) => t.id));
   // Properties, dynamic properties, events, components, sounds and command ids are not game objects.
-  const notObjects = /^minepreggo:(phase|pose|kick|growth|gender|skin|savage|age|mob|crop|food_effects|impregnation_potion|pregnancy_acceleration|gradual_pregnancy_acceleration|breast_milk|pregnancy|female|pending|set_|on_tame|become_savage|calm_down|spawn_natural|hostile|tamed|tameable|fetal_movement_inducer|belly_touch|stomach_growls|pregnant_preggo_mob_death|player_|preggo_mob|loaded|selfcheck|hud|gender_)/;
+  const notObjects = /^minepreggo:(phase|pose|kick|growth|gender|skin|savage|age|mob|crop|food_effects|impregnation_potion|pregnancy_acceleration|gradual_pregnancy_acceleration|breast_milk|pregnancy|female|pending|set_|on_tame|become_savage|calm_down|spawn_natural|hostile|tamed|tameable|fetal_movement_inducer|guide_given|belly_touch|stomach_growls|pregnant_preggo_mob_death|player_|preggo_mob|loaded|selfcheck|hud|gender_)/;
   const missing = [...named].filter((id) => !notObjects.test(id) && !known.has(id) && !id.startsWith('minepreggo:baby_'));
   assert.deepEqual(missing, [], 'ids used by the scripts that no JSON defines');
+});
+
+test('a zombie pregnancy burns in daylight, a creeper one explodes on death, slime babies cushion falls', () => {
+  const mother = new Player('Zombie-mother');
+  world.players.push(mother);
+  const record = getRecord(mother);
+  record.setGender('female');
+  const [[, params]] = customComponentsOf('minepreggo:zombie_impregnation_potion_0');
+  assert.equal(params.species, 'ZOMBIE');
+  customComponents.items.get('minepreggo:impregnation_potion').onConsume({ source: mother, itemStack: new ItemStack('minepreggo:zombie_impregnation_potion_0') }, { params });
+  assert.equal(record.pending?.father, 'ZOMBIE');
+  world.setAbsoluteTime(world.getAbsoluteTime() + 300);
+  system.tick(20);
+  assert.equal(record.pregnancy?.father, 'ZOMBIE');
+  const random = Math.random;
+  Math.random = () => 0;
+  try {
+    world.setAbsoluteTime(1000); // daytime
+    system.tick(20);
+  } finally {
+    Math.random = random;
+  }
+  assert.equal(mother.fireSeconds, 8, 'burns in daylight without a helmet');
+  world.players.pop();
+
+  const creeper = new Player('Creeper-mother');
+  const c = getRecord(creeper);
+  c.setGender('female');
+  assert.match(command(creeper, 'minepreggo:pregnancy', 'potion 0 creeper'), /father species: CREEPER/);
+  assert.match(command(creeper, 'minepreggo:pregnancy', 'phase 4'), /phase P4/);
+  emit(world.afterEvents.entityDie, { deadEntity: creeper, damageSource: { cause: 'entityAttack' } });
+  assert.equal(overworld.explosions.length, 1, 'a creeper pregnancy explodes from P3');
+  assert.deepEqual(creeper.dropped, ['minepreggo:dead_humanoid_creeper_fetus'], 'the fetus drops');
+
+  const slime = new Player('Slime-mother');
+  const sRecord = getRecord(slime);
+  sRecord.setGender('female');
+  assert.match(command(slime, 'minepreggo:pregnancy', 'potion 2 slime'), /father species: SLIME/);
+  assert.match(command(slime, 'minepreggo:pregnancy', 'phase 4'), /phase P4/);
+  const health = slime.getComponent('minecraft:health');
+  health.currentValue = 10;
+  emit(world.afterEvents.entityHurt, { hurtEntity: slime, damage: 6, damageSource: { cause: EntityDamageCause.fall } });
+  assert.ok(health.currentValue > 10, 'part of the fall damage is healed back by the slime babies');
+});
+
+test('the guide book opens a chapter menu and is given on the first join', async () => {
+  const reader = new Player('Reader');
+  world.players.push(reader);
+  reader.formSelection = 3; // "Female (Steve)" is index 2; pick male to skip pregnancy
+  emit(world.afterEvents.playerSpawn, { player: reader, initialSpawn: true });
+  await flush();
+  assert.ok(reader.inventory.includes('minepreggo:guide_book'), 'new players get the guide');
+  const { CHAPTERS } = await import('../../packs/behavior/scripts/world/guide.js');
+  assert.ok(CHAPTERS.length >= 7);
+  reader.formSelection = 0;
+  const event = { itemStack: new ItemStack('minepreggo:guide_book'), source: reader, cancel: false };
+  emit(world.beforeEvents.itemUse, event);
+  assert.equal(event.cancel, true, 'using the book opens the form instead');
+  await flush();
+  world.players.pop();
 });

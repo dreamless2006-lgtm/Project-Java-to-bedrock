@@ -279,3 +279,19 @@ test('the fetal movement inducer starts a kick of the chosen intensity from P3 a
   p.pain = { type: 'WATER_BREAKING', duration: 100, severity: 0, elapsed: 0 };
   assert.equal(induceFetalMovement(record, 4), false, 'not during labor');
 });
+
+test('species potions: the father species picks the babies, the fetuses and the Full Of effect', async () => {
+  const { SPECIES } = await import('../../packs/behavior/scripts/pregnancy/data.js');
+  const { startPregnancyFromPotion } = await import('../../packs/behavior/scripts/pregnancy/system.js');
+  for (const [species, data] of Object.entries(SPECIES)) {
+    const player = new Player(`Mother-${species}`);
+    const record = getRecord(player);
+    record.setGender('female');
+    assert.ok(startPregnancyFromPotion(record, 0, /** @type {any} */ (species)));
+    const p = /** @type {any} */ (record.pregnancy);
+    assert.equal(p.father, species);
+    assert.deepEqual(p.womb, [species]);
+    assert.ok(data.babyItem.startsWith('minepreggo:baby_'));
+    assert.ok(data.deadBabyItem.includes('fetus'));
+  }
+});

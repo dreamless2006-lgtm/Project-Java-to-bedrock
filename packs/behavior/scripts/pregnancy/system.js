@@ -156,8 +156,8 @@ export function startPregnancy(record, babies, father = 'HUMAN') {
 }
 
 /** Impregnation potion: Java starts the pregnancy when the 15 s Impregnation effect ends. */
-export function startPregnancyFromPotion(/** @type {PlayerRecord} */ record, /** @type {number} */ amplifier) {
-  return startPregnancy(record, babiesFromPotion(amplifier), 'HUMAN');
+export function startPregnancyFromPotion(/** @type {PlayerRecord} */ record, /** @type {number} */ amplifier, /** @type {import('./data.js').Species} */ father = 'HUMAN') {
+  return startPregnancy(record, babiesFromPotion(amplifier), father);
 }
 
 /**
@@ -228,7 +228,10 @@ export function startCommonPain(record, pain, cause, baseDuration) {
   const p = /** @type {Pregnancy} */ (record.pregnancy);
   if (p.pain && !COMMON_PAINS.has(p.pain.type)) return false;
   const { duration, severity } = createCommonPain(pain, p.phase, p.lastPhase, cause, baseDuration);
-  if (pain === 'FETAL_MOVEMENT') playSound(record.player, 'minepreggo.pregnancy_pain');
+  if (pain === 'FETAL_MOVEMENT') {
+    playSound(record.player, 'minepreggo.pregnancy_pain');
+    actionbar(record.player, 'minepreggo.fetal_movement.felt');
+  }
   if (pain === 'CONTRACTION') playSound(record.player, 'minepreggo.player_contraction');
   p.pain = { type: pain, duration, severity, elapsed: 0 };
   record.dirty = true;
@@ -770,9 +773,9 @@ function updateMovement(record) {
 export function tickPlayer(player) {
   const record = getRecord(player);
   if (record.pending && world.getAbsoluteTime() >= record.pending.endTime) {
-    const { amplifier } = record.pending;
+    const { amplifier, father } = record.pending;
     record.pending = null;
-    startPregnancyFromPotion(record, amplifier);
+    startPregnancyFromPotion(record, amplifier, father ?? 'HUMAN');
     record.dirty = true;
   }
   if (!record.isFemale()) return record;

@@ -126,17 +126,22 @@ export const CRAVING_ITEMS = {
   'minepreggo:french_fries': { craving: 'SALTY', gratification: 6 },
 };
 
-/** @typedef {'HUMAN'} Species species that can currently father a pregnancy in the port */
-/** Per-species birth data: PregnancySystemHelper / PlayerHelper. */
+/** @typedef {'HUMAN' | 'ZOMBIE' | 'CREEPER' | 'ENDER' | 'SLIME' | 'VILLAGER'} Species species that can father a player's pregnancy (Java Species; DRAGON not ported) */
+/**
+ * Per-species birth data (PregnancySystemHelper.calculatePostBirthDuration, the baby and fetus
+ * items of a humanoid-creature litter, and the "Full Of ..." effect the mother gets in Java).
+ * @type {Record<Species, { babyItem: string, deadBabyItem: string, milkItem: string, postBirthTicks: number, pushesPerLevel: number, effect: string | null }>}
+ */
 export const SPECIES = {
-  HUMAN: {
-    babyItem: 'minepreggo:baby_human',
-    deadBabyItem: 'minepreggo:dead_human_fetus',
-    milkItem: 'minepreggo:human_breast_milk_bottle',
-    postBirthTicks: 150, // calculatePostBirthDuration
-    pushesPerLevel: 28, // getRequiredPressesToPushInBirth: 14 * 2
-  },
+  HUMAN: { babyItem: 'minepreggo:baby_human', deadBabyItem: 'minepreggo:dead_human_fetus', milkItem: 'minepreggo:human_breast_milk_bottle', postBirthTicks: 150, pushesPerLevel: 28, effect: null },
+  ZOMBIE: { babyItem: 'minepreggo:baby_zombie', deadBabyItem: 'minepreggo:dead_zombie_fetus', milkItem: 'minepreggo:human_breast_milk_bottle', postBirthTicks: 150, pushesPerLevel: 28, effect: 'FULL_OF_ZOMBIES' },
+  CREEPER: { babyItem: 'minepreggo:baby_humanoid_creeper', deadBabyItem: 'minepreggo:dead_humanoid_creeper_fetus', milkItem: 'minepreggo:human_breast_milk_bottle', postBirthTicks: 100, pushesPerLevel: 28, effect: 'FULL_OF_CREEPERS' },
+  ENDER: { babyItem: 'minepreggo:baby_humanoid_ender', deadBabyItem: 'minepreggo:dead_humanoid_ender_fetus', milkItem: 'minepreggo:human_breast_milk_bottle', postBirthTicks: 200, pushesPerLevel: 28, effect: 'FULL_OF_ENDERS' },
+  SLIME: { babyItem: 'minepreggo:baby_humanoid_slime', deadBabyItem: 'minepreggo:dead_humanoid_slime_fetus', milkItem: 'minepreggo:human_breast_milk_bottle', postBirthTicks: 100, pushesPerLevel: 28, effect: 'FULL_OF_SLIMES' },
+  VILLAGER: { babyItem: 'minepreggo:baby_villager', deadBabyItem: 'minepreggo:dead_villager_fetus', milkItem: 'minepreggo:human_breast_milk_bottle', postBirthTicks: 150, pushesPerLevel: 28, effect: null },
 };
+/** Species a potion can name, by the "species" parameter of minepreggo:impregnation_potion. */
+export const POTION_SPECIES = /** @type {Species[]} */ (['HUMAN', 'ZOMBIE', 'CREEPER', 'ENDER', 'SLIME', 'VILLAGER']);
 
 /** BirthData default: push levels needed per baby. */
 export const PUSH_LEVELS_PER_BABY = 4;

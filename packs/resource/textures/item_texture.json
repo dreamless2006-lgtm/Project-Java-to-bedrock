@@ -35,6 +35,9 @@
     "minepreggo_baby_slime": {
       "textures": "textures/minepreggo/item/baby_slime"
     },
+    "minepreggo_baby_villager": {
+      "textures": "textures/minepreggo/item/baby_villager"
+    },
     "minepreggo_baby_zombie": {
       "textures": "textures/minepreggo/item/baby_zombie"
     },
@@ -71,6 +74,9 @@
     "minepreggo_creeper_breast_milk_bottle": {
       "textures": "textures/minepreggo/item/creeper_breast_milk_bottle"
     },
+    "minepreggo_creeper_impregnation_potion": {
+      "textures": "textures/port/creeper_impregnation_potion"
+    },
     "minepreggo_cucumber": {
       "textures": "textures/minepreggo/item/cucumber"
     },
@@ -95,11 +101,17 @@
     "minepreggo_dead_slime_fetus": {
       "textures": "textures/minepreggo/item/dead_slime_fetus"
     },
+    "minepreggo_dead_villager_fetus": {
+      "textures": "textures/minepreggo/item/dead_villager_fetus"
+    },
     "minepreggo_dead_zombie_fetus": {
       "textures": "textures/minepreggo/item/dead_zombie_fetus"
     },
     "minepreggo_ender_breast_milk_bottle": {
       "textures": "textures/minepreggo/item/ender_breast_milk_bottle"
+    },
+    "minepreggo_ender_impregnation_potion": {
+      "textures": "textures/port/ender_impregnation_potion"
     },
     "minepreggo_ender_slime_jelly": {
       "textures": "textures/minepreggo/item/ender_slime_jelly"
@@ -121,6 +133,9 @@
     },
     "minepreggo_gradual_pregnancy_acceleration_potion": {
       "textures": "textures/port/gradual_pregnancy_acceleration_potion"
+    },
+    "minepreggo_guide_book": {
+      "textures": "textures/port/guide_book"
     },
     "minepreggo_hostile_humanoid_creeper_girl_spawn_egg": {
       "textures": "textures/minepreggo/item/hostile_humanoid_creeper_girl_spawn_egg"
@@ -194,6 +209,9 @@
     "minepreggo_slime_breast_milk_bottle": {
       "textures": "textures/minepreggo/item/slime_breast_milk_bottle"
     },
+    "minepreggo_slime_impregnation_potion": {
+      "textures": "textures/port/slime_impregnation_potion"
+    },
     "minepreggo_sour_activated_gunpowder": {
       "textures": "textures/minepreggo/item/sour_activated_gunpowder"
     },
@@ -227,11 +245,17 @@
     "minepreggo_villager_brain": {
       "textures": "textures/minepreggo/item/villager_brain"
     },
+    "minepreggo_villager_impregnation_potion": {
+      "textures": "textures/port/villager_impregnation_potion"
+    },
     "minepreggo_witch_brain": {
       "textures": "textures/minepreggo/item/witch_brain"
     },
     "minepreggo_zombie_breast_milk_bottle": {
       "textures": "textures/minepreggo/item/zombie_breast_milk_bottle"
+    },
+    "minepreggo_zombie_impregnation_potion": {
+      "textures": "textures/port/zombie_impregnation_potion"
     }
   }
 }

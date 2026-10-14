@@ -1127,174 +1127,39 @@
           },
           {
             "weight": 79,
-            "add": {
-              "component_groups": [
-                "minepreggo:hostile",
-                "minepreggo:phase_3",
-                "minepreggo:hostile_phase_3",
-                "minepreggo:combat_fight_and_explode"
-              ]
-            },
-            "set_property": {
-              "minepreggo:phase": 3
-            },
-            "remove": {
-              "component_groups": [
-                "minepreggo:tameable"
-              ]
-            }
+            "trigger": "minepreggo:spawn_pregnant_3"
           },
           {
             "weight": 6,
-            "add": {
-              "component_groups": [
-                "minepreggo:hostile",
-                "minepreggo:phase_3",
-                "minepreggo:hostile_phase_3",
-                "minepreggo:combat_dont_explode"
-              ]
-            },
-            "set_property": {
-              "minepreggo:phase": 3
-            },
-            "remove": {
-              "component_groups": [
-                "minepreggo:tameable"
-              ]
-            }
+            "trigger": "minepreggo:spawn_pregnant_3"
           },
           {
             "weight": 15,
-            "add": {
-              "component_groups": [
-                "minepreggo:hostile",
-                "minepreggo:phase_3",
-                "minepreggo:hostile_phase_3",
-                "minepreggo:combat_explode"
-              ]
-            },
-            "set_property": {
-              "minepreggo:phase": 3
-            },
-            "remove": {
-              "component_groups": [
-                "minepreggo:tameable"
-              ]
-            }
+            "trigger": "minepreggo:spawn_pregnant_3"
           },
           {
             "weight": 79,
-            "add": {
-              "component_groups": [
-                "minepreggo:hostile",
-                "minepreggo:phase_5",
-                "minepreggo:hostile_phase_5",
-                "minepreggo:combat_fight_and_explode"
-              ]
-            },
-            "set_property": {
-              "minepreggo:phase": 5
-            },
-            "remove": {
-              "component_groups": [
-                "minepreggo:tameable"
-              ]
-            }
+            "trigger": "minepreggo:spawn_pregnant_5"
           },
           {
             "weight": 6,
-            "add": {
-              "component_groups": [
-                "minepreggo:hostile",
-                "minepreggo:phase_5",
-                "minepreggo:hostile_phase_5",
-                "minepreggo:combat_dont_explode"
-              ]
-            },
-            "set_property": {
-              "minepreggo:phase": 5
-            },
-            "remove": {
-              "component_groups": [
-                "minepreggo:tameable"
-              ]
-            }
+            "trigger": "minepreggo:spawn_pregnant_5"
           },
           {
             "weight": 15,
-            "add": {
-              "component_groups": [
-                "minepreggo:hostile",
-                "minepreggo:phase_5",
-                "minepreggo:hostile_phase_5",
-                "minepreggo:combat_explode"
-              ]
-            },
-            "set_property": {
-              "minepreggo:phase": 5
-            },
-            "remove": {
-              "component_groups": [
-                "minepreggo:tameable"
-              ]
-            }
+            "trigger": "minepreggo:spawn_pregnant_5"
           },
           {
             "weight": 79,
-            "add": {
-              "component_groups": [
-                "minepreggo:hostile",
-                "minepreggo:phase_7",
-                "minepreggo:hostile_phase_7",
-                "minepreggo:combat_fight_and_explode"
-              ]
-            },
-            "set_property": {
-              "minepreggo:phase": 7
-            },
-            "remove": {
-              "component_groups": [
-                "minepreggo:tameable"
-              ]
-            }
+            "trigger": "minepreggo:spawn_pregnant_7"
           },
           {
             "weight": 6,
-            "add": {
-              "component_groups": [
-                "minepreggo:hostile",
-                "minepreggo:phase_7",
-                "minepreggo:hostile_phase_7",
-                "minepreggo:combat_dont_explode"
-              ]
-            },
-            "set_property": {
-              "minepreggo:phase": 7
-            },
-            "remove": {
-              "component_groups": [
-                "minepreggo:tameable"
-              ]
-            }
+            "trigger": "minepreggo:spawn_pregnant_7"
           },
           {
             "weight": 15,
-            "add": {
-              "component_groups": [
-                "minepreggo:hostile",
-                "minepreggo:phase_7",
-                "minepreggo:hostile_phase_7",
-                "minepreggo:combat_explode"
-              ]
-            },
-            "set_property": {
-              "minepreggo:phase": 7
-            },
-            "remove": {
-              "component_groups": [
-                "minepreggo:tameable"
-              ]
-            }
+            "trigger": "minepreggo:spawn_pregnant_7"
           }
         ]
       },
@@ -2730,6 +2595,60 @@
         "add": {
           "component_groups": [
             "minepreggo:combat_dont_explode"
+          ]
+        }
+      },
+      "minepreggo:spawn_pregnant_3": {
+        "add": {
+          "component_groups": [
+            "minepreggo:hostile",
+            "minepreggo:phase_3",
+            "minepreggo:hostile_phase_3",
+            "minepreggo:combat_explode"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 3
+        },
+        "remove": {
+          "component_groups": [
+            "minepreggo:tameable"
+          ]
+        }
+      },
+      "minepreggo:spawn_pregnant_5": {
+        "add": {
+          "component_groups": [
+            "minepreggo:hostile",
+            "minepreggo:phase_5",
+            "minepreggo:hostile_phase_5",
+            "minepreggo:combat_explode"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 5
+        },
+        "remove": {
+          "component_groups": [
+            "minepreggo:tameable"
+          ]
+        }
+      },
+      "minepreggo:spawn_pregnant_7": {
+        "add": {
+          "component_groups": [
+            "minepreggo:hostile",
+            "minepreggo:phase_7",
+            "minepreggo:hostile_phase_7",
+            "minepreggo:combat_explode"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 7
+        },
+        "remove": {
+          "component_groups": [
+            "minepreggo:tameable"
           ]
         }
       }

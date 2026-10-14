@@ -33,11 +33,22 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
   starts labor when the birth phase is complete; a **Potion of Gradual Pregnancy Acceleration**
   makes the pregnancy run 120–600 times faster for three minutes. Both also work on a pregnant
   mob when used on her.
-- Fetal movements start on their own from P3 (the mod's per-phase chances). While one lasts, the
+- During water breaking, pre-birth, birth, post-birth, a miscarriage and back pain your body plays
+  the mod's own animations (ported from `PlayerAnimations`: lying down in birth, doubled over
+  before it); rubbing your belly plays the per-phase arm animation and from P4 you walk heavily.
+- Fetal movements start on their own from P3 (the mod's per-phase chances: on average one every
+  minute or two in P3-P4, more often later). The action bar says "You feel the baby move". While one lasts, the
   belly plays the mod's kick animation for the phase and intensity (I, II or III); late in the
   pregnancy the kicks bulge out of the belly. A **Potion of Fetal Movement Inducement** (I–III, a
   Bedrock addition) brings one on at that intensity, for you or, used on her, for a pregnant mob.
   From P5 a strong kick can make a mob sit down for a moment, as in the mod.
+
+### Updating the add-on in an existing world
+
+A world pins the pack version it was created with. After importing a newer `.mcaddon`, open the
+world's settings → **Behavior Packs**, remove Minepreggo from the active packs and add it again,
+so the world picks up the new version (the join message shows which version is running). Without
+this step, new items such as the fetal movement and species potions stay missing.
 
 ### If nothing shows on your character
 
@@ -50,6 +61,22 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
    game says a pack failed to load, your game is older than 1.26.30 or another copy of an older
    Minepreggo version is still installed: remove it in Settings → Storage and import again.
 4. Chest and belly show in third person and, in first person, when you look down more than 25°.
+
+### Other species
+
+**Potions of Zombie, Creeper, Ender, Slime and Villager Impregnation** (I–VI) give a litter of
+that species: the babies and dead fetuses are that species' items, and the mother carries the mod's
+"Full Of ..." condition for the whole pregnancy. Zombie: you burn in daylight without a helmet.
+Creeper: dying from P3 on explodes. Ender: now and then the babies teleport you 8–16 blocks.
+Slime: the babies cushion your falls. Every pregnancy makes falls hurt more from P3, and dying from
+P3 on leaves a dead fetus per baby. Used on a mob, only her own species' potion (or the human one)
+works; another species' potion just hurts her, as in the mod.
+
+### Guide book
+
+Every new player gets the **Minepreggo Guide** (also craftable: book + lemon). Use it to open the
+chapters: getting started, phases, symptoms and pains, fetal movements, labor and birth, other
+species, preggo mobs, commands.
 
 ### Preggo mobs
 

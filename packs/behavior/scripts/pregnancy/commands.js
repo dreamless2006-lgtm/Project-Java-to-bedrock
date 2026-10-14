@@ -5,7 +5,7 @@
 //   /scriptevent minepreggo:gender female
 
 import { system, Player } from '@minecraft/server';
-import { MAX_LEVEL } from './data.js';
+import { MAX_LEVEL, POTION_SPECIES } from './data.js';
 import { babiesFromPotion, clampBabies } from './math.js';
 import {
   accelerate,
@@ -24,7 +24,7 @@ import {
 } from './system.js';
 
 const USAGE = [
-  'minepreggo:pregnancy start [babies 1-10] | potion [level 0-5] | end | status',
+  'minepreggo:pregnancy start [babies 1-10] | potion [level 0-5] [human|zombie|creeper|ender|slime|villager] | end | status',
   '  phase <0-9> | days <n> | labor | miscarry | accelerate <0-4> | gradual <0-4> | induce <0-4>',
   '  pain <morning_sickness|fetal_movement|contraction|back_pain>',
   '  symptom <craving|milking|belly_rubs>',
@@ -39,6 +39,7 @@ const SYMPTOMS = { CRAVING: 'craving', MILKING: 'milking', BELLY_RUBS: 'bellyRub
 function status(record) {
   const p = record.pregnancy;
   const lines = [`gender: ${record.gender ?? 'not chosen'}`];
+  if (p && p.father !== 'HUMAN') lines.push(`father species: ${p.father}`);
   if (record.pending) lines.push(`impregnation pending (potion level ${record.pending.amplifier})`);
   if (record.female.post) lines.push(`recovering after ${record.female.post.type.toLowerCase()}: ${record.female.post.timer} ticks`);
   if (record.female.lactation) lines.push(`post-partum lactation level ${record.female.lactation.level}/20`);
@@ -61,15 +62,17 @@ function status(record) {
  */
 function run(player, message) {
   const record = getRecord(player);
-  const [command = 'status', arg] = message.trim().toLowerCase().split(/\s+/);
+  const [command = 'status', arg, arg2] = message.trim().toLowerCase().split(/\s+/);
   const p = record.pregnancy;
   const ok = (/** @type {boolean} */ done, /** @type {string} */ failure) => (done ? status(record) : failure);
 
   switch (command) {
     case 'start':
       return ok(startPregnancy(record, clampBabies(Number(arg ?? 1) || 1)), 'cannot start: needs a female player who is not pregnant or recovering');
-    case 'potion':
-      return ok(startPregnancy(record, babiesFromPotion(Number(arg ?? 0) || 0)), 'cannot start: needs a female player who is not pregnant or recovering');
+    case 'potion': {
+      const father = POTION_SPECIES.find((species) => species === (arg2 ?? 'human').toUpperCase()) ?? 'HUMAN';
+      return ok(startPregnancy(record, babiesFromPotion(Number(arg ?? 0) || 0), father), 'cannot start: needs a female player who is not pregnant or recovering');
+    }
     case 'end':
       record.female.post = null;
       return ok(endPregnancy(record), 'not pregnant');

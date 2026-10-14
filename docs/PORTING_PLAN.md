@@ -119,6 +119,16 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
 - 🟡 Player visuals need the gender form answered; it now returns every 10 s until it is (Java's
   join screen cannot be dismissed either). Manifests are format 2 with array versions, the only
   form the game accepts without "must conform to format version [2]".
+- ✅ Player body animations: the mod's procedural `PlayerAnimations` (birth, post-birth,
+  miscarriage, water breaking, pre-birth, back pain, belly rubbing P0–P9, heavy walking P4–P9)
+  are generated into Molang by `tools/gen/player-animations.py` (absolute transforms via
+  `expr - this`, head and arms converted into body-local space, y flipped).
+- ✅ Species pregnancies (phase 4 item): Zombie/Creeper/Ender/Slime/Villager Impregnation I–VI,
+  species babies and fetuses, and the Full Of Zombies (daylight burn), Creepers (death explosion
+  `calculateExplosionLevelByPregnancyPhase`), Enders (random teleport every 2400 ticks),
+  Slimes (fall cushioning) effects plus `calculateExtraFallDamageMultiplier`. Not ported: the
+  species diets (brains, chorus shards, mob foods becoming edible for the mother).
+- ✅ Guide book item with the add-on's manual (Bedrock addition).
 - ⬜ **Zombie girl follow-up (requested):** the Ill Zombie Girl variant (`IllZombieGirl`, P0 model)
   and the zombie girl GUI/inventory are not ported yet; the hostile, tamable and pregnant zombie
   girls are.

@@ -15,8 +15,10 @@ export class ActionFormData {
     this.buttons.push(label);
     return this;
   }
+  /** Resolves with the player's scripted choice, which is used up (a second form in a row is closed). */
   show(player) {
     const selection = player.formSelection;
+    player.formSelection = undefined;
     return Promise.resolve(selection === undefined ? { canceled: true, cancelationReason: FormCancelationReason.UserClosed } : { canceled: false, selection });
   }
 }

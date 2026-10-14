@@ -35,3 +35,5 @@ item.minepreggo.fetal_movement_inducer_potion_1=Potion of Fetal Movement Inducem
 item.minepreggo.fetal_movement_inducer_potion_2=Potion of Fetal Movement Inducement III
 minepreggo.fetal_movement_inducer.not_pregnant=Only a pregnant woman can feel her baby move.
 minepreggo.fetal_movement_inducer.too_early=Nothing happens: the baby is too small to feel yet (from P3), or labor has begun.
+item.minepreggo.guide_book=Minepreggo Guide
+minepreggo.fetal_movement.felt=You feel the baby move.

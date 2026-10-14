@@ -31,7 +31,8 @@
             "postbirth",
             "miscarriage",
             "belly_rubs",
-            "incapacitated"
+            "incapacitated",
+            "rubbing"
           ],
           "default": "none",
           "client_sync": true
