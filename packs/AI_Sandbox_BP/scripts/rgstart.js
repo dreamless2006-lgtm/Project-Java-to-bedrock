@@ -50,6 +50,7 @@ import { startSurvivalBrain } from "./ai_survival_brain.js";
 import { startAiDebug } from "./ai_debug.js";
 import { startNavigationAuthority } from "./ai_navigation.js";
 import { startAdvancedCombatSystem } from "./ai_combat_combos.js";
+import { getWorldConfig } from "./brain/config.js";
 
 // ============================================================================
 // CONSTANTS & CONFIGURATION
@@ -215,6 +216,10 @@ function generateEnvironmentalDeathMessage() {
 function scheduleNextMessage() {
     const randomDelayTicks = 100 + Math.floor(Math.random() * 200);
     system.runTimeout(() => {
+        // Simulated "other players" chat is off by default now that bots talk for real.
+        let fakeChat = false;
+        try { fakeChat = !!getWorldConfig().legacyFakeChat; } catch (e) { fakeChat = false; }
+        if (!fakeChat) { scheduleNextMessage(); return; }
         const realPlayersCache = REAL_PLAYERS_CACHE;
         const messageTypeRoll = Math.random();
         let messageToSend = null;

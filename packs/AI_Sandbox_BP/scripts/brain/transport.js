@@ -20,6 +20,24 @@ function tickSleep(ms) {
     return new Promise(resolve => system.runTimeout(resolve, Math.max(1, Math.round(ms / 50))));
 }
 
+// BDS enforces max_concurrent_requests (HttpRequestLimitExceededError); keep our own cap below it.
+const MAX_IN_FLIGHT = 3;
+let inFlight = 0;
+const waiters = [];
+async function limitedSend(req) {
+    if (inFlight >= MAX_IN_FLIGHT) await new Promise(resolve => waiters.push(resolve));
+    inFlight++;
+    try {
+        return await httpSend({ ...req, timeoutSec: req.timeoutSec || 90 });
+    } finally {
+        inFlight--;
+        const next = waiters.shift();
+        if (next) next();
+    }
+}
+
+export function inFlightRequests() { return inFlight; }
+
 /**
  * Run one think for a bot. Prefers the bridge when it is connected and the
  * operator chose it; otherwise direct HTTP; otherwise fails fast.
@@ -33,5 +51,5 @@ export async function think(botId, cfg, turn) {
         return bridge.think(botId, cfg, turn);
     }
     if (!hasDirectHttp) return { ok: false, error: "no transport: Realm edition without a bridge", type: "no_transport" };
-    return runThink(cfg, turn, httpSend, tickSleep);
+    return runThink(cfg, turn, limitedSend, tickSleep);
 }

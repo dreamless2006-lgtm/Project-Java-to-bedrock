@@ -31,8 +31,11 @@ export function buildOpenAICompatRequest(cfg, req) {
     const headers = [{ key: "Content-Type", value: "application/json" }];
     const authHeader = cfg.authHeader || preset.authHeader;
     if (cfg.apiKey) {
+        // On a dedicated server the key is an opaque SecretString that must already hold
+        // the full header value ("Bearer sk-..."); a plain string gets the prefix added here.
+        const raw = typeof cfg.apiKey !== "string";
         if (authHeader) headers.push({ key: authHeader, value: cfg.apiKey });
-        else headers.push({ key: "Authorization", value: "Bearer " + cfg.apiKey });
+        else headers.push({ key: "Authorization", value: raw || /^Bearer /i.test(cfg.apiKey) ? cfg.apiKey : "Bearer " + cfg.apiKey });
     }
     if (cfg.provider === "openrouter") {
         headers.push({ key: "HTTP-Referer", value: "https://github.com/ai-sandbox-bedrock" });

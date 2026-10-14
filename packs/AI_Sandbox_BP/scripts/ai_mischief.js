@@ -1,4 +1,5 @@
 import { world, system } from "@minecraft/server";
+import { brainActive } from "./brain/gate.js";
 import { ALL_AI_CACHE } from "./greeting.js";
 import { botSay } from "./ai_conversations.js";
 import { getSettings } from "./ai_settings.js";
@@ -135,6 +136,7 @@ export function startMischief() {
 
         for (const ai of ALL_AI_CACHE || []) {
             if (!ai.isValid) continue;
+            if (brainActive(ai)) continue;   // the LLM brain owns this bot
             if (ai.hasTag("is_sleeping") || ai.getDynamicProperty("rg:current_target")) continue;
             if ((ai.getDynamicProperty(NEXT_KEY) || 0) > system.currentTick) continue;
 

@@ -4,6 +4,7 @@ import { REAL_PLAYERS_CACHE } from "./rgstart.js";
 import { isSameFaction, isHostileFaction } from "./ai_faction_system.js";
 import { TOPIC_NOUNS, REPLIES, MOOD_FLAVOUR, OPENERS, SELF_TALK } from "./database/bot_banter.js";
 import { chatAllows } from "./ai_settings.js";
+import { brainActive, impulse } from "./brain/gate.js";
 
 const ai_player_id = "rg:bot";
 const BOT_CHAT_COOLDOWN_KEY = "rg:chat_cooldown";
@@ -84,9 +85,12 @@ function withSpeakingLock(ai, send, cooldownSeconds) {
  * Say something as this bot and file it into the conversation pool so other
  * bots can answer it. Every bot-facing chat line should go through here.
  */
-export function botSay(ai, message, style = "") {
+export function botSay(ai, message, style = "", opts = {}) {
     if (!ai?.isValid || !message) return;
-    if (!chatAllows()) return;
+    // A brain-driven bot does not blurt canned lines: the line becomes an
+    // impulse the model may voice in its own words.
+    if (!opts.brain && brainActive(ai)) { impulse(ai, message); return; }
+    if (!opts.brain && !chatAllows()) return;
 
     const name = ai.nameTag || "A player";
     try {
@@ -254,6 +258,7 @@ export function startBotConversations() {
 
             for (const ai of everyai) {
                 if (!ai.isValid || ai.hasTag(BOT_SPEAKING_TAG)) continue;
+                if (brainActive(ai)) continue;   // the LLM brain owns this bot
 
                 // Skip if in combat
                 if (ai.getDynamicProperty("rg:current_target")) continue;
@@ -336,6 +341,7 @@ export function startBotConversations() {
 
         for (const ai of everyai) {
             if (!ai.isValid) continue;
+            if (brainActive(ai)) continue;   // the LLM brain owns this bot
             if (ai.hasTag(BOT_SPEAKING_TAG) || ai.hasTag("is_sleeping") || ai.hasTag("building_shelter")) continue;
             if (ai.hasTag("on_eat") || ai.hasTag("is_busy_cooking") || ai.hasTag("is_upgrading")) continue;
 

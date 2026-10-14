@@ -3,7 +3,7 @@ import { getProvider } from "./providers/index.js";
 import { parseJsonLoose } from "./json_util.js";
 import { normalizeReply, REPLY_SCHEMA } from "./action_schema.js";
 
-export const RETRY = { attempts: 3, baseDelayMs: 1500, maxDelayMs: 12_000, timeoutSec: 45 };
+export const RETRY = { attempts: 3, baseDelayMs: 1500, maxDelayMs: 12_000, timeoutSec: 90 };
 
 /**
  * cfg: {provider, model, apiKey, baseUrl, maxTokens, effort, temperature}

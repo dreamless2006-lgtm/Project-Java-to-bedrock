@@ -1,4 +1,5 @@
 import { world, system } from "@minecraft/server";
+import { brainActive } from "./brain/gate.js";
 import { ALL_AI_CACHE } from "./greeting.js";
 import { hasJob } from "./ai_task_worker.js";
 
@@ -202,6 +203,7 @@ export function startGoalSystem() {
 
             for (const ai of everyai) {
                 if (!ai.isValid) continue;
+                if (brainActive(ai)) continue;   // the LLM brain owns this bot
 
                 // Skip if AI is already busy with something
                 if (isAIBusy(ai)) continue;

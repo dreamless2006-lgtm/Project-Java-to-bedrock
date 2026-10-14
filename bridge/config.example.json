@@ -1,0 +1,28 @@
+{
+  "connect": {
+    "mode": "realm",
+    "realm": { "invite": "", "id": "", "pickFirst": true },
+    "host": "127.0.0.1",
+    "port": 19132,
+    "username": "AISandboxBridge",
+    "offline": false,
+    "profilesFolder": "./.auth-cache"
+  },
+  "defaults": { "provider": "anthropic", "model": "" },
+  "providers": {
+    "anthropic":  { "apiKey": "", "model": "claude-opus-5-5" },
+    "openai":     { "apiKey": "", "model": "gpt-5-mini" },
+    "xai":        { "apiKey": "", "model": "grok-4-fast" },
+    "gemini":     { "apiKey": "", "model": "gemini-2.5-flash" },
+    "openrouter": { "apiKey": "", "model": "" },
+    "player2":    { "apiKey": "", "baseUrl": "http://127.0.0.1:4315/v1", "model": "" },
+    "ollama":     { "baseUrl": "http://127.0.0.1:11434/v1", "model": "llama3.1" },
+    "lmstudio":   { "baseUrl": "http://127.0.0.1:1234/v1", "model": "" },
+    "custom":     { "baseUrl": "", "apiKey": "", "model": "" }
+  },
+  "chatRelay": true,
+  "anchor": { "enabled": true, "intervalSeconds": 120 },
+  "maxConcurrentThinks": 4,
+  "requestTimeoutSeconds": 60,
+  "log": "info"
+}

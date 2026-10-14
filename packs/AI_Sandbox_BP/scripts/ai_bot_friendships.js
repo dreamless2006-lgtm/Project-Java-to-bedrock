@@ -1,4 +1,5 @@
 import { world, system } from "@minecraft/server";
+import { brainActive } from "./brain/gate.js";
 import { ActionFormData } from "@minecraft/server-ui";
 import { ALL_AI_CACHE } from "./greeting.js";
 import { REAL_PLAYERS_CACHE } from "./rgstart.js";
@@ -119,7 +120,7 @@ function remindWithForm(key, offer) {
 
 export function startBotFriendships() {
     // Answer in chat: "yes" / "no" to whichever bot asked
-    world.afterEvents.chatSend.subscribe(event => {
+    (world.afterEvents.chatSend ?? { subscribe() { return undefined; } }).subscribe(event => {
         const player = event.sender;
         if (!player?.isValid) return;
 
@@ -156,6 +157,7 @@ export function startBotFriendships() {
 
         for (const ai of ALL_AI_CACHE) {
             if (!ai.isValid) continue;
+            if (brainActive(ai)) continue;   // the LLM brain owns this bot
             if (ai.getDynamicProperty("rg:current_target")) continue;   // busy fighting
             if (ai.hasTag("is_sleeping") || ai.hasTag("building_shelter")) continue;
 

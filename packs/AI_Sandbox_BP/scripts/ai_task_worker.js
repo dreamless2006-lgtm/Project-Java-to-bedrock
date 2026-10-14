@@ -801,6 +801,27 @@ function announceHaul(ai, stash, closing) {
 function handOver(ai, state) {
     const owner = state.ownerId ? findPlayer(state.ownerId) : null;
 
+    // A job the bot gave itself (LLM brain): keep the haul in its own bag.
+    if (!state.ownerId) {
+        if (state.stash.count > 0) {
+            let container = null;
+            try { container = ai.getComponent("minecraft:inventory")?.container || null; } catch (e) { container = null; }
+            for (const pile of pilesOf(state.stash)) {
+                let left = pile[1];
+                while (left > 0) {
+                    const batch = Math.min(64, left);
+                    left -= batch;
+                    let rest;
+                    try { rest = container ? container.addItem(new ItemStack(pile[0], batch)) : new ItemStack(pile[0], batch); } catch (e) { rest = null; }
+                    if (rest) { try { ai.dimension.spawnItem(rest, ai.location); } catch (e) { /* ignore */ } }
+                }
+            }
+            botSay(ai, `got ${state.stash.count} ${prettyName(state.stash.item)}`);
+            emptyStash(state.stash);
+        }
+        return true;
+    }
+
     if (!owner || !owner.isValid || owner.dimension !== ai.dimension) {
         // He logged off or is unloaded. The haul only exists as a count, so
         // putting it on the ground is the difference between a delivery and
@@ -875,7 +896,8 @@ function endJob(ai, state) {
  * (staircase down, then prospect for ore at depth).
  */
 export function assignFriendTask(ai, player, kind, options = {}) {
-    if (!ai?.isValid || !player?.isValid) return false;
+    if (!ai?.isValid) return false;
+    if (player && !player.isValid) return false;
     if (ai.getDynamicProperty(TASK_KEY)) return false;
 
     const want = options.want || null;
@@ -883,7 +905,7 @@ export function assignFriendTask(ai, player, kind, options = {}) {
     const until = system.currentTick + (options.durationTicks || jobLengthTicks());
 
     ai.setDynamicProperty(TASK_KEY, kind);
-    ai.setDynamicProperty(OWNER_KEY, player.id);
+    ai.setDynamicProperty(OWNER_KEY, player ? player.id : null);
     ai.setDynamicProperty(UNTIL_KEY, until);
     ai.setDynamicProperty(WANT_KEY, want);
     ai.setDynamicProperty(AMOUNT_KEY, amount);
@@ -895,7 +917,7 @@ export function assignFriendTask(ai, player, kind, options = {}) {
 
     jobs.set(ai.id, {
         kind: kind,
-        ownerId: player.id,
+        ownerId: player ? player.id : null,
         until: until,
         want: want,
         amount: amount,

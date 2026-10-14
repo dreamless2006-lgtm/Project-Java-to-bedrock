@@ -168,7 +168,7 @@ function pickBots(sender, arg) {
 }
 
 export function startAiDebug() {
-    world.afterEvents.chatSend.subscribe(event => {
+    (world.afterEvents.chatSend ?? { subscribe() { return undefined; } }).subscribe(event => {
         const message = event.message.trim();
         if (!message.toLowerCase().startsWith("!aistatus")) return;
 

@@ -1448,7 +1448,7 @@ export function startInteractionUI() {
     });
 
     // Chat command trigger
-    world.afterEvents.chatSend.subscribe(event => {
+    (world.afterEvents.chatSend ?? { subscribe() { return undefined; } }).subscribe(event => {
         const { message, sender } = event;
 
         if (message.toLowerCase() === "!givemefriendconfig") {

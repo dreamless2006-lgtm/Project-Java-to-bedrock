@@ -1,8 +1,8 @@
 {
   "format_version": 2,
   "header": {
-    "name": "AI Multiplayer + Scape and Run: Parasites RP",
-    "description": "Models, textures and sounds for AI players and the parasites.",
+    "name": "AI Sandbox: LLM Players + Parasites RP",
+    "description": "Models, textures and sounds for the AI players and the parasites.",
     "uuid": "3d7f2b9a-1e6c-4f08-a5d3-9b2c8e7f1a40",
     "version": [
       2,
@@ -12,7 +12,7 @@
     "min_engine_version": [
       1,
       26,
-      30
+      50
     ]
   },
   "modules": [
@@ -39,6 +39,7 @@
   ],
   "metadata": {
     "authors": [
+      "AI Sandbox contributors",
       "AI Multiplayer authors",
       "Dhanantry (Scape and Run: Parasites)"
     ],

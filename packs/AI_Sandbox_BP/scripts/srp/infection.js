@@ -163,6 +163,7 @@ function tickInfections() {
             const hp = e.getComponent("minecraft:health");
             const low = hp && hp.currentValue < hp.effectiveMax * 0.3;
             const age = now - rec.since;
+            if (e.typeId === "rg:bot") { e.addEffect("weakness", 100, { amplifier: 0, showParticles: false }); continue; }   // bots are never replaced; the brain cures them
             if ((phase >= 2 && age > 400 + (id.length % 7) * 60) || (low && age > 60)) {
                 const into = ASSIMILATE[e.typeId];
                 if (into && state.settings.assimilation && canSpawnMore(1)) {

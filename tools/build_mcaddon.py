@@ -2,13 +2,14 @@
 """Package packs/*_BP and packs/*_RP into dist/<name>-<edition>.mcaddon (and .mcpack per pack).
 
 Editions:
-  realm  (default) - no @minecraft/server-net; the LLM brain talks through the bridge.
-                     Works on Realms, LAN/friend worlds and dedicated servers.
-  bds              - adds @minecraft/server-net + @minecraft/server-admin dependencies and
-                     swaps scripts/brain/net_impl.js for the direct-HTTP implementation.
-                     Only loads on Bedrock Dedicated Server with both modules allowed.
+  realm      (default) stable @minecraft/server API, no experiments needed; the LLM brain talks
+                       through the bridge; players chat with bots via the bridge relay or the menu.
+  realm-beta           same, but depends on the -beta server module so bots hear chat directly
+                       (world needs the Beta APIs experiment; Realms may not allow it).
+  bds                  beta module + @minecraft/server-net/@minecraft/server-admin, with
+                       scripts/brain/net_impl.js swapped for direct HTTP. Bedrock Dedicated Server only.
 
-Usage: python3 tools/build_mcaddon.py [--name ai-sandbox] [--edition realm|bds|both]
+Usage: python3 tools/build_mcaddon.py [--name ai-sandbox] [--edition realm|realm-beta|bds|all]
 """
 import argparse, io, json, os, re, sys, zipfile
 
@@ -55,21 +56,30 @@ NET_DEPS = [
 ]
 
 
+BETA_SERVER_VERSION = "2.11.0-beta"   # ships with 1.26.50; bump when a new major release lands
+
+
 def transform(pack_dir, rel, data, edition):
     """Return the bytes to store for a file, applying edition-specific swaps."""
-    if edition != "bds":
+    if edition == "realm":
         return data
     if rel == "manifest.json":
         m = json.loads(strip_comments(data.decode("utf-8-sig")))
         if any(mod.get("type") == "script" for mod in m.get("modules", [])):
             deps = m.setdefault("dependencies", [])
-            names = {d.get("module_name") for d in deps}
-            for d in NET_DEPS:
-                if d["module_name"] not in names:
-                    deps.append(d)
-            m["header"]["name"] = m["header"]["name"] + " (Dedicated Server)"
+            for d in deps:
+                if d.get("module_name") == "@minecraft/server":
+                    d["version"] = BETA_SERVER_VERSION
+            if edition == "bds":
+                names = {d.get("module_name") for d in deps}
+                for d in NET_DEPS:
+                    if d["module_name"] not in names:
+                        deps.append(d)
+            suffix = " (Dedicated Server)" if edition == "bds" else " (Beta API)"
+            m["header"]["name"] = m["header"]["name"] + suffix
+            m["header"]["description"] = m["header"]["description"].replace("Stable API edition: works on Realms and worlds with the AI Sandbox bridge; use the Dedicated Server edition for in-server HTTP.", "Beta API edition: enable the Beta APIs experiment." + (" Dedicated Server edition: in-server HTTP via @minecraft/server-net." if edition == "bds" else " Bots hear chat directly."))
             return json.dumps(m, indent=2).encode("utf-8")
-    if rel.replace(os.sep, "/") == "scripts/brain/net_impl.js":
+    if edition == "bds" and rel.replace(os.sep, "/") == "scripts/brain/net_impl.js":
         with open(os.path.join(pack_dir, "scripts", "brain", "net_impl.bds.js"), "rb") as f:
             return f.read()
     return data
@@ -92,9 +102,9 @@ def add_tree(zf, pack_dir, prefix, edition="realm"):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--name", default="ai-sandbox")
-    ap.add_argument("--edition", default="realm", choices=["realm", "bds", "both"])
+    ap.add_argument("--edition", default="realm", choices=["realm", "realm-beta", "bds", "all", "both"])
     args = ap.parse_args()
-    editions = ["realm", "bds"] if args.edition == "both" else [args.edition]
+    editions = ["realm", "realm-beta", "bds"] if args.edition in ("all", "both") else [args.edition]
     packs = sorted(d for d in os.listdir(PACKS) if os.path.isdir(os.path.join(PACKS, d)) and os.path.exists(os.path.join(PACKS, d, "manifest.json")))
     if not packs:
         print("no packs found", file=sys.stderr); sys.exit(1)

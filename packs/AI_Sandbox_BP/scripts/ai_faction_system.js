@@ -1,5 +1,8 @@
 import { world, system, EntityComponentTypes } from "@minecraft/server";
 import { REAL_PLAYERS_CACHE } from "./rgstart.js";
+import { getWorldConfig } from "./brain/config.js";
+
+function legacyFakeChat() { try { return !!getWorldConfig().legacyFakeChat; } catch (e) { return false; } }
 
 const ai_player_id = "rg:bot";
 const FACTION_PROPERTY = "rg:faction";
@@ -75,7 +78,7 @@ export function assignFaction(ai) {
     // Display faction join message
     try {
         const allPlayers = REAL_PLAYERS_CACHE;
-        if (allPlayers && allPlayers.length > 0) {
+        if (allPlayers && allPlayers.length > 0 && legacyFakeChat()) {
             for (const player of allPlayers) {
                 player.sendMessage(`${factionConfig.displayName} recruited ${ai.nameTag || "AI"}!`);
             }

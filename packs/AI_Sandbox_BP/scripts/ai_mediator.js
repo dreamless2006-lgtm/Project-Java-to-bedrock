@@ -17,7 +17,7 @@ const RESPONSE_DELAY_MAX_SECONDS = 5;
 
 
 export function startmediatorBehavior() {
-    world.afterEvents.chatSend.subscribe(event => {
+    (world.afterEvents.chatSend ?? { subscribe() { return undefined; } }).subscribe(event => {
         const { message, sender: player } = event;
         const lowerCaseMessage = message.toLowerCase();
 

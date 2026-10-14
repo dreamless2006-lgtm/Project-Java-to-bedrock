@@ -3,6 +3,7 @@ import { REAL_PLAYERS_CACHE } from "./rgstart.js";
 import { getCurrentTarget } from "./ai_combat_tactics.js";
 import { jump } from "./ai_player_physics.js";
 import { hasJob } from "./ai_task_worker.js";
+import { brainActive } from "./brain/gate.js";
 
 const PROXIMITY_RADIUS_FOR_IDLE_CHECK = 72; // 72 blocks around player
 const NEARBY_BUILDERS_CHECK_DISTANCE = 16; // Distance to check for nearby builders
@@ -819,6 +820,7 @@ export function startBuilderSystem() {
 
             for (const ai of nearbyAis) {
                 if (processedAis.has(ai.id) || !ai.isValid) continue;
+                if (brainActive(ai)) continue;   // the LLM brain decides when to build
 
                 const hasCombatTarget = getCurrentTarget(ai) !== null;
 

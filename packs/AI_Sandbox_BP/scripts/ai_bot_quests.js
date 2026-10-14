@@ -1,4 +1,5 @@
 import { system } from "@minecraft/server";
+import { brainActive } from "./brain/gate.js";
 import { ALL_AI_CACHE } from "./greeting.js";
 import { REAL_PLAYERS_CACHE } from "./rgstart.js";
 import { botSay } from "./ai_conversations.js";
@@ -111,6 +112,7 @@ export function startBotQuests() {
 
         for (const ai of everyai) {
             if (!ai.isValid) continue;
+            if (brainActive(ai)) continue;   // the LLM brain owns this bot
             if (ai.hasTag("is_sleeping") || ai.getDynamicProperty("rg:current_target")) continue;
             if (ai.getDynamicProperty("rg:friend_task")) continue;   // busy working
 

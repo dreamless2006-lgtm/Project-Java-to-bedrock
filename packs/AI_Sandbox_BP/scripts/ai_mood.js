@@ -1,4 +1,5 @@
 import { world, system, EntityComponentTypes } from "@minecraft/server";
+import { brainActive } from "./brain/gate.js";
 import { ALL_AI_CACHE } from "./greeting.js";
 import { botSay } from "./ai_conversations.js";
 
@@ -90,6 +91,7 @@ export function startMoodSystem() {
 
         for (const ai of everyai) {
             if (!ai.isValid) continue;
+            if (brainActive(ai)) continue;   // the LLM brain owns this bot
             try {
                 const healthComp = ai.getComponent(EntityComponentTypes.Health);
                 if (!healthComp) continue;

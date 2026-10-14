@@ -1,4 +1,5 @@
 import { world, system } from "@minecraft/server";
+import { brainActive } from "./brain/gate.js";
 import { botSay } from "./ai_conversations.js";
 import { CHAT_SYMPATHY_CONFIG, VOCABULARY } from './database/chat_config.js';
 
@@ -605,7 +606,7 @@ function simulateHumanTyping(message, player = null) {
 
 export function startSympathySystem() {
     buildKeywordIndex(CHAT_SYMPATHY_CONFIG);
-    world.afterEvents.chatSend.subscribe(event => {
+    (world.afterEvents.chatSend ?? { subscribe() { return undefined; } }).subscribe(event => {
         
         const player = event.sender;
         const message = event.message.toLowerCase();
@@ -626,6 +627,7 @@ export function startSympathySystem() {
         for (const ai of aiEntities) {
             
             if (!ai.isValid) continue;
+            if (brainActive(ai)) continue;   // the LLM brain owns this bot
 
             if (ai.getDynamicProperty("rg:current_target")) continue; 
              

@@ -1,0 +1,17 @@
+{
+  "name": "ai-sandbox-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Joins a Bedrock Realm/world as a player and relays bot thinking between the AI Sandbox addon and LLM providers (Claude, ChatGPT, Grok, Gemini, Player2, local models).",
+  "main": "index.mjs",
+  "bin": { "ai-sandbox-bridge": "./index.mjs" },
+  "scripts": {
+    "start": "node index.mjs",
+    "test-provider": "node index.mjs --test-provider"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "bedrock-protocol": "^3.60.1"
+  }
+}

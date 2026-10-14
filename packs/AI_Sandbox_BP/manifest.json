@@ -1,8 +1,8 @@
 {
   "format_version": 2,
   "header": {
-    "name": "AI Multiplayer + Scape and Run: Parasites",
-    "description": "AI players that act like real multiplayer users, fighting an evolving parasite apocalypse (Scape and Run: Parasites port). Enable Beta APIs.",
+    "name": "AI Sandbox: LLM Players + Parasites",
+    "description": "Real AI players (Claude, ChatGPT, Grok, Gemini, Player2 or local models) that talk, build, mine, craft, fight and travel dimensions in a Scape and Run: Parasites apocalypse. Stable API edition: works on Realms and worlds with the AI Sandbox bridge; use the Dedicated Server edition for in-server HTTP.",
     "uuid": "5f1b8c2e-7a3d-4e91-b6c4-2d8e9f0a1b37",
     "version": [
       2,
@@ -12,7 +12,7 @@
     "min_engine_version": [
       1,
       26,
-      30
+      50
     ]
   },
   "modules": [
@@ -42,11 +42,11 @@
   "dependencies": [
     {
       "module_name": "@minecraft/server",
-      "version": "2.11.0-beta"
+      "version": "2.10.0"
     },
     {
       "module_name": "@minecraft/server-ui",
-      "version": "2.0.0"
+      "version": "2.2.0"
     },
     {
       "uuid": "3d7f2b9a-1e6c-4f08-a5d3-9b2c8e7f1a40",
@@ -59,6 +59,7 @@
   ],
   "metadata": {
     "authors": [
+      "AI Sandbox contributors",
       "AI Multiplayer authors",
       "Dhanantry (Scape and Run: Parasites)"
     ],

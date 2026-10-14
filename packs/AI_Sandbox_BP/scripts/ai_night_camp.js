@@ -1,4 +1,5 @@
 import { system } from "@minecraft/server";
+import { brainActive } from "./brain/gate.js";
 import { ALL_AI_CACHE } from "./greeting.js";
 import { botSay } from "./ai_conversations.js";
 import { getCachedTimeOfDay } from "./ai_mood.js";
@@ -86,6 +87,7 @@ export function startNightCamp() {
 
         for (const ai of ALL_AI_CACHE || []) {
             if (!ai.isValid) continue;
+            if (brainActive(ai)) continue;   // the LLM brain owns this bot
             const sleeping = ai.hasTag("is_sleeping");
 
             if (!night) {
