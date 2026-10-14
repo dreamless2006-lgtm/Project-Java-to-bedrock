@@ -17,6 +17,7 @@ import { randomUUID } from "node:crypto";
 import { PROVIDERS, getProvider } from "../packs/RealAI_BP/scripts/brain/providers/index.js";
 import { encodeFrames, Reassembler, nextMessageId, packMessage, unpackMessage, DEFAULT_CHUNK } from "../packs/RealAI_BP/scripts/brain/frame.js";
 import { REPLY_SCHEMA } from "../packs/RealAI_BP/scripts/brain/action_schema.js";
+import { Body } from "./body.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const VERSION = "0.1.0";
@@ -107,6 +108,8 @@ export class Bridge {
         this.reconnectDelay = 5000;
         this.lastAnchor = 0;
         this.anchorTarget = null;
+        this.body = new Body();          // our own player body: position, walking, the per-tick input packet
+        this.inputFailures = 0;
     }
 
     async start() {
@@ -133,7 +136,11 @@ export class Bridge {
         opts.useNativeRaknet = opts.raknetBackend === "raknet-native";
         const client = bedrock.createClient(opts);
         this.client = client;
-        client.on("start_game", p => { try { this.entityId = BigInt(p.runtime_entity_id ?? p.entity_id ?? 0); } catch (e) { this.entityId = 0n; } });
+        client.on("start_game", p => { try { this.entityId = BigInt(p.runtime_entity_id ?? p.entity_id ?? 0); } catch (e) { this.entityId = 0n; } try { this.body.onStartGame(p); log("debug", "body starts at", JSON.stringify(this.body.status().pos)); } catch (e) { log("warn", "start_game body:", e?.message || e); } });
+        // Movement is server-authoritative: the body only exists where our own input packets say it is.
+        client.on("move_player", p => { try { if (this.body.onMovePlayer(p)) log("debug", `server moved us (${p.mode}) to`, JSON.stringify(this.body.status().pos)); } catch (e) { /* ignore */ } });
+        client.on("correct_player_move_prediction", p => { try { if (this.body.onCorrection(p) && this.body.corrections % 50 === 1) log("debug", "movement corrected by the server to", JSON.stringify(this.body.status().pos)); } catch (e) { /* ignore */ } });
+        client.on("respawn", p => { try { for (const pk of this.body.onRespawn(p)) this.client.queue(pk.name, pk.params); if (Number(p.state) === 1) log("info", "respawning at", JSON.stringify(this.body.status().pos)); } catch (e) { log("warn", "respawn:", e?.message || e); } });
         this.spawned = false;
         client.on("spawn", () => {
             log("info", "spawned in the world; announcing to the addon");
@@ -144,7 +151,7 @@ export class Bridge {
             this.reconnectDelay = 5000;
             // every frame is a /scriptevent command; without this the server tells every operator about each one
             this.outQueue.push("/gamerule sendcommandfeedback false");
-            this.sendToAddon({ t: "hello", v: 1, name: opts.username, version: VERSION, providers: Object.keys(PROVIDERS).filter(id => !PROVIDERS[id].needsKey || this.cfg.providers[id]?.apiKey) });
+            this.sendToAddon(this.helloMessage(opts.username));
         });
         client.on("text", p => this.onText(p));
         client.on("disconnect", p => { this.spawned = false; log("warn", "disconnected:", p?.message || p?.reason || ""); this.scheduleReconnect(); });
@@ -166,7 +173,7 @@ export class Bridge {
             if (!this.spawned) return;
             if (this.addonHello) { this.sendToAddon({ t: "ping" }); return; }
             // Not acknowledged yet: say hello again, and after a minute explain the usual causes.
-            this.sendToAddon({ t: "hello", v: 1, name: opts.username, version: VERSION, providers: Object.keys(PROVIDERS).filter(id => !PROVIDERS[id].needsKey || this.cfg.providers[id]?.apiKey) });
+            this.sendToAddon(this.helloMessage(opts.username));
             if (Date.now() - (this.helloSentAt || 0) > 60_000) log("warn", "the addon has not answered yet. On the Realm: (1) make this account an Operator (Realm settings > Members), (2) turn on 'Activate Cheats' in the Realm's game settings, (3) make sure the Real AI behavior pack is active on this world. The hello is retried every 30 s.");
         }, 30_000);
         // The server tells us when a command was refused: that is how a missing operator permission shows up.
@@ -192,6 +199,24 @@ export class Bridge {
             } catch (e) { /* ignore */ }
         });
         this.anchorTimer = setInterval(() => this.anchor(), 5000);
+        // One player_auth_input every tick (50 ms), like a real client: it carries where we are,
+        // which way we walk, and the acknowledgement of teleports. Without it the body stands frozen.
+        this.bodyTimer = setInterval(() => this.bodyTick(), 50);
+    }
+
+    helloMessage(username) {
+        return { t: "hello", v: 2, name: username, version: VERSION, body: 1, providers: Object.keys(PROVIDERS).filter(id => !PROVIDERS[id].needsKey || this.cfg.providers[id]?.apiKey) };
+    }
+
+    bodyTick() {
+        if (!this.client || !this.spawned) return;
+        let params;
+        try { params = this.body.step(); } catch (e) { return; }
+        if (!params) return;
+        try { this.client.queue("player_auth_input", params); this.inputFailures = 0; }
+        catch (e) { if (this.inputFailures++ === 0) log("warn", "could not send movement input:", e?.message || e); }
+        const st = this.body;
+        if (st.target && (Number(st.tick) % 40 === 0)) log("debug", "walking", JSON.stringify(st.status().pos), "->", JSON.stringify(st.target));
     }
 
     // Resolve the Realm ourselves (what bedrock-protocol's realmAuthenticate does) so we can log
@@ -235,7 +260,8 @@ export class Bridge {
     scheduleReconnect() {
         if (this.stopped || this._reconnecting) return;
         this._reconnecting = true;
-        clearInterval(this.pumpTimer); clearInterval(this.pingTimer); clearInterval(this.anchorTimer);
+        clearInterval(this.pumpTimer); clearInterval(this.pingTimer); clearInterval(this.anchorTimer); clearInterval(this.bodyTimer);
+        this.body = new Body();
         const d = this.reconnectDelay;
         this.reconnectDelay = Math.min(120_000, d * 2);
         log("info", `reconnecting in ${Math.round(d / 1000)}s`);
@@ -301,6 +327,19 @@ export class Bridge {
             case "anchor":
                 if (msg.off) { this.anchorTarget = null; break; }
                 this.anchorTarget = msg;
+                break;
+            // The addon walks our body: it knows the terrain and sends the next footing point.
+            case "walk":
+                if (this.body.walkTo({ x: Number(msg.x), y: Number(msg.y), z: Number(msg.z) }, msg.mode)) { if (msg.jump) this.body.jump(); }
+                break;
+            case "stop":
+                this.body.stop();
+                break;
+            case "look":
+                this.body.lookAt({ x: Number(msg.x), y: Number(msg.y), z: Number(msg.z) });
+                break;
+            case "body_status":
+                this.sendToAddon({ t: "body", ...this.body.status() });
                 break;
             case "think":
                 await this.think(msg);

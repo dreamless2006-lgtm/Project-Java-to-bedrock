@@ -14,6 +14,7 @@ import { craftPlan, smeltPlan, isLog, isPlanks } from "./crafting.js";
 import { getWorldConfig } from "./config.js";
 import { presetBlueprint } from "./blueprints.js";
 import { dropsOf, harvestCheck, breakTicks, materialMatcher, isOreId, bestTool } from "./harvest.js";
+import { bridge } from "./transport.js";
 export { presetBlueprint };
 
 const SOURCE = "llm";
@@ -39,6 +40,11 @@ function solid(b) { return !!b && !b.isAir && !b.isLiquid; }
 const walkers = new Map();   // player id -> { bot, target, mode, enterWater, until }
 let walkerTimer = null;
 export function isPlayerBody(bot) { try { return bot.typeId === "minecraft:player"; } catch (e) { return false; } }
+// The bridge account's body moves only through its own client's input packets (Bedrock movement is
+// server-authoritative), so when the bridge says it has a body, the walker sends it footing points
+// instead of teleporting. Other player bodies (tests, older bridges) are still stepped by teleport.
+export function bridgeWalks(bot) { try { return !!(bridge.info && bridge.info.body) && bridge.player && bridge.player.id === bot.id; } catch (e) { return false; } }
+function bridgeSend(obj) { try { return bridge.send(obj); } catch (e) { return false; } }
 function goTo(bot, target, mode = "sprint", prio = PRIO, enterWater = false) {
     if (isPlayerBody(bot)) {
         const w = walkers.get(bot.id);
@@ -49,7 +55,7 @@ function goTo(bot, target, mode = "sprint", prio = PRIO, enterWater = false) {
     }
     requestMove(bot, target, { priority: prio, source: SOURCE, mode, ttl: STEP * 3, enterWater });
 }
-function stopMoving(bot) { if (isPlayerBody(bot)) { walkers.delete(bot.id); return; } releaseMove(bot, SOURCE); }
+function stopMoving(bot) { if (isPlayerBody(bot)) { const w = walkers.get(bot.id); walkers.delete(bot.id); if (w && w.sent) bridgeSend({ t: "stop" }); return; } releaseMove(bot, SOURCE); }
 export function stepPlayerBody(bot, now) {
     const w = walkers.get(bot.id);
     if (!w) return;
@@ -76,6 +82,16 @@ export function stepPlayerBody(bot, now) {
     w.blocked = 0;
     w.slide = slid ? (w.slide || 0) + 1 : 0;
     const yaw = Math.atan2(-dx, dz) * 180 / Math.PI;
+    if (bridgeWalks(bot)) {
+        // hand the next footing point to the bridge every few ticks; its client walks there itself
+        if (now - (w.sentAt || -100) >= 4 || Math.abs(move.y - (w.sentY ?? move.y)) > 0.01) {
+            const ahead = Math.min(1.5, flat);
+            const px = loc.x + (move.x - loc.x) / step * ahead, pz = loc.z + (move.z - loc.z) / step * ahead;
+            bridgeSend({ t: "walk", x: +px.toFixed(2), y: +move.y.toFixed(2), z: +pz.toFixed(2), mode: w.mode === "walk" ? "walk" : "sprint", jump: move.y > loc.y + 0.5 ? 1 : 0 });
+            w.sentAt = now; w.sentY = move.y; w.sent = true;
+        }
+        return;
+    }
     try { bot.teleport(move, { rotation: { x: 0, y: yaw } }); }
     catch (e) { try { bot.teleport(move); } catch (e2) { /* ignore */ } }
 }
@@ -94,7 +110,10 @@ function footing(dim, x, y, z, enterWater) {
     return null;
 }
 export function walkerBlocked(bot) { const w = walkers.get(bot.id); return w ? (w.blocked || 0) : 0; }
-function lookAt(bot, target) { try { faceBlock(bot, target); } catch (e) { /* ignore */ } }
+function lookAt(bot, target) {
+    if (bridgeWalks(bot)) { bridgeSend({ t: "look", x: target.x + 0.5, y: (typeof target.y === "number" ? target.y : bot.location.y) + 0.5, z: target.z + 0.5 }); return; }
+    try { faceBlock(bot, target); } catch (e) { /* ignore */ }
+}
 function cfg() { return getWorldConfig(); }
 
 export function findPlayer(name) {
@@ -306,9 +325,13 @@ function walkProgress(bot, s, target) {
     s.lastPos = { ...bot.location };
     if (s.stuck >= 6 && s.stuck % 6 === 0) {
         if (isPlayerBody(bot)) {
-            const r = clearPath(bot, target);
-            if (r.blockedBy) s.hardBlock = (s.hardBlock || 0) + 1;
-            else if (r.cleared) s.stuck = 0;
+            // dig only when the ground itself is in the way; a body the bridge walks that simply
+            // did not move (network, a slow client) must not leave holes everywhere it stands
+            if (!bridgeWalks(bot) || walkerBlocked(bot) >= 8) {
+                const r = clearPath(bot, target);
+                if (r.blockedBy) s.hardBlock = (s.hardBlock || 0) + 1;
+                else if (r.cleared) s.stuck = 0;
+            }
         } else { try { jump(bot); } catch (e) { /* ignore */ } }
     }
     return s.stuck;

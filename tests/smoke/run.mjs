@@ -365,6 +365,36 @@ check(residents().length === 8, "still 8 residents after the respawn: " + reside
         check(log.chat.some(l => /could not decide: 429/.test(l) && /rate limiting/.test(l)), "a provider failure is explained in chat: " + log.chat.slice(-1));
     }
 }
+// Ninth cycle: a bridge that owns its body. When the bridge's hello says body: 1, the walker stops
+// teleporting the player and sends it footing points (walk), a stop when it is done, and look
+// requests, because a real client only moves through its own input packets.
+{
+    const bb = gate.getBrain(relay.id);
+    if (bb) {
+        fromBridge({ t: "hello", v: 2, name: "RealAIBridge", version: "0.2.0", body: 1, providers: ["anthropic"] });
+        await run(40);
+        relay.teleport({ x: 300.5, y: 64, z: 300.5 });
+        const before = { ...relay.location };
+        const walksBefore = otherMsgs.filter(m => m.t === "walk").length;
+        if (bb.actuator.current?.action.type === "wait") bb.actuator.finish("wait cancelled");
+        bb.actuator.enqueue([{ type: "move_to", x: 310, y: 64, z: 300 }]);
+        await run(60, 5, () => otherMsgs.filter(m => m.t === "walk").length > walksBefore + 2);
+        const walks = otherMsgs.filter(m => m.t === "walk").slice(walksBefore);
+        check(walks.length >= 3 && walks.every(w => typeof w.x === "number" && typeof w.z === "number" && w.y === 64 && /^(walk|sprint)$/.test(w.mode)), `the walker hands footing points to the bridge: ${JSON.stringify(walks[0])}`);
+        check(walks.length && walks[0].x > 300.5 && walks[0].x < 303 && Math.abs(walks[0].z - 300.5) < 0.2, "the first point is a step ahead along the way");
+        check(relay.location.x === before.x && relay.location.z === before.z, "and the player is no longer teleported by the script");
+        // the server moves the body (as the real client would): the walker keeps sending new points ahead
+        relay.teleport({ x: 305.5, y: 64, z: 300.5 });
+        await run(20);
+        const later = otherMsgs.filter(m => m.t === "walk").slice(-1)[0];
+        check(later && later.x > 305.5, "later points start from where the server says the body is: " + JSON.stringify(later));
+        bb.actuator.stopAll();
+        await run(10);
+        check(otherMsgs.some(m => m.t === "stop"), "stopping tells the bridge to stop walking");
+        fromBridge({ t: "hello", v: 1, name: "RealAIBridge", version: "0.1.0", providers: ["anthropic", "openai", "xai", "gemini", "ollama", "lmstudio", "player2"] });
+        await run(40);
+    }
+}
 check(log.errors.length === 0, "no engine-level errors after lifecycle: " + log.errors.slice(0, 3).join(" | "));
 const lateWarnings = log.warnings.filter(w => /\[RealAI\]/.test(w) && !/started|connected|unavailable|quota exceeded/.test(w));
 check(lateWarnings.length === 0, "no late [RealAI] warnings: " + lateWarnings.slice(0, 3).join(" | "));
