@@ -1,0 +1,14 @@
+action.interact.ask=Preguntar
+action.interact.give=Dar
+action.interact.chuanshang=Poner
+action.interact.tuoxia=Quitar
+action.interact.suoding=Bloquear
+action.interact.unlock=Desbloquear
+entity.rg:bot.name=Jugador
+item.spawn_egg.entity.rg:bot.name=Generar Jugador
+item.rg:friend_list_opener=Lista de amigos
+item.rg:friend_list_opener.name=Lista de amigos
+item.rg:friend_request=Solicitud de amistad
+item.rg:friend_request.name=Solicitud de amistad
+pack.name=Real AI
+pack.description=Real AI players (Claude, ChatGPT, Grok, Gemini) living in your world

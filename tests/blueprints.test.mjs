@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { presetBlueprint } from "../packs/AI_Sandbox_BP/scripts/brain/blueprints.js";
+import { presetBlueprint } from "../packs/RealAI_BP/scripts/brain/blueprints.js";
 
 test("house has walls, roof, floor, door gap, windows and furniture", () => {
     const bp = presetBlueprint("house", "minecraft:oak_planks", { width: 5, depth: 5, height: 3 });

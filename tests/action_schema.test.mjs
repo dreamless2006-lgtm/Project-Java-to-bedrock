@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { normalizeReply, validateAction, renderActionDocs, ACTION_NAMES, REPLY_SCHEMA, MAX_ACTIONS } from "../packs/AI_Sandbox_BP/scripts/brain/action_schema.js";
+import { normalizeReply, validateAction, renderActionDocs, ACTION_NAMES, REPLY_SCHEMA, MAX_ACTIONS } from "../packs/RealAI_BP/scripts/brain/action_schema.js";
 
 test("normalizeReply accepts a good reply and clamps", () => {
     const r = normalizeReply({ thought: "x".repeat(500), say: "§chello\nthere", mood: "happy", goal: "build a house", actions: [{ type: "move_to", x: "1", y: 64, z: 3 }, { type: "gather", material: "oak_log", amount: 999 }], remember: ["Steve lives north"] });

@@ -1,0 +1,14 @@
+action.interact.ask=Tanya
+action.interact.give=Beri
+action.interact.chuanshang=Pakai
+action.interact.tuoxia=Lepas
+action.interact.suoding=Kunci
+action.interact.unlock=Buka Kunci
+entity.rg:bot.name=Pemain
+item.spawn_egg.entity.rg:bot.name=Munculkan Pemain
+item.rg:friend_list_opener=Daftar teman
+item.rg:friend_list_opener.name=Daftar teman
+item.rg:friend_request=Permintaan pertemanan
+item.rg:friend_request.name=Permintaan pertemanan
+pack.name=Real AI
+pack.description=Real AI players (Claude, ChatGPT, Grok, Gemini) living in your world

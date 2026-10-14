@@ -1,15 +1,21 @@
-# Setup: Bedrock Dedicated Server (direct HTTP edition)
+# Optional: Bedrock Dedicated Server with in-server HTTP
 
-This is the "bots think inside the server" setup. The server calls the model
-over HTTPS itself; nothing else needs to run.
+The standard `Real-AI-<version>.mcaddon` works on a dedicated server exactly
+like on a Realm: install it and run the bridge (see
+[SETUP-REALM-BRIDGE.md](SETUP-REALM-BRIDGE.md) with `connect.mode: "server"`).
 
-## 1. Build and install the packs
+This page is the alternative for server admins who do not want a bridge
+account: a server-only build where the server calls the model over HTTPS
+itself. It needs beta script modules, so it loads only on a Bedrock
+Dedicated Server with the Beta APIs experiment.
+
+## 1. Build and install the server variant
 
 ```bash
-python3 tools/build_mcaddon.py --edition bds
+python3 tools/build_mcaddon.py --variant server
 ```
 
-Install `dist/ai-sandbox-<version>-bds.mcaddon` into the server world
+Install `dist/Real-AI-<version>-server.mcaddon` into the server world
 (behaviour pack + resource pack), and enable the **Beta APIs** experiment on
 that world (do this on a client, then copy the world to the server, or edit
 the world with experiments on before uploading).
@@ -67,12 +73,12 @@ keys must include the `Bearer ` prefix:
 
 ```json
 {
-  "aisb.apiKey.anthropic": "sk-ant-...",
-  "aisb.apiKey.openai": "Bearer sk-...",
-  "aisb.apiKey.xai": "Bearer xai-...",
-  "aisb.apiKey.gemini": "AIza...",
-  "aisb.apiKey.openrouter": "Bearer sk-or-...",
-  "aisb.apiKey.player2": "<player2 game key>"
+  "realai.apiKey.anthropic": "sk-ant-...",
+  "realai.apiKey.openai": "Bearer sk-...",
+  "realai.apiKey.xai": "Bearer xai-...",
+  "realai.apiKey.gemini": "AIza...",
+  "realai.apiKey.openrouter": "Bearer sk-or-...",
+  "realai.apiKey.player2": "<player2 game key>"
 }
 ```
 
@@ -86,29 +92,32 @@ Any of these override what operators set in the in-game menu:
 
 ```json
 {
-  "aisb.provider": "anthropic",
-  "aisb.model": "claude-haiku-5-5",
-  "aisb.effort": "low",
-  "aisb.maxBrains": 8,
-  "aisb.autonomy": "full",
-  "aisb.chatVolume": 2,
-  "aisb.callByName": false,
-  "aisb.freeBuild": true,
-  "aisb.keepAlive": true,
-  "aisb.serverRules": "Speak English. No griefing.",
-  "aisb.budget.softTokens": 400000,
-  "aisb.budget.hardTokens": 1000000,
-  "aisb.budget.windowMinutes": 60,
-  "aisb.baseUrl.custom": "http://127.0.0.1:1234/v1"
+  "realai.provider": "anthropic",
+  "realai.model": "claude-haiku-5-5",
+  "realai.effort": "low",
+  "realai.worldPlayers": 8,
+  "realai.wildSpawns": false,
+  "realai.maxBrains": 12,
+  "realai.autonomy": "full",
+  "realai.chatVolume": 2,
+  "realai.callByName": false,
+  "realai.freeBuild": true,
+  "realai.keepAlive": true,
+  "realai.serverRules": "Speak English. No griefing.",
+  "realai.budget.softTokens": 400000,
+  "realai.budget.hardTokens": 1000000,
+  "realai.budget.windowMinutes": 60,
+  "realai.baseUrl.custom": "http://127.0.0.1:1234/v1"
 }
 ```
 
 ## 5. Start the server and check
 
-Join, then type `!ai status`. You should see `transport: direct http` and,
-after a bot thinks, token usage in the budget line. If it says bots cannot
-think, the message names the missing key or the module permission.
+Join, then type `!ai status`. You should see `transport: direct http`, the
+residents listed, and, after a bot thinks, token usage in the budget line.
+If it says bots cannot think, the message names the missing key or the
+module permission.
 
 Keeping bots alive when nobody is online: `keepAlive` (Behavior tab) keeps
-ticking areas around up to four bot clusters, so companions keep building and
-parasites keep evolving.
+ticking areas around up to four bot clusters, so residents and companions
+keep building and exploring between your visits.

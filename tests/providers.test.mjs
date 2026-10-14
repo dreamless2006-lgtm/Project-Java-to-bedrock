@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { PROVIDERS, PROVIDER_IDS } from "../packs/AI_Sandbox_BP/scripts/brain/providers/index.js";
+import { PROVIDERS, PROVIDER_IDS } from "../packs/RealAI_BP/scripts/brain/providers/index.js";
 
 const req = {
     systemStable: "You are a bot.",

@@ -2,26 +2,26 @@
 // push chat through the bridge channel, answer its think with a scripted reply, and
 // make sure actions execute without errors.  Run: npm run smoke
 import { world, system, log, advanceTicksAsync, spawnPlayer, worldLoad, ItemStack } from "@minecraft/server";
-import { Reassembler, encodeFrames, packMessage, unpackMessage, DEFAULT_CHUNK } from "../../packs/AI_Sandbox_BP/scripts/brain/frame.js";
+import { Reassembler, encodeFrames, packMessage, unpackMessage, DEFAULT_CHUNK } from "../../packs/RealAI_BP/scripts/brain/frame.js";
 
 const fails = [];
 function check(cond, msg) { if (!cond) fails.push(msg); else console.log("ok -", msg); }
 
-await import("../../packs/AI_Sandbox_BP/scripts/main.js");
+await import("../../packs/RealAI_BP/scripts/main.js");
 worldLoad();
 const overworld = world.getDimension("minecraft:overworld");
 const steve = spawnPlayer("Steve", { x: 0, y: 64, z: 0 });
-const relay = spawnPlayer("AISandboxBridge", { x: 3, y: 64, z: 3 });
+const relay = spawnPlayer("RealAIBridge", { x: 3, y: 64, z: 3 });
 const bot = overworld.spawnEntity("rg:bot", { x: 4, y: 64, z: 0 });
 bot.addTag("good");
 await advanceTicksAsync(400);     // legacy boot (100) + brain start (140) + first discover/caches
 check(log.errors.length === 0, "no errors during boot: " + log.errors.slice(0, 3).join(" | "));
-const brainMod = await import("../../packs/AI_Sandbox_BP/scripts/brain/core.js");
-const gate = await import("../../packs/AI_Sandbox_BP/scripts/brain/gate.js");
+const brainMod = await import("../../packs/RealAI_BP/scripts/brain/core.js");
+const gate = await import("../../packs/RealAI_BP/scripts/brain/gate.js");
 
-// Bridge handshake: the relay account runs /scriptevent aisb:in <frames>
-function fromBridge(obj) { for (const f of encodeFrames("b" + Math.random().toString(36).slice(2, 6), packMessage(obj), DEFAULT_CHUNK)) system.afterEvents.scriptEventReceive.emit({ id: "aisb:in", message: f, sourceType: "Entity", sourceEntity: relay }); }
-fromBridge({ t: "hello", v: 1, name: "AISandboxBridge", version: "0.1.0", providers: ["anthropic"] });
+// Bridge handshake: the relay account runs /scriptevent realai:in <frames>
+function fromBridge(obj) { for (const f of encodeFrames("b" + Math.random().toString(36).slice(2, 6), packMessage(obj), DEFAULT_CHUNK)) system.afterEvents.scriptEventReceive.emit({ id: "realai:in", message: f, sourceType: "Entity", sourceEntity: relay }); }
+fromBridge({ t: "hello", v: 1, name: "RealAIBridge", version: "0.1.0", providers: ["anthropic"] });
 await advanceTicksAsync(250);
 check(gate.isBrainEnabled(), "brains enabled after bridge hello");
 check(bot.nameTag && bot.nameTag.length > 0, "bot got a name: " + bot.nameTag);
@@ -57,7 +57,7 @@ const thinkMsg = await waitThink(msg => msg.messages?.some(m => String(m.content
 check(!!thinkMsg, "addon sent a think request to the bridge");
 if (thinkMsg) {
     check(typeof thinkMsg.sys === "string" && thinkMsg.sys.includes("# Actions you can take"), "think carried the system prompt");
-    check(thinkMsg.sys.includes("other:magic_block") && thinkMsg.sys.includes("srp:grunt"), "system prompt lists modded content");
+    check(thinkMsg.sys.includes("other:magic_block") && thinkMsg.sys.includes("mymod:goblin"), "system prompt lists modded content");
     const obs = thinkMsg.messages[thinkMsg.messages.length - 1].content;
     check(obs.includes("<Steve>") && obs.includes("build us a house"), "observation contains the chat line");
     check(obs.includes("Players nearby") && obs.includes("Steve"), "observation lists Steve nearby");
@@ -82,13 +82,13 @@ if (thinkMsg) {
 }
 check(brain && brain.failures === 0, "no think failures");
 check(log.errors.length === 0, "no engine-level errors: " + log.errors.slice(0, 3).join(" | "));
-const aisbWarnings = log.warnings.filter(w => /\[AISB\]/.test(w) && !/started|connected|unavailable/.test(w));
-check(aisbWarnings.length === 0, "no [AISB] warnings: " + aisbWarnings.slice(0, 3).join(" | "));
+const realaiWarnings = log.warnings.filter(w => /\[RealAI\]/.test(w) && !/started|connected|unavailable/.test(w));
+check(realaiWarnings.length === 0, "no [RealAI] warnings: " + realaiWarnings.slice(0, 3).join(" | "));
 
 // Second cycle: status command and a travel action with a built portal
-const cmds = await import("../../packs/AI_Sandbox_BP/scripts/brain/commands.js");
+const cmds = await import("../../packs/RealAI_BP/scripts/brain/commands.js");
 cmds.handleCommand(steve, "!ai status");
-check(steve.messages.some(m => m.includes("[AI Sandbox]")), "!ai status answered");
+check(steve.messages.some(m => m.includes("[Real AI]")), "!ai status answered");
 cmds.handleCommand(steve, "!ai summon Ellie a cheerful builder");
 console.log("summon reply:", steve.messages.slice(-1)[0]);
 await run(200);
@@ -128,9 +128,50 @@ if (ellie) {
         check(Math.hypot(ellie2.bot.location.x - steve.location.x, ellie2.bot.location.z - steve.location.z) < 6, "Ellie brought to Steve on join: " + JSON.stringify(ellie2.bot.location));
     }
 }
+// Fourth cycle: the resident AI players. They joined when the bridge connected, each announced
+// like a player; they come back with the same names and memories after the world reloads, and
+// they respawn like players when they die.
+const mgr = brainMod.manager;
+await run(200);
+const residents = () => [...gate.allBrains().values()].filter(b => b.settings.mode === "resident" && b.bot.isValid);
+const joinMsgs = () => log.chat.filter(l => l.includes("multiplayer.player.joined")).length;
+check(residents().length === 8, "8 resident AI players have bodies and brains: " + residents().length);
+check(joinMsgs() >= 8, "each resident was announced like a player joining: " + joinMsgs());
+check(mgr.residentsStatus().online === 8 && mgr.residentsStatus().total === 8, "residents status 8/8: " + JSON.stringify(mgr.residentsStatus()));
+const rosterNames = residents().map(b => b.name).sort();
+const rosterPids = residents().map(b => b.bot.getDynamicProperty("rg:p_id")).sort();
+check(new Set(rosterNames).size === 8 && rosterNames.every(n => n && n.length > 0), "resident names are unique: " + rosterNames.join(", "));
+check(residents().every(b => Math.hypot(b.bot.location.x - steve.location.x, b.bot.location.z - steve.location.z) <= 15), "residents spawned within 15 blocks of Steve");
+check(world.getDimension("overworld").getEntities({ type: "rg:bot" }).filter(e => !e.getDynamicProperty("rg:p_id")).length <= 1, "no wild bots from the legacy spawner (wildSpawns off)");
+// the world unloads (bodies vanish without dying), Steve rejoins: same people come back
+const first = residents()[0];
+first.memory.facts.push({ text: "Steve built a house by spawn", at: Date.now(), hits: 1 }); first.saveMemory();
+const firstName = first.name, firstPid = first.bot.getDynamicProperty("rg:p_id");
+for (const b of residents()) b.bot.remove();
+const joinsBefore = joinMsgs();
+world.afterEvents.playerLeave.emit({ playerId: steve.id, playerName: steve.name });
+world.afterEvents.playerSpawn.emit({ player: steve, initialSpawn: true });
+await run(500);
+check(residents().length === 8, "residents rejoined after a reload: " + residents().length);
+check(joinMsgs() - joinsBefore >= 8, "rejoin was announced again: " + (joinMsgs() - joinsBefore));
+check(JSON.stringify(residents().map(b => b.name).sort()) === JSON.stringify(rosterNames), "same names after reload");
+check(JSON.stringify(residents().map(b => b.bot.getDynamicProperty("rg:p_id")).sort()) === JSON.stringify(rosterPids), "same persistent ids after reload");
+const firstAgain = residents().find(b => b.name === firstName);
+check(!!firstAgain && firstAgain.bot.getDynamicProperty("rg:p_id") === firstPid && firstAgain.memory.facts.some(f => f.text.includes("built a house")), "resident memory survived the reload");
+// a stale body of the same resident loads from a far chunk: it is removed, not duplicated
+const stale = overworld.spawnEntity("rg:bot", { x: 500, y: 64, z: 500 }); stale.addTag("rg:awakened_ai"); stale.setDynamicProperty("rg:p_id", firstPid);
+world.afterEvents.entityLoad.emit({ entity: stale });
+await run(20);
+check(!stale.isValid && firstAgain.bot.isValid, "stale duplicate body removed on load");
+// a resident dies: it respawns like a player, same identity
+firstAgain.bot.applyDamage(100, { cause: "fall" });
+await run(260);
+const reborn = residents().find(b => b.name === firstName);
+check(!!reborn && reborn !== firstAgain && reborn.bot.getDynamicProperty("rg:p_id") === firstPid, "dead resident respawned with the same identity");
+check(residents().length === 8, "still 8 residents after the respawn: " + residents().length);
 check(log.errors.length === 0, "no engine-level errors after lifecycle: " + log.errors.slice(0, 3).join(" | "));
-const lateWarnings = log.warnings.filter(w => /\[AISB\]/.test(w) && !/started|connected|unavailable/.test(w));
-check(lateWarnings.length === 0, "no late [AISB] warnings: " + lateWarnings.slice(0, 3).join(" | "));
+const lateWarnings = log.warnings.filter(w => /\[RealAI\]/.test(w) && !/started|connected|unavailable/.test(w));
+check(lateWarnings.length === 0, "no late [RealAI] warnings: " + lateWarnings.slice(0, 3).join(" | "));
 
 if (fails.length) { console.log("\nFAILED:\n - " + fails.join("\n - ")); console.log("\nwarnings:\n" + log.warnings.slice(0, 15).join("\n")); process.exit(1); }
 console.log(`\nsmoke OK (${seenThinks.length} think requests answered, ${log.commands.length} commands)`);

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// AI Sandbox bridge: a Node process that joins the world as a player, so a
+// Real AI bridge: a Node process that joins the world as a player, so a
 // Realm (which cannot make HTTP calls from scripts) still gets real LLM bots.
 //
 //   addon --(chat frames to this player)--> bridge --(HTTPS)--> LLM provider
-//   bridge --(/scriptevent aisb:in frames)--> addon
+//   bridge --(/scriptevent realai:in frames)--> addon
 //
 // The bridge also relays public chat it sees into the addon (so bots hear
 // players even where the Beta chat API is unavailable), keeps the Realm
@@ -13,13 +13,13 @@ import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { randomUUID } from "node:crypto";
-import { PROVIDERS, getProvider } from "../packs/AI_Sandbox_BP/scripts/brain/providers/index.js";
-import { encodeFrames, Reassembler, nextMessageId, packMessage, unpackMessage, DEFAULT_CHUNK } from "../packs/AI_Sandbox_BP/scripts/brain/frame.js";
-import { REPLY_SCHEMA } from "../packs/AI_Sandbox_BP/scripts/brain/action_schema.js";
+import { PROVIDERS, getProvider } from "../packs/RealAI_BP/scripts/brain/providers/index.js";
+import { encodeFrames, Reassembler, nextMessageId, packMessage, unpackMessage, DEFAULT_CHUNK } from "../packs/RealAI_BP/scripts/brain/frame.js";
+import { REPLY_SCHEMA } from "../packs/RealAI_BP/scripts/brain/action_schema.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const VERSION = "0.1.0";
-const SCRIPT_EVENT = "aisb:in";
+const SCRIPT_EVENT = "realai:in";
 const ENV_KEYS = {
     anthropic: "ANTHROPIC_API_KEY", openai: "OPENAI_API_KEY", xai: "XAI_API_KEY", gemini: "GEMINI_API_KEY",
     openrouter: "OPENROUTER_API_KEY", player2: "PLAYER2_API_KEY", player2cloud: "PLAYER2_API_KEY", custom: "CUSTOM_LLM_API_KEY",
@@ -111,7 +111,7 @@ export class Bridge {
     async start() {
         const bedrock = await import("bedrock-protocol");
         const c = this.cfg.connect || {};
-        const opts = { username: c.username || "AISandboxBridge", offline: !!c.offline, profilesFolder: c.profilesFolder || join(HERE, ".auth-cache"), conLog: (...a) => log("info", "[mc]", ...a) };
+        const opts = { username: c.username || "RealAIBridge", offline: !!c.offline, profilesFolder: c.profilesFolder || join(HERE, ".auth-cache"), conLog: (...a) => log("info", "[mc]", ...a) };
         if ((c.mode || "realm") === "realm") {
             const r = c.realm || {};
             if (r.invite) opts.realms = { realmInvite: r.invite };
@@ -175,7 +175,7 @@ export class Bridge {
             if (text.startsWith("!ai")) {
                 // Chat commands still work on the stable API: the bridge runs them for the sender.
                 const safe = `${from}|${text.slice(3).trim()}`.replace(/\s+/g, " ").slice(0, 420);
-                this.outQueue.push(`/scriptevent aisb:cmdfor ${safe}`);
+                this.outQueue.push(`/scriptevent realai:cmdfor ${safe}`);
                 return;
             }
             this.sendToAddon({ t: "chat_in", from, text });
@@ -280,7 +280,7 @@ async function main() {
         process.exit(res.ok ? 0 : 1);
     }
     if (argv.includes("--help")) {
-        console.log(`AI Sandbox bridge ${VERSION}\n  node index.mjs [--config path] [--log debug|info|warn] [--test-provider <id>]\nProviders: ${Object.keys(PROVIDERS).join(", ")}`);
+        console.log(`Real AI bridge ${VERSION}\n  node index.mjs [--config path] [--log debug|info|warn] [--test-provider <id>]\nProviders: ${Object.keys(PROVIDERS).join(", ")}`);
         process.exit(0);
     }
     const bridge = new Bridge(cfg);

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BudgetLedger, estimateCostMillicents, formatUsd } from "../packs/AI_Sandbox_BP/scripts/brain/budget.js";
+import { BudgetLedger, estimateCostMillicents, formatUsd } from "../packs/RealAI_BP/scripts/brain/budget.js";
 
 function mem() { let v; return { get: () => v, set: s => { v = s; } }; }
 

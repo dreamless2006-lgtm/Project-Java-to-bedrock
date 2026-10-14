@@ -1,0 +1,12 @@
+{
+  "resource_pack_name": "real_ai",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "friend_list_opener": {
+      "textures": "textures/items/friends"
+    },
+    "friend_request": {
+      "textures": "textures/items/friend_request"
+    }
+  }
+}

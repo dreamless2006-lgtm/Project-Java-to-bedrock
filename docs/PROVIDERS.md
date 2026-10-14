@@ -1,7 +1,7 @@
 # Providers and models
 
 The brain speaks to any of these through one request/parse pair per wire
-protocol (`packs/AI_Sandbox_BP/scripts/brain/providers/`). Pick the provider
+protocol (`packs/RealAI_BP/scripts/brain/providers/`). Pick the provider
 in the hub (Profiles & Models), with `!ai provider <id> [model]`, or in
 `variables.json` on a dedicated server. Keys never live in the world: they
 come from the server's `secrets.json` or the bridge's `config.json`.
@@ -17,7 +17,7 @@ come from the server's `secrets.json` or the bridge's `config.json`.
 | `openrouter` | OpenRouter (any model) | `openai/gpt-5.4-mini` | Bearer | Good for trying many models with one key. |
 | `ollama` | Ollama (local) | `llama3.1` | none | Needs a model that follows JSON instructions well. |
 | `lmstudio` | LM Studio (local) | loaded model | none | OpenAI-compatible server on port 1234. |
-| `custom` | Any OpenAI-compatible endpoint | set `baseUrl` + `model` | optional | `aisb.baseUrl.custom` variable or bridge config. |
+| `custom` | Any OpenAI-compatible endpoint | set `baseUrl` + `model` | optional | `realai.baseUrl.custom` variable or bridge config. |
 
 Model ids above were checked against the providers' official SDK typings
 (October 2026); if a provider retires one, set a new id in the menu. Prices
@@ -28,12 +28,12 @@ approximate for everything except Anthropic.
 
 ```json
 {
-  "aisb.apiKey.anthropic": "sk-ant-...",
-  "aisb.apiKey.openai": "Bearer sk-...",
-  "aisb.apiKey.xai": "Bearer xai-...",
-  "aisb.apiKey.gemini": "AIza...",
-  "aisb.apiKey.openrouter": "Bearer sk-or-...",
-  "aisb.apiKey.player2cloud": "Bearer <token>"
+  "realai.apiKey.anthropic": "sk-ant-...",
+  "realai.apiKey.openai": "Bearer sk-...",
+  "realai.apiKey.xai": "Bearer xai-...",
+  "realai.apiKey.gemini": "AIza...",
+  "realai.apiKey.openrouter": "Bearer sk-or-...",
+  "realai.apiKey.player2cloud": "Bearer <token>"
 }
 ```
 

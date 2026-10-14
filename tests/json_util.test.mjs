@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { extractJsonText, parseJsonLoose, stableStringify, clip } from "../packs/AI_Sandbox_BP/scripts/brain/json_util.js";
+import { extractJsonText, parseJsonLoose, stableStringify, clip } from "../packs/RealAI_BP/scripts/brain/json_util.js";
 
 test("extracts fenced json", () => {
     const t = 'Sure! ```json\n{"say": "hi", "actions": []}\n``` done';

@@ -18,7 +18,7 @@ export class BlockPermutation {
 }
 
 // ---------------------------------------------------------------- items ---
-const FOOD = new Set(["minecraft:bread", "minecraft:apple", "minecraft:cooked_beef", "minecraft:cooked_porkchop", "minecraft:carrot", "minecraft:baked_potato", "minecraft:sweet_berries", "srp:assimilated_flesh"]);
+const FOOD = new Set(["minecraft:bread", "minecraft:apple", "minecraft:cooked_beef", "minecraft:cooked_porkchop", "minecraft:carrot", "minecraft:baked_potato", "minecraft:sweet_berries", "mymod:jerky"]);
 export class ItemStack {
     constructor(typeId, amount = 1) { if (typeof typeId !== "string") throw new TypeError("bad item id"); this.typeId = typeId; this.amount = amount; this.nameTag = undefined; this._lore = []; }
     getComponent(id) { if (id === "minecraft:food" && FOOD.has(this.typeId)) return { nutrition: 4 }; return undefined; }
@@ -158,7 +158,7 @@ let nextEntityId = 1000;
 export class Entity {
     constructor(typeId, dimension, location) {
         this.id = String(nextEntityId++); this.typeId = typeId; this.dimension = dimension; this.location = location; this.isValid = true;
-        this.nameTag = ""; this.tags = new Set(); this.families = new Set(typeId === "rg:bot" ? ["player", "mob", "bot"] : typeId.startsWith("srp:") ? ["srp", "parasite", "monster", "mob"] : /zombie|skeleton|creeper|spider/.test(typeId) ? ["monster", "mob"] : /cow|pig|sheep|chicken|wolf/.test(typeId) ? ["animal", "mob"] : []);
+        this.nameTag = ""; this.tags = new Set(); this.families = new Set(typeId === "rg:bot" ? ["player", "mob", "bot"] : typeId.startsWith("mymod:") && /goblin|wyvern/.test(typeId) ? ["mymod", "hostile", "monster", "mob"] : /zombie|skeleton|creeper|spider/.test(typeId) ? ["monster", "mob"] : /cow|pig|sheep|chicken|wolf/.test(typeId) ? ["animal", "mob"] : []);
         this.rotation = { x: 0, y: 0 }; this.velocity = { x: 0, y: 0, z: 0 }; this.isOnGround = true; this.isInWater = false; this.isFalling = false; this.isSneaking = false; this.isSleeping = false; this.isClimbing = false; this.isSwimming = false; this.isSprinting = false;
         this.components = { "minecraft:health": new EntityHealthComponent(20), "minecraft:type_family": { hasTypeFamily: f => this.families.has(f), getTypeFamilies: () => [...this.families] } };
         if (typeId === "rg:bot" || typeId === "minecraft:player") { this.components["minecraft:inventory"] = new EntityInventoryComponent(typeId === "rg:bot" ? 24 : 36); this.components["minecraft:equippable"] = new EntityEquippableComponent(); }
@@ -221,9 +221,9 @@ export const world = {
     getDefaultSpawnLocation() { return { x: 0, y: 64, z: 0 }; },
 };
 dynProps(world);
-export const BlockTypes = { getAll: () => ["minecraft:stone", "minecraft:dirt", "minecraft:oak_log", "srp:infested_stain", "srp:parasite_biomass", "other:magic_block"].map(id => ({ id })), get: id => ({ id }) };
-export const ItemTypes = { getAll: () => ["minecraft:stick", "minecraft:bread", "srp:living_sword", "srp:quench", "other:wand"].map(id => ({ id })), get: id => ({ id }) };
-export const EntityTypes = { getAll: () => ["minecraft:zombie", "minecraft:cow", "rg:bot", "srp:grunt", "srp:crux", "other:dragon"].map(id => ({ id })), get: id => ({ id }) };
+export const BlockTypes = { getAll: () => ["minecraft:stone", "minecraft:dirt", "minecraft:oak_log", "mymod:glow_stone", "mymod:crystal_block", "other:magic_block"].map(id => ({ id })), get: id => ({ id }) };
+export const ItemTypes = { getAll: () => ["minecraft:stick", "minecraft:bread", "mymod:flame_sword", "mymod:jerky", "other:wand"].map(id => ({ id })), get: id => ({ id }) };
+export const EntityTypes = { getAll: () => ["minecraft:zombie", "minecraft:cow", "rg:bot", "mymod:goblin", "mymod:wyvern", "other:dragon"].map(id => ({ id })), get: id => ({ id }) };
 export const BiomeTypes = { getAll: () => [] };
 
 // helpers for tests

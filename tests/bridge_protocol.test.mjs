@@ -1,12 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Bridge } from "../bridge/index.mjs";
-import { Reassembler, encodeFrames, packMessage, unpackMessage } from "../packs/AI_Sandbox_BP/scripts/brain/frame.js";
+import { Reassembler, encodeFrames, packMessage, unpackMessage } from "../packs/RealAI_BP/scripts/brain/frame.js";
 
 function makeBridge() {
     const cfg = { _path: "t", defaults: { provider: "openai" }, providers: { openai: { apiKey: "k", model: "m" } }, chatRelay: true, maxConcurrentThinks: 2, requestTimeoutSeconds: 5, anchor: { enabled: false } };
     const b = new Bridge(cfg);
-    b.client = { username: "AISandboxBridge", queue: () => {} };
+    b.client = { username: "RealAIBridge", queue: () => {} };
     return b;
 }
 
@@ -16,8 +16,8 @@ function drain(b) {
     const out = [];
     while (b.outQueue.length) {
         const cmd = b.outQueue.shift();
-        if (cmd.startsWith("/scriptevent aisb:cmdfor ")) continue;
-        assert.ok(cmd.startsWith("/scriptevent aisb:in "), cmd);
+        if (cmd.startsWith("/scriptevent realai:cmdfor ")) continue;
+        assert.ok(cmd.startsWith("/scriptevent realai:in "), cmd);
         assert.ok(cmd.length <= 512, "command too long: " + cmd.length);
         const got = r.push(cmd);
         if (got) out.push(unpackMessage(got.text));
@@ -52,9 +52,9 @@ test("public chat is relayed, !ai lines become relayed commands, own lines are i
     const b = makeBridge();
     b.onText({ type: "chat", source_name: "Steve", message: "hi Zed" });
     b.onText({ type: "chat", source_name: "Steve", message: "!ai status" });
-    b.onText({ type: "chat", source_name: "AISandboxBridge", message: "ignored" });
+    b.onText({ type: "chat", source_name: "RealAIBridge", message: "ignored" });
     const cmds = b.outQueue.slice();
-    assert.ok(cmds.some(c => c.includes("aisb:cmdfor Steve|status")));
+    assert.ok(cmds.some(c => c.includes("realai:cmdfor Steve|status")));
     const msgs = drain(b);
     assert.deepEqual(msgs.filter(m => m && m.t === "chat_in"), [{ t: "chat_in", from: "Steve", text: "hi Zed" }]);
 });

@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { craftPlan, smeltPlan, findRecipes, RECIPES } from "../packs/AI_Sandbox_BP/scripts/brain/crafting.js";
+import { craftPlan, smeltPlan, findRecipes, RECIPES } from "../packs/RealAI_BP/scripts/brain/crafting.js";
 
 test("pack recipes are loaded alongside vanilla", () => {
-    assert.ok(RECIPES.some(r => r.result === "srp:living_sword"));
+    assert.ok(RECIPES.every(r => r.station), "every recipe has a station");
     assert.ok(RECIPES.some(r => r.result === "minecraft:oak_planks"));
 });
 
@@ -32,6 +32,6 @@ test("smelt picks input and fuel", () => {
     assert.equal(smeltPlan("iron", { "minecraft:raw_iron": 5 }).ok, false);
 });
 
-test("srp recipe resolves by loose name", () => {
-    assert.ok(findRecipes("living sword")[0].result === "srp:living_sword");
+test("vanilla recipe resolves by loose name", () => {
+    assert.ok(findRecipes("crafting table")[0].result === "minecraft:crafting_table");
 });

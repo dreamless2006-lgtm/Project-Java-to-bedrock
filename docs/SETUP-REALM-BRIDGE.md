@@ -1,20 +1,20 @@
-# Setup: Realms, LAN worlds and friend worlds (bridge edition)
+# Setup: Realms, LAN worlds, friend worlds and servers (the bridge)
 
 Scripts on Realms and ordinary worlds cannot make HTTP calls, so the model
 runs behind a small Node program, the **bridge**, that joins the world as a
-player and relays thinking. It also keeps the Realm loaded while you are
-away and lets bots hear chat on the stable API.
+player and relays thinking. It also keeps a Realm loaded while you are away
+and lets bots hear chat on the stable API. The same single addon and the
+same bridge work on a dedicated server too.
 
-## 1. Build and install the packs
+## 1. Build and install the addon
 
 ```bash
-python3 tools/build_mcaddon.py            # realm edition (stable API, no experiments)
+python3 tools/build_mcaddon.py
 ```
 
-Install `dist/ai-sandbox-<version>-realm.mcaddon` on the world, then upload
-or "Replace World" on your Realm. No experiments are required for this
-edition. (`--edition realm-beta` adds direct chat events but needs the Beta
-APIs experiment, which Realms may not accept.)
+Import `dist/Real-AI-<version>.mcaddon` (double-click it, or open it from
+the game) and enable both packs on the world, then upload or "Replace World"
+on your Realm. No experiments are required.
 
 ## 2. Prepare a second Microsoft account for the bridge
 
@@ -22,7 +22,7 @@ The bridge logs in with its own Xbox account (it takes one player slot).
 Invite that account to the Realm and make it an **operator** (Realm settings
 > Members, or `/op <gamertag>` in game). The bridge needs operator rights to
 run `/scriptevent`, which is how it answers the addon. Cheats must be
-allowed on the Realm.
+allowed on the world.
 
 ## 3. Configure and run the bridge
 
@@ -58,15 +58,21 @@ role).
 
 ## 4. In game
 
-Join and type `!ai status`. You should see `bridge (<gamertag>)` as the
-transport. If `!ai` lines are not picked up (stable API without the relay),
-use the slash commands instead:
+Join the world. Within a few seconds of the bridge connecting you will see
+"<Name> joined the game" lines as the resident AI players arrive next to
+you (eight by default). `!ai status` shows `bridge (<gamertag>)` as the
+transport and lists the residents. If you joined before the bridge was up,
+the game tells you what is missing and the residents join as soon as the
+bridge connects.
+
+If `!ai` lines are not picked up (stable API without the relay), use the
+slash commands instead:
 
 ```
-/aisb:menu                       open the AI Sandbox menu
-/aisb:talk Ellie "come help me"  whisper to a bot
-/aisb:summon Ellie "a brave builder"
-/aisb:ai "status"
+/realai:menu                       open the Real AI menu
+/realai:talk Ellie "come help me"  whisper to a bot
+/realai:summon Ellie "a brave builder"
+/realai:ai "status"
 ```
 
 The Friend List item (sneak + use) also opens the menu, and sneaking while
@@ -77,5 +83,6 @@ interacting with a bot opens its card.
 A Realm keeps ticking while any player is connected, and the bridge is a
 player. Chunks only simulate near players, so turn on `anchor` and the bridge
 parks itself near the bots' base; the addon also keeps script ticking areas
-around bot clusters. Bots then keep building, mining and fighting the
-parasites while you are away, within your token budget.
+around bot clusters. Bots then keep building, mining and exploring while you
+are away, within your token budget. If their chunks do unload, they simply
+log in again next to you when you come back, with their memories intact.

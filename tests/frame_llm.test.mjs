@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { encodeFrames, decodeFrame, Reassembler, packMessage, unpackMessage } from "../packs/AI_Sandbox_BP/scripts/brain/frame.js";
-import { runThink } from "../packs/AI_Sandbox_BP/scripts/brain/llm_core.js";
+import { encodeFrames, decodeFrame, Reassembler, packMessage, unpackMessage } from "../packs/RealAI_BP/scripts/brain/frame.js";
+import { runThink } from "../packs/RealAI_BP/scripts/brain/llm_core.js";
 
 test("frames round-trip and reassemble out of order", () => {
     const text = packMessage({ t: "think", bot: "Zed", n: "x".repeat(1000), q: "a|b/c" });
@@ -11,7 +11,7 @@ test("frames round-trip and reassemble out of order", () => {
     const r = new Reassembler(() => 0);
     const shuffled = [frames[2], frames[0], frames[3], frames[1], ...frames.slice(4)];
     let out = null;
-    for (const f of shuffled) { const got = r.push("/scriptevent aisb:in " + f); if (got) out = got; }
+    for (const f of shuffled) { const got = r.push("/scriptevent realai:in " + f); if (got) out = got; }
     assert.ok(out);
     assert.equal(out.text, text);
     assert.deepEqual(unpackMessage(out.text).q, "a|b/c");

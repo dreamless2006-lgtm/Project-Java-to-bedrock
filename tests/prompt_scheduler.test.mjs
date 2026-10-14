@@ -1,16 +1,16 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildSystemStable, renderObservation, buildTurn, renderWorldContent, promptHash } from "../packs/AI_Sandbox_BP/scripts/brain/prompt.js";
-import { createSchedulerState, noteEvent, shouldThink, beginThink, endThink, CADENCE } from "../packs/AI_Sandbox_BP/scripts/brain/scheduler.js";
-import { createMemory, addFact } from "../packs/AI_Sandbox_BP/scripts/brain/memory.js";
+import { buildSystemStable, renderObservation, buildTurn, renderWorldContent, promptHash } from "../packs/RealAI_BP/scripts/brain/prompt.js";
+import { createSchedulerState, noteEvent, shouldThink, beginThink, endThink, CADENCE } from "../packs/RealAI_BP/scripts/brain/scheduler.js";
+import { createMemory, addFact } from "../packs/RealAI_BP/scripts/brain/memory.js";
 
 test("system prompt is deterministic and includes persona, actions, world content", () => {
-    const a = buildSystemStable({ persona: { name: "Zed", faction: "good" }, worldContent: renderWorldContent({ blocks: ["srp:infested_stone"], entities: ["srp:grunt", "srp:crux"], descriptions: { "srp:grunt": "small parasite" } }) });
-    const b = buildSystemStable({ persona: { name: "Zed", faction: "good" }, worldContent: renderWorldContent({ blocks: ["srp:infested_stone"], entities: ["srp:crux", "srp:grunt"], descriptions: { "srp:grunt": "small parasite" } }) });
+    const a = buildSystemStable({ persona: { name: "Zed", faction: "good" }, worldContent: renderWorldContent({ blocks: ["mymod:glow_stone"], entities: ["mymod:goblin", "mymod:wyvern"], descriptions: { "mymod:goblin": "small raider" } }) });
+    const b = buildSystemStable({ persona: { name: "Zed", faction: "good" }, worldContent: renderWorldContent({ blocks: ["mymod:glow_stone"], entities: ["mymod:wyvern", "mymod:goblin"], descriptions: { "mymod:goblin": "small raider" } }) });
     assert.equal(a, b);
     assert.ok(a.includes("Name: Zed"));
     assert.ok(a.includes("- gather("));
-    assert.ok(a.includes("srp:grunt (small parasite)"));
+    assert.ok(a.includes("mymod:goblin (small raider)"));
     assert.equal(promptHash(a), promptHash(b));
 });
 

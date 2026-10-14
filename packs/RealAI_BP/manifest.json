@@ -1,0 +1,67 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Real AI",
+    "description": "Real AI players (Claude, ChatGPT, Grok, Gemini, Player2 or local models) that talk, build, mine, craft, fight, trade and travel dimensions in your world. Works on Realms, worlds and servers with the Real AI bridge; no experiments needed.",
+    "uuid": "5f1b8c2e-7a3d-4e91-b6c4-2d8e9f0a1b37",
+    "version": [
+      2,
+      1,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "description": "Real AI bot bodies and data",
+      "type": "data",
+      "uuid": "8c3e1a7f-2b4d-4c65-9e18-7f0a6d3b5c21",
+      "version": [
+        2,
+        1,
+        0
+      ]
+    },
+    {
+      "description": "Real AI scripts: bot reflexes + LLM brains",
+      "type": "script",
+      "language": "javascript",
+      "uuid": "e2a9d4c1-6f3b-4a87-8d25-1c7e0b9f4a63",
+      "version": [
+        2,
+        1,
+        0
+      ],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.10.0"
+    },
+    {
+      "module_name": "@minecraft/server-ui",
+      "version": "2.2.0"
+    },
+    {
+      "uuid": "3d7f2b9a-1e6c-4f08-a5d3-9b2c8e7f1a40",
+      "version": [
+        2,
+        1,
+        0
+      ]
+    }
+  ],
+  "metadata": {
+    "authors": [
+      "Real AI contributors",
+      "AI Multiplayer authors"
+    ],
+    "product_type": "addon"
+  }
+}

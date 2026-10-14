@@ -17,7 +17,7 @@ bin-release/
 # should NOT be excluded as they contain compiler settings and other important
 # information for Eclipse / Flash Builder.
 
-# AI Sandbox build output and local deps
+# Real AI build output and local deps
 dist/
 node_modules/
 bridge/node_modules/

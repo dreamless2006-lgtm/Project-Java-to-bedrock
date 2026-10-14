@@ -1,9 +1,9 @@
 {
-  "name": "ai-sandbox-bedrock",
+  "name": "real-ai",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "AI Sandbox: LLM-driven player bots (Claude, GPT, Grok, Gemini, Player2) for Minecraft Bedrock, merged with AI Multiplayer x Scape and Run: Parasites",
+  "description": "Real AI: LLM-driven player bots (Claude, GPT, Grok, Gemini, Player2) for Minecraft Bedrock, built on the AI Multiplayer bot bodies",
   "scripts": {
     "check": "node tools/check.mjs",
     "test": "node --test",

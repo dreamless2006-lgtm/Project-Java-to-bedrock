@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createMemory, loadMemory, addFact, forgetFact, addEpisode, addChat, notePerson, saveMemory, renderMemory, byteLength, MEMORY_LIMITS } from "../packs/AI_Sandbox_BP/scripts/brain/memory.js";
+import { createMemory, loadMemory, addFact, forgetFact, addEpisode, addChat, notePerson, saveMemory, renderMemory, byteLength, MEMORY_LIMITS } from "../packs/RealAI_BP/scripts/brain/memory.js";
 
 test("facts dedupe and forget", () => {
     const m = createMemory();
