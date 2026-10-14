@@ -83,7 +83,7 @@ but everything else works.
 
 If the game says a pack failed to load, turn on **Settings → Creator → Content Log GUI** and
 reload the world: the log names the file and the problem. When the scripts are running, every
-player sees "[Minepreggo 0.2.0] Add-on loaded." on joining.
+player sees "[Minepreggo 0.2.0] Add-on loaded." and the self-check line on joining.
 
 ## About the original assets
 
@@ -104,12 +104,28 @@ npm install
 cp /path/to/minepreggo-official-1.3.2-mc1.20.1.jar vendor/   # or pass the path to `npm run import`
 npm run import   # extracts textures, sounds, translations, models, animations and icon into packs/
 npm run check    # type-checks scripts, validates JSON against Mojang's schemas and cross-references
-npm test         # unit tests, model conversion checks and pregnancy simulations (players and mobs)
+npm test         # unit tests, model conversion checks, pregnancy simulations (players and mobs) and a
+                 # smoke test that loads the whole script entry point against the mocked game API
 npm run build    # writes dist/minepreggo-<version>.mcaddon
 ```
 
 Open the `.mcaddon` on a device with Minecraft installed (double-click on Windows, "open with
 Minecraft" on mobile), then activate both packs on a world.
+
+### Consoles
+
+The add-on needs no experimental toggles (stable Script API only), keeps every file path under
+the 100-character limit that consoles enforce, and is checked with Microsoft's Creator Tools, so
+it runs on Xbox, PlayStation and Switch like any other add-on. Consoles can't open files from a
+USB stick, so get it onto one of these ways:
+
+- add it to a world on a PC or phone, then share that world through a **Realm** (every platform),
+- on Xbox, download the `.mcaddon` with the console's Edge browser and open it from the downloads,
+- or export the world from a PC/phone as a `.mcworld` and import it the same way.
+
+When you join a world with the add-on, chat shows `[Minepreggo 0.2.0] Add-on loaded.` followed by
+a self-check line (`mobs ✔ items ✔ crops ✔ player visuals ✔`). A red ✘ names the part that
+failed to load; the Content Log GUI (Settings → Creator) has the details on platforms that show it.
 
 ## Layout
 

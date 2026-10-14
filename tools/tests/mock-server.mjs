@@ -6,14 +6,71 @@ const signal = () => {
   return { listeners, subscribe: (fn) => (listeners.push(fn), fn), unsubscribe() {} };
 };
 
+/** Scheduled jobs of system.runTimeout / runInterval; `system.tick()` advances the clock and runs them. */
+const jobs = new Map();
+let nextJobId = 1;
+
 export const system = {
   currentTick: 0,
   run: (fn) => fn(),
-  runTimeout: () => 0,
-  runInterval: () => 0,
+  runTimeout(fn, delay = 0) {
+    const id = nextJobId++;
+    jobs.set(id, { fn, at: system.currentTick + Math.max(1, delay), every: 0 });
+    return id;
+  },
+  runInterval(fn, every = 1) {
+    const id = nextJobId++;
+    jobs.set(id, { fn, at: system.currentTick + Math.max(1, every), every: Math.max(1, every) });
+    return id;
+  },
+  clearRun(id) {
+    jobs.delete(id);
+  },
+  /** Advances `ticks` game ticks, running every due job like the game would. */
+  tick(ticks = 1) {
+    for (let i = 0; i < ticks; i++) {
+      system.currentTick++;
+      for (const [id, job] of [...jobs]) {
+        if (job.at > system.currentTick) continue;
+        if (job.every) job.at = system.currentTick + job.every;
+        else jobs.delete(id);
+        job.fn();
+      }
+    }
+  },
+  jobs,
   beforeEvents: { startup: signal() },
   afterEvents: { scriptEventReceive: signal() },
 };
+
+/** Fires an event signal: every listener is called with `event`. */
+export const emit = (sig, event) => sig.listeners.forEach((fn) => fn(event));
+
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+
+const PACK = new URL('../../packs/behavior/', import.meta.url).pathname;
+function* jsonFiles(dir) {
+  for (const name of readdirSync(dir)) {
+    const path = join(dir, name);
+    if (statSync(path).isDirectory()) yield* jsonFiles(path);
+    else if (name.endsWith('.json')) yield JSON.parse(readFileSync(path, 'utf8'));
+  }
+}
+const idsOf = (folder, key) => new Set([...jsonFiles(join(PACK, folder))].map((j) => j[key]?.description?.identifier).filter(Boolean));
+const registry = (ids) => ({ get: (id) => (ids.has(id) ? { id } : undefined), getAll: () => [...ids].map((id) => ({ id })) });
+export const EntityTypes = registry(idsOf('entities', 'minecraft:entity'));
+export const ItemTypes = registry(idsOf('items', 'minecraft:item'));
+export const BlockTypes = registry(idsOf('blocks', 'minecraft:block'));
+
+/** What system.beforeEvents.startup registered (custom item/block components). */
+export const customComponents = { items: new Map(), blocks: new Map() };
+export function startup() {
+  emit(system.beforeEvents.startup, {
+    itemComponentRegistry: { registerCustomComponent: (id, c) => customComponents.items.set(id, c) },
+    blockComponentRegistry: { registerCustomComponent: (id, c) => customComponents.blocks.set(id, c) },
+  });
+}
 
 let absoluteTime = 0;
 export const world = {
@@ -32,12 +89,20 @@ export const GameMode = { Survival: 'Survival', Creative: 'Creative', Adventure:
 export const InputButton = { Jump: 'Jump', Sneak: 'Sneak' };
 export const ButtonState = { Pressed: 'Pressed', Released: 'Released' };
 
+const ITEM_JSON = new Map([...jsonFiles(join(PACK, 'items'))].map((j) => [j['minecraft:item'].description.identifier, j['minecraft:item']]));
+/** The pack's custom components (with their JSON parameters) of an item. */
+export const customComponentsOf = (typeId) => Object.entries(ITEM_JSON.get(typeId)?.components ?? {}).filter(([k]) => k.startsWith('minepreggo:'));
+
 export class ItemStack {
   constructor(typeId, amount = 1) {
     this.typeId = typeId;
     this.amount = amount;
   }
-  getComponent() {
+  getComponent(id) {
+    if (id === 'minecraft:food') {
+      const food = ITEM_JSON.get(this.typeId)?.components?.['minecraft:food'];
+      return food ? { nutrition: food.nutrition ?? 0, saturationModifier: food.saturation_modifier ?? 0.6, canAlwaysEat: !!food.can_always_eat } : undefined;
+    }
     return undefined;
   }
 }
@@ -55,7 +120,14 @@ export class Player {
   constructor(name = 'Alex') {
     this.name = name;
     this.id = `player-${name}`;
+    this.typeId = 'minecraft:player';
     this.isValid = true;
+    /** entity properties of packs/behavior/entities/player.json */
+    this.entityProperties = new Map([['minepreggo:phase', -1], ['minepreggo:pose', 'none'], ['minepreggo:kick', 0], ['minepreggo:growth', 0], ['minepreggo:gender', 'unset'], ['minepreggo:skin', 'custom']]);
+    /** what the player picks on the next form (undefined = closes it) */
+    this.formSelection = undefined;
+    /** @type {ItemStack | undefined} */
+    this.held = undefined;
     this.isSneaking = false;
     this.isSprinting = false;
     this.isOnGround = true;
@@ -74,12 +146,17 @@ export class Player {
       'minecraft:player.hunger': attribute(20),
       'minecraft:player.saturation': attribute(5),
       'minecraft:inventory': { container: { addItem: (stack) => void self.inventory.push(stack.typeId) } },
-      'minecraft:equippable': { getEquipment: () => undefined, setEquipment: () => true },
+      'minecraft:equippable': {
+        getEquipment: (slot) => (slot === EquipmentSlot.Mainhand ? self.held : undefined),
+        setEquipment: (slot, stack) => (slot === EquipmentSlot.Mainhand ? ((self.held = stack), true) : true),
+      },
     };
     this.dimension = {
+      id: 'minecraft:overworld',
       playSound: () => {},
       spawnParticle: () => {},
       spawnItem: (stack) => self.dropped.push(stack.typeId),
+      getEntities: (options) => world.getDimension('minecraft:overworld').getEntities(options),
     };
     this.onScreenDisplay = { setActionBar: (m) => self.messages.push(m) };
   }
@@ -92,6 +169,14 @@ export class Player {
   setDynamicProperty(key, value) {
     if (value === undefined) this.properties.delete(key);
     else this.properties.set(key, value);
+  }
+  getProperty(id) {
+    if (!this.entityProperties.has(id)) throw new Error(`Unknown property ${id}`);
+    return this.entityProperties.get(id);
+  }
+  setProperty(id, value) {
+    if (!this.entityProperties.has(id)) throw new Error(`Unknown property ${id}`);
+    this.entityProperties.set(id, value);
   }
   sendMessage(m) {
     this.messages.push(m);
@@ -127,7 +212,28 @@ export class Player {
 let nextEntityId = 1;
 const dimensions = new Map();
 world.getDimension = (id) => {
-  if (!dimensions.has(id)) dimensions.set(id, { entities: [], getEntities: () => dimensions.get(id).entities.filter((e) => e.isValid) });
+  if (!dimensions.has(id)) {
+    const dimension = {
+      id,
+      entities: [],
+      spawned: [],
+      playSound: () => {},
+      spawnParticle: () => {},
+      spawnItem: (stack) => dimension.spawned.push(stack.typeId),
+      /** Supports the query options the scripts use: type, location + maxDistance, closest. */
+      getEntities(options = {}) {
+        let found = dimension.entities.filter((e) => e.isValid);
+        if (options.type) found = found.filter((e) => e.typeId === options.type);
+        if (options.location && options.maxDistance !== undefined) {
+          const d = (e) => Math.hypot(e.location.x - options.location.x, e.location.y - options.location.y, e.location.z - options.location.z);
+          found = found.filter((e) => d(e) <= options.maxDistance).sort((a, b) => d(a) - d(b));
+        }
+        if (options.closest !== undefined) found = found.slice(0, options.closest);
+        return found;
+      },
+    };
+    dimensions.set(id, dimension);
+  }
   return dimensions.get(id);
 };
 world.getEntity = (id) => [...world.players, ...[...dimensions.values()].flatMap((d) => d.entities)].find((e) => e.id === id);
