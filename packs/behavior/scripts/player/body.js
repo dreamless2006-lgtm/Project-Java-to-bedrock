@@ -52,12 +52,22 @@ export function playerVisuals(/** @type {PlayerRecord} */ record) {
 
 /** Writes the visuals to the player's entity properties, only the ones that changed. */
 /** Forces the client state for `ticks` (the debug command). */
-export function debugPose(/** @type {PlayerRecord} */ record, /** @type {string} */ pose, /** @type {number} */ kick, ticks = 200) {
+export function debugPose(/** @type {PlayerRecord} */ record, /** @type {string} */ pose, /** @type {number} */ kick, ticks = 200, phase = -1) {
   record.debugUntil = system.currentTick + ticks;
   record.player.setProperty('minepreggo:pose', pose);
   record.player.setProperty('minepreggo:kick', kick);
-  if (Number(record.player.getProperty('minepreggo:phase')) < 0) record.player.setProperty('minepreggo:phase', 5);
+  // The kicks live in the P3+ bellies and P0-P2 are flat: a small or absent belly becomes a big
+  // one for the duration; syncBody restores the real phase afterwards.
+  if (phase >= 0) record.player.setProperty('minepreggo:phase', phase);
+  else if (Number(record.player.getProperty('minepreggo:phase')) < 3) record.player.setProperty('minepreggo:phase', 7);
   record.sentVisuals = {};
+}
+
+/** Ends a forced client state: the real values are written back at once. */
+export function clearDebug(/** @type {PlayerRecord} */ record) {
+  record.debugUntil = 0;
+  record.sentVisuals = {};
+  syncBody(record);
 }
 
 export function syncBody(/** @type {PlayerRecord} */ record) {

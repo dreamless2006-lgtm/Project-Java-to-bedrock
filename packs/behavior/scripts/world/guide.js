@@ -21,7 +21,7 @@ export const CHAPTERS = [
     title: 'Phases P0-P9',
     body:
       'A pregnancy lasts 50 Minecraft days in up to ten phases. One baby is born in P4; more babies mean a later birth (P5 to P9) and a bigger belly.\n\n' +
-      'P0-P2: barely visible. P3: the belly shows and the baby starts to move. P4+: back pain after long walks, heavy walking. P7+: a big belly and hard kicks.\n\n' +
+      'P0 and P1: the belly is flat, as in the mod (nothing to see yet). P2: a small bump. P3: the belly shows and the baby starts to move. P4+: back pain after long walks, heavy walking. P7+: a big belly and hard kicks.\n\n' +
       'Sleeping through the night moves the pregnancy forward. A Potion of Pregnancy Acceleration skips 4 to 17 days at once; the Gradual one makes time run 120-600x faster for 3 minutes.',
   },
   {
@@ -65,7 +65,8 @@ export const CHAPTERS = [
       'Operators can test everything with /scriptevent:\n' +
       'minepreggo:pregnancy start|potion|phase <n>|days <n>|labor|miscarry|accelerate <0-4>|induce <0-4>|pain <name>|symptom <name>|status|end\n' +
       'minepreggo:mob (nearest mob) status|start|potion|phase|labor|induce|feed|starve|...\n' +
-      'minepreggo:gender female|male, minepreggo:skin custom|alex|steve',
+      'minepreggo:gender female|male, minepreggo:skin custom|alex|steve\n' +
+      'minepreggo:debug belly <0-9> shows that belly size on you and the nearest mob for 10 s; minepreggo:debug kick|birth forces the kicks or a birth.',
   },
 ];
 

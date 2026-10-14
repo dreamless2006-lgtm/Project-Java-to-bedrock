@@ -14,6 +14,7 @@ import { BlockTypes, EntityDamageCause, EntityTypes, ItemStack, ItemTypes, Mob, 
 import '../../packs/behavior/scripts/main.js';
 import { selfCheck } from '../../packs/behavior/scripts/world/banner.js';
 import { getRecord } from '../../packs/behavior/scripts/pregnancy/system.js';
+import * as mobs from '../../packs/behavior/scripts/mobs/system.js';
 import { getRecord as getMobRecord, STEP } from '../../packs/behavior/scripts/mobs/system.js';
 import { VERSION } from '../../packs/behavior/scripts/version.js';
 
@@ -506,4 +507,79 @@ test('vanilla attackers impregnate a female player after enough hits, and a coun
   system.tick(320);
   assert.ok(girlRecord.data.pregnancy, 'pregnant 15 seconds later');
   assert.equal(girl.getProperty('minepreggo:phase'), 0);
+});
+
+test('the belly follows the real phase every tick, and the debug command can force any belly size', () => {
+  const tester = new Player('BellyTester');
+  tester.location = { x: 300, y: 64, z: 300 };
+  world.players.push(tester);
+  const girl = new Mob('minepreggo:zombie_girl', { tamed: true });
+  girl.location = { x: 301, y: 64, z: 300 };
+  overworld.entities.push(girl);
+  const record = getMobRecord(girl);
+
+  // A kick forced on a mob without a visible belly shows a big one for the duration.
+  command(tester, 'minepreggo:debug', 'kick');
+  assert.equal(girl.getProperty('minepreggo:phase'), 7, 'the kicks live in the P3+ bellies');
+  assert.equal(tester.getProperty('minepreggo:phase'), 7);
+  system.tick(220);
+  assert.equal(girl.getProperty('minepreggo:phase'), -1, 'not pregnant again once the debug time is over');
+
+  // Any belly size, and the output names the version so a stale pack is recognisable.
+  const out = command(tester, 'minepreggo:debug', 'belly 9');
+  assert.match(out, /belly P9 forced for 10 s on you and the nearest mob/);
+  assert.match(out, new RegExp(`\\[Minepreggo debug ${VERSION.replaceAll('.', '\\.')}\\] you:`));
+  assert.equal(girl.getProperty('minepreggo:phase'), 9);
+  assert.equal(tester.getProperty('minepreggo:phase'), 9);
+  assert.match(command(tester, 'minepreggo:debug', 'belly 42'), /belly P9 forced/);
+  assert.match(command(tester, 'minepreggo:debug', 'belly'), /belly P7 forced/);
+  assert.match(command(tester, 'minepreggo:debug', 'nonsense'), /usage/);
+  assert.match(command(tester, 'minepreggo:debug', 'off'), /you: minecraft:player: phase=-1/);
+  assert.equal(girl.getProperty('minepreggo:phase'), -1, 'off restores the real phase at once');
+  system.tick(STEP + 1);
+  assert.equal(record.data.wild, null, 'a forced belly never turns her into a wild pregnant mob');
+
+  // A pregnant mob whose property was never written (saves from before 0.2.6) gets it back.
+  const { startPregnancy } = mobs;
+  assert.ok(startPregnancy(record, 2));
+  assert.equal(girl.getProperty('minepreggo:phase'), 0);
+  girl.setProperty('minepreggo:phase', -1);
+  system.tick(STEP + 1);
+  assert.equal(girl.getProperty('minepreggo:phase'), 0, 'the property is re-synced from the pregnancy');
+  record.data.pregnancy.phase = 6;
+  system.tick(STEP + 1);
+  assert.equal(girl.getProperty('minepreggo:phase'), 6);
+
+  // A wild pregnant mob keeps her spawn phase too, even when only the variant survived.
+  const wild = new Mob('minepreggo:humanoid_creeper_girl', { variant: 6 });
+  wild.location = { x: 303, y: 64, z: 300 };
+  overworld.entities.push(wild);
+  system.tick(STEP + 1);
+  const wildRecord = getMobRecord(wild);
+  assert.equal(wildRecord.data.wild?.phase, 5);
+  assert.equal(wild.getProperty('minepreggo:phase'), 5);
+  wild.setProperty('minepreggo:phase', -1);
+  delete wildRecord.data.wild.phase;
+  system.tick(STEP + 1);
+  assert.equal(wild.getProperty('minepreggo:phase'), 5, 'recovered from the variant');
+  world.players.pop();
+});
+
+test('the client renders a belly even when the phase property never arrives', () => {
+  for (const file of readdirSync(join(RP, 'entity'))) {
+    const pre = json(join(RP, 'entity', file))['minecraft:client_entity'].description.scripts.pre_animation;
+    if (file === 'player.entity.json') {
+      const i = pre.findIndex((/** @type {string} */ line) => line.startsWith('variable.mp_phase = variable.mp_phase >= 0 ?'));
+      assert.ok(i > 0, 'player phase fallback');
+      assert.ok(pre.slice(0, i).some((/** @type {string} */ line) => line.startsWith('variable.mp_pose =')), 'the pose is known before the fallback');
+      assert.match(pre[i], /mp_pose == 'none'/);
+    } else {
+      const i = pre.findIndex((/** @type {string} */ line) => line.startsWith('v.phase = v.phase >= 0 ?'));
+      assert.ok(i > 0, `${file} phase fallback`);
+      assert.match(pre[i], /q\.variant > 0 \? q\.variant - 1/);
+      assert.match(pre[i], /v\.pregnant_pose \? 5 : -1/);
+      assert.ok(pre.slice(0, i).some((/** @type {string} */ line) => line.startsWith('v.pregnant_pose =')), 'the pose test is known before the fallback');
+      assert.ok(pre.slice(0, i).some((/** @type {string} */ line) => line.startsWith('v.pose =')));
+    }
+  }
 });

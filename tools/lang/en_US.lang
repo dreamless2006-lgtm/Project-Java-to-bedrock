@@ -3,6 +3,8 @@
 minepreggo.gender.body=Choose your character's gender. Only female characters can become pregnant.
 minepreggo.gender.later=Minepreggo needs your character's gender. The choice comes back in 10 seconds, or run /scriptevent minepreggo:gender female (or male).
 minepreggo.pregnancy.controls=You're pregnant! Crouch to check on your pregnancy, crouch and look down to rub your belly, and use a glass bottle when lactating.
+minepreggo.pregnancy.belly=P0: the belly is still flat, as in the mod. It starts to show at P2 and is unmistakable from P3, a few Minecraft days in. Operators can jump ahead: /scriptevent minepreggo:pregnancy phase 5
+minepreggo.mob.pregnancy.started=%s is pregnant (P0). Her belly is flat at first, shows from P2 and is unmistakable from P3. Operators can jump ahead: /scriptevent minepreggo:mob phase 5
 minepreggo.birth.push_hint=Keep tapping sneak to push!
 minepreggo.hud.day=Day %s/%s
 minepreggo.hud.health=Pregnancy health %s

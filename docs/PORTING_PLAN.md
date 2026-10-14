@@ -137,6 +137,12 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   so the belly depends on nothing but the phase property and an animation, both proven in game.
   Every render controller is a plain geometry + texture reference. Per-phase chest and arm
   variants of the mod's models are not merged (the base model's are shown).
+- ✅ **Belly visible under every condition (0.3.1).** The mod's P0/P1 bellies are flat, so a fresh
+  pregnancy shows nothing for days; the start messages and the guide now say so, and
+  `/scriptevent minepreggo:debug belly <0-9>` forces a size for 10 s (kick/birth force a P7 belly
+  when hers is small). The client falls back to `q.variant` and to the pose when the phase
+  property is unknown, and the mob system rewrites the phase property every tick (records from
+  versions that only set it through entity events, wild mobs that only kept the variant).
 - ✅ The non-pregnant models have no belly cubes at all, so a pregnant model that is never
   selected shows nothing to animate. The model index is now `max(phase property + 1, variant)`
   computed in pre_animation (the vanilla ghast pattern with a variable); the phase property is

@@ -152,6 +152,7 @@ export function startPregnancy(record, babies, father = 'HUMAN') {
   record.female.lactation = null; // femaleData.tryRemoveLactation()
   record.save();
   message(record.player, 'minepreggo.pregnancy.controls');
+  message(record.player, 'minepreggo.pregnancy.belly');
   return true;
 }
 

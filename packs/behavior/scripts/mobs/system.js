@@ -183,6 +183,7 @@ export function startPregnancy(record, babies) {
   setPhaseProperty(entity, 0);
   fireEvent(entity, 'minepreggo:set_phase_0');
   particles(entity, 'minecraft:heart_particle', 5);
+  tellOwner(record, 'minepreggo.mob.pregnancy.started');
   record.save();
   return true;
 }
@@ -221,6 +222,7 @@ export function initWild(/** @type {MobRecord} */ record, /** @type {number} */ 
   const totalDays = days.slice(0, phase).reduce((a, b) => a + b, 0) + randomInt(0, days[phase] ?? 0);
   const counts = BABIES_BY_FINAL_PHASE[/** @type {4|5|6|7|8|9} */ (lastPhase)];
   record.data.wild = {
+    phase,
     lastPhase,
     babies: counts[randomInt(0, counts.length - 1)],
     totalDays,
@@ -671,17 +673,46 @@ function clientState(/** @type {MobRecord} */ record) {
 }
 
 /** Forces the client state for `ticks` (the debug command), e.g. a strong fetal movement. */
-export function debugPose(/** @type {MobRecord} */ record, /** @type {string} */ pose, /** @type {number} */ kick, ticks = 200) {
+export function debugPose(/** @type {MobRecord} */ record, /** @type {string} */ pose, /** @type {number} */ kick, ticks = 200, phase = -1) {
   record.debugUntil = system.currentTick + ticks;
   record.entity.setProperty('minepreggo:pose', pose);
   record.entity.setProperty('minepreggo:kick', kick);
+  // The kicks live in the P3+ bellies and P0-P2 are flat: a small or absent belly becomes a big
+  // one for the duration; syncClient restores the real phase afterwards.
+  if (phase >= 0) setPhaseProperty(record.entity, phase);
+  else if (phaseProperty(record.entity) < 3) setPhaseProperty(record.entity, 7);
   record.sent = {};
+}
+
+/** Ends a forced client state: the real phase comes back at once (the wild-spawn detection reads it). */
+export function clearDebug(/** @type {MobRecord} */ record) {
+  record.debugUntil = 0;
+  if (record.entity.isValid) setPhaseProperty(record.entity, expectedPhase(record));
+  record.sent = {};
+}
+
+/** The phase the client must render the belly from: the pregnancy's, a wild mob's spawn phase, or -1. */
+function expectedPhase(/** @type {MobRecord} */ record) {
+  const { data, entity } = record;
+  if (data.pregnancy) return data.pregnancy.phase;
+  if (!data.wild) return -1;
+  if (data.wild.phase === undefined) {
+    // Wild data saved before the phase was recorded: the property or the variant still carries it.
+    data.wild.phase = Math.max(0, phaseProperty(entity), variantOf(entity) - 1);
+    record.dirty = true;
+  }
+  return data.wild.phase;
 }
 
 function syncClient(/** @type {MobRecord} */ record) {
   const { entity, sent } = record;
   if ((record.debugUntil ?? 0) > system.currentTick) return;
   const state = clientState(record);
+  // The belly is rendered from this property alone, so it is kept equal to the real phase every
+  // tick: mobs saved by versions that only set it through entity events never had it, and the
+  // debug command overrides it for a while.
+  const phase = expectedPhase(record);
+  if (phaseProperty(entity) !== phase) setPhaseProperty(entity, phase);
   if (sent.pose !== state.pose) entity.setProperty('minepreggo:pose', (sent.pose = state.pose));
   if (sent.kick !== state.kick) entity.setProperty('minepreggo:kick', (sent.kick = state.kick));
   if (sent.growth !== state.growth) entity.setProperty('minepreggo:growth', (sent.growth = state.growth));
@@ -738,10 +769,12 @@ export function tickMob(/** @type {Entity} */ entity) {
   const { data } = record;
   if (!familyOf(entity)) return record;
   updateMovement(record);
+  if (record.debugUntil && record.debugUntil <= system.currentTick) clearDebug(record);
 
   // A mob that spawned pregnant (natural spawn) gets her hostile pregnancy data once. Her spawn
-  // event added a phase component group, whose variant is phase + 1.
-  if (!data.pregnancy && !data.wild && !data.post) {
+  // event added a phase component group, whose variant is phase + 1. (Not while the debug command
+  // forces a phase on her.)
+  if (!data.pregnancy && !data.wild && !data.post && (record.debugUntil ?? 0) <= system.currentTick) {
     const spawnedPhase = phaseProperty(entity) >= 0 ? phaseProperty(entity) : variantOf(entity) - 1;
     if (spawnedPhase >= 0) initWild(record, spawnedPhase);
   }

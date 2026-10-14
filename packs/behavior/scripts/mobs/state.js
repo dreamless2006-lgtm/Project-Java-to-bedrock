@@ -8,6 +8,7 @@ import { FULLNESS } from './families.js';
 
 /**
  * @typedef {object} WildPregnancy naturally spawned hostile pregnant mob (HostilePregnantPreggoMobDataImpl)
+ * @property {number} [phase] her phase (never changes; the client renders the belly from it)
  * @property {number} lastPhase
  * @property {number} babies
  * @property {number} totalDays days elapsed since P0 (used for death drops)

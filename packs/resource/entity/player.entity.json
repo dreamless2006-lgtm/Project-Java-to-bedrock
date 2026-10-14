@@ -89,6 +89,7 @@
           "variable.riding_y_offset = query.is_riding_any_entity_of_type('minecraft:minecart', 'minecraft:boat', 'minecraft:chest_boat', 'minecraft:strider') ? -3.0 : 0.0;",
           "variable.mp_phase = query.property('minepreggo:phase');",
           "variable.mp_pose = query.property('minepreggo:pose');",
+          "variable.mp_phase = variable.mp_phase >= 0 ? variable.mp_phase : ((variable.mp_pose == 'none' || variable.mp_pose == 'postbirth' || variable.mp_pose == 'miscarriage') ? -1 : 5);",
           "variable.mp_navel = query.property('minepreggo:navel');",
           "v.push = variable.mp_pose == 'birth' ? q.property('minepreggo:growth') : 0.0;",
           "variable.mp_kick = query.property('minepreggo:kick');",

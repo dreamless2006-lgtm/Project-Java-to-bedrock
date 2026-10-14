@@ -53,6 +53,17 @@ world's settings → **Behavior Packs**, remove Minepreggo from the active packs
 so the world picks up the new version (the join message shows which version is running). Without
 this step, new items such as the fetal movement and species potions stay missing.
 
+### If no belly shows
+
+A new pregnancy starts at P0, and the mod's P0 and P1 bellies are flat (a 1-pixel-deep cube flush
+with the body). The bump appears at P2 and the belly is unmistakable from P3, which takes a few
+Minecraft days (24000 ticks each). To see it right away run `/scriptevent minepreggo:debug belly 7`
+(10 seconds, on you and the nearest preggo mob) or jump the pregnancy with
+`/scriptevent minepreggo:pregnancy phase 5` / `/scriptevent minepreggo:mob phase 5`. The client
+also falls back to the vanilla variant and to the pose when the phase property is not available, and
+the behavior pack rewrites the phase property every tick, so mobs impregnated by older versions get
+their belly back.
+
 ### If nothing shows on your character
 
 1. Answer the gender form. It opens when you join and comes back every 10 seconds until you choose;
@@ -144,7 +155,8 @@ The same for the nearest preggo mob within 16 blocks:
 /scriptevent minepreggo:mob phase <0-9> | days <n> | labor | miscarry | feed | starve
 /scriptevent minepreggo:mob pain morning_sickness|fetal_movement|contraction|back_pain
 /scriptevent minepreggo:mob induce <0-4>
-/scriptevent minepreggo:debug [kick|birth|off]          # shows the rendered properties; forces a 10 s kick/birth on you and the nearest mob
+/scriptevent minepreggo:debug belly <0-9>               # shows that belly size for 10 s on you and the nearest mob (P0/P1 are flat by design)
+/scriptevent minepreggo:debug [kick|birth|off]          # shows the rendered properties and the version; forces a 10 s kick/birth (on a P7 belly if hers is small)
 /scriptevent minepreggo:mob symptom craving|milking|belly_rubs
 ```
 
