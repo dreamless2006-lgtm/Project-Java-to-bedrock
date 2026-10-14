@@ -25,7 +25,7 @@ export const DEFAULTS = Object.freeze({
     thinkIdleSec: 45,
     thinkActiveSec: 12,
     maxBrains: 12,              // bots with a live brain at once (companions, then residents, then the closest wild bots)
-    worldPlayers: 8,            // named AI players that live in this world and join when you do
+    worldPlayers: 0,            // extra named AI players (residents) that join when you do; 0 = only the bridge account plays
     wildSpawns: false,          // the original addon's random bot spawner (extra nameless bots far from players)
     mixProviders: true,         // spread residents across every provider that has a key (Claude, GPT, Grok, Gemini...)
     showThoughts: false,        // show each bot's reasoning and chosen actions to nearby players

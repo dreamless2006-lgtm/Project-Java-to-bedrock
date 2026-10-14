@@ -21,6 +21,9 @@ const gate = await import("../../packs/RealAI_BP/scripts/brain/gate.js");
 
 // Bridge handshake: the relay account runs /scriptevent realai:in <frames>
 function fromBridge(obj) { for (const f of encodeFrames("b" + Math.random().toString(36).slice(2, 6), packMessage(obj), DEFAULT_CHUNK)) system.afterEvents.scriptEventReceive.emit({ id: "realai:in", message: f, sourceType: "Entity", sourceEntity: relay }); }
+const { getWorldConfig: gwc, updateWorldConfig: uwc } = await import("../../packs/RealAI_BP/scripts/brain/config.js");
+check(gwc().worldPlayers === 0 && gwc().bridgePlays === true, "by default the bridge account's player is the only AI player");
+uwc({ worldPlayers: 8 });   // the rest of the run covers residents too
 fromBridge({ t: "hello", v: 1, name: "RealAIBridge", version: "0.1.0", providers: ["anthropic", "openai", "xai", "gemini", "ollama", "lmstudio", "player2"] });
 await advanceTicksAsync(250);
 check(gate.isBrainEnabled(), "brains enabled after bridge hello");

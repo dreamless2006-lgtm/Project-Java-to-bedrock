@@ -68,11 +68,12 @@ role).
 
 ## 4. In game
 
-Join the world. Within a few seconds of the bridge connecting you will see
-"<Name> joined the game" lines as the resident AI players arrive next to
-you (eight by default). `!ai status` shows `bridge (<gamertag>)` as the
-transport and lists the residents with the provider and model each one
-thinks with. Put several keys in `config.json` and the residents are spread
+Join the world. When the bridge connects you see its account join like any
+player; a few seconds later that player starts moving and talking: it is
+the AI, playing in person. `!ai status` shows `bridge (<gamertag>)` as the
+transport and lists every thinking player with its provider and model. For
+more AI players, `!ai players <n>` spawns named residents that join next to
+you. Put several keys in `config.json` and the residents are spread
 across them (two on Claude, two on ChatGPT, two on Grok, two on Gemini with
 four keys). `!ai thoughts on` shows their reasoning and decisions in chat. If you joined before the bridge was up,
 the game tells you what is missing and the residents join as soon as the

@@ -51,22 +51,25 @@ pressing feeling shortens the time to their next decision. Self, plans,
 drives and memory persist across reloads. `!ai memory <Name>` shows a bot's
 self and plans; `!ai thoughts on` shows the decisions as they happen.
 
-The bridge account's own player plays too. The account that carries the
-other players' thinking stands in the world as a real player, so it gets a
-brain of its own: it walks by stepping its real body, builds, mines and
-fights through the same actions as everyone else, and its chat goes out as
-genuine chat from that account. Turn it off with `!ai bridgeplays off`.
+The bridge account's player is that AI. It stands in the world as a real
+player, so it gets a brain of its own: it walks by stepping its real body,
+builds, mines and fights through the same actions as any bot, and its chat
+goes out as genuine chat from that account. `!ai bridgeplays off` turns it
+back into a plain relay.
 
 ## Who lives in your world
 
-Eight named AI players live in the world by default (`Behavior` tab or
-`!ai players <n>`, up to 16). A few seconds after you join, each one that is
-not already loaded spawns a few blocks from you, announced in chat like a
-real player joining. They keep the same names, personalities and memories
-across sessions and world reloads, respawn when they die, and get a brain
-before any other bot. `!ai summon Ellie a cheerful builder` adds a companion
-bound to you on top of that; companions respawn next to you (or permadeath,
-your choice) and come to you when you join.
+By default there is exactly one AI player: the bridge account itself. When
+the bridge connects, its player comes alive and plays in person, and when
+it disconnects that player leaves like anyone else. Want a second AI
+player? Run a second bridge with another account (`node index.mjs --config
+other.json`). Want a crowd without more accounts? Residents are named AI
+bodies the addon spawns and keeps: `!ai players <n>` (up to 16) or the
+Behavior tab. They join a few seconds after you do, keep their names,
+personalities and memories across sessions, respawn when they die, and are
+announced in chat like real players. `!ai summon Ellie a cheerful builder`
+adds a companion bound to you; companions respawn next to you (or
+permadeath, your choice) and come to you when you join.
 
 The original addon's random spawner (nameless bots far away from players)
 is off by default; turn on "Extra wild bots" in Behavior if you want more

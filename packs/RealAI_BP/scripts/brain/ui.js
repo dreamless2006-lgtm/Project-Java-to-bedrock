@@ -43,7 +43,9 @@ function showGettingStarted(player) {
     const cfg = getWorldConfig();
     const lines = [
         "§lWhat this is§r\nEvery bot in this world can be a real AI player: it sees, talks, builds, mines, crafts, fights and travels between dimensions. The brain runs on a language model (Claude, ChatGPT, Grok, Gemini, Player2 or a local model).",
-        `§lWho lives here§r\n${cfg.worldPlayers} named AI players live in this world (Behavior tab to change). They join a few seconds after you do, remember you between sessions, respawn like players and keep going when you leave if the world stays loaded. §b!ai status§r lists them.`,
+        cfg.worldPlayers > 0
+            ? `§lWho lives here§r\nThe bridge account's player is an AI player in person, plus ${cfg.worldPlayers} named residents (Behavior tab to change). Residents join a few seconds after you do, remember you between sessions and respawn like players. §b!ai status§r lists everyone.`
+            : "§lWho lives here§r\nThe AI plays through the bridge account's own player: when the bridge connects, that player comes alive and lives here in person. Want more AI players? Set residents in the Behavior tab or §b!ai players 4§r; each extra resident costs model calls.",
         "§lHow to talk to bots§r\nJust chat. Bots within earshot hear you and answer by name. Use §b!ai talk <Name> <message>§r to whisper. Turn on call-by-name in Behavior to make bots answer only when named.",
         `§lHow the brain connects§r\nBuild: ${EDITION}. ${t.direct ? "This server calls the model directly (dedicated server, server-net)." : "This world cannot make HTTP calls itself, so run the Real AI bridge (bridge/ folder, node index.mjs) with your API key; it joins as a player and relays thinking."} ${t.bridgeConnected ? `Bridge connected as ${t.bridgePlayer}.` : "No bridge connected right now."}`,
         "§lCompanions§r\nSummon a bot bound to you with §b!ai summon <Name> [description]§r or from the Companions tab. Companions remember you, follow reasonable requests and keep their memory across deaths.",

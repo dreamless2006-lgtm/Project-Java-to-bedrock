@@ -414,7 +414,7 @@ class BrainManager {
         try {
             const bp = this.bridgePlayer();
             if (bp && cfg.bridgePlays && !brains.has(bp.id)) {
-                const settings = patchBotSettings(bp, { mode: "bridge", persona: { name: bp.name, description: "You are playing in person through the account that also carries the other AI players' thinking. You are a full member of this world, not a helper: live your own life here.", personality: PERSONALITIES[hashStr(bp.name) % PERSONALITIES.length], voice: VOICES[(hashStr(bp.name) >> 3) % VOICES.length] } });
+                const settings = patchBotSettings(bp, { mode: "bridge", persona: { name: bp.name, description: "You are the AI player on this account: this body is yours and you play the game in person, as a full member of this world with a life of your own. You are not a helper or a relay.", personality: PERSONALITIES[hashStr(bp.name) % PERSONALITIES.length], voice: VOICES[(hashStr(bp.name) >> 3) % VOICES.length] } });
                 try { bp.setDynamicProperty(PID_KEY, "bridge-" + bp.name); } catch (e) { /* ignore */ }
                 const b = new BotBrain(bp);
                 b.settings = settings;
