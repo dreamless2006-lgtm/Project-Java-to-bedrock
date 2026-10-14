@@ -8,13 +8,15 @@
 // "minepreggo:gradual_pregnancy_acceleration": { "amplifier": 0-4, "duration": ticks }
 //   Java's instant and timed acceleration effects (world/effect/PregnancyAcceleration and the
 //   gradual timer speed-up); drinking them as a pregnant player applies them to yourself.
+// "minepreggo:fetal_movement_inducer": { "severity": 0-4 }
+//   A Bedrock addition: drinking it while pregnant (P3+) makes the baby kick with that severity.
 // "minepreggo:breast_milk": { "regeneration": ticks }
 //   AbstractBreastMilk clears the drinker's effects like milk does, then the human variant adds
 //   Regeneration.
 
 import { system, world, Player } from '@minecraft/server';
 import { promptGender } from '../player/gender.js';
-import { accelerate, accelerateGradually, getRecord } from './system.js';
+import { accelerate, accelerateGradually, actionbar, getRecord, induceFetalMovement } from './system.js';
 
 const IMPREGNATION_TICKS = 300;
 
@@ -49,6 +51,18 @@ system.beforeEvents.startup.subscribe(({ itemComponentRegistry }) => {
   itemComponentRegistry.registerCustomComponent('minepreggo:gradual_pregnancy_acceleration', {
     onConsume: ({ source }, { params }) => {
       if (source instanceof Player) accelerateGradually(getRecord(source), numberParam(params, 'amplifier'), numberParam(params, 'duration'));
+    },
+  });
+
+  itemComponentRegistry.registerCustomComponent('minepreggo:fetal_movement_inducer', {
+    onConsume: ({ source }, { params }) => {
+      if (!(source instanceof Player)) return;
+      const record = getRecord(source);
+      if (!record.pregnancy) {
+        actionbar(source, 'minepreggo.fetal_movement_inducer.not_pregnant');
+      } else if (!induceFetalMovement(record, numberParam(params, 'severity'))) {
+        actionbar(source, 'minepreggo.fetal_movement_inducer.too_early');
+      }
     },
   });
 

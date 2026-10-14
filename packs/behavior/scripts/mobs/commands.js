@@ -15,6 +15,7 @@ import {
   endPregnancy,
   forceLabor,
   getRecord,
+  induceFetalMovement,
   isTamed,
   setPhase,
   startCommonPain,
@@ -24,7 +25,7 @@ import {
 
 const USAGE = [
   'minepreggo:mob status | start [babies 1-10] | potion [level 0-5] | end',
-  '  phase <0-9> | days <n> | labor | miscarry | feed | starve | accelerate <0-4> | gradual <0-4>',
+  '  phase <0-9> | days <n> | labor | miscarry | feed | starve | accelerate <0-4> | gradual <0-4> | induce <0-4>',
   '  pain <morning_sickness|fetal_movement|contraction|back_pain>',
   '  symptom <craving|milking|belly_rubs>',
 ].join('\n');
@@ -100,6 +101,8 @@ function run(player, message) {
       return accelerate(record, Math.min(4, Math.max(0, n || 0))) ? `Now P${p.phase}, day ${p.daysPassed}.` : 'Not during labor or a miscarriage.';
     case 'gradual':
       return accelerateGradually(record, Math.min(4, Math.max(0, n || 0))) ? 'Gradual acceleration for 3 minutes.' : 'Not during labor or a miscarriage.';
+    case 'induce':
+      return induceFetalMovement(record, Math.min(4, Math.max(0, n || 0))) ? 'The baby kicks.' : 'Fetal movement needs P3+ and no labor or miscarriage.';
     case 'pain': {
       const pain = PAINS[/** @type {keyof typeof PAINS} */ (arg)];
       if (!pain) return USAGE;

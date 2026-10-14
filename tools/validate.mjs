@@ -52,7 +52,6 @@ const schema = (id) => {
   return validate;
 };
 const SCHEMA = {
-  manifest: schema('/client_server/packaging/3.0.0/Manifest.json'),
   item: schema('/server/item/1.26.30/ItemDocument.json'),
   block: schema('/server/block/1.26.20/Blocks.json'),
   trades: schema('/client_server/entity/1.21.30/Trade%20Table.json'),
@@ -130,19 +129,52 @@ function checkItemRef(file, id, { vanilla = true } = {}) {
 }
 
 // --- manifests ---------------------------------------------------------------------------
+/**
+ * Manifest format 2, the one Mojang's samples use and every game version accepts (format 3 with
+ * string versions is only in the newest schema and made the game report "must conform to format
+ * version [2]"). Versions are [major, minor, patch]; script module dependencies use strings.
+ * @param {any} m @param {string} file
+ */
+function checkManifest(m, file) {
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+  const isVersion = (/** @type {unknown} */ v) => Array.isArray(v) && v.length === 3 && v.every((n) => Number.isInteger(n) && n >= 0);
+  if (m?.format_version !== 2) fail(file, 'manifest format_version must be 2');
+  const h = m?.header ?? {};
+  for (const key of ['name', 'description', 'uuid']) if (typeof h[key] !== 'string') fail(file, `header.${key} must be a string`);
+  if (!uuid.test(h.uuid ?? '')) fail(file, 'header.uuid must be a lowercase uuid');
+  if (!isVersion(h.version)) fail(file, 'header.version must be [major, minor, patch]');
+  if (!isVersion(h.min_engine_version)) fail(file, 'header.min_engine_version must be [major, minor, patch]');
+  if (!Array.isArray(m?.modules) || !m.modules.length) fail(file, 'modules must be a non-empty array');
+  for (const mod of m?.modules ?? []) {
+    if (!['data', 'resources', 'script', 'skin_pack', 'world_template'].includes(mod.type)) fail(file, `module type ${JSON.stringify(mod.type)} unknown`);
+    if (!uuid.test(mod.uuid ?? '')) fail(file, 'module uuid must be a lowercase uuid');
+    if (!isVersion(mod.version)) fail(file, 'module version must be [major, minor, patch]');
+    if (mod.type === 'script' && (mod.language !== 'javascript' || typeof mod.entry !== 'string')) fail(file, 'script module needs language "javascript" and an entry');
+  }
+  for (const dep of m?.dependencies ?? []) {
+    if (dep.module_name) {
+      if (!/^@minecraft\/[a-z-]+$/.test(dep.module_name) || !/^\d+\.\d+\.\d+$/.test(String(dep.version))) fail(file, `module dependency ${JSON.stringify(dep)} needs a stable "x.y.z" version`);
+    } else if (!uuid.test(dep.uuid ?? '') || !isVersion(dep.version)) {
+      fail(file, `pack dependency ${JSON.stringify(dep)} needs a uuid and a [major, minor, patch] version`);
+    }
+  }
+  if ('capabilities' in (m ?? {})) fail(file, 'capabilities (experimental features) are not allowed');
+}
 // Bedrock skips a pack whose uuid and version it has already imported, so every release must carry
 // a new version: all of our own versions have to match package.json, which build.mjs names the file after.
 const { version: VERSION } = readJson(join(ROOT, 'package.json'));
+/** Manifest format 2 writes versions as [major, minor, patch]. */
+const VERSION_ARRAY = JSON.stringify(VERSION.split('.').map(Number));
 const manifests = [BP, RP].map((pack) => [join(pack, 'manifest.json'), readJson(join(pack, 'manifest.json'))]);
 const ownUuids = new Set(manifests.map(([, m]) => m?.header?.uuid));
 if (!readFileSync(join(BP, 'scripts/version.js'), 'utf8').includes(`'${VERSION}'`)) {
   fail(join(BP, 'scripts/version.js'), `VERSION should be package.json's ${VERSION}`);
 }
 for (const [file, manifest] of manifests) {
-  check(SCHEMA.manifest, manifest, file, 'manifest');
+  checkManifest(manifest, file);
   const own = [manifest?.header, ...(manifest?.modules ?? []), ...(manifest?.dependencies ?? []).filter((d) => ownUuids.has(d.uuid))];
   for (const entry of own) {
-    if (entry?.version !== VERSION) fail(file, `version ${JSON.stringify(entry?.version)} of ${entry?.uuid} should be package.json's ${VERSION}`);
+    if (JSON.stringify(entry?.version) !== VERSION_ARRAY) fail(file, `version ${JSON.stringify(entry?.version)} of ${entry?.uuid} should be package.json's ${VERSION} as ${VERSION_ARRAY}`);
   }
 }
 

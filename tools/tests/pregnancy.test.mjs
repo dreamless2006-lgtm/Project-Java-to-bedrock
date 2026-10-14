@@ -22,6 +22,7 @@ import {
   accelerate,
   accelerateGradually,
   getRecord,
+  induceFetalMovement,
   onPush,
   setPhase,
   startPregnancy,
@@ -255,4 +256,26 @@ test('pregnancy acceleration skips 7 % of the pregnancy per level, phase by phas
   run(slow, 10);
   assert.ok(g.timer >= 10 * 600, `timer ${g.timer} should run 600x`);
   void player;
+});
+
+test('the fetal movement inducer starts a kick of the chosen intensity from P3 and the model shows it', async () => {
+  const { playerVisuals } = await import('../../packs/behavior/scripts/player/body.js');
+  const player = new Player('Inducer');
+  const record = getRecord(player);
+  record.setGender('female');
+  assert.ok(startPregnancy(record, 1));
+  const p = /** @type {any} */ (record.pregnancy);
+  assert.equal(induceFetalMovement(record, 4), false, 'the baby cannot be felt before P3');
+  assert.ok(setPhase(record, 3));
+  assert.ok(induceFetalMovement(record, 4));
+  assert.equal(p.pain.type, 'FETAL_MOVEMENT');
+  assert.equal(p.pain.severity, 4);
+  assert.equal(p.pain.duration, PHASES[3].fetalMovementTicks * 2, 'duration scales 1 + severity x 0.25');
+  assert.deepEqual([playerVisuals(record).pose, playerVisuals(record).kick], ['fetal_movement', 2], 'III animation');
+  assert.ok(induceFetalMovement(record, 2), 'a stronger or weaker inducement replaces the current one');
+  assert.equal(playerVisuals(record).kick, 1, 'severity 2 is the II animation');
+  assert.ok(induceFetalMovement(record, 0));
+  assert.equal(playerVisuals(record).kick, 0, 'severity 0 is the I animation');
+  p.pain = { type: 'WATER_BREAKING', duration: 100, severity: 0, elapsed: 0 };
+  assert.equal(induceFetalMovement(record, 4), false, 'not during labor');
 });

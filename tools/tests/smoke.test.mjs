@@ -48,11 +48,14 @@ world.players.push(player);
 test('both manifests are console-safe: stable modules, no experiments, matching versions', () => {
   for (const pack of [BP, RP]) {
     const manifest = json(join(pack, 'manifest.json'));
-    assert.equal(manifest.format_version, 3);
-    assert.equal(manifest.header.version, VERSION);
-    assert.equal(manifest.header.min_engine_version, '1.26.30');
+    // Format 2 with [major, minor, patch] arrays is what the game and Mojang's samples use; the
+    // in-game error "must conform to format version [2]" is what other formats produce.
+    assert.equal(manifest.format_version, 2);
+    const version = VERSION.split('.').map(Number);
+    assert.deepEqual(manifest.header.version, version);
+    assert.deepEqual(manifest.header.min_engine_version, [1, 26, 30]);
     assert.ok(!('capabilities' in manifest), 'no capabilities (experimental_custom_ui, script_eval...)');
-    for (const module of manifest.modules) assert.equal(module.version, VERSION);
+    for (const module of manifest.modules) assert.deepEqual(module.version, version);
     for (const dependency of manifest.dependencies ?? []) {
       if (dependency.module_name) assert.doesNotMatch(dependency.version, /beta|preview|internal/, `${dependency.module_name} must be a stable module`);
     }
@@ -270,7 +273,7 @@ test('every entity, item and block the scripts name exists in the pack', () => {
   const named = new Set(scripts.match(/minepreggo:[a-z0-9_]+/g));
   const known = new Set([...ItemTypes.getAll(), ...BlockTypes.getAll(), ...EntityTypes.getAll()].map((t) => t.id));
   // Properties, dynamic properties, events, components, sounds and command ids are not game objects.
-  const notObjects = /^minepreggo:(phase|pose|kick|growth|gender|skin|savage|age|mob|crop|food_effects|impregnation_potion|pregnancy_acceleration|gradual_pregnancy_acceleration|breast_milk|pregnancy|female|pending|set_|on_tame|become_savage|calm_down|spawn_natural|hostile|tamed|tameable|belly_touch|stomach_growls|pregnant_preggo_mob_death|player_|preggo_mob|loaded|selfcheck|hud|gender_)/;
+  const notObjects = /^minepreggo:(phase|pose|kick|growth|gender|skin|savage|age|mob|crop|food_effects|impregnation_potion|pregnancy_acceleration|gradual_pregnancy_acceleration|breast_milk|pregnancy|female|pending|set_|on_tame|become_savage|calm_down|spawn_natural|hostile|tamed|tameable|fetal_movement_inducer|belly_touch|stomach_growls|pregnant_preggo_mob_death|player_|preggo_mob|loaded|selfcheck|hud|gender_)/;
   const missing = [...named].filter((id) => !notObjects.test(id) && !known.has(id) && !id.startsWith('minepreggo:baby_'));
   assert.deepEqual(missing, [], 'ids used by the scripts that no JSON defines');
 });

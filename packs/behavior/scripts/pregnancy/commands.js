@@ -14,6 +14,7 @@ import {
   canExperience,
   endPregnancy,
   getRecord,
+  induceFetalMovement,
   setPhase,
   startCommonPain,
   startPregnancy,
@@ -24,7 +25,7 @@ import {
 
 const USAGE = [
   'minepreggo:pregnancy start [babies 1-10] | potion [level 0-5] | end | status',
-  '  phase <0-9> | days <n> | labor | miscarry | accelerate <0-4> | gradual <0-4>',
+  '  phase <0-9> | days <n> | labor | miscarry | accelerate <0-4> | gradual <0-4> | induce <0-4>',
   '  pain <morning_sickness|fetal_movement|contraction|back_pain>',
   '  symptom <craving|milking|belly_rubs>',
   'minepreggo:gender <female|male>',
@@ -95,6 +96,8 @@ function run(player, message) {
       return ok(accelerate(record, Math.min(4, Math.max(0, Number(arg) || 0))), 'not during labor or a miscarriage');
     case 'gradual':
       return ok(accelerateGradually(record, Math.min(4, Math.max(0, Number(arg) || 0))), 'not during labor or a miscarriage');
+    case 'induce':
+      return ok(induceFetalMovement(record, Math.min(4, Math.max(0, Number(arg) || 0))), 'fetal movement needs P3+ and no labor or miscarriage');
     case 'pain': {
       const pain = /** @type {import('./math.js').CommonPain} */ ((arg ?? '').toUpperCase());
       if (!PAINS.includes(pain)) return USAGE;

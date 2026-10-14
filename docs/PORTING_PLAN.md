@@ -110,6 +110,18 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
 - ✅ Potions of Pregnancy Acceleration I–V and Gradual Pregnancy Acceleration I–V for players
   and mobs (PregnancyPhaseMapHelper.calculateAdvancedPhase ported; Java's float rounding kept:
   level V skips 17 days, not 18).
+- ✅ Fetal movements render as in Java: `BellyAnimation.FETAL_MOVEMENT_P3..P9_{I,II,III}` chosen by
+  phase and pain severity (0 → I, 1–2 → II, 3+ → III, `FetalMovement.getAnimation`), the sitting
+  `KICKING_SIT` body animation when the kick incapacitates a mob (P5+, chance 0.04 × phase), and
+  the II animation on incapacitated hostile mobs. A **Potion of Fetal Movement Inducement I–III**
+  (Bedrock addition, severity 0/2/4, duration = phase base × (1 + severity × 0.25)) triggers one
+  for players and mobs.
+- 🟡 Player visuals need the gender form answered; it now returns every 10 s until it is (Java's
+  join screen cannot be dismissed either). Manifests are format 2 with array versions, the only
+  form the game accepts without "must conform to format version [2]".
+- ⬜ **Zombie girl follow-up (requested):** the Ill Zombie Girl variant (`IllZombieGirl`, P0 model)
+  and the zombie girl GUI/inventory are not ported yet; the hostile, tamable and pregnant zombie
+  girls are.
 - ⬜ Inventory/main menu, combat modes, wander mode, break-blocks and pick-up options (phase 7).
 - ⬜ Ill variants, scientific illager, reproduction witch (phase 5).
 

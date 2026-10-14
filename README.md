@@ -33,6 +33,23 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
   starts labor when the birth phase is complete; a **Potion of Gradual Pregnancy Acceleration**
   makes the pregnancy run 120–600 times faster for three minutes. Both also work on a pregnant
   mob when used on her.
+- Fetal movements start on their own from P3 (the mod's per-phase chances). While one lasts, the
+  belly plays the mod's kick animation for the phase and intensity (I, II or III); late in the
+  pregnancy the kicks bulge out of the belly. A **Potion of Fetal Movement Inducement** (I–III, a
+  Bedrock addition) brings one on at that intensity, for you or, used on her, for a pregnant mob.
+  From P5 a strong kick can make a mob sit down for a moment, as in the mod.
+
+### If nothing shows on your character
+
+1. Answer the gender form. It opens when you join and comes back every 10 seconds until you choose;
+   only a female character gets the chest, belly and jiggle physics. You can also run
+   `/scriptevent minepreggo:gender female`.
+2. Check the self-check line in chat after joining: all four parts must be green. "player visuals ✘"
+   means another pack also overrides the player entity.
+3. Both packs must be active on the world (the behavior pack pulls the resource pack in). If the
+   game says a pack failed to load, your game is older than 1.26.30 or another copy of an older
+   Minepreggo version is still installed: remove it in Settings → Storage and import again.
+4. Chest and belly show in third person and, in first person, when you look down more than 25°.
 
 ### Preggo mobs
 
@@ -61,6 +78,7 @@ Operator commands for testing (cheats on), acting on the player who runs them:
 /scriptevent minepreggo:pregnancy days <n>
 /scriptevent minepreggo:pregnancy symptom craving|milking|belly_rubs
 /scriptevent minepreggo:pregnancy pain morning_sickness|fetal_movement|contraction|back_pain
+/scriptevent minepreggo:pregnancy induce <0-4>          # fetal movement of that severity (P3+)
 /scriptevent minepreggo:pregnancy labor | miscarry | end
 /scriptevent minepreggo:pregnancy accelerate <0-4> | gradual <0-4>
 /scriptevent minepreggo:skin custom|alex|steve
@@ -73,6 +91,7 @@ The same for the nearest preggo mob within 16 blocks:
 /scriptevent minepreggo:mob start [babies 1-10] | potion [level 0-5] | end
 /scriptevent minepreggo:mob phase <0-9> | days <n> | labor | miscarry | feed | starve
 /scriptevent minepreggo:mob pain morning_sickness|fetal_movement|contraction|back_pain
+/scriptevent minepreggo:mob induce <0-4>
 /scriptevent minepreggo:mob symptom craving|milking|belly_rubs
 ```
 

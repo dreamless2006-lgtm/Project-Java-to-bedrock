@@ -235,6 +235,26 @@ export function startCommonPain(record, pain, cause, baseDuration) {
   return true;
 }
 
+/**
+ * Potion of Fetal Movement Inducement (a Bedrock addition): a fetal movement of the chosen severity
+ * (0, 2 or 4 pick the I, II and III belly animations) from P3, lasting the phase's base duration
+ * scaled like PregnancyPainInstanceFactory scales it (1 + severity x 0.25). Replaces a common pain
+ * in progress; impossible during labor or a miscarriage.
+ * @param {PlayerRecord} record
+ * @param {number} severity 0-4
+ */
+export function induceFetalMovement(record, severity) {
+  const p = record.pregnancy;
+  if (!p || !canExperience(p, 'FETAL_MOVEMENT')) return false;
+  if (p.pain && !COMMON_PAINS.has(p.pain.type)) return false;
+  const level = Math.min(4, Math.max(0, Math.round(severity)));
+  const duration = Math.round(baseDurationOf(p, 'FETAL_MOVEMENT') * (1 + level * 0.25));
+  p.pain = { type: 'FETAL_MOVEMENT', duration, severity: level, elapsed: 0 };
+  playSound(record.player, 'minepreggo.pregnancy_pain');
+  record.dirty = true;
+  return true;
+}
+
 /** AbstractPregnancySystem.canExperience: which pains a phase allows when forced. */
 export function canExperience(/** @type {Pregnancy} */ p, /** @type {CommonPain} */ pain) {
   if (pain === 'CONTRACTION') return isAtLastPhase(p);

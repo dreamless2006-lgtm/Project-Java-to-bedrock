@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Mob, Player, ItemStack, system } from './mock-server.mjs';
-import { STEP, accelerate, getRecord, onDeath, onHurt, startPregnancy, tickMob } from '../../packs/behavior/scripts/mobs/system.js';
+import { STEP, accelerate, getRecord, induceFetalMovement, onDeath, onHurt, setPhase, startPregnancy, tickMob } from '../../packs/behavior/scripts/mobs/system.js';
 import { chooseAction } from '../../packs/behavior/scripts/mobs/interact.js';
 import { birthTicks, FAMILIES } from '../../packs/behavior/scripts/mobs/families.js';
 import { PHASES } from '../../packs/behavior/scripts/pregnancy/data.js';
@@ -192,4 +192,27 @@ test('an acceleration potion moves a mob pregnancy forward and can start labor',
   p.daysPassed = 15;
   assert.ok(accelerate(record, 0));
   assert.equal(p.pain?.type, 'WATER_BREAKING');
+});
+
+test('the fetal movement inducer works on a pregnant mob through the interaction and shows on her', () => {
+  const mob = new Mob('minepreggo:ender_woman', { tamed: true });
+  const record = getRecord(/** @type {any} */ (mob));
+  const player = new Player('Owner');
+  record.data.owner = player.id;
+  assert.ok(startPregnancy(record, 1));
+  assert.equal(chooseAction(/** @type {any} */ (player), /** @type {any} */ (mob), new ItemStack('minepreggo:fetal_movement_inducer_potion_2')) !== undefined, true, 'the potion is accepted while pregnant');
+  assert.equal(induceFetalMovement(record, 4), false, 'nothing to feel before P3');
+  assert.ok(setPhase(record, 4));
+  const action = chooseAction(/** @type {any} */ (player), /** @type {any} */ (mob), new ItemStack('minepreggo:fetal_movement_inducer_potion_1'));
+  assert.ok(action);
+  action();
+  const p = /** @type {any} */ (record.data.pregnancy);
+  assert.equal(p.pain.type, 'FETAL_MOVEMENT');
+  assert.equal(p.pain.severity, 2, 'level II is severity 2');
+  assert.equal(p.pain.duration, Math.round(PHASES[4].fetalMovementTicks * 1.5));
+  assert.equal(mob.getProperty('minepreggo:pose'), 'fetal_movement', 'synced to the client at once');
+  assert.equal(mob.getProperty('minepreggo:kick'), 1);
+  run(mob, 1);
+  assert.equal(mob.getProperty('minepreggo:pose'), 'fetal_movement');
+  assert.equal(chooseAction(/** @type {any} */ (player), /** @type {any} */ (mob), new ItemStack('minepreggo:fetal_movement_inducer_potion_0')) !== undefined, true);
 });

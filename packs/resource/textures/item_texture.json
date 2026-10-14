@@ -113,6 +113,9 @@
     "minepreggo_ender_slime_jelly_with_salt": {
       "textures": "textures/minepreggo/item/ender_slime_jelly_with_salt"
     },
+    "minepreggo_fetal_movement_inducer_potion": {
+      "textures": "textures/port/fetal_movement_inducer_potion"
+    },
     "minepreggo_french_fries": {
       "textures": "textures/minepreggo/item/french_fries"
     },

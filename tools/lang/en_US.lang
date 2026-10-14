@@ -1,7 +1,7 @@
 ## Strings added by the Bedrock port, merged into every language by tools/import-jar.mjs.
 ## Add <locale>.lang next to this file to translate them; locales without one use English.
 minepreggo.gender.body=Choose your character's gender. Only female characters can become pregnant.
-minepreggo.gender.later=You can choose later with /scriptevent minepreggo:gender female (or male).
+minepreggo.gender.later=Minepreggo needs your character's gender. The choice comes back in 10 seconds, or run /scriptevent minepreggo:gender female (or male).
 minepreggo.pregnancy.controls=You're pregnant! Crouch to check on your pregnancy, crouch and look down to rub your belly, and use a glass bottle when lactating.
 minepreggo.birth.push_hint=Keep tapping sneak to push!
 minepreggo.hud.day=Day %s/%s
@@ -30,3 +30,8 @@ minepreggo.selfcheck.entities=mobs
 minepreggo.selfcheck.items=items
 minepreggo.selfcheck.blocks=crops
 minepreggo.selfcheck.visuals=player visuals
+item.minepreggo.fetal_movement_inducer_potion_0=Potion of Fetal Movement Inducement
+item.minepreggo.fetal_movement_inducer_potion_1=Potion of Fetal Movement Inducement II
+item.minepreggo.fetal_movement_inducer_potion_2=Potion of Fetal Movement Inducement III
+minepreggo.fetal_movement_inducer.not_pregnant=Only a pregnant woman can feel her baby move.
+minepreggo.fetal_movement_inducer.too_early=Nothing happens: the baby is too small to feel yet (from P3), or labor has begun.

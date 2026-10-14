@@ -70,8 +70,8 @@ function isUsed(inner, file, used) {
 const { version } = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
 for (const pack of PACKS) {
   const manifest = JSON.parse(readFileSync(join(ROOT, pack.dir, 'manifest.json'), 'utf8'));
-  if (manifest.header.version !== version) {
-    console.error(`${pack.dir}/manifest.json is version ${manifest.header.version}, package.json ${version} - run \`npm run check\`.`);
+  if (JSON.stringify(manifest.header.version) !== JSON.stringify(version.split('.').map(Number))) {
+    console.error(`${pack.dir}/manifest.json is version ${JSON.stringify(manifest.header.version)}, package.json ${version} - run \`npm run check\`.`);
     process.exit(1);
   }
 }

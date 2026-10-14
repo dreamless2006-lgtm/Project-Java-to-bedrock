@@ -225,6 +225,26 @@ export function startCommonPain(/** @type {MobRecord} */ record, /** @type {Comm
   return true;
 }
 
+/**
+ * Potion of Fetal Movement Inducement used on a pregnant mob (P3+): a fetal movement of the chosen
+ * severity, with Java's chance of it being strong enough to sit her down from P5.
+ * @param {MobRecord} record
+ * @param {number} severity 0-4
+ */
+export function induceFetalMovement(record, severity) {
+  const p = record.data.pregnancy;
+  if (!p || p.phase < 3) return false;
+  if (p.pain && !COMMON_PAINS.has(p.pain.type)) return false;
+  const level = Math.min(4, Math.max(0, Math.round(severity)));
+  const duration = Math.round(PHASES[p.phase].fetalMovementTicks * (1 + level * 0.25));
+  const incapacitating = p.phase >= 5 && Math.random() < 0.04 * p.phase;
+  playSound(record.entity, 'minepreggo.stomach_growls');
+  p.pain = /** @type {PainInstance & { incapacitating?: boolean }} */ ({ type: 'FETAL_MOVEMENT', duration, severity: level, elapsed: 0, incapacitating });
+  syncClient(record);
+  record.save();
+  return true;
+}
+
 /** P0/P3/P4 tryInitRandomPregnancyPain (a draw every ~21 ticks in Java, every STEP here). */
 function tryInitRandomPain(/** @type {MobRecord} */ record) {
   const p = /** @type {Pregnancy} */ (record.data.pregnancy);

@@ -14,7 +14,7 @@ import { EquipmentSlot, GameMode, ItemStack, system, world } from '@minecraft/se
 import { CRAVING_LANG } from '../pregnancy/data.js';
 import { clampLevel } from '../pregnancy/state.js';
 import { FULLNESS } from './families.js';
-import { accelerate, accelerateGradually, calmDown, familyOf, getRecord, isIncapacitated, isTamed, nameOf, onEatSpicyFood, particles, playSound } from './system.js';
+import { accelerate, accelerateGradually, calmDown, familyOf, getRecord, induceFetalMovement, isIncapacitated, isTamed, nameOf, onEatSpicyFood, particles, playSound } from './system.js';
 
 /** @typedef {import('@minecraft/server').Player} Player */
 /** @typedef {import('@minecraft/server').Entity} Entity */
@@ -23,6 +23,7 @@ import { accelerate, accelerateGradually, calmDown, familyOf, getRecord, isIncap
 const IMPREGNATION_TICKS = 300;
 const POTION = /^minepreggo:impregnation_potion_(\d)$/;
 const ACCELERATION = /^minepreggo:(gradual_)?pregnancy_acceleration_potion_(\d)$/;
+const INDUCER = /^minepreggo:fetal_movement_inducer_potion_(\d)$/;
 
 /** Uses up one of the item in the player's main hand (not in creative), optionally leaving `remainder`. */
 function consumeHeld(/** @type {Player} */ player, /** @type {string | undefined} */ remainder = undefined) {
@@ -170,6 +171,15 @@ export function chooseAction(player, target, item) {
     return () => {
       const applied = acceleration[1] ? accelerateGradually(record, amplifier) : accelerate(record, amplifier);
       if (!applied) return;
+      consumeHeld(player, 'minecraft:glass_bottle');
+      playSound(record.entity, 'random.drink', 0.8);
+    };
+  }
+  const inducer = id?.match(INDUCER);
+  if (inducer) {
+    if (!data.pregnancy) return undefined;
+    return () => {
+      if (!induceFetalMovement(record, Number(inducer[1]) * 2)) return;
       consumeHeld(player, 'minecraft:glass_bottle');
       playSound(record.entity, 'random.drink', 0.8);
     };

@@ -22,11 +22,16 @@ export function promptGender(player, attempt = 0) {
 
   form.show(player).then((response) => {
     if (response.canceled) {
-      // Forms can't open while another screen (or the loading screen) is up; try again shortly.
-      if (response.cancelationReason === FormCancelationReason.UserBusy && attempt < 30 && player.isValid) {
+      if (!player.isValid || getRecord(player).gender) return;
+      if (response.cancelationReason === FormCancelationReason.UserBusy) {
+        // Forms can't open while another screen (or the loading screen) is up; try again shortly.
         system.runTimeout(() => promptGender(player, attempt + 1), 20);
-      } else if (player.isValid) {
-        player.sendMessage({ translate: 'minepreggo.gender.later' });
+      } else {
+        // Closed without choosing: Java's screen can't be dismissed, so the form comes back.
+        if (attempt % 6 === 0) player.sendMessage({ translate: 'minepreggo.gender.later' });
+        system.runTimeout(() => {
+          if (player.isValid && !getRecord(player).gender) promptGender(player, attempt + 1);
+        }, 200);
       }
       return;
     }
