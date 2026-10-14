@@ -8,17 +8,7 @@
         "eyes": "charged_creeper"
       },
       "textures": {
-        "default": "textures/minepreggo/mobs/ender/ender_woman",
-        "p0": "textures/minepreggo/mobs/ender/ender_woman_p0",
-        "p1": "textures/minepreggo/mobs/ender/ender_woman_p1",
-        "p2": "textures/minepreggo/mobs/ender/ender_woman_p2",
-        "p3": "textures/minepreggo/mobs/ender/ender_woman_p3",
-        "p4": "textures/minepreggo/mobs/ender/ender_woman_p4",
-        "p5": "textures/minepreggo/mobs/ender/ender_woman_p5",
-        "p6": "textures/minepreggo/mobs/ender/ender_woman_p6",
-        "p7": "textures/minepreggo/mobs/ender/ender_woman_p7",
-        "p8": "textures/minepreggo/mobs/ender/ender_woman_p8",
-        "p9": "textures/minepreggo/mobs/ender/ender_woman_p9",
+        "default": "textures/minepreggo/mobs/ender/ender_woman_all",
         "eyes": "textures/minepreggo/mobs/ender/eye/ender_woman_eyes",
         "eyes_surprised": "textures/minepreggo/mobs/ender/expressions/monster_ender_woman_eye_surprised",
         "eyes_pain": "textures/minepreggo/mobs/ender/expressions/monster_ender_woman_eye_pain",
@@ -28,22 +18,11 @@
         "eyes_empty": "textures/minepreggo/mobs/ender/expressions/monster_ender_woman_eye_empty"
       },
       "geometry": {
-        "default": "geometry.minepreggo.ender_woman",
-        "p0": "geometry.minepreggo.ender_woman_p0",
-        "p1": "geometry.minepreggo.ender_woman_p1",
-        "p2": "geometry.minepreggo.ender_woman_p2",
-        "p3": "geometry.minepreggo.ender_woman_p3",
-        "p4": "geometry.minepreggo.ender_woman_p4",
-        "p5": "geometry.minepreggo.ender_woman_p5",
-        "p6": "geometry.minepreggo.ender_woman_p6",
-        "p7": "geometry.minepreggo.ender_woman_p7",
-        "p8": "geometry.minepreggo.ender_woman_p8",
-        "p9": "geometry.minepreggo.ender_woman_p9"
+        "default": "geometry.minepreggo.ender_woman_all"
       },
       "scripts": {
         "pre_animation": [
           "v.phase = q.property('minepreggo:phase');",
-          "v.geo = math.max(v.phase + 1, q.variant);",
           "v.pose = q.property('minepreggo:pose');",
           "v.push = v.pose == 'birth' ? q.property('minepreggo:growth') : 0.0;",
           "v.kick = q.property('minepreggo:kick');",
@@ -126,6 +105,9 @@
           "v.jbutt_y = v.phase >= 3 ? -v.jtp : 0.0;"
         ],
         "animate": [
+          {
+            "belly_select": "true"
+          },
           {
             "look_at_target": "!q.is_sitting && (v.pose == 'none' || v.pose == 'belly_rubs')"
           },
@@ -300,7 +282,8 @@
         "fetal_push": "animation.minepreggo.fetal_push_monster",
         "birth_push": "animation.minepreggo.birth_push_monster",
         "navel_prebirth": "animation.minepreggo.navel_prebirth",
-        "navel_birth": "animation.minepreggo.navel_birth"
+        "navel_birth": "animation.minepreggo.navel_birth",
+        "belly_select": "animation.minepreggo.belly_select"
       },
       "render_controllers": [
         "controller.render.minepreggo.preggo_mob",

@@ -8,36 +8,15 @@
         "charged": "charged_creeper"
       },
       "textures": {
-        "default": "textures/minepreggo/mobs/creeper/humanoid/humanoid_creeper_girl",
-        "p0": "textures/minepreggo/mobs/creeper/humanoid/humanoid_creeper_girl_p0",
-        "p1": "textures/minepreggo/mobs/creeper/humanoid/humanoid_creeper_girl_p1",
-        "p2": "textures/minepreggo/mobs/creeper/humanoid/humanoid_creeper_girl_p2",
-        "p3": "textures/minepreggo/mobs/creeper/humanoid/humanoid_creeper_girl_p3",
-        "p4": "textures/minepreggo/mobs/creeper/humanoid/humanoid_creeper_girl_p4",
-        "p5": "textures/minepreggo/mobs/creeper/humanoid/humanoid_creeper_girl_p5",
-        "p6": "textures/minepreggo/mobs/creeper/humanoid/humanoid_creeper_girl_p6",
-        "p7": "textures/minepreggo/mobs/creeper/humanoid/humanoid_creeper_girl_p7",
-        "p8": "textures/minepreggo/mobs/creeper/humanoid/humanoid_creeper_girl_p8",
-        "p9": "textures/minepreggo/mobs/creeper/humanoid/humanoid_creeper_girl_p9",
+        "default": "textures/minepreggo/mobs/creeper/humanoid/humanoid_creeper_girl_all",
         "charged": "textures/minepreggo/mobs/creeper/humanoid/armor"
       },
       "geometry": {
-        "default": "geometry.minepreggo.humanoid_creeper_girl",
-        "p0": "geometry.minepreggo.humanoid_creeper_girl_p0",
-        "p1": "geometry.minepreggo.humanoid_creeper_girl_p1",
-        "p2": "geometry.minepreggo.humanoid_creeper_girl_p2",
-        "p3": "geometry.minepreggo.humanoid_creeper_girl_p3",
-        "p4": "geometry.minepreggo.humanoid_creeper_girl_p4",
-        "p5": "geometry.minepreggo.humanoid_creeper_girl_p5",
-        "p6": "geometry.minepreggo.humanoid_creeper_girl_p6",
-        "p7": "geometry.minepreggo.humanoid_creeper_girl_p7",
-        "p8": "geometry.minepreggo.humanoid_creeper_girl_p8",
-        "p9": "geometry.minepreggo.humanoid_creeper_girl_p9"
+        "default": "geometry.minepreggo.humanoid_creeper_girl_all"
       },
       "scripts": {
         "pre_animation": [
           "v.phase = q.property('minepreggo:phase');",
-          "v.geo = math.max(v.phase + 1, q.variant);",
           "v.pose = q.property('minepreggo:pose');",
           "v.push = v.pose == 'birth' ? q.property('minepreggo:growth') : 0.0;",
           "v.kick = q.property('minepreggo:kick');",
@@ -127,6 +106,9 @@
         "scaleY": "v.scale_y",
         "scaleZ": "v.scale_xz",
         "animate": [
+          {
+            "belly_select": "true"
+          },
           {
             "look_at_target": "!q.is_sitting && (v.pose == 'none' || v.pose == 'belly_rubs')"
           },
@@ -279,7 +261,8 @@
         "jiggle": "animation.minepreggo.jiggle",
         "belly_hidden": "animation.minepreggo.belly_hidden",
         "fetal_push": "animation.minepreggo.fetal_push",
-        "birth_push": "animation.minepreggo.birth_push"
+        "birth_push": "animation.minepreggo.birth_push",
+        "belly_select": "animation.minepreggo.belly_select"
       },
       "render_controllers": [
         "controller.render.minepreggo.humanoid_creeper_girl",

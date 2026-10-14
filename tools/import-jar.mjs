@@ -14,6 +14,8 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { unzipSync, strFromU8 } from 'fflate';
 import { createModelRunner, toBedrockAnimation, toBedrockGeometry } from './lib/java-models.mjs';
+import { mergeBellies, replicateKickBones } from './lib/belly-merge.mjs';
+import { decodePng, encodePng } from './lib/png.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const RP = join(ROOT, 'packs/resource');
@@ -182,6 +184,50 @@ for (const [id, javaClass, method] of MODELS) {
   writeFile(join(modelOut, `${id}.geo.json`), JSON.stringify(geometry, null, 2) + '\n');
 }
 
+// One model per family with every phase's belly (tools/lib/belly-merge.mjs): the belly no longer
+// depends on switching geometry or texture at render time. The composite texture sits below the
+// family's base texture; the per-phase models and textures stay available for tooling.
+const FAMILY_TEXTURES = {
+  zombie_girl: 'mobs/zombie/zombie_girl',
+  humanoid_creeper_girl: 'mobs/creeper/humanoid/humanoid_creeper_girl',
+  monster_creeper_girl: 'mobs/creeper/monster/monster_creeper_girl',
+  ender_woman: 'mobs/ender/ender_woman',
+  humanoid_slime_girl: 'mobs/slime/humanoid/humanoid_slime_girl',
+  monster_slime_girl: 'mobs/slime/monster/monster_slime_girl',
+};
+const readGeometry = (/** @type {string} */ id) => JSON.parse(readFileSync(join(modelOut, `${id}.geo.json`), 'utf8'));
+const readTexture = (/** @type {string} */ path) => (existsSync(join(textureOut, `${path}.png`)) ? decodePng(new Uint8Array(readFileSync(join(textureOut, `${path}.png`)))) : null);
+let mergedCount = 0;
+for (const [family, texture] of Object.entries(FAMILY_TEXTURES)) {
+  const merged = mergeBellies({
+    base: readGeometry(family),
+    phases: Array.from({ length: 10 }, (_, p) => readGeometry(`${family}_p${p}`)),
+    baseTexture: readTexture(texture),
+    phaseTextures: Array.from({ length: 10 }, (_, p) => readTexture(`${texture}_p${p}`)),
+  });
+  writeFile(join(modelOut, `${family}_all.geo.json`), JSON.stringify({ ...merged.geometry, 'minecraft:geometry': [{ ...merged.geometry['minecraft:geometry'][0], description: { ...merged.geometry['minecraft:geometry'][0].description, identifier: `geometry.${MOD_ID}.${family}_all` } }] }, null, 2) + '\n');
+  if (merged.texture) writeFile(join(textureOut, `${texture}_all.png`), encodePng(merged.texture));
+  mergedCount++;
+}
+// The player's belly layers: the custom one keeps its skin UVs (every phase maps onto the skin),
+// the predefined one gets a composite of the Alex "extra" textures.
+for (const [kind, texture, relocate] of [['custom', null, false], ['predefined', 'entity/player/predefined/alex/alex', true]]) {
+  const base = readGeometry(`player_body_${kind}_p5`);
+  base['minecraft:geometry'][0].bones = base['minecraft:geometry'][0].bones.filter((b) => !/^(belly|.*_kick|bellyCube.*)$/.test(b.name));
+  const merged = mergeBellies({
+    base,
+    phases: Array.from({ length: 10 }, (_, p) => readGeometry(`player_body_${kind}_p${p}`)),
+    baseTexture: relocate && texture ? readTexture(`${texture}_extra`) : null,
+    phaseTextures: Array.from({ length: 10 }, (_, p) => (relocate && texture ? readTexture(`${texture}_p${p}_extra`) : null)),
+    relocate,
+  });
+  const g = merged.geometry['minecraft:geometry'][0];
+  g.description.identifier = `geometry.${MOD_ID}.player_belly_${kind}`;
+  writeFile(join(modelOut, `player_belly_${kind}.geo.json`), JSON.stringify(merged.geometry, null, 2) + '\n');
+  if (merged.texture && texture) writeFile(join(textureOut, `${texture}_extra_all.png`), encodePng(merged.texture));
+  mergedCount++;
+}
+
 // Keyframe animations, one file per Java animation class: e.g. ZombieGirlAnimations.IDLE becomes
 // "animation.minepreggo.zombie_girl.idle". They animate the Java part names, which the converted
 // geometry keeps.
@@ -211,7 +257,7 @@ for (const [javaClass, id] of Object.entries(ANIMATIONS)) {
     // Java copies the head's pose onto the hat after animating (hat.copyFrom(head)), overwriting
     // any hat keyframes; the converted hat is a child of the head, so it follows on its own.
     delete bedrock.bones.hat;
-    animations[`animation.${MOD_ID}.${id}.${field.toLowerCase()}`] = bedrock;
+    animations[`animation.${MOD_ID}.${id}.${field.toLowerCase()}`] = replicateKickBones(bedrock);
     animationCount++;
   }
   writeFile(join(animationOut, `${id}.animation.json`), JSON.stringify({ format_version: '1.8.0', animations }, null, 2) + '\n');
@@ -241,6 +287,6 @@ if (logo) {
 }
 
 console.log(
-  `Imported ${MOD_ID} ${modVersion} from ${jarPath}: ${textureCount} textures, ${soundCount} sounds, ${MODELS.length + PLAYER_MODELS.length} models, ${animationCount} animations, ` +
+  `Imported ${MOD_ID} ${modVersion} from ${jarPath}: ${textureCount} textures, ${soundCount} sounds, ${MODELS.length + PLAYER_MODELS.length} models (+${mergedCount} merged), ${animationCount} animations, ` +
     `${locales.length} languages (${locales.sort().join(', ')})${logo ? ', pack icons' : ''}`
 );

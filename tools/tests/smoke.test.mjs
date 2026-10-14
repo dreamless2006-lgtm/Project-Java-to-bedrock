@@ -8,6 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { decodePng } from '../lib/png.mjs';
 import { join, relative } from 'node:path';
 import { BlockTypes, EntityDamageCause, EntityTypes, ItemStack, ItemTypes, Mob, Player, customComponents, customComponentsOf, emit, startup, system, world } from './mock-server.mjs';
 import '../../packs/behavior/scripts/main.js';
@@ -22,6 +23,11 @@ const RP = join(ROOT, 'packs/resource');
 const MAX_PATH = 100; // Minecraft Creator Tools warns above this; long paths break packs on some platforms
 
 const flush = () => new Promise((resolve) => setImmediate(resolve));
+/** Decodes a PNG and offers alpha lookups. */
+function png(/** @type {string} */ path) {
+  const image = decodePng(new Uint8Array(readFileSync(path)));
+  return { ...image, alpha: (/** @type {number} */ x, /** @type {number} */ y) => (x < 0 || y < 0 || x >= image.width || y >= image.height ? 0 : image.data[(y * image.width + x) * 4 + 3]) };
+}
 const json = (/** @type {string} */ path) => JSON.parse(readFileSync(path, 'utf8'));
 const text = (/** @type {unknown} */ message) => JSON.stringify(message);
 
@@ -77,7 +83,7 @@ test('no pack file path is longer than the platforms allow', () => {
     const client = json(join(RP, 'entity', file))['minecraft:client_entity'].description;
     for (const texture of Object.values(client.textures ?? {})) referenced.add(`${texture}.png`);
   }
-  assert.ok(referenced.size > 60, 'entity textures are referenced');
+  assert.ok(referenced.size >= 7, 'entity textures are referenced');
   assert.deepEqual([...referenced].filter((path) => path.length > MAX_PATH), []);
 });
 
@@ -378,37 +384,72 @@ test('a potion used on a mob is not also drunk, and species foods only agree wit
   world.players.pop();
 });
 
-test('every phase component group carries the variant the render controller selects the belly with', () => {
-  for (const path of files(join(BP, 'entities'))) {
-    const entity = json(join(BP, 'entities', path))['minecraft:entity'];
-    if (entity.description.identifier === 'minecraft:player') continue;
-    assert.equal(entity.components['minecraft:variant']?.value, 0, `${path}: not pregnant is variant 0`);
-    for (const [group, components] of Object.entries(entity.component_groups)) {
-      const phase = group.match(/^minepreggo:(?:hostile_)?phase_(\d)$/);
-      if (phase) assert.equal(components['minecraft:variant']?.value, Number(phase[1]) + 1, `${path} ${group}`);
+test('one model per female carries every belly size, textured, selected by animation, no render-time switching', () => {
+  const families = { zombie_girl: 'mobs/zombie/zombie_girl', humanoid_creeper_girl: 'mobs/creeper/humanoid/humanoid_creeper_girl', monster_creeper_girl: 'mobs/creeper/monster/monster_creeper_girl', ender_woman: 'mobs/ender/ender_woman', humanoid_slime_girl: 'mobs/slime/humanoid/humanoid_slime_girl', monster_slime_girl: 'mobs/slime/monster/monster_slime_girl' };
+  const select = json(join(RP, 'animations/preggo_mob.animation.json')).animations['animation.minepreggo.belly_select'];
+  for (const [family, texture] of Object.entries(families)) {
+    const entity = json(join(RP, 'entity', `${family}.entity.json`))['minecraft:client_entity'].description;
+    assert.equal(entity.geometry.default, `geometry.minepreggo.${family}_all`, `${family} renders one model`);
+    assert.equal(entity.textures.default, `textures/minepreggo/${texture}_all`, `${family} renders one texture`);
+    assert.ok(entity.scripts.animate.some((a) => a.belly_select === 'true'), `${family} selects the belly by animation`);
+    const geometry = json(join(RP, 'models/entity/minepreggo', `${family}_all.geo.json`))['minecraft:geometry'][0];
+    const bones = new Map(geometry.bones.map((b) => [b.name, b]));
+    assert.ok(bones.has('belly'), `${family}: belly parent bone`);
+    const image = png(join(RP, `textures/minepreggo/${texture}_all.png`));
+    assert.equal(geometry.description.texture_width, image.width);
+    assert.equal(geometry.description.texture_height, image.height);
+    for (let phase = 0; phase <= 9; phase++) {
+      const group = [...bones.values()].filter((b) => b.name === `belly_p${phase}` || b.name.endsWith(`_p${phase}`));
+      const cubes = group.flatMap((b) => b.cubes ?? []);
+      assert.ok(cubes.length > 0, `${family} P${phase}: belly cubes`);
+      assert.equal(bones.get(`belly_p${phase}`).parent, 'belly');
+      assert.deepEqual(select.bones[`belly_p${phase}`].scale, [`v.phase == ${phase} ? 1.0 : 0.0`, `v.phase == ${phase} ? 1.0 : 0.0`, `v.phase == ${phase} ? 1.0 : 0.0`]);
+      // the belly's front faces have their texture pixels in the composite (the mod leaves a few
+      // small cubes of the slime girls untextured, so the check is per phase, not per cube)
+      let opaque = 0, total = 0;
+      for (const cube of cubes) {
+        const [w, h, d] = cube.size.map((n) => Math.max(1, Math.ceil(n - 1e-6)));
+        for (let y = cube.uv[1] + d; y < cube.uv[1] + d + h; y++) {
+          for (let x = cube.uv[0] + d; x < cube.uv[0] + d + w; x++) {
+            total++;
+            if (image.alpha(x, y) > 0) opaque++;
+          }
+        }
+      }
+      assert.ok(opaque >= total * 0.5, `${family} P${phase}: ${opaque}/${total} textured belly pixels`);
+      if (phase >= 3) {
+        for (const kick of ['front_kick', 'left_kick', 'right_kick']) assert.ok(bones.has(`${kick}_p${phase}`), `${family} P${phase} ${kick}`);
+      }
     }
   }
-  // Every mob render controller selects by query.variant; none reads a property or compares strings.
+  // Every render controller of ours is a plain geometry + texture reference (no arrays, no property reads).
   for (const file of readdirSync(join(RP, 'render_controllers'))) {
-    if (file.startsWith('player')) continue;
     for (const [name, controller] of Object.entries(json(join(RP, 'render_controllers', file)).render_controllers)) {
       const text = JSON.stringify(controller);
       assert.doesNotMatch(text, /q(uery)?\.property/, `${name} reads a property`);
       assert.doesNotMatch(text, /!= '/, `${name} compares strings`);
-      if (typeof controller.geometry === 'string' && controller.geometry.startsWith('Array.')) assert.match(controller.geometry, /\[v\.geo\]$/, name);
+      if (name !== 'controller.render.minepreggo.ender_woman_eyes') assert.ok(!controller.arrays, `${name} uses no arrays`);
     }
   }
+  // The player's belly layers are merged the same way (custom on the skin, predefined on a composite).
+  const player = json(join(RP, 'entity/player.entity.json'))['minecraft:client_entity'].description;
+  assert.equal(player.geometry.minepreggo_belly_custom, 'geometry.minepreggo.player_belly_custom');
+  assert.equal(player.geometry.minepreggo_belly_predefined, 'geometry.minepreggo.player_belly_predefined');
+  for (const kind of ['custom', 'predefined']) {
+    const geometry = json(join(RP, 'models/entity/minepreggo', `player_belly_${kind}.geo.json`))['minecraft:geometry'][0];
+    for (let phase = 0; phase <= 9; phase++) assert.ok(geometry.bones.some((b) => b.name === `belly_p${phase}` && (b.cubes?.length ?? 0) > 0), `player ${kind} P${phase}`);
+  }
+  const extra = png(join(RP, 'textures/minepreggo/entity/player/predefined/alex/alex_extra_all.png'));
+  const predefined = json(join(RP, 'models/entity/minepreggo/player_belly_predefined.geo.json'))['minecraft:geometry'][0];
+  assert.equal(predefined.description.texture_height, extra.height);
+  // The kick animations name the per-phase kick bones.
+  const belly = json(join(RP, 'animations/minepreggo/belly.animation.json')).animations;
+  assert.ok(belly['animation.minepreggo.belly.fetal_movement_p9_iii'].bones.left_kick_p9, 'per-phase kick bones in the mod animations');
+  const pushes = json(join(RP, 'animations/preggo_mob.animation.json')).animations;
+  assert.ok(pushes['animation.minepreggo.fetal_push'].bones.front_kick_p5 && pushes['animation.minepreggo.navel_birth'].bones.front_kick_p9);
   // The player's labor poses are the mod's humanoid animations on the flat labor geometry.
   const labor = json(join(RP, 'animations/minepreggo/player_labor.animation.json')).animations;
-  for (const pose of ['water_breaking', 'prebirth', 'birth', 'postbirth', 'miscarriage']) {
-    assert.ok(labor[`animation.minepreggo.player.labor_${pose}`], pose);
-  }
-  const player = json(join(RP, 'entity/player.entity.json'))['minecraft:client_entity'].description;
-  assert.equal(player.geometry.minepreggo_labor, 'geometry.minepreggo.player_labor');
-  const laborGeometry = json(join(RP, 'models/entity/player_labor.geo.json'))['minecraft:geometry'][0];
-  for (const bone of laborGeometry.bones) {
-    if (['head', 'body', 'rightArm', 'leftArm', 'rightLeg', 'leftLeg'].includes(bone.name)) assert.equal(bone.parent, undefined, `${bone.name} is a root bone like the mod's models`);
-  }
+  for (const pose of ['water_breaking', 'prebirth', 'birth', 'postbirth', 'miscarriage']) assert.ok(labor[`animation.minepreggo.player.labor_${pose}`], pose);
 });
 
 test('the debug command forces a kick the client renders from and reports the properties', () => {
@@ -434,7 +475,6 @@ test('the debug command forces a kick the client renders from and reports the pr
     const monster = /^(monster_|ender_woman)/.test(file);
     assert.ok(Object.values(entity.animations).includes(monster ? 'animation.minepreggo.fetal_push_monster' : 'animation.minepreggo.fetal_push'), `${file} plays its kind's fetal movement`);
     assert.ok(Object.values(entity.animations).includes(monster ? 'animation.minepreggo.birth_push_monster' : 'animation.minepreggo.birth_push'), `${file} plays its kind's birth push`);
-    if (file !== 'player.entity.json') assert.ok(entity.scripts.pre_animation.some((l) => l.startsWith('v.geo = math.max(v.phase + 1, q.variant)')), `${file} picks the model from the phase property`);
   }
   world.players.pop();
 });

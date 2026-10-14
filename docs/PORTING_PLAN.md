@@ -129,6 +129,14 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   Slimes (fall cushioning) effects plus `calculateExtraFallDamageMultiplier`, the species diets
   (`CRAVING_ITEM`: the species' foods are edible only for a mother carrying that species and
   satisfy her cravings) and species milk (`MILK_ITEM`). Baby mobs are still not spawned.
+- ✅ **One model per female with every belly size (0.3.0).** The render-time model/texture switch
+  never showed in game, so `tools/lib/belly-merge.mjs` now merges the ten phase bellies (with their
+  kick bones, suffixed `_pN`) under the `belly` bone of the base model and composites the belly
+  pixels of the ten phase textures into one texture per family (and for the predefined player
+  layer). `animation.minepreggo.belly_select` scales every belly but the current phase's to zero,
+  so the belly depends on nothing but the phase property and an animation, both proven in game.
+  Every render controller is a plain geometry + texture reference. Per-phase chest and arm
+  variants of the mod's models are not merged (the base model's are shown).
 - ✅ The non-pregnant models have no belly cubes at all, so a pregnant model that is never
   selected shows nothing to animate. The model index is now `max(phase property + 1, variant)`
   computed in pre_animation (the vanilla ghast pattern with a variable); the phase property is

@@ -630,6 +630,81 @@
           ]
         }
       }
+    },
+    "animation.minepreggo.player.belly_select": {
+      "loop": true,
+      "bones": {
+        "belly_p0": {
+          "scale": [
+            "variable.mp_phase == 0 ? 1.0 : 0.0",
+            "variable.mp_phase == 0 ? 1.0 : 0.0",
+            "variable.mp_phase == 0 ? 1.0 : 0.0"
+          ]
+        },
+        "belly_p1": {
+          "scale": [
+            "variable.mp_phase == 1 ? 1.0 : 0.0",
+            "variable.mp_phase == 1 ? 1.0 : 0.0",
+            "variable.mp_phase == 1 ? 1.0 : 0.0"
+          ]
+        },
+        "belly_p2": {
+          "scale": [
+            "variable.mp_phase == 2 ? 1.0 : 0.0",
+            "variable.mp_phase == 2 ? 1.0 : 0.0",
+            "variable.mp_phase == 2 ? 1.0 : 0.0"
+          ]
+        },
+        "belly_p3": {
+          "scale": [
+            "variable.mp_phase == 3 ? 1.0 : 0.0",
+            "variable.mp_phase == 3 ? 1.0 : 0.0",
+            "variable.mp_phase == 3 ? 1.0 : 0.0"
+          ]
+        },
+        "belly_p4": {
+          "scale": [
+            "variable.mp_phase == 4 ? 1.0 : 0.0",
+            "variable.mp_phase == 4 ? 1.0 : 0.0",
+            "variable.mp_phase == 4 ? 1.0 : 0.0"
+          ]
+        },
+        "belly_p5": {
+          "scale": [
+            "variable.mp_phase == 5 ? 1.0 : 0.0",
+            "variable.mp_phase == 5 ? 1.0 : 0.0",
+            "variable.mp_phase == 5 ? 1.0 : 0.0"
+          ]
+        },
+        "belly_p6": {
+          "scale": [
+            "variable.mp_phase == 6 ? 1.0 : 0.0",
+            "variable.mp_phase == 6 ? 1.0 : 0.0",
+            "variable.mp_phase == 6 ? 1.0 : 0.0"
+          ]
+        },
+        "belly_p7": {
+          "scale": [
+            "variable.mp_phase == 7 ? 1.0 : 0.0",
+            "variable.mp_phase == 7 ? 1.0 : 0.0",
+            "variable.mp_phase == 7 ? 1.0 : 0.0"
+          ]
+        },
+        "belly_p8": {
+          "scale": [
+            "variable.mp_phase == 8 ? 1.0 : 0.0",
+            "variable.mp_phase == 8 ? 1.0 : 0.0",
+            "variable.mp_phase == 8 ? 1.0 : 0.0"
+          ]
+        },
+        "belly_p9": {
+          "scale": [
+            "variable.mp_phase == 9 ? 1.0 : 0.0",
+            "variable.mp_phase == 9 ? 1.0 : 0.0",
+            "variable.mp_phase == 9 ? 1.0 : 0.0"
+          ]
+        }
+      }
     }
   }
 }

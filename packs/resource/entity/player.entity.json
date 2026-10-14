@@ -55,34 +55,17 @@
         "minepreggo_steve_p8": "textures/minepreggo/entity/player/predefined/alex/alex_p8",
         "minepreggo_steve_p8_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p8_extra",
         "minepreggo_steve_p9": "textures/minepreggo/entity/player/predefined/alex/alex_p9",
-        "minepreggo_steve_p9_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p9_extra"
+        "minepreggo_steve_p9_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p9_extra",
+        "minepreggo_alex_extra_all": "textures/minepreggo/entity/player/predefined/alex/alex_extra_all"
       },
       "geometry": {
         "default": "geometry.humanoid.custom",
         "cape": "geometry.cape",
-        "minepreggo_body_custom_p0": "geometry.minepreggo.player_body_custom_p0",
-        "minepreggo_body_predefined_p0": "geometry.minepreggo.player_body_predefined_p0",
-        "minepreggo_body_custom_p1": "geometry.minepreggo.player_body_custom_p1",
-        "minepreggo_body_predefined_p1": "geometry.minepreggo.player_body_predefined_p1",
-        "minepreggo_body_custom_p2": "geometry.minepreggo.player_body_custom_p2",
-        "minepreggo_body_predefined_p2": "geometry.minepreggo.player_body_predefined_p2",
-        "minepreggo_body_custom_p3": "geometry.minepreggo.player_body_custom_p3",
-        "minepreggo_body_predefined_p3": "geometry.minepreggo.player_body_predefined_p3",
-        "minepreggo_body_custom_p4": "geometry.minepreggo.player_body_custom_p4",
-        "minepreggo_body_predefined_p4": "geometry.minepreggo.player_body_predefined_p4",
-        "minepreggo_body_custom_p5": "geometry.minepreggo.player_body_custom_p5",
-        "minepreggo_body_predefined_p5": "geometry.minepreggo.player_body_predefined_p5",
-        "minepreggo_body_custom_p6": "geometry.minepreggo.player_body_custom_p6",
-        "minepreggo_body_predefined_p6": "geometry.minepreggo.player_body_predefined_p6",
-        "minepreggo_body_custom_p7": "geometry.minepreggo.player_body_custom_p7",
-        "minepreggo_body_predefined_p7": "geometry.minepreggo.player_body_predefined_p7",
-        "minepreggo_body_custom_p8": "geometry.minepreggo.player_body_custom_p8",
-        "minepreggo_body_predefined_p8": "geometry.minepreggo.player_body_predefined_p8",
-        "minepreggo_body_custom_p9": "geometry.minepreggo.player_body_custom_p9",
-        "minepreggo_body_predefined_p9": "geometry.minepreggo.player_body_predefined_p9",
         "minepreggo_boobs_custom": "geometry.minepreggo.player_boobs_custom",
         "minepreggo_boobs_predefined": "geometry.minepreggo.player_boobs_predefined",
-        "minepreggo_labor": "geometry.minepreggo.player_labor"
+        "minepreggo_labor": "geometry.minepreggo.player_labor",
+        "minepreggo_belly_custom": "geometry.minepreggo.player_belly_custom",
+        "minepreggo_belly_predefined": "geometry.minepreggo.player_belly_predefined"
       },
       "scripts": {
         "scale": "0.9375",
@@ -354,6 +337,9 @@
           },
           {
             "minepreggo_birth_push": "variable.mp_pregnant && variable.mp_pose == 'birth'"
+          },
+          {
+            "minepreggo_belly_select": "variable.mp_pregnant"
           }
         ],
         "variables": {
@@ -494,7 +480,8 @@
         "minepreggo_navel_prebirth": "animation.minepreggo.navel_prebirth",
         "minepreggo_navel_birth": "animation.minepreggo.navel_birth",
         "minepreggo_fetal_push": "animation.minepreggo.fetal_push",
-        "minepreggo_birth_push": "animation.minepreggo.birth_push"
+        "minepreggo_birth_push": "animation.minepreggo.birth_push",
+        "minepreggo_belly_select": "animation.minepreggo.player.belly_select"
       },
       "render_controllers": [
         {
@@ -516,7 +503,7 @@
           "controller.render.minepreggo.player_skin": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.mp_predefined && !variable.mp_labor"
         },
         {
-          "controller.render.minepreggo.player_boobs": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_female && !variable.mp_pregnant"
+          "controller.render.minepreggo.player_boobs": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_female && !variable.mp_pregnant && !variable.mp_predefined"
         },
         {
           "controller.render.minepreggo.player_belly_custom": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && !variable.mp_predefined"
@@ -526,6 +513,9 @@
         },
         {
           "controller.render.minepreggo.player_labor": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.mp_labor"
+        },
+        {
+          "controller.render.minepreggo.player_boobs_predefined": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_female && !variable.mp_pregnant && variable.mp_predefined"
         }
       ],
       "enable_attachables": true
