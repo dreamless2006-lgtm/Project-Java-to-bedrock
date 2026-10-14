@@ -931,3 +931,35 @@ test("the game's own parser rules hold: float literals, flat component parameter
     if (file === 'player.entity.json') assert.ok(initialized.has('melee_spear_equipped'), 'the vanilla animations read melee_spear_equipped');
   }
 });
+
+test('kicks are bulges, not loose cubes: the push layers only move the belly, the navel crowning travels by the measured reach of each belly size', () => {
+  const animations = json(join(RP, 'animations/preggo_mob.animation.json')).animations;
+  for (const name of ['fetal_push', 'fetal_push_monster', 'birth_push', 'birth_push_monster']) {
+    const bones = Object.keys(animations[`animation.minepreggo.${name}`].bones);
+    assert.deepEqual(bones, ['belly'], `${name} leaves the kick cubes to the mod's keyframed kicks`);
+  }
+  for (const name of ['navel_prebirth', 'navel_birth', 'navel_birth_light']) {
+    const bones = animations[`animation.minepreggo.${name}`].bones;
+    assert.match(JSON.stringify(bones.front_kick.position), /v\.kr_f/, `${name}: the crowning travels by the reach of the belly size`);
+    const scales = JSON.stringify(bones.front_kick.scale ?? []);
+    assert.ok(!/[2-9]\.\d+ \* v\.push/.test(scales), `${name}: the crowning never grows into a block`);
+  }
+  for (const anim of Object.values(animations)) for (const bone of Object.keys(anim.bones ?? {})) assert.doesNotMatch(bone, /_p\d$/, 'no channels for the old merged-model bones');
+  // Every female and the player know how deep their kick cube rests for every belly size that has one.
+  for (const file of readdirSync(join(RP, 'entity'))) {
+    const pre = json(join(RP, 'entity', file))['minecraft:client_entity'].description.scripts.pre_animation;
+    const line = pre.find((/** @type {string} */ l) => /^(v|variable)\.kr_f =/.test(l));
+    assert.ok(line, `${file}: kick reach`);
+    for (let phase = 3; phase <= 9; phase++) assert.match(line, new RegExp(`== ${phase} \\? \\d+\\.\\d+`), `${file}: reach for P${phase}`);
+    const values = [...line.matchAll(/== \d \? (\d+\.\d+)/g)].map((m) => Number(m[1]));
+    assert.ok(values.every((v) => v >= 0.5 && v <= 12), `${file}: reaches within the belly depth (${values.join(', ')})`);
+  }
+  // The monster creeper girl's own birth animation moves her kick cubes, so her crowning only grows in place; the ender woman's does not, so hers travels.
+  const creeper = json(join(RP, 'entity/monster_creeper_girl.entity.json'))['minecraft:client_entity'].description.animations;
+  const ender = json(join(RP, 'entity/ender_woman.entity.json'))['minecraft:client_entity'].description.animations;
+  assert.equal(creeper.navel_birth, 'animation.minepreggo.navel_birth_light');
+  assert.equal(ender.navel_birth, 'animation.minepreggo.navel_birth');
+  // The mod's own kicks are what move the kick cubes, per belly size and kick strength.
+  const mod = Object.assign({}, ...readdirSync(join(RP, 'animations/minepreggo')).map((f) => json(join(RP, 'animations/minepreggo', f)).animations));
+  for (let phase = 3; phase <= 9; phase++) for (const strength of ['ii', 'iii']) assert.ok(mod[`animation.minepreggo.belly.fetal_movement_p${phase}_${strength}`]?.bones?.front_kick, `the mod's P${phase} ${strength} kick moves the front kick`);
+});

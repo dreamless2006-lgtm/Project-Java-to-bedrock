@@ -25,989 +25,46 @@
         }
       }
     },
-    "animation.minepreggo.navel_prebirth": {
-      "loop": true,
-      "bones": {
-        "belly": {
-          "scale": [
-            "1.0 + 0.03 * math.sin(q.anim_time * 540)",
-            "1.0",
-            "1.06 + 0.06 * math.sin(q.anim_time * 540)"
-          ],
-          "rotation": [
-            "2.0 * math.sin(q.anim_time * 900)",
-            0,
-            0
-          ]
-        },
-        "front_kick": {
-          "position": [
-            0,
-            "0.3 * math.sin(q.anim_time * 900)",
-            "-(1.5 + 2.0 * math.max(0.0, math.sin(q.anim_time * 540)))"
-          ],
-          "scale": [
-            "1.3 + 0.4 * math.max(0.0, math.sin(q.anim_time * 540))",
-            "1.3 + 0.4 * math.max(0.0, math.sin(q.anim_time * 540))",
-            "1.2 + 0.6 * math.max(0.0, math.sin(q.anim_time * 540))"
-          ]
-        },
-        "left_kick": {
-          "position": [
-            "-0.4 * math.sin(q.anim_time * 900)",
-            0,
-            "-(1.0 + 1.2 * math.max(0.0, math.sin(q.anim_time * 540 + 120)))"
-          ]
-        },
-        "right_kick": {
-          "position": [
-            "0.4 * math.sin(q.anim_time * 900)",
-            0,
-            "-(1.0 + 1.2 * math.max(0.0, math.sin(q.anim_time * 540 + 240)))"
-          ]
-        },
-        "front_kick_p3": {
-          "position": [
-            0,
-            "0.3 * math.sin(q.anim_time * 900)",
-            "-(1.5 + 2.0 * math.max(0.0, math.sin(q.anim_time * 540)))"
-          ],
-          "scale": [
-            "1.3 + 0.4 * math.max(0.0, math.sin(q.anim_time * 540))",
-            "1.3 + 0.4 * math.max(0.0, math.sin(q.anim_time * 540))",
-            "1.2 + 0.6 * math.max(0.0, math.sin(q.anim_time * 540))"
-          ]
-        },
-        "front_kick_p4": {
-          "position": [
-            0,
-            "0.3 * math.sin(q.anim_time * 900)",
-            "-(1.5 + 2.0 * math.max(0.0, math.sin(q.anim_time * 540)))"
-          ],
-          "scale": [
-            "1.3 + 0.4 * math.max(0.0, math.sin(q.anim_time * 540))",
-            "1.3 + 0.4 * math.max(0.0, math.sin(q.anim_time * 540))",
-            "1.2 + 0.6 * math.max(0.0, math.sin(q.anim_time * 540))"
-          ]
-        },
-        "front_kick_p5": {
-          "position": [
-            0,
-            "0.3 * math.sin(q.anim_time * 900)",
-            "-(1.5 + 2.0 * math.max(0.0, math.sin(q.anim_time * 540)))"
-          ],
-          "scale": [
-            "1.3 + 0.4 * math.max(0.0, math.sin(q.anim_time * 540))",
-            "1.3 + 0.4 * math.max(0.0, math.sin(q.anim_time * 540))",
-            "1.2 + 0.6 * math.max(0.0, math.sin(q.anim_time * 540))"
-          ]
-        },
-        "front_kick_p6": {
-          "position": [
-            0,
-            "0.3 * math.sin(q.anim_time * 900)",
-            "-(1.5 + 2.0 * math.max(0.0, math.sin(q.anim_time * 540)))"
-          ],
-          "scale": [
-            "1.3 + 0.4 * math.max(0.0, math.sin(q.anim_time * 540))",
-            "1.3 + 0.4 * math.max(0.0, math.sin(q.anim_time * 540))",
-            "1.2 + 0.6 * math.max(0.0, math.sin(q.anim_time * 540))"
-          ]
-        },
-        "front_kick_p7": {
-          "position": [
-            0,
-            "0.3 * math.sin(q.anim_time * 900)",
-            "-(1.5 + 2.0 * math.max(0.0, math.sin(q.anim_time * 540)))"
-          ],
-          "scale": [
-            "1.3 + 0.4 * math.max(0.0, math.sin(q.anim_time * 540))",
-            "1.3 + 0.4 * math.max(0.0, math.sin(q.anim_time * 540))",
-            "1.2 + 0.6 * math.max(0.0, math.sin(q.anim_time * 540))"
-          ]
-        },
-        "front_kick_p8": {
-          "position": [
-            0,
-            "0.3 * math.sin(q.anim_time * 900)",
-            "-(1.5 + 2.0 * math.max(0.0, math.sin(q.anim_time * 540)))"
-          ],
-          "scale": [
-            "1.3 + 0.4 * math.max(0.0, math.sin(q.anim_time * 540))",
-            "1.3 + 0.4 * math.max(0.0, math.sin(q.anim_time * 540))",
-            "1.2 + 0.6 * math.max(0.0, math.sin(q.anim_time * 540))"
-          ]
-        },
-        "front_kick_p9": {
-          "position": [
-            0,
-            "0.3 * math.sin(q.anim_time * 900)",
-            "-(1.5 + 2.0 * math.max(0.0, math.sin(q.anim_time * 540)))"
-          ],
-          "scale": [
-            "1.3 + 0.4 * math.max(0.0, math.sin(q.anim_time * 540))",
-            "1.3 + 0.4 * math.max(0.0, math.sin(q.anim_time * 540))",
-            "1.2 + 0.6 * math.max(0.0, math.sin(q.anim_time * 540))"
-          ]
-        },
-        "left_kick_p3": {
-          "position": [
-            "-0.4 * math.sin(q.anim_time * 900)",
-            0,
-            "-(1.0 + 1.2 * math.max(0.0, math.sin(q.anim_time * 540 + 120)))"
-          ]
-        },
-        "left_kick_p4": {
-          "position": [
-            "-0.4 * math.sin(q.anim_time * 900)",
-            0,
-            "-(1.0 + 1.2 * math.max(0.0, math.sin(q.anim_time * 540 + 120)))"
-          ]
-        },
-        "left_kick_p5": {
-          "position": [
-            "-0.4 * math.sin(q.anim_time * 900)",
-            0,
-            "-(1.0 + 1.2 * math.max(0.0, math.sin(q.anim_time * 540 + 120)))"
-          ]
-        },
-        "left_kick_p6": {
-          "position": [
-            "-0.4 * math.sin(q.anim_time * 900)",
-            0,
-            "-(1.0 + 1.2 * math.max(0.0, math.sin(q.anim_time * 540 + 120)))"
-          ]
-        },
-        "left_kick_p7": {
-          "position": [
-            "-0.4 * math.sin(q.anim_time * 900)",
-            0,
-            "-(1.0 + 1.2 * math.max(0.0, math.sin(q.anim_time * 540 + 120)))"
-          ]
-        },
-        "left_kick_p8": {
-          "position": [
-            "-0.4 * math.sin(q.anim_time * 900)",
-            0,
-            "-(1.0 + 1.2 * math.max(0.0, math.sin(q.anim_time * 540 + 120)))"
-          ]
-        },
-        "left_kick_p9": {
-          "position": [
-            "-0.4 * math.sin(q.anim_time * 900)",
-            0,
-            "-(1.0 + 1.2 * math.max(0.0, math.sin(q.anim_time * 540 + 120)))"
-          ]
-        },
-        "right_kick_p3": {
-          "position": [
-            "0.4 * math.sin(q.anim_time * 900)",
-            0,
-            "-(1.0 + 1.2 * math.max(0.0, math.sin(q.anim_time * 540 + 240)))"
-          ]
-        },
-        "right_kick_p4": {
-          "position": [
-            "0.4 * math.sin(q.anim_time * 900)",
-            0,
-            "-(1.0 + 1.2 * math.max(0.0, math.sin(q.anim_time * 540 + 240)))"
-          ]
-        },
-        "right_kick_p5": {
-          "position": [
-            "0.4 * math.sin(q.anim_time * 900)",
-            0,
-            "-(1.0 + 1.2 * math.max(0.0, math.sin(q.anim_time * 540 + 240)))"
-          ]
-        },
-        "right_kick_p6": {
-          "position": [
-            "0.4 * math.sin(q.anim_time * 900)",
-            0,
-            "-(1.0 + 1.2 * math.max(0.0, math.sin(q.anim_time * 540 + 240)))"
-          ]
-        },
-        "right_kick_p7": {
-          "position": [
-            "0.4 * math.sin(q.anim_time * 900)",
-            0,
-            "-(1.0 + 1.2 * math.max(0.0, math.sin(q.anim_time * 540 + 240)))"
-          ]
-        },
-        "right_kick_p8": {
-          "position": [
-            "0.4 * math.sin(q.anim_time * 900)",
-            0,
-            "-(1.0 + 1.2 * math.max(0.0, math.sin(q.anim_time * 540 + 240)))"
-          ]
-        },
-        "right_kick_p9": {
-          "position": [
-            "0.4 * math.sin(q.anim_time * 900)",
-            0,
-            "-(1.0 + 1.2 * math.max(0.0, math.sin(q.anim_time * 540 + 240)))"
-          ]
-        }
-      }
-    },
-    "animation.minepreggo.navel_birth": {
-      "loop": true,
-      "bones": {
-        "belly": {
-          "scale": [
-            "1.0 + 0.04 * v.push + 0.02 * math.sin(q.anim_time * 540)",
-            "1.0 - 0.03 * v.push",
-            "1.08 + 0.12 * v.push + 0.04 * math.sin(q.anim_time * 540)"
-          ],
-          "rotation": [
-            "3.0 * math.sin(q.anim_time * 900) * v.push",
-            0,
-            "2.0 * math.sin(q.anim_time * 540) * v.push"
-          ]
-        },
-        "front_kick": {
-          "position": [
-            0,
-            "0.4 * math.sin(q.anim_time * 900) * v.push",
-            "-(2.0 + 7.0 * v.push + 0.8 * math.max(0.0, math.sin(q.anim_time * 540)))"
-          ],
-          "scale": [
-            "1.3 + 1.6 * v.push",
-            "1.3 + 1.6 * v.push",
-            "1.3 + 2.4 * v.push + 0.3 * math.max(0.0, math.sin(q.anim_time * 540))"
-          ],
-          "rotation": [
-            "8.0 * math.sin(q.anim_time * 900) * v.push",
-            "10.0 * math.sin(q.anim_time * 540) * v.push",
-            0
-          ]
-        },
-        "left_kick": {
-          "position": [
-            "-(0.6 + 1.0 * v.push)",
-            0,
-            "-(1.0 + 1.0 * math.max(0.0, math.sin(q.anim_time * 540 + 120)))"
-          ],
-          "scale": [
-            "1.0 - 0.4 * v.push",
-            "1.0 - 0.4 * v.push",
-            "1.0"
-          ]
-        },
-        "right_kick": {
-          "position": [
-            "(0.6 + 1.0 * v.push)",
-            0,
-            "-(1.0 + 1.0 * math.max(0.0, math.sin(q.anim_time * 540 + 240)))"
-          ],
-          "scale": [
-            "1.0 - 0.4 * v.push",
-            "1.0 - 0.4 * v.push",
-            "1.0"
-          ]
-        },
-        "front_kick_p3": {
-          "position": [
-            0,
-            "0.4 * math.sin(q.anim_time * 900) * v.push",
-            "-(2.0 + 7.0 * v.push + 0.8 * math.max(0.0, math.sin(q.anim_time * 540)))"
-          ],
-          "scale": [
-            "1.3 + 1.6 * v.push",
-            "1.3 + 1.6 * v.push",
-            "1.3 + 2.4 * v.push + 0.3 * math.max(0.0, math.sin(q.anim_time * 540))"
-          ],
-          "rotation": [
-            "8.0 * math.sin(q.anim_time * 900) * v.push",
-            "10.0 * math.sin(q.anim_time * 540) * v.push",
-            0
-          ]
-        },
-        "front_kick_p4": {
-          "position": [
-            0,
-            "0.4 * math.sin(q.anim_time * 900) * v.push",
-            "-(2.0 + 7.0 * v.push + 0.8 * math.max(0.0, math.sin(q.anim_time * 540)))"
-          ],
-          "scale": [
-            "1.3 + 1.6 * v.push",
-            "1.3 + 1.6 * v.push",
-            "1.3 + 2.4 * v.push + 0.3 * math.max(0.0, math.sin(q.anim_time * 540))"
-          ],
-          "rotation": [
-            "8.0 * math.sin(q.anim_time * 900) * v.push",
-            "10.0 * math.sin(q.anim_time * 540) * v.push",
-            0
-          ]
-        },
-        "front_kick_p5": {
-          "position": [
-            0,
-            "0.4 * math.sin(q.anim_time * 900) * v.push",
-            "-(2.0 + 7.0 * v.push + 0.8 * math.max(0.0, math.sin(q.anim_time * 540)))"
-          ],
-          "scale": [
-            "1.3 + 1.6 * v.push",
-            "1.3 + 1.6 * v.push",
-            "1.3 + 2.4 * v.push + 0.3 * math.max(0.0, math.sin(q.anim_time * 540))"
-          ],
-          "rotation": [
-            "8.0 * math.sin(q.anim_time * 900) * v.push",
-            "10.0 * math.sin(q.anim_time * 540) * v.push",
-            0
-          ]
-        },
-        "front_kick_p6": {
-          "position": [
-            0,
-            "0.4 * math.sin(q.anim_time * 900) * v.push",
-            "-(2.0 + 7.0 * v.push + 0.8 * math.max(0.0, math.sin(q.anim_time * 540)))"
-          ],
-          "scale": [
-            "1.3 + 1.6 * v.push",
-            "1.3 + 1.6 * v.push",
-            "1.3 + 2.4 * v.push + 0.3 * math.max(0.0, math.sin(q.anim_time * 540))"
-          ],
-          "rotation": [
-            "8.0 * math.sin(q.anim_time * 900) * v.push",
-            "10.0 * math.sin(q.anim_time * 540) * v.push",
-            0
-          ]
-        },
-        "front_kick_p7": {
-          "position": [
-            0,
-            "0.4 * math.sin(q.anim_time * 900) * v.push",
-            "-(2.0 + 7.0 * v.push + 0.8 * math.max(0.0, math.sin(q.anim_time * 540)))"
-          ],
-          "scale": [
-            "1.3 + 1.6 * v.push",
-            "1.3 + 1.6 * v.push",
-            "1.3 + 2.4 * v.push + 0.3 * math.max(0.0, math.sin(q.anim_time * 540))"
-          ],
-          "rotation": [
-            "8.0 * math.sin(q.anim_time * 900) * v.push",
-            "10.0 * math.sin(q.anim_time * 540) * v.push",
-            0
-          ]
-        },
-        "front_kick_p8": {
-          "position": [
-            0,
-            "0.4 * math.sin(q.anim_time * 900) * v.push",
-            "-(2.0 + 7.0 * v.push + 0.8 * math.max(0.0, math.sin(q.anim_time * 540)))"
-          ],
-          "scale": [
-            "1.3 + 1.6 * v.push",
-            "1.3 + 1.6 * v.push",
-            "1.3 + 2.4 * v.push + 0.3 * math.max(0.0, math.sin(q.anim_time * 540))"
-          ],
-          "rotation": [
-            "8.0 * math.sin(q.anim_time * 900) * v.push",
-            "10.0 * math.sin(q.anim_time * 540) * v.push",
-            0
-          ]
-        },
-        "front_kick_p9": {
-          "position": [
-            0,
-            "0.4 * math.sin(q.anim_time * 900) * v.push",
-            "-(2.0 + 7.0 * v.push + 0.8 * math.max(0.0, math.sin(q.anim_time * 540)))"
-          ],
-          "scale": [
-            "1.3 + 1.6 * v.push",
-            "1.3 + 1.6 * v.push",
-            "1.3 + 2.4 * v.push + 0.3 * math.max(0.0, math.sin(q.anim_time * 540))"
-          ],
-          "rotation": [
-            "8.0 * math.sin(q.anim_time * 900) * v.push",
-            "10.0 * math.sin(q.anim_time * 540) * v.push",
-            0
-          ]
-        },
-        "left_kick_p3": {
-          "position": [
-            "-(0.6 + 1.0 * v.push)",
-            0,
-            "-(1.0 + 1.0 * math.max(0.0, math.sin(q.anim_time * 540 + 120)))"
-          ],
-          "scale": [
-            "1.0 - 0.4 * v.push",
-            "1.0 - 0.4 * v.push",
-            "1.0"
-          ]
-        },
-        "left_kick_p4": {
-          "position": [
-            "-(0.6 + 1.0 * v.push)",
-            0,
-            "-(1.0 + 1.0 * math.max(0.0, math.sin(q.anim_time * 540 + 120)))"
-          ],
-          "scale": [
-            "1.0 - 0.4 * v.push",
-            "1.0 - 0.4 * v.push",
-            "1.0"
-          ]
-        },
-        "left_kick_p5": {
-          "position": [
-            "-(0.6 + 1.0 * v.push)",
-            0,
-            "-(1.0 + 1.0 * math.max(0.0, math.sin(q.anim_time * 540 + 120)))"
-          ],
-          "scale": [
-            "1.0 - 0.4 * v.push",
-            "1.0 - 0.4 * v.push",
-            "1.0"
-          ]
-        },
-        "left_kick_p6": {
-          "position": [
-            "-(0.6 + 1.0 * v.push)",
-            0,
-            "-(1.0 + 1.0 * math.max(0.0, math.sin(q.anim_time * 540 + 120)))"
-          ],
-          "scale": [
-            "1.0 - 0.4 * v.push",
-            "1.0 - 0.4 * v.push",
-            "1.0"
-          ]
-        },
-        "left_kick_p7": {
-          "position": [
-            "-(0.6 + 1.0 * v.push)",
-            0,
-            "-(1.0 + 1.0 * math.max(0.0, math.sin(q.anim_time * 540 + 120)))"
-          ],
-          "scale": [
-            "1.0 - 0.4 * v.push",
-            "1.0 - 0.4 * v.push",
-            "1.0"
-          ]
-        },
-        "left_kick_p8": {
-          "position": [
-            "-(0.6 + 1.0 * v.push)",
-            0,
-            "-(1.0 + 1.0 * math.max(0.0, math.sin(q.anim_time * 540 + 120)))"
-          ],
-          "scale": [
-            "1.0 - 0.4 * v.push",
-            "1.0 - 0.4 * v.push",
-            "1.0"
-          ]
-        },
-        "left_kick_p9": {
-          "position": [
-            "-(0.6 + 1.0 * v.push)",
-            0,
-            "-(1.0 + 1.0 * math.max(0.0, math.sin(q.anim_time * 540 + 120)))"
-          ],
-          "scale": [
-            "1.0 - 0.4 * v.push",
-            "1.0 - 0.4 * v.push",
-            "1.0"
-          ]
-        },
-        "right_kick_p3": {
-          "position": [
-            "(0.6 + 1.0 * v.push)",
-            0,
-            "-(1.0 + 1.0 * math.max(0.0, math.sin(q.anim_time * 540 + 240)))"
-          ],
-          "scale": [
-            "1.0 - 0.4 * v.push",
-            "1.0 - 0.4 * v.push",
-            "1.0"
-          ]
-        },
-        "right_kick_p4": {
-          "position": [
-            "(0.6 + 1.0 * v.push)",
-            0,
-            "-(1.0 + 1.0 * math.max(0.0, math.sin(q.anim_time * 540 + 240)))"
-          ],
-          "scale": [
-            "1.0 - 0.4 * v.push",
-            "1.0 - 0.4 * v.push",
-            "1.0"
-          ]
-        },
-        "right_kick_p5": {
-          "position": [
-            "(0.6 + 1.0 * v.push)",
-            0,
-            "-(1.0 + 1.0 * math.max(0.0, math.sin(q.anim_time * 540 + 240)))"
-          ],
-          "scale": [
-            "1.0 - 0.4 * v.push",
-            "1.0 - 0.4 * v.push",
-            "1.0"
-          ]
-        },
-        "right_kick_p6": {
-          "position": [
-            "(0.6 + 1.0 * v.push)",
-            0,
-            "-(1.0 + 1.0 * math.max(0.0, math.sin(q.anim_time * 540 + 240)))"
-          ],
-          "scale": [
-            "1.0 - 0.4 * v.push",
-            "1.0 - 0.4 * v.push",
-            "1.0"
-          ]
-        },
-        "right_kick_p7": {
-          "position": [
-            "(0.6 + 1.0 * v.push)",
-            0,
-            "-(1.0 + 1.0 * math.max(0.0, math.sin(q.anim_time * 540 + 240)))"
-          ],
-          "scale": [
-            "1.0 - 0.4 * v.push",
-            "1.0 - 0.4 * v.push",
-            "1.0"
-          ]
-        },
-        "right_kick_p8": {
-          "position": [
-            "(0.6 + 1.0 * v.push)",
-            0,
-            "-(1.0 + 1.0 * math.max(0.0, math.sin(q.anim_time * 540 + 240)))"
-          ],
-          "scale": [
-            "1.0 - 0.4 * v.push",
-            "1.0 - 0.4 * v.push",
-            "1.0"
-          ]
-        },
-        "right_kick_p9": {
-          "position": [
-            "(0.6 + 1.0 * v.push)",
-            0,
-            "-(1.0 + 1.0 * math.max(0.0, math.sin(q.anim_time * 540 + 240)))"
-          ],
-          "scale": [
-            "1.0 - 0.4 * v.push",
-            "1.0 - 0.4 * v.push",
-            "1.0"
-          ]
-        }
-      }
-    },
     "animation.minepreggo.fetal_push": {
       "loop": true,
       "bones": {
         "belly": {
           "scale": [
-            "1.0 + 0.05 * v.kl * math.max(0.0, math.sin(q.anim_time * 600 + 0))",
-            "1.0 + 0.02 * v.kl * math.max(0.0, math.sin(q.anim_time * 600 + 0))",
-            "1.0 + 0.10 * v.kl * math.max(0.0, math.sin(q.anim_time * 600 + 0))"
+            "1.0 + 0.03 * v.kl * math.max(0.0, math.sin(q.anim_time * 600))",
+            "1.0 + 0.015 * v.kl * math.max(0.0, math.sin(q.anim_time * 600))",
+            "1.0 + 0.06 * v.kl * math.max(0.0, math.sin(q.anim_time * 600))"
           ],
           "rotation": [
-            "4.0 * v.kl * math.sin(q.anim_time * 420)",
+            "2.5 * v.kl * math.sin(q.anim_time * 420)",
             0,
-            "3.0 * v.kl * math.sin(q.anim_time * 300)"
-          ]
-        },
-        "front_kick": {
-          "position": [
-            0,
-            "0.3 * v.kl * math.sin(q.anim_time * 900)",
-            "-(1.0 + 1.5 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 0))"
+            "2.0 * v.kl * math.sin(q.anim_time * 300)"
           ],
-          "scale": [
-            "1.0 + 0.4 * math.max(0.0, math.sin(q.anim_time * 600 + 0))",
-            "1.0 + 0.4 * math.max(0.0, math.sin(q.anim_time * 600 + 0))",
-            "1.0 + 0.6 * math.max(0.0, math.sin(q.anim_time * 600 + 0))"
-          ]
-        },
-        "left_kick": {
-          "position": [
-            "-0.6 * v.kl * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "-(1.0 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ],
-          "scale": [
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ]
-        },
-        "right_kick": {
-          "position": [
-            "0.6 * v.kl * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "-(1.0 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ],
-          "scale": [
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ]
-        },
-        "top_kick": {
           "position": [
             0,
-            "(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 60))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 60))"
+            "0.15 * v.kl * math.max(0.0, math.sin(q.anim_time * 600))",
+            "-0.25 * v.kl * math.max(0.0, math.sin(q.anim_time * 600))"
           ]
-        },
-        "bottom_kick": {
-          "position": [
-            0,
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 180))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 180))"
-          ]
-        },
-        "front_kick_p3": {
-          "position": [
-            0,
-            "0.3 * v.kl * math.sin(q.anim_time * 900)",
-            "-(1.0 + 1.5 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 0))"
-          ],
+        }
+      }
+    },
+    "animation.minepreggo.fetal_push_monster": {
+      "loop": true,
+      "bones": {
+        "belly": {
           "scale": [
-            "1.0 + 0.4 * math.max(0.0, math.sin(q.anim_time * 600 + 0))",
-            "1.0 + 0.4 * math.max(0.0, math.sin(q.anim_time * 600 + 0))",
-            "1.0 + 0.6 * math.max(0.0, math.sin(q.anim_time * 600 + 0))"
-          ]
-        },
-        "front_kick_p4": {
-          "position": [
-            0,
-            "0.3 * v.kl * math.sin(q.anim_time * 900)",
-            "-(1.0 + 1.5 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 0))"
+            "1.0 + 0.05 * v.kl * math.max(0.0, math.sin(q.anim_time * 360))",
+            "1.0 + 0.06 * v.kl * math.max(0.0, math.sin(q.anim_time * 360 + 90))",
+            "1.0 + 0.04 * v.kl * math.max(0.0, math.sin(q.anim_time * 360 + 180))"
           ],
-          "scale": [
-            "1.0 + 0.4 * math.max(0.0, math.sin(q.anim_time * 600 + 0))",
-            "1.0 + 0.4 * math.max(0.0, math.sin(q.anim_time * 600 + 0))",
-            "1.0 + 0.6 * math.max(0.0, math.sin(q.anim_time * 600 + 0))"
-          ]
-        },
-        "front_kick_p5": {
-          "position": [
-            0,
-            "0.3 * v.kl * math.sin(q.anim_time * 900)",
-            "-(1.0 + 1.5 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 0))"
+          "rotation": [
+            "4.0 * v.kl * math.sin(q.anim_time * 240)",
+            "3.0 * v.kl * math.sin(q.anim_time * 180)",
+            "4.0 * v.kl * math.cos(q.anim_time * 240)"
           ],
-          "scale": [
-            "1.0 + 0.4 * math.max(0.0, math.sin(q.anim_time * 600 + 0))",
-            "1.0 + 0.4 * math.max(0.0, math.sin(q.anim_time * 600 + 0))",
-            "1.0 + 0.6 * math.max(0.0, math.sin(q.anim_time * 600 + 0))"
-          ]
-        },
-        "front_kick_p6": {
           "position": [
-            0,
-            "0.3 * v.kl * math.sin(q.anim_time * 900)",
-            "-(1.0 + 1.5 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 0))"
-          ],
-          "scale": [
-            "1.0 + 0.4 * math.max(0.0, math.sin(q.anim_time * 600 + 0))",
-            "1.0 + 0.4 * math.max(0.0, math.sin(q.anim_time * 600 + 0))",
-            "1.0 + 0.6 * math.max(0.0, math.sin(q.anim_time * 600 + 0))"
-          ]
-        },
-        "front_kick_p7": {
-          "position": [
-            0,
-            "0.3 * v.kl * math.sin(q.anim_time * 900)",
-            "-(1.0 + 1.5 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 0))"
-          ],
-          "scale": [
-            "1.0 + 0.4 * math.max(0.0, math.sin(q.anim_time * 600 + 0))",
-            "1.0 + 0.4 * math.max(0.0, math.sin(q.anim_time * 600 + 0))",
-            "1.0 + 0.6 * math.max(0.0, math.sin(q.anim_time * 600 + 0))"
-          ]
-        },
-        "front_kick_p8": {
-          "position": [
-            0,
-            "0.3 * v.kl * math.sin(q.anim_time * 900)",
-            "-(1.0 + 1.5 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 0))"
-          ],
-          "scale": [
-            "1.0 + 0.4 * math.max(0.0, math.sin(q.anim_time * 600 + 0))",
-            "1.0 + 0.4 * math.max(0.0, math.sin(q.anim_time * 600 + 0))",
-            "1.0 + 0.6 * math.max(0.0, math.sin(q.anim_time * 600 + 0))"
-          ]
-        },
-        "front_kick_p9": {
-          "position": [
-            0,
-            "0.3 * v.kl * math.sin(q.anim_time * 900)",
-            "-(1.0 + 1.5 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 0))"
-          ],
-          "scale": [
-            "1.0 + 0.4 * math.max(0.0, math.sin(q.anim_time * 600 + 0))",
-            "1.0 + 0.4 * math.max(0.0, math.sin(q.anim_time * 600 + 0))",
-            "1.0 + 0.6 * math.max(0.0, math.sin(q.anim_time * 600 + 0))"
-          ]
-        },
-        "left_kick_p3": {
-          "position": [
-            "-0.6 * v.kl * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "-(1.0 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ],
-          "scale": [
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ]
-        },
-        "left_kick_p4": {
-          "position": [
-            "-0.6 * v.kl * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "-(1.0 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ],
-          "scale": [
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ]
-        },
-        "left_kick_p5": {
-          "position": [
-            "-0.6 * v.kl * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "-(1.0 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ],
-          "scale": [
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ]
-        },
-        "left_kick_p6": {
-          "position": [
-            "-0.6 * v.kl * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "-(1.0 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ],
-          "scale": [
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ]
-        },
-        "left_kick_p7": {
-          "position": [
-            "-0.6 * v.kl * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "-(1.0 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ],
-          "scale": [
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ]
-        },
-        "left_kick_p8": {
-          "position": [
-            "-0.6 * v.kl * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "-(1.0 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ],
-          "scale": [
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ]
-        },
-        "left_kick_p9": {
-          "position": [
-            "-0.6 * v.kl * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "-(1.0 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ],
-          "scale": [
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 120))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ]
-        },
-        "right_kick_p3": {
-          "position": [
-            "0.6 * v.kl * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "-(1.0 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ],
-          "scale": [
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ]
-        },
-        "right_kick_p4": {
-          "position": [
-            "0.6 * v.kl * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "-(1.0 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ],
-          "scale": [
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ]
-        },
-        "right_kick_p5": {
-          "position": [
-            "0.6 * v.kl * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "-(1.0 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ],
-          "scale": [
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ]
-        },
-        "right_kick_p6": {
-          "position": [
-            "0.6 * v.kl * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "-(1.0 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ],
-          "scale": [
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ]
-        },
-        "right_kick_p7": {
-          "position": [
-            "0.6 * v.kl * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "-(1.0 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ],
-          "scale": [
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ]
-        },
-        "right_kick_p8": {
-          "position": [
-            "0.6 * v.kl * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "-(1.0 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ],
-          "scale": [
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ]
-        },
-        "right_kick_p9": {
-          "position": [
-            "0.6 * v.kl * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "-(1.0 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ],
-          "scale": [
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "1.0 + 0.3 * math.max(0.0, math.sin(q.anim_time * 600 + 240))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ]
-        },
-        "top_kick_p3": {
-          "position": [
-            0,
-            "(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 60))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 60))"
-          ]
-        },
-        "top_kick_p4": {
-          "position": [
-            0,
-            "(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 60))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 60))"
-          ]
-        },
-        "top_kick_p5": {
-          "position": [
-            0,
-            "(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 60))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 60))"
-          ]
-        },
-        "top_kick_p6": {
-          "position": [
-            0,
-            "(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 60))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 60))"
-          ]
-        },
-        "top_kick_p7": {
-          "position": [
-            0,
-            "(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 60))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 60))"
-          ]
-        },
-        "top_kick_p8": {
-          "position": [
-            0,
-            "(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 60))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 60))"
-          ]
-        },
-        "top_kick_p9": {
-          "position": [
-            0,
-            "(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 60))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 60))"
-          ]
-        },
-        "bottom_kick_p3": {
-          "position": [
-            0,
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 180))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 180))"
-          ]
-        },
-        "bottom_kick_p4": {
-          "position": [
-            0,
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 180))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 180))"
-          ]
-        },
-        "bottom_kick_p5": {
-          "position": [
-            0,
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 180))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 180))"
-          ]
-        },
-        "bottom_kick_p6": {
-          "position": [
-            0,
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 180))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 180))"
-          ]
-        },
-        "bottom_kick_p7": {
-          "position": [
-            0,
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 180))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 180))"
-          ]
-        },
-        "bottom_kick_p8": {
-          "position": [
-            0,
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 180))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 180))"
-          ]
-        },
-        "bottom_kick_p9": {
-          "position": [
-            0,
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 180))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 600 + 180))"
+            "0.2 * v.kl * math.sin(q.anim_time * 300)",
+            "0.15 * v.kl * math.max(0.0, math.sin(q.anim_time * 360))",
+            "-0.3 * v.kl * math.max(0.0, math.sin(q.anim_time * 360))"
           ]
         }
       }
@@ -1019,517 +76,17 @@
           "scale": [
             "1.0 + 0.05 * v.push",
             "1.0 - 0.04 * v.push",
-            "1.0 + 0.12 * v.push + 0.05 * math.max(0.0, math.sin(q.anim_time * 600 + 0))"
+            "1.0 + 0.10 * v.push + 0.04 * math.max(0.0, math.sin(q.anim_time * 600))"
           ],
           "rotation": [
-            "5.0 * v.push * math.sin(q.anim_time * 720)",
+            "4.0 * v.push * math.sin(q.anim_time * 720)",
             0,
             0
-          ]
-        },
-        "front_kick": {
-          "position": [
-            0,
-            "-1.0 * v.push",
-            "-(1.0 + 2.0 * v.push) * (0.5 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 0)))"
-          ]
-        },
-        "left_kick": {
-          "position": [
-            "-1.0 * v.push",
-            "-0.5 * v.push",
-            "-(0.5 + 1.5 * v.push) * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ]
-        },
-        "right_kick": {
-          "position": [
-            "1.0 * v.push",
-            "-0.5 * v.push",
-            "-(0.5 + 1.5 * v.push) * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ]
-        },
-        "front_kick_p3": {
-          "position": [
-            0,
-            "-1.0 * v.push",
-            "-(1.0 + 2.0 * v.push) * (0.5 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 0)))"
-          ]
-        },
-        "front_kick_p4": {
-          "position": [
-            0,
-            "-1.0 * v.push",
-            "-(1.0 + 2.0 * v.push) * (0.5 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 0)))"
-          ]
-        },
-        "front_kick_p5": {
-          "position": [
-            0,
-            "-1.0 * v.push",
-            "-(1.0 + 2.0 * v.push) * (0.5 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 0)))"
-          ]
-        },
-        "front_kick_p6": {
-          "position": [
-            0,
-            "-1.0 * v.push",
-            "-(1.0 + 2.0 * v.push) * (0.5 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 0)))"
-          ]
-        },
-        "front_kick_p7": {
-          "position": [
-            0,
-            "-1.0 * v.push",
-            "-(1.0 + 2.0 * v.push) * (0.5 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 0)))"
-          ]
-        },
-        "front_kick_p8": {
-          "position": [
-            0,
-            "-1.0 * v.push",
-            "-(1.0 + 2.0 * v.push) * (0.5 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 0)))"
-          ]
-        },
-        "front_kick_p9": {
-          "position": [
-            0,
-            "-1.0 * v.push",
-            "-(1.0 + 2.0 * v.push) * (0.5 + 0.5 * math.max(0.0, math.sin(q.anim_time * 600 + 0)))"
-          ]
-        },
-        "left_kick_p3": {
-          "position": [
-            "-1.0 * v.push",
-            "-0.5 * v.push",
-            "-(0.5 + 1.5 * v.push) * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ]
-        },
-        "left_kick_p4": {
-          "position": [
-            "-1.0 * v.push",
-            "-0.5 * v.push",
-            "-(0.5 + 1.5 * v.push) * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ]
-        },
-        "left_kick_p5": {
-          "position": [
-            "-1.0 * v.push",
-            "-0.5 * v.push",
-            "-(0.5 + 1.5 * v.push) * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ]
-        },
-        "left_kick_p6": {
-          "position": [
-            "-1.0 * v.push",
-            "-0.5 * v.push",
-            "-(0.5 + 1.5 * v.push) * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ]
-        },
-        "left_kick_p7": {
-          "position": [
-            "-1.0 * v.push",
-            "-0.5 * v.push",
-            "-(0.5 + 1.5 * v.push) * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ]
-        },
-        "left_kick_p8": {
-          "position": [
-            "-1.0 * v.push",
-            "-0.5 * v.push",
-            "-(0.5 + 1.5 * v.push) * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ]
-        },
-        "left_kick_p9": {
-          "position": [
-            "-1.0 * v.push",
-            "-0.5 * v.push",
-            "-(0.5 + 1.5 * v.push) * math.max(0.0, math.sin(q.anim_time * 600 + 120))"
-          ]
-        },
-        "right_kick_p3": {
-          "position": [
-            "1.0 * v.push",
-            "-0.5 * v.push",
-            "-(0.5 + 1.5 * v.push) * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ]
-        },
-        "right_kick_p4": {
-          "position": [
-            "1.0 * v.push",
-            "-0.5 * v.push",
-            "-(0.5 + 1.5 * v.push) * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ]
-        },
-        "right_kick_p5": {
-          "position": [
-            "1.0 * v.push",
-            "-0.5 * v.push",
-            "-(0.5 + 1.5 * v.push) * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ]
-        },
-        "right_kick_p6": {
-          "position": [
-            "1.0 * v.push",
-            "-0.5 * v.push",
-            "-(0.5 + 1.5 * v.push) * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ]
-        },
-        "right_kick_p7": {
-          "position": [
-            "1.0 * v.push",
-            "-0.5 * v.push",
-            "-(0.5 + 1.5 * v.push) * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ]
-        },
-        "right_kick_p8": {
-          "position": [
-            "1.0 * v.push",
-            "-0.5 * v.push",
-            "-(0.5 + 1.5 * v.push) * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ]
-        },
-        "right_kick_p9": {
-          "position": [
-            "1.0 * v.push",
-            "-0.5 * v.push",
-            "-(0.5 + 1.5 * v.push) * math.max(0.0, math.sin(q.anim_time * 600 + 240))"
-          ]
-        }
-      }
-    },
-    "animation.minepreggo.fetal_push_monster": {
-      "loop": true,
-      "bones": {
-        "belly": {
-          "scale": [
-            "1.0 + 0.08 * v.kl * math.max(0.0, math.sin(q.anim_time * 360 + 0))",
-            "1.0 + 0.10 * v.kl * math.max(0.0, math.sin(q.anim_time * 360 + 90))",
-            "1.0 + 0.06 * v.kl * math.max(0.0, math.sin(q.anim_time * 360 + 180))"
           ],
-          "rotation": [
-            "6.0 * v.kl * math.sin(q.anim_time * 240)",
-            "4.0 * v.kl * math.sin(q.anim_time * 180)",
-            "6.0 * v.kl * math.cos(q.anim_time * 240)"
-          ]
-        },
-        "front_kick": {
-          "position": [
-            "1.5 * v.kl * math.sin(q.anim_time * 300)",
-            "1.0 * v.kl * math.cos(q.anim_time * 300)",
-            "-(0.8 + 1.5 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 0))"
-          ],
-          "scale": [
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 300 + 0))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 300 + 0))",
-            "1.0 + 0.8 * math.max(0.0, math.sin(q.anim_time * 300 + 0))"
-          ]
-        },
-        "left_kick": {
-          "position": [
-            "-(1.0 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 120))",
-            "0.8 * v.kl * math.sin(q.anim_time * 300 + 120)",
-            "-(0.8 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 120))"
-          ]
-        },
-        "right_kick": {
-          "position": [
-            "(1.0 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 240))",
-            "0.8 * v.kl * math.sin(q.anim_time * 300 + 240)",
-            "-(0.8 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 240))"
-          ]
-        },
-        "top_kick": {
           "position": [
             0,
-            "(0.6 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 60))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 60))"
-          ]
-        },
-        "bottom_kick": {
-          "position": [
-            0,
-            "-(0.6 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 180))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 180))"
-          ]
-        },
-        "front_kick_p3": {
-          "position": [
-            "1.5 * v.kl * math.sin(q.anim_time * 300)",
-            "1.0 * v.kl * math.cos(q.anim_time * 300)",
-            "-(0.8 + 1.5 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 0))"
-          ],
-          "scale": [
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 300 + 0))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 300 + 0))",
-            "1.0 + 0.8 * math.max(0.0, math.sin(q.anim_time * 300 + 0))"
-          ]
-        },
-        "front_kick_p4": {
-          "position": [
-            "1.5 * v.kl * math.sin(q.anim_time * 300)",
-            "1.0 * v.kl * math.cos(q.anim_time * 300)",
-            "-(0.8 + 1.5 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 0))"
-          ],
-          "scale": [
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 300 + 0))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 300 + 0))",
-            "1.0 + 0.8 * math.max(0.0, math.sin(q.anim_time * 300 + 0))"
-          ]
-        },
-        "front_kick_p5": {
-          "position": [
-            "1.5 * v.kl * math.sin(q.anim_time * 300)",
-            "1.0 * v.kl * math.cos(q.anim_time * 300)",
-            "-(0.8 + 1.5 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 0))"
-          ],
-          "scale": [
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 300 + 0))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 300 + 0))",
-            "1.0 + 0.8 * math.max(0.0, math.sin(q.anim_time * 300 + 0))"
-          ]
-        },
-        "front_kick_p6": {
-          "position": [
-            "1.5 * v.kl * math.sin(q.anim_time * 300)",
-            "1.0 * v.kl * math.cos(q.anim_time * 300)",
-            "-(0.8 + 1.5 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 0))"
-          ],
-          "scale": [
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 300 + 0))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 300 + 0))",
-            "1.0 + 0.8 * math.max(0.0, math.sin(q.anim_time * 300 + 0))"
-          ]
-        },
-        "front_kick_p7": {
-          "position": [
-            "1.5 * v.kl * math.sin(q.anim_time * 300)",
-            "1.0 * v.kl * math.cos(q.anim_time * 300)",
-            "-(0.8 + 1.5 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 0))"
-          ],
-          "scale": [
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 300 + 0))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 300 + 0))",
-            "1.0 + 0.8 * math.max(0.0, math.sin(q.anim_time * 300 + 0))"
-          ]
-        },
-        "front_kick_p8": {
-          "position": [
-            "1.5 * v.kl * math.sin(q.anim_time * 300)",
-            "1.0 * v.kl * math.cos(q.anim_time * 300)",
-            "-(0.8 + 1.5 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 0))"
-          ],
-          "scale": [
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 300 + 0))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 300 + 0))",
-            "1.0 + 0.8 * math.max(0.0, math.sin(q.anim_time * 300 + 0))"
-          ]
-        },
-        "front_kick_p9": {
-          "position": [
-            "1.5 * v.kl * math.sin(q.anim_time * 300)",
-            "1.0 * v.kl * math.cos(q.anim_time * 300)",
-            "-(0.8 + 1.5 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 0))"
-          ],
-          "scale": [
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 300 + 0))",
-            "1.0 + 0.5 * math.max(0.0, math.sin(q.anim_time * 300 + 0))",
-            "1.0 + 0.8 * math.max(0.0, math.sin(q.anim_time * 300 + 0))"
-          ]
-        },
-        "left_kick_p3": {
-          "position": [
-            "-(1.0 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 120))",
-            "0.8 * v.kl * math.sin(q.anim_time * 300 + 120)",
-            "-(0.8 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 120))"
-          ]
-        },
-        "left_kick_p4": {
-          "position": [
-            "-(1.0 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 120))",
-            "0.8 * v.kl * math.sin(q.anim_time * 300 + 120)",
-            "-(0.8 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 120))"
-          ]
-        },
-        "left_kick_p5": {
-          "position": [
-            "-(1.0 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 120))",
-            "0.8 * v.kl * math.sin(q.anim_time * 300 + 120)",
-            "-(0.8 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 120))"
-          ]
-        },
-        "left_kick_p6": {
-          "position": [
-            "-(1.0 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 120))",
-            "0.8 * v.kl * math.sin(q.anim_time * 300 + 120)",
-            "-(0.8 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 120))"
-          ]
-        },
-        "left_kick_p7": {
-          "position": [
-            "-(1.0 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 120))",
-            "0.8 * v.kl * math.sin(q.anim_time * 300 + 120)",
-            "-(0.8 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 120))"
-          ]
-        },
-        "left_kick_p8": {
-          "position": [
-            "-(1.0 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 120))",
-            "0.8 * v.kl * math.sin(q.anim_time * 300 + 120)",
-            "-(0.8 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 120))"
-          ]
-        },
-        "left_kick_p9": {
-          "position": [
-            "-(1.0 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 120))",
-            "0.8 * v.kl * math.sin(q.anim_time * 300 + 120)",
-            "-(0.8 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 120))"
-          ]
-        },
-        "right_kick_p3": {
-          "position": [
-            "(1.0 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 240))",
-            "0.8 * v.kl * math.sin(q.anim_time * 300 + 240)",
-            "-(0.8 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 240))"
-          ]
-        },
-        "right_kick_p4": {
-          "position": [
-            "(1.0 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 240))",
-            "0.8 * v.kl * math.sin(q.anim_time * 300 + 240)",
-            "-(0.8 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 240))"
-          ]
-        },
-        "right_kick_p5": {
-          "position": [
-            "(1.0 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 240))",
-            "0.8 * v.kl * math.sin(q.anim_time * 300 + 240)",
-            "-(0.8 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 240))"
-          ]
-        },
-        "right_kick_p6": {
-          "position": [
-            "(1.0 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 240))",
-            "0.8 * v.kl * math.sin(q.anim_time * 300 + 240)",
-            "-(0.8 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 240))"
-          ]
-        },
-        "right_kick_p7": {
-          "position": [
-            "(1.0 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 240))",
-            "0.8 * v.kl * math.sin(q.anim_time * 300 + 240)",
-            "-(0.8 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 240))"
-          ]
-        },
-        "right_kick_p8": {
-          "position": [
-            "(1.0 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 240))",
-            "0.8 * v.kl * math.sin(q.anim_time * 300 + 240)",
-            "-(0.8 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 240))"
-          ]
-        },
-        "right_kick_p9": {
-          "position": [
-            "(1.0 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 240))",
-            "0.8 * v.kl * math.sin(q.anim_time * 300 + 240)",
-            "-(0.8 + 1.2 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 240))"
-          ]
-        },
-        "top_kick_p3": {
-          "position": [
-            0,
-            "(0.6 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 60))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 60))"
-          ]
-        },
-        "top_kick_p4": {
-          "position": [
-            0,
-            "(0.6 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 60))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 60))"
-          ]
-        },
-        "top_kick_p5": {
-          "position": [
-            0,
-            "(0.6 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 60))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 60))"
-          ]
-        },
-        "top_kick_p6": {
-          "position": [
-            0,
-            "(0.6 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 60))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 60))"
-          ]
-        },
-        "top_kick_p7": {
-          "position": [
-            0,
-            "(0.6 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 60))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 60))"
-          ]
-        },
-        "top_kick_p8": {
-          "position": [
-            0,
-            "(0.6 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 60))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 60))"
-          ]
-        },
-        "top_kick_p9": {
-          "position": [
-            0,
-            "(0.6 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 60))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 60))"
-          ]
-        },
-        "bottom_kick_p3": {
-          "position": [
-            0,
-            "-(0.6 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 180))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 180))"
-          ]
-        },
-        "bottom_kick_p4": {
-          "position": [
-            0,
-            "-(0.6 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 180))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 180))"
-          ]
-        },
-        "bottom_kick_p5": {
-          "position": [
-            0,
-            "-(0.6 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 180))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 180))"
-          ]
-        },
-        "bottom_kick_p6": {
-          "position": [
-            0,
-            "-(0.6 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 180))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 180))"
-          ]
-        },
-        "bottom_kick_p7": {
-          "position": [
-            0,
-            "-(0.6 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 180))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 180))"
-          ]
-        },
-        "bottom_kick_p8": {
-          "position": [
-            0,
-            "-(0.6 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 180))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 180))"
-          ]
-        },
-        "bottom_kick_p9": {
-          "position": [
-            0,
-            "-(0.6 + 1.0 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 180))",
-            "-(0.5 + 0.8 * v.kl) * math.max(0.0, math.sin(q.anim_time * 300 + 180))"
+            "-0.4 * v.push",
+            "-0.3 * v.push * math.max(0.0, math.sin(q.anim_time * 600))"
           ]
         }
       }
@@ -1541,220 +98,151 @@
           "scale": [
             "1.0 + 0.08 * v.push",
             "1.0 - 0.06 * v.push",
-            "1.0 + 0.16 * v.push + 0.06 * math.max(0.0, math.sin(q.anim_time * 480 + 0))"
+            "1.0 + 0.14 * v.push + 0.05 * math.max(0.0, math.sin(q.anim_time * 480))"
           ],
           "rotation": [
-            "8.0 * v.push * math.sin(q.anim_time * 480)",
+            "6.0 * v.push * math.sin(q.anim_time * 480)",
             0,
-            "6.0 * v.push * math.cos(q.anim_time * 480)"
+            "5.0 * v.push * math.cos(q.anim_time * 480)"
+          ],
+          "position": [
+            0,
+            "-0.5 * v.push",
+            "-0.4 * v.push * math.max(0.0, math.sin(q.anim_time * 480))"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.navel_prebirth": {
+      "loop": true,
+      "bones": {
+        "belly": {
+          "scale": [
+            "1.0 + 0.03 * math.sin(q.anim_time * 540)",
+            "1.0",
+            "1.05 + 0.05 * math.sin(q.anim_time * 540)"
+          ],
+          "rotation": [
+            "2.0 * math.sin(q.anim_time * 900)",
+            0,
+            0
           ]
         },
         "front_kick": {
           "position": [
             0,
-            "-1.5 * v.push",
-            "-(1.5 + 3.0 * v.push) * (0.5 + 0.5 * math.max(0.0, math.sin(q.anim_time * 480 + 0)))"
+            "0.2 * math.sin(q.anim_time * 900)",
+            "-(v.kr_f - 0.6) - 1.1 * math.max(0.0, math.sin(q.anim_time * 540))"
           ],
           "scale": [
-            "1.0 + 0.6 * v.push",
-            "1.0 + 0.6 * v.push",
-            "1.0 + 1.0 * v.push"
+            "1.0 + 0.15 * math.max(0.0, math.sin(q.anim_time * 540))",
+            "1.0 + 0.15 * math.max(0.0, math.sin(q.anim_time * 540))",
+            "1.0 + 0.1 * math.max(0.0, math.sin(q.anim_time * 540))"
           ]
         },
         "left_kick": {
-          "position": [
-            "-1.5 * v.push",
-            "-0.8 * v.push",
-            "-(0.5 + 2.0 * v.push) * math.max(0.0, math.sin(q.anim_time * 480 + 120))"
+          "scale": [
+            0.7,
+            0.7,
+            0.7
           ]
         },
         "right_kick": {
-          "position": [
-            "1.5 * v.push",
-            "-0.8 * v.push",
-            "-(0.5 + 2.0 * v.push) * math.max(0.0, math.sin(q.anim_time * 480 + 240))"
+          "scale": [
+            0.7,
+            0.7,
+            0.7
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.navel_birth": {
+      "loop": true,
+      "bones": {
+        "belly": {
+          "scale": [
+            "1.0 + 0.04 * v.push + 0.02 * math.sin(q.anim_time * 540)",
+            "1.0 - 0.03 * v.push",
+            "1.06 + 0.10 * v.push + 0.03 * math.sin(q.anim_time * 540)"
+          ],
+          "rotation": [
+            "3.0 * math.sin(q.anim_time * 900) * v.push",
+            0,
+            "2.0 * math.sin(q.anim_time * 540) * v.push"
           ]
         },
-        "front_kick_p3": {
+        "front_kick": {
           "position": [
             0,
-            "-1.5 * v.push",
-            "-(1.5 + 3.0 * v.push) * (0.5 + 0.5 * math.max(0.0, math.sin(q.anim_time * 480 + 0)))"
+            "0.2 * math.sin(q.anim_time * 900) * v.push",
+            "-(v.kr_f - 0.6) - (0.6 + 2.0 * v.push) - 0.3 * math.max(0.0, math.sin(q.anim_time * 540))"
           ],
           "scale": [
-            "1.0 + 0.6 * v.push",
-            "1.0 + 0.6 * v.push",
-            "1.0 + 1.0 * v.push"
+            "1.0 + 0.45 * v.push",
+            "1.0 + 0.45 * v.push",
+            "1.0 + 0.35 * v.push + 0.1 * math.max(0.0, math.sin(q.anim_time * 540))"
+          ],
+          "rotation": [
+            "6.0 * math.sin(q.anim_time * 900) * v.push",
+            "8.0 * math.sin(q.anim_time * 540) * v.push",
+            0
           ]
         },
-        "front_kick_p4": {
+        "left_kick": {
+          "scale": [
+            "1.0 - 0.3 * v.push",
+            "1.0 - 0.3 * v.push",
+            "1.0 - 0.3 * v.push"
+          ]
+        },
+        "right_kick": {
+          "scale": [
+            "1.0 - 0.3 * v.push",
+            "1.0 - 0.3 * v.push",
+            "1.0 - 0.3 * v.push"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.navel_birth_light": {
+      "loop": true,
+      "bones": {
+        "belly": {
+          "scale": [
+            "1.0 + 0.04 * v.push + 0.02 * math.sin(q.anim_time * 540)",
+            "1.0 - 0.03 * v.push",
+            "1.06 + 0.10 * v.push + 0.03 * math.sin(q.anim_time * 540)"
+          ],
+          "rotation": [
+            "3.0 * math.sin(q.anim_time * 900) * v.push",
+            0,
+            "2.0 * math.sin(q.anim_time * 540) * v.push"
+          ]
+        },
+        "front_kick": {
           "position": [
             0,
-            "-1.5 * v.push",
-            "-(1.5 + 3.0 * v.push) * (0.5 + 0.5 * math.max(0.0, math.sin(q.anim_time * 480 + 0)))"
-          ],
-          "scale": [
-            "1.0 + 0.6 * v.push",
-            "1.0 + 0.6 * v.push",
-            "1.0 + 1.0 * v.push"
-          ]
-        },
-        "front_kick_p5": {
-          "position": [
             0,
-            "-1.5 * v.push",
-            "-(1.5 + 3.0 * v.push) * (0.5 + 0.5 * math.max(0.0, math.sin(q.anim_time * 480 + 0)))"
+            "-(v.kr_f - 1.2) * v.push"
           ],
           "scale": [
-            "1.0 + 0.6 * v.push",
-            "1.0 + 0.6 * v.push",
-            "1.0 + 1.0 * v.push"
+            "1.0 + 0.45 * v.push",
+            "1.0 + 0.45 * v.push",
+            "1.0 + 0.35 * v.push"
           ]
         },
-        "front_kick_p6": {
-          "position": [
-            0,
-            "-1.5 * v.push",
-            "-(1.5 + 3.0 * v.push) * (0.5 + 0.5 * math.max(0.0, math.sin(q.anim_time * 480 + 0)))"
-          ],
+        "left_kick": {
           "scale": [
-            "1.0 + 0.6 * v.push",
-            "1.0 + 0.6 * v.push",
-            "1.0 + 1.0 * v.push"
+            "1.0 - 0.3 * v.push",
+            "1.0 - 0.3 * v.push",
+            "1.0 - 0.3 * v.push"
           ]
         },
-        "front_kick_p7": {
-          "position": [
-            0,
-            "-1.5 * v.push",
-            "-(1.5 + 3.0 * v.push) * (0.5 + 0.5 * math.max(0.0, math.sin(q.anim_time * 480 + 0)))"
-          ],
+        "right_kick": {
           "scale": [
-            "1.0 + 0.6 * v.push",
-            "1.0 + 0.6 * v.push",
-            "1.0 + 1.0 * v.push"
-          ]
-        },
-        "front_kick_p8": {
-          "position": [
-            0,
-            "-1.5 * v.push",
-            "-(1.5 + 3.0 * v.push) * (0.5 + 0.5 * math.max(0.0, math.sin(q.anim_time * 480 + 0)))"
-          ],
-          "scale": [
-            "1.0 + 0.6 * v.push",
-            "1.0 + 0.6 * v.push",
-            "1.0 + 1.0 * v.push"
-          ]
-        },
-        "front_kick_p9": {
-          "position": [
-            0,
-            "-1.5 * v.push",
-            "-(1.5 + 3.0 * v.push) * (0.5 + 0.5 * math.max(0.0, math.sin(q.anim_time * 480 + 0)))"
-          ],
-          "scale": [
-            "1.0 + 0.6 * v.push",
-            "1.0 + 0.6 * v.push",
-            "1.0 + 1.0 * v.push"
-          ]
-        },
-        "left_kick_p3": {
-          "position": [
-            "-1.5 * v.push",
-            "-0.8 * v.push",
-            "-(0.5 + 2.0 * v.push) * math.max(0.0, math.sin(q.anim_time * 480 + 120))"
-          ]
-        },
-        "left_kick_p4": {
-          "position": [
-            "-1.5 * v.push",
-            "-0.8 * v.push",
-            "-(0.5 + 2.0 * v.push) * math.max(0.0, math.sin(q.anim_time * 480 + 120))"
-          ]
-        },
-        "left_kick_p5": {
-          "position": [
-            "-1.5 * v.push",
-            "-0.8 * v.push",
-            "-(0.5 + 2.0 * v.push) * math.max(0.0, math.sin(q.anim_time * 480 + 120))"
-          ]
-        },
-        "left_kick_p6": {
-          "position": [
-            "-1.5 * v.push",
-            "-0.8 * v.push",
-            "-(0.5 + 2.0 * v.push) * math.max(0.0, math.sin(q.anim_time * 480 + 120))"
-          ]
-        },
-        "left_kick_p7": {
-          "position": [
-            "-1.5 * v.push",
-            "-0.8 * v.push",
-            "-(0.5 + 2.0 * v.push) * math.max(0.0, math.sin(q.anim_time * 480 + 120))"
-          ]
-        },
-        "left_kick_p8": {
-          "position": [
-            "-1.5 * v.push",
-            "-0.8 * v.push",
-            "-(0.5 + 2.0 * v.push) * math.max(0.0, math.sin(q.anim_time * 480 + 120))"
-          ]
-        },
-        "left_kick_p9": {
-          "position": [
-            "-1.5 * v.push",
-            "-0.8 * v.push",
-            "-(0.5 + 2.0 * v.push) * math.max(0.0, math.sin(q.anim_time * 480 + 120))"
-          ]
-        },
-        "right_kick_p3": {
-          "position": [
-            "1.5 * v.push",
-            "-0.8 * v.push",
-            "-(0.5 + 2.0 * v.push) * math.max(0.0, math.sin(q.anim_time * 480 + 240))"
-          ]
-        },
-        "right_kick_p4": {
-          "position": [
-            "1.5 * v.push",
-            "-0.8 * v.push",
-            "-(0.5 + 2.0 * v.push) * math.max(0.0, math.sin(q.anim_time * 480 + 240))"
-          ]
-        },
-        "right_kick_p5": {
-          "position": [
-            "1.5 * v.push",
-            "-0.8 * v.push",
-            "-(0.5 + 2.0 * v.push) * math.max(0.0, math.sin(q.anim_time * 480 + 240))"
-          ]
-        },
-        "right_kick_p6": {
-          "position": [
-            "1.5 * v.push",
-            "-0.8 * v.push",
-            "-(0.5 + 2.0 * v.push) * math.max(0.0, math.sin(q.anim_time * 480 + 240))"
-          ]
-        },
-        "right_kick_p7": {
-          "position": [
-            "1.5 * v.push",
-            "-0.8 * v.push",
-            "-(0.5 + 2.0 * v.push) * math.max(0.0, math.sin(q.anim_time * 480 + 240))"
-          ]
-        },
-        "right_kick_p8": {
-          "position": [
-            "1.5 * v.push",
-            "-0.8 * v.push",
-            "-(0.5 + 2.0 * v.push) * math.max(0.0, math.sin(q.anim_time * 480 + 240))"
-          ]
-        },
-        "right_kick_p9": {
-          "position": [
-            "1.5 * v.push",
-            "-0.8 * v.push",
-            "-(0.5 + 2.0 * v.push) * math.max(0.0, math.sin(q.anim_time * 480 + 240))"
+            "1.0 - 0.3 * v.push",
+            "1.0 - 0.3 * v.push",
+            "1.0 - 0.3 * v.push"
           ]
         }
       }

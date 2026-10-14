@@ -143,6 +143,15 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   when hers is small). The client falls back to `q.variant` and to the pose when the phase
   property is unknown, and the mob system rewrites the phase property every tick (records from
   versions that only set it through entity events, wild mobs that only kept the variant).
+- ✅ **Kicks as bulges (0.3.8).** The kick cubes rest 1 to 10 units inside the belly depending on
+  the size, and the mod's own per-phase `fetal_movement_pN` animations move them by exactly the
+  right distance; the port's procedural push layers used to add a fixed 2-5 units on top, which
+  threw the cubes clear of the skin on small bellies. `fetal_push`, `fetal_push_monster`,
+  `birth_push` and `birth_push_monster` now move only the belly bone (a swell and shift from
+  inside), the kick cubes belong to the mod's keyframed kicks, and the navel birth's crowning
+  travels by the measured reach of the current belly size (`v.kr_f`, written per family and for
+  the player's two bodies by the generator), growing at most 1.45x; the monster creeper girl, whose
+  own birth animation already moves her kick cubes, gets a crowning that grows in place.
 - ✅ **What the game's content log said (0.3.7).** The first content log from a device named the
   real failures: a float property default written as `0` (what JSON.stringify makes of 0.0) makes
   the game drop every property of the entity ("'default' value does not match the specified type

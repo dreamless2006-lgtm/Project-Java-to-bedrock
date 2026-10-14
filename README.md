@@ -52,7 +52,7 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
 A world keeps the pack versions it was created with, and Bedrock keeps older imports next to the
 new one. After importing a newer `.mcaddon`, open the world's settings and, under **Behavior
 Packs** *and* **Resource Packs**, remove Minepreggo from the active packs and add it again. The
-join message shows both versions (`[Minepreggo 0.3.7, resources 0.3.7]`); while the resources
+join message shows both versions (`[Minepreggo 0.3.8, resources 0.3.8]`); while the resources
 version lags behind, the models, bellies and animations are the old ones, whatever the scripts do.
 Old versions can be deleted in Settings → Storage.
 

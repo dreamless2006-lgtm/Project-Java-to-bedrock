@@ -52,6 +52,34 @@ function rejectedFields(/** @type {any} */ entity) {
   }
 }
 
+/**
+ * How far the front kick cube's resting face sits behind the belly skin, per belly size: the navel
+ * birth moves it out by exactly that plus the crowning, so the bulge surfaces at the skin instead
+ * of floating in front of it (or staying buried) whatever the belly size.
+ * @param {(phase: number) => any} geometryOf
+ */
+function kickReach(geometryOf) {
+  /** @type {number[]} */
+  const reach = [];
+  for (let p = 0; p <= 9; p++) {
+    const geometry = geometryOf(p);
+    const byName = new Map(geometry.bones.map((/** @type {any} */ b) => [b.name, b]));
+    const children = (/** @type {string} */ n) => geometry.bones.filter((/** @type {any} */ b) => b.parent === n).map((/** @type {any} */ b) => b.name);
+    const subtree = (/** @type {string} */ n) => [n, ...children(n).flatMap(subtree)];
+    const front = (/** @type {any} */ bone) => Math.min(...bone.cubes.map((/** @type {any} */ c) => c.origin[2] - (c.inflate ?? 0)));
+    const bellyBones = subtree('belly').filter((n) => !/kick/.test(n)).map((n) => byName.get(n)).filter((b) => b?.cubes?.length);
+    const kick = byName.get('front_kick');
+    reach.push(kick && bellyBones.length ? Math.max(0, Math.round((front(kick) - Math.min(...bellyBones.map(front))) * 100) / 100) : 0);
+  }
+  return reach;
+}
+/** Molang picking the reach of the current belly size. */
+const reachExpression = (/** @type {string} */ sizeVariable, /** @type {number[]} */ reach) => {
+  let expr = '0.0';
+  for (let p = 9; p >= 3; p--) expr = `(${sizeVariable} == ${p} ? ${reach[p].toFixed(2)} : ${expr})`;
+  return expr;
+};
+
 /** Molang: the belly size as a number from the enum property, -1 when none. */
 function bellyIndex(/** @type {string} */ property) {
   let expr = '-1';
@@ -134,17 +162,24 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
   ];
 
   // pre_animation: the belly size from the enum property, else the phase, the variant, or a pregnancy pose.
-  const pre = d.scripts.pre_animation.filter((/** @type {string} */ line) => !line.startsWith('v.bp =') && !line.startsWith('v.phase = v.phase >= 0 ?') && !line.startsWith('v.phase = v.bp'));
+  const pre = d.scripts.pre_animation.filter((/** @type {string} */ line) => !line.startsWith('v.bp =') && !line.startsWith('v.phase = v.phase >= 0 ?') && !line.startsWith('v.phase = v.bp') && !line.startsWith('v.kr_f ='));
   const at = pre.findIndex((/** @type {string} */ line) => line.startsWith('v.pregnant_pose ='));
   if (at < 0) throw new Error(`${family}: no v.pregnant_pose line`);
   pre.splice(at + 1, 0,
     `v.bp = ${bellyIndex("q.property('minepreggo:belly')")};`,
     'v.bp = v.bp >= 0 ? v.bp : (v.phase >= 0 ? v.phase : (q.variant > 0 ? q.variant - 1 : (v.pregnant_pose ? 5 : -1)));',
-    'v.phase = v.bp;');
+    'v.phase = v.bp;',
+    `v.kr_f = ${reachExpression('v.bp', kickReach((p) => read(join(RP, 'models/entity', MOD, `${family}_p${p}.geo.json`))['minecraft:geometry'][0]))};`);
   d.scripts.pre_animation = pre;
 
   // The belly animations move into the controller.
   const navel = 'navel_birth' in d.animations;
+  if (navel) {
+    // Where the mod's own birth animation already moves her kick cubes, the crowning only grows in place.
+    const birthFile = join(RP, 'animations', MOD, `${family}.animation.json`);
+    const birth = existsSync(birthFile) ? read(birthFile).animations?.[d.animations.birth] : undefined;
+    d.animations.navel_birth = `animation.${MOD}.navel_birth${birth?.bones?.front_kick ? '_light' : ''}`;
+  }
   d.animations.belly_controller = `controller.animation.${MOD}.${navel ? 'belly_navel' : 'belly'}`;
   const animate = d.scripts.animate.filter((/** @type {string | Record<string, string>} */ a) => !(typeof a === 'object' && BELLY_ANIMATE.test(Object.keys(a)[0])) && a !== 'belly_controller');
   const pain = animate.indexOf('pain_controller');
@@ -197,13 +232,17 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
     d.render_controllers.push({ [`controller.render.${MOD}.player_belly_custom_p${p}`]: `${belly} && !variable.mp_predefined && variable.mp_bp == ${p}` });
     d.render_controllers.push({ [`controller.render.${MOD}.player_belly_predefined_p${p}`]: `${belly} && variable.mp_predefined && variable.mp_bp == ${p}` });
   }
-  const pre = d.scripts.pre_animation.filter((/** @type {string} */ line) => !line.startsWith('variable.mp_bp =') && !line.startsWith('variable.mp_phase = variable.mp_phase >= 0 ?') && !line.startsWith('variable.mp_phase = variable.mp_bp'));
+  const pre = d.scripts.pre_animation.filter((/** @type {string} */ line) => !line.startsWith('variable.mp_bp =') && !line.startsWith('variable.mp_phase = variable.mp_phase >= 0 ?') && !line.startsWith('variable.mp_phase = variable.mp_bp') && !line.startsWith('variable.kr_f ='));
   const at = pre.findIndex((/** @type {string} */ line) => line.startsWith('variable.mp_pose ='));
   if (at < 0) throw new Error('player: no mp_pose line');
   pre.splice(at + 1, 0,
     `variable.mp_bp = ${bellyIndex("query.property('minepreggo:belly')")};`,
     "variable.mp_bp = variable.mp_bp >= 0 ? variable.mp_bp : (variable.mp_phase >= 0 ? variable.mp_phase : ((variable.mp_pose == 'none' || variable.mp_pose == 'postbirth' || variable.mp_pose == 'miscarriage') ? -1 : 5));",
     'variable.mp_phase = variable.mp_bp;');
+  const reachOf = (/** @type {string} */ kind) => reachExpression('variable.mp_bp', kickReach((p) => read(join(RP, 'models/entity', MOD, `player_body_${kind}_p${p}.geo.json`))['minecraft:geometry'][0]));
+  const predefinedAt = pre.findIndex((/** @type {string} */ line) => line.startsWith('variable.mp_predefined ='));
+  if (predefinedAt < 0) throw new Error('player: no mp_predefined line');
+  pre.splice(predefinedAt + 1, 0, `variable.kr_f = variable.mp_predefined ? ${reachOf('predefined')} : ${reachOf('custom')};`);
   d.scripts.pre_animation = pre;
   d.scripts.initialize = initializers(pre, [...(d.scripts.initialize ?? []), 'variable.melee_spear_equipped = 0.0;']);
   write(file, doc);

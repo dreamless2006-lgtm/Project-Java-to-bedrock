@@ -42,6 +42,7 @@
           "v.bp = (q.property('minepreggo:belly') == 'p0' ? 0 : (q.property('minepreggo:belly') == 'p1' ? 1 : (q.property('minepreggo:belly') == 'p2' ? 2 : (q.property('minepreggo:belly') == 'p3' ? 3 : (q.property('minepreggo:belly') == 'p4' ? 4 : (q.property('minepreggo:belly') == 'p5' ? 5 : (q.property('minepreggo:belly') == 'p6' ? 6 : (q.property('minepreggo:belly') == 'p7' ? 7 : (q.property('minepreggo:belly') == 'p8' ? 8 : (q.property('minepreggo:belly') == 'p9' ? 9 : -1))))))))));",
           "v.bp = v.bp >= 0 ? v.bp : (v.phase >= 0 ? v.phase : (q.variant > 0 ? q.variant - 1 : (v.pregnant_pose ? 5 : -1)));",
           "v.phase = v.bp;",
+          "v.kr_f = (v.bp == 3 ? 1.87 : (v.bp == 4 ? 3.47 : (v.bp == 5 ? 3.48 : (v.bp == 6 ? 2.57 : (v.bp == 7 ? 2.87 : (v.bp == 8 ? 7.37 : (v.bp == 9 ? 9.57 : 0.0)))))));",
           "v.push = v.pose == 'birth' ? q.property('minepreggo:growth') : 0.0;",
           "v.kick = q.property('minepreggo:kick');",
           "v.savage = q.property('minepreggo:savage');",
@@ -221,6 +222,7 @@
           "variable.kick = 0.0;",
           "variable.kicking = 0.0;",
           "variable.kl = 0.0;",
+          "variable.kr_f = 0.0;",
           "variable.phase = 0.0;",
           "variable.pose = 0.0;",
           "variable.pregnant_pose = 0.0;",
@@ -286,7 +288,7 @@
         "fetal_push": "animation.minepreggo.fetal_push_monster",
         "birth_push": "animation.minepreggo.birth_push_monster",
         "navel_prebirth": "animation.minepreggo.navel_prebirth",
-        "navel_birth": "animation.minepreggo.navel_birth",
+        "navel_birth": "animation.minepreggo.navel_birth_light",
         "belly_controller": "controller.animation.minepreggo.belly_navel"
       },
       "render_controllers": [
