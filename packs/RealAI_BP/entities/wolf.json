@@ -404,7 +404,7 @@
                 "target": "self"
               },
               "equip_item_slot": "slot.armor.body",
-              "play_sounds": "armor.equip_wolf",
+              "play_sounds": [ "armor.equip_wolf" ],
               "interact_text": "action.interact.equipwolfarmor"
             },
             {
@@ -444,7 +444,7 @@
               },
               "hurt_item": 1,
               "drop_item_slot": "slot.armor.body",
-              "play_sounds": "armor.unequip_wolf",
+              "play_sounds": [ "armor.unequip_wolf" ],
               "interact_text": "action.interact.removewolfarmor",
               "vibration": "shear"
             },
@@ -492,7 +492,7 @@
                 "amount": 8
               },
               "use_item": true,
-              "play_sounds": "armor.repair_wolf",
+              "play_sounds": [ "armor.repair_wolf" ],
               "interact_text": "action.interact.repairwolfarmor"
             }
           ]
