@@ -51,7 +51,7 @@ export function renderObservation(obs) {
     const L = [];
     const pos = obs.position ? `${r(obs.position.x)} ${r(obs.position.y)} ${r(obs.position.z)}` : "?";
     L.push(`Time: ${obs.timeOfDay || "?"}${obs.weather ? ", " + obs.weather : ""}. Dimension: ${obs.dimension || "overworld"}. Position: ${pos}${obs.biome ? " (" + obs.biome + ")" : ""}${obs.facing ? ", facing " + obs.facing : ""}.`);
-    L.push(`Health ${obs.health ?? "?"}/${obs.maxHealth ?? 20}, hunger ${obs.hunger ?? "?"}/20${obs.onFire ? ", ON FIRE" : ""}${obs.inWater ? ", in water" : ""}${obs.status ? ", " + obs.status : ""}.`);
+    L.push(`Health ${obs.health ?? "?"}/${obs.maxHealth ?? 20}, hunger ${obs.hunger ?? "?"}${obs.onFire ? ", ON FIRE" : ""}${obs.inWater ? ", in water" : ""}${obs.status ? ", " + obs.status : ""}.`);
     if (obs.equipment) L.push(`Wearing/holding: ${obs.equipment}.`);
     L.push(`Inventory: ${obs.inventory && obs.inventory.length ? obs.inventory.join(", ") : "empty"}.`);
     if (obs.feelings) L.push(obs.feelings);

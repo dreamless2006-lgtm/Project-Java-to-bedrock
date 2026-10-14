@@ -13,6 +13,7 @@ import { addFact } from "./memory.js";
 import { craftPlan, smeltPlan, isLog, isPlanks } from "./crafting.js";
 import { getWorldConfig } from "./config.js";
 import { presetBlueprint } from "./blueprints.js";
+import { dropsOf, harvestCheck, breakTicks, materialMatcher, isOreId, bestTool } from "./harvest.js";
 export { presetBlueprint };
 
 const SOURCE = "llm";
@@ -40,7 +41,9 @@ let walkerTimer = null;
 export function isPlayerBody(bot) { try { return bot.typeId === "minecraft:player"; } catch (e) { return false; } }
 function goTo(bot, target, mode = "sprint", prio = PRIO, enterWater = false) {
     if (isPlayerBody(bot)) {
-        walkers.set(bot.id, { bot, target: { x: target.x, y: target.y, z: target.z }, mode, enterWater, until: system.currentTick + STEP * 3 });
+        const w = walkers.get(bot.id);
+        if (w) { w.target = { x: target.x, y: target.y, z: target.z }; w.mode = mode; w.enterWater = enterWater; w.until = system.currentTick + STEP * 3; }
+        else walkers.set(bot.id, { bot, target: { x: target.x, y: target.y, z: target.z }, mode, enterWater, until: system.currentTick + STEP * 3, blocked: 0, slide: 0 });
         if (walkerTimer === null) walkerTimer = system.runInterval(() => { const now = system.currentTick; for (const w of [...walkers.values()]) { try { if (!w.bot.isValid) walkers.delete(w.bot.id); else stepPlayerBody(w.bot, now); } catch (e) { /* ignore */ } } }, 1);
         return;
     }
@@ -55,21 +58,42 @@ export function stepPlayerBody(bot, now) {
     const dx = w.target.x - loc.x, dz = w.target.z - loc.z;
     const flat = Math.hypot(dx, dz);
     if (flat < 0.3) { walkers.delete(bot.id); return; }
-    const step = Math.min(w.mode === "sprint" ? 0.28 : 0.2, flat);
-    const nx = loc.x + dx / flat * step, nz = loc.z + dz / flat * step;
-    let ny = loc.y;
-    try {
-        const dim = bot.dimension, fx = Math.floor(nx), fz = Math.floor(nz), feet = Math.floor(loc.y);
-        for (const y of [feet, feet + 1, feet - 1, feet - 2, feet - 3]) {
-            const below = dim.getBlock({ x: fx, y: y - 1, z: fz }), at = dim.getBlock({ x: fx, y, z: fz }), head = dim.getBlock({ x: fx, y: y + 1, z: fz });
-            if (!below || !at || !head) continue;
-            if ((solid(below) || (w.enterWater && /water/.test(below.typeId))) && !solid(at) && !solid(head)) { ny = y; break; }
-        }
-    } catch (e) { /* unloaded chunk: keep the height */ }
+    const step = Math.min(w.mode === "walk" ? 0.2 : 0.28, flat);
+    const ux = dx / flat, uz = dz / flat;
+    let move = null, slid = false;
+    // straight on first, then slip sideways around whatever is in the way (a trunk, a corner, a
+    // post); a slide that goes on for more than a few blocks is a wall, and the body stops so
+    // whoever is walking it can dig through instead.
+    for (const a of [0, 0.8, -0.8, 1.5, -1.5]) {
+        if (a !== 0 && (w.slide || 0) >= 30) break;
+        const cs = Math.cos(a), sn = Math.sin(a);
+        const vx = ux * cs - uz * sn, vz = ux * sn + uz * cs;
+        const nx = loc.x + vx * step, nz = loc.z + vz * step;
+        const ny = footing(bot.dimension, nx, loc.y, nz, w.enterWater);
+        if (ny !== null) { move = { x: nx, y: ny, z: nz }; slid = a !== 0; break; }
+    }
+    if (!move) { w.blocked = (w.blocked || 0) + 1; return; }
+    w.blocked = 0;
+    w.slide = slid ? (w.slide || 0) + 1 : 0;
     const yaw = Math.atan2(-dx, dz) * 180 / Math.PI;
-    try { bot.teleport({ x: nx, y: ny, z: nz }, { rotation: { x: 0, y: yaw } }); }
-    catch (e) { try { bot.teleport({ x: nx, y: ny, z: nz }); } catch (e2) { /* ignore */ } }
+    try { bot.teleport(move, { rotation: { x: 0, y: yaw } }); }
+    catch (e) { try { bot.teleport(move); } catch (e2) { /* ignore */ } }
 }
+// The height the feet can stand at in column (x, z) within a step of the current height; null when the way is blocked.
+function footing(dim, x, y, z, enterWater) {
+    try {
+        const fx = Math.floor(x), fz = Math.floor(z), feet = Math.floor(y);
+        for (const fy of [feet, feet + 1, feet - 1, feet - 2, feet - 3]) {
+            const below = dim.getBlock({ x: fx, y: fy - 1, z: fz }), at = dim.getBlock({ x: fx, y: fy, z: fz }), head = dim.getBlock({ x: fx, y: fy + 1, z: fz });
+            if (!below || !at || !head) continue;
+            if (/lava/.test(below.typeId) || /lava/.test(at.typeId)) return null;
+            const ground = solid(below) || (enterWater && /water/.test(below.typeId));
+            if (ground && !solid(at) && !solid(head)) return fy;
+        }
+    } catch (e) { return y; }   // unloaded chunk: keep the height
+    return null;
+}
+export function walkerBlocked(bot) { const w = walkers.get(bot.id); return w ? (w.blocked || 0) : 0; }
 function lookAt(bot, target) { try { faceBlock(bot, target); } catch (e) { /* ignore */ } }
 function cfg() { return getWorldConfig(); }
 
@@ -178,21 +202,116 @@ function placeBlock(bot, pos, blockId) {
     }
 }
 
-function breakBlock(bot, pos) {
+function swing(bot) { try { bot.playAnimation(isPlayerBody(bot) ? "animation.player.attack.rotations" : "animation.humanoid.attack.rotations"); } catch (e) { /* ignore */ } }
+
+function heldId(bot) { try { return bot.getComponent(EntityComponentTypes.Equippable)?.getEquipment(EquipmentSlot.Mainhand)?.typeId || null; } catch (e) { return null; } }
+// {id: count} of the inventory plus whatever is in the hand (an entity bot's hand is outside its container).
+function invWithHand(bot) { const inv = inventoryMap(bot); const h = heldId(bot); if (h && !inv[h]) inv[h] = 1; return inv; }
+
+// Put an item in the hand. A real player's hand is a hotbar slot, so the item is moved there;
+// an entity bot gets it through replaceitem (its hand is not part of its container).
+function holdItem(bot, typeId) {
+    const c = containerOf(bot);
+    if (!c) return false;
+    if (isPlayerBody(bot)) {
+        if (heldId(bot) === typeId) return true;
+        let idx = -1;
+        for (let i = 0; i < c.size; i++) { let st; try { st = c.getItem(i); } catch (e) { continue; } if (st && st.typeId === typeId) { idx = i; break; } }
+        if (idx < 0) return false;
+        const sel = typeof bot.selectedSlotIndex === "number" ? bot.selectedSlotIndex : 0;
+        if (idx !== sel) {
+            try { c.swapItems(idx, sel, c); }
+            catch (e) { try { const a = c.getItem(idx), b = c.getItem(sel); c.setItem(sel, a); c.setItem(idx, b); } catch (e2) { return false; } }
+        }
+        return true;
+    }
+    if (takeItems(c, typeId, 1) < 1) return false;
+    try { bot.runCommand(`replaceitem entity @s slot.weapon.mainhand 0 ${typeId}`); } catch (e) { giveItems(c, typeId, 1); return false; }
+    return true;
+}
+
+// One use of wear on the tool in the inventory; a worn-out tool breaks, like in survival.
+function wearTool(bot, typeId) {
+    try {
+        const c = containerOf(bot);
+        if (!c) return;
+        for (let i = 0; i < c.size; i++) {
+            const st = c.getItem(i);
+            if (!st || st.typeId !== typeId) continue;
+            const d = st.getComponent("minecraft:durability");
+            if (!d) return;
+            if (d.damage + 1 >= d.maxDurability) { c.setItem(i, undefined); try { bot.dimension.playSound("random.break", bot.location); } catch (e) { /* ignore */ } }
+            else { d.damage += 1; c.setItem(i, st); }
+            return;
+        }
+    } catch (e) { /* ignore */ }
+}
+
+// Break a block the survival way: the right tool, its drops into the inventory, wear on the tool.
+function harvestBlock(bot, pos) {
     const dim = bot.dimension;
     const x = Math.floor(pos.x), y = Math.floor(pos.y), z = Math.floor(pos.z);
     const b = blockAt(dim, x, y, z);
     if (!b) return { ok: false, reason: "chunk not loaded" };
     if (b.isAir) return { ok: false, reason: "nothing there" };
-    if (/bedrock|barrier|end_portal_frame|command_block/.test(b.typeId)) return { ok: false, reason: `${nameOf(b.typeId)} cannot be broken` };
     const id = b.typeId;
+    const chk = harvestCheck(id, invWithHand(bot));
+    if (!chk.ok) return { ok: false, reason: chk.reason, id };
     try {
-        lookAt(bot, { x: x + 0.5, y, z: z + 0.5 });
-        try { bot.playAnimation("mine"); } catch (e) { /* ignore */ }
-        dim.runCommand(`setblock ${x} ${y} ${z} minecraft:air destroy`);
-        try { dim.playSound(/log|wood|planks|leaves/.test(id) ? "dig.wood" : "dig.stone", { x, y, z }); } catch (e) { /* ignore */ }
-        return { ok: true, id };
-    } catch (e) { return { ok: false, reason: String(e?.message || e) }; }
+        lookAt(bot, { x, y, z });
+        if (chk.tool) holdItem(bot, chk.tool);
+        swing(bot);
+        try { b.setType("minecraft:air"); } catch (e) { dim.runCommand(`setblock ${x} ${y} ${z} minecraft:air`); }
+        try { dim.playSound(/log|wood|planks|leaves/.test(id) ? "dig.wood" : /dirt|grass|sand|gravel|clay|snow/.test(id) ? "dig.gravel" : "dig.stone", { x, y, z }); } catch (e) { /* ignore */ }
+        const c = containerOf(bot);
+        let got = 0;
+        const drops = dropsOf(id);
+        for (const d of drops) {
+            const n = c ? giveItems(c, d.id, d.n) : 0;
+            got += n;
+            if (n < d.n) { try { dim.spawnItem(new ItemStack(d.id, d.n - n), { x: x + 0.5, y: y + 0.5, z: z + 0.5 }); } catch (e) { /* ignore */ } }
+        }
+        if (chk.tool) wearTool(bot, chk.tool);
+        return { ok: true, id, got, drops };
+    } catch (e) { return { ok: false, reason: String(e?.message || e), id }; }
+}
+
+function breakBlock(bot, pos) { return harvestBlock(bot, pos); }
+
+// Terrain a player digs through without a second thought; anything else may be someone's build.
+const NATURAL = /^minecraft:(stone|dirt|grass_block|coarse_dirt|podzol|mycelium|gravel|sand|red_sand|sandstone|red_sandstone|clay|snow|snow_layer|netherrack|soul_sand|soul_soil|basalt|blackstone|end_stone|deepslate|tuff|calcite|andesite|diorite|granite|dripstone_block|pointed_dripstone|moss_block|mud|packed_mud|magma|ice|packed_ice|bamboo|cactus|pumpkin|melon_block|nether_wart_block|warped_wart_block|shroomlight|glowstone|hay_block|sweet_berry_bush|tallgrass|short_grass|fern|large_fern|double_plant|vine|cobweb|web|amethyst_block|budding_amethyst|amethyst_cluster|.*_terracotta|terracotta|.*_leaves|.*_log|.*_stem|.*_wood|.*_hyphae|.*_ore|ancient_debris|.*_mushroom_block|.*_sapling|.*_flower|dandelion|poppy|.*_amethyst_bud)$/;
+
+// Blocked on the way somewhere: dig the two blocks ahead if they are plain terrain.
+function clearPath(bot, target) {
+    const loc = bot.location;
+    const dx = target.x - loc.x, dz = target.z - loc.z, len = Math.hypot(dx, dz) || 1;
+    const ax = Math.floor(loc.x) + Math.round(dx / len), az = Math.floor(loc.z) + Math.round(dz / len), fy = Math.floor(loc.y);
+    let cleared = 0;
+    for (const y of [fy + 1, fy]) {
+        const b = blockAt(bot.dimension, ax, y, az);
+        if (!b || !solid(b)) continue;
+        if (!NATURAL.test(b.typeId)) return { cleared, blockedBy: b.typeId };
+        const r = harvestBlock(bot, { x: ax, y, z: az });
+        if (r.ok) cleared++; else return { cleared, blockedBy: b.typeId, reason: r.reason };
+    }
+    return { cleared };
+}
+
+// Shared stuck handling for everything that walks: counts steps without progress; a stuck
+// entity bot jumps, a stuck player body digs through plain terrain. Returns the stuck count.
+function walkProgress(bot, s, target) {
+    const moved = s.lastPos ? dist(bot.location, s.lastPos) : 1;
+    s.stuck = moved < 0.15 ? (s.stuck || 0) + 1 : 0;
+    if (isPlayerBody(bot) && walkerBlocked(bot) >= 8) s.stuck = Math.max(s.stuck, 6);
+    s.lastPos = { ...bot.location };
+    if (s.stuck >= 6 && s.stuck % 6 === 0) {
+        if (isPlayerBody(bot)) {
+            const r = clearPath(bot, target);
+            if (r.blockedBy) s.hardBlock = (s.hardBlock || 0) + 1;
+            else if (r.cleared) s.stuck = 0;
+        } else { try { jump(bot); } catch (e) { /* ignore */ } }
+    }
+    return s.stuck;
 }
 
 function collectNearbyItems(bot, radius = 4) {
@@ -278,11 +397,8 @@ H.move_to = {
         if (near(bot, s.target, 1.6) || (Math.abs(bot.location.x - s.target.x) < 1.2 && Math.abs(bot.location.z - s.target.z) < 1.2 && Math.abs(bot.location.y - s.target.y) < 3)) { stopMoving(bot); return { done: true, result: `arrived at ${fmtPos(s.target)}` }; }
         if (ctx.now - s.started > MOVE_TIMEOUT) { stopMoving(bot); return { done: true, result: `gave up walking to ${fmtPos(s.target)} (${Math.round(dist(bot.location, s.target))}m left, blocked?)` }; }
         goTo(bot, s.target, s.mode, PRIO, true);
-        const moved = dist(bot.location, s.lastPos);
-        s.stuck = moved < 0.15 ? s.stuck + 1 : 0;
-        s.lastPos = { ...bot.location };
-        if (s.stuck === 6) { try { jump(bot); } catch (e) { /* ignore */ } }
-        if (s.stuck > 24) { stopMoving(bot); return { done: true, result: `stuck on the way to ${fmtPos(s.target)} (${Math.round(dist(bot.location, s.target))}m left); try break_block or another route` }; }
+        const stuck = walkProgress(bot, s, s.target);
+        if (stuck > 24 || (s.hardBlock || 0) > 2) { stopMoving(bot); return { done: true, result: `stuck on the way to ${fmtPos(s.target)} (${Math.round(dist(bot.location, s.target))}m left${s.hardBlock ? ", something built is in the way" : ""}); try break_block or another route` }; }
         return undefined;
     },
 };
@@ -337,7 +453,7 @@ H.attack = {
         if (!t) return { done: true, result: `attack: no ${a.name} nearby` };
         if (t.dimension?.id !== ctx.bot.dimension.id || dist(t.location, ctx.bot.location) > 64) return { done: true, result: `${a.name} is too far away to attack` };
         if (t.typeId === "minecraft:player" && t.hasTag("realai_bridge")) return { done: true, result: "that is the relay account, leave it alone" };
-        try { setAITarget(ctx.bot, t); ctx.bot.addTag("allow_attack"); ctx.bot.applyDamage(0, { cause: EntityDamageCause.entityAttack, damagingEntity: t }); } catch (e) { /* ignore */ }
+        try { setAITarget(ctx.bot, t); ctx.bot.addTag("allow_attack"); if (!isPlayerBody(ctx.bot)) ctx.bot.applyDamage(0, { cause: EntityDamageCause.entityAttack, damagingEntity: t }); } catch (e) { /* ignore */ }
         equipBest(ctx.bot, "sword");
         return { targetId: t.id, name: a.name, started: ctx.now, startHp: healthOf(t)?.hp };
     },
@@ -349,14 +465,15 @@ H.attack = {
         try { bot.addTag("allow_attack"); } catch (e) { /* ignore */ }
         const d = dist(bot.location, t.location);
         if (d > 2.4) goTo(bot, t.location, "sprint", NAV.COMBAT + 1, true);
-        else { stopMoving(bot); lookAt(bot, t.location); if (ctx.now - (s.lastHit || 0) >= 20) { s.lastHit = ctx.now; try { t.applyDamage(meleeDamage(bot), { cause: EntityDamageCause.entityAttack, damagingEntity: bot }); bot.playAnimation("animation.humanoid.attack.rotations"); } catch (e) { /* ignore */ } } }
+        else { stopMoving(bot); lookAt(bot, t.location); if (ctx.now - (s.lastHit || 0) >= 20) { s.lastHit = ctx.now; try { t.applyDamage(meleeDamage(bot), { cause: EntityDamageCause.entityAttack, damagingEntity: bot }); swing(bot); } catch (e) { /* ignore */ } } }
         return undefined;
     },
 };
 
 function meleeDamage(bot) {
     const inv = inventoryMap(bot);
-    const held = WEAPON_RANK.find(w => inv["minecraft:" + w] || inv[w]);
+    const inHand = heldId(bot);
+    const held = WEAPON_RANK.find(w => inv["minecraft:" + w] || inv[w] || inHand === "minecraft:" + w);
     if (!held) return 2;
     if (/netherite/.test(held)) return 8; if (/diamond/.test(held)) return 7; if (/iron|sentient/.test(held)) return 6; if (/stone|living/.test(held)) return 5; return 4;
 }
@@ -379,33 +496,185 @@ H.defend = {
     },
 };
 
+// Legacy job system (entity bots only): the bot body's own worker chops and mines.
+function legacyGatherStart(a, ctx, m) {
+    if (hasJob(ctx.bot)) return { done: true, result: "already on a gathering job (use stop first)" };
+    const kind = /log|wood|tree|oak|spruce|birch|jungle|acacia|dark_oak|mangrove|cherry/.test(m) ? "chop" : "mine";
+    let want = m === "wood" || m === "logs" || m === "log" ? null : m.replace(/_log$/, "");
+    if (kind === "mine" && /^(stone|cobblestone|dirt|sand|gravel|anything|ore|ores)$/.test(m)) want = null;
+    const owner = ctx.brain.ownerPlayer();
+    const ok = assignFriendTask(ctx.bot, owner || null, kind, { want, amount: a.amount || 16, durationTicks: 20 * 60 * 6 });
+    if (!ok) return { done: true, result: "could not start the job" };
+    return { kind, want: want || "anything", started: ctx.now };
+}
+function legacyGatherStep(s, ctx) {
+    const t = getFriendTask(ctx.bot);
+    if (!t) { collectNearbyItems(ctx.bot, 6); const inv = inventoryMap(ctx.bot); return { done: true, result: `${s.kind} job finished (${s.want}); inventory now has ${Object.entries(inv).slice(0, 6).map(([id, n]) => nameOf(id) + " x" + n).join(", ") || "nothing new"}` }; }
+    if (ctx.now - s.started > 20 * 60 * 6) return { done: true, result: `${s.kind} job still running in the background` };
+    return undefined;
+}
+
+// Script-driven gathering: find the nearest matching block, walk within reach, take the time a
+// real player takes to break it, bank the drops, repeat. Works on any body, including the real
+// player the bridge account controls.
+const blockKey = (b) => `${b.x},${b.y},${b.z}`;
+function harvestStep(s, ctx) {
+    const bot = ctx.bot;
+    const summary = () => `${s.got} ${s.label}`;
+    if (s.got >= s.amount) { stopMoving(bot); return { done: true, result: `gathered ${summary()}` }; }
+    if (ctx.now - s.started > 20 * 60 * 6) { stopMoving(bot); return { done: true, result: `stopped after six minutes with ${summary()}` }; }
+    if (s.target) { const b = blockAt(bot.dimension, s.target.x, s.target.y, s.target.z); if (!b || !s.pred(b.typeId)) { s.target = null; s.breakingSince = 0; } }
+    if (!s.target) {
+        const feet = Math.floor(bot.location.y);
+        const cands = findBlocks(bot, b => s.pred(b.typeId) && !s.skip.has(blockKey(b)) && b.y - feet <= 5 && b.y - feet >= -6, 12, 6, 8);
+        cands.sort((p, q) => dist(eye(bot), center(p)) - dist(eye(bot), center(q)));
+        let pick = cands[0];
+        if (!pick) {
+            s.searches++;
+            if (s.searches > 1) { stopMoving(bot); return { done: true, result: s.got ? `gathered ${summary()}; no more ${s.label} around here (explore to find more)` : `no ${s.label} in sight here; explore (looking_for: ${s.label}) to find some` }; }
+            pick = findBlocks(bot, b => s.pred(b.typeId) && !s.skip.has(blockKey(b)), 28, 8, 1)[0];
+            if (!pick) { stopMoving(bot); return { done: true, result: s.got ? `gathered ${summary()}; no more ${s.label} within 28 blocks` : `no ${s.label} within 28 blocks; explore (looking_for: ${s.label}) to find some` }; }
+        }
+        s.target = { x: pick.x, y: pick.y, z: pick.z }; s.walkSince = ctx.now; s.breakingSince = 0; s.lastPos = { ...bot.location }; s.stuck = 0; s.hardBlock = 0;
+        return undefined;
+    }
+    const t = s.target;
+    const d = dist(eye(bot), center(t));
+    if (d > REACH) {
+        const flat = Math.hypot(bot.location.x - (t.x + 0.5), bot.location.z - (t.z + 0.5));
+        if (ctx.now - s.walkSince > 20 * 25 || flat < 1.3 || (s.hardBlock || 0) > 2) { s.skip.add(blockKey(t)); s.target = null; return undefined; }
+        goTo(bot, { x: t.x + 0.5, y: t.y, z: t.z + 0.5 }, "walk", PRIO, true);
+        walkProgress(bot, s, t);
+        return undefined;
+    }
+    stopMoving(bot);
+    if (!s.breakingSince) {
+        const b = blockAt(bot.dimension, t.x, t.y, t.z);
+        const inv = invWithHand(bot);
+        const chk = harvestCheck(b ? b.typeId : "", inv);
+        if (!chk.ok) return { done: true, result: `cannot gather ${s.label}: ${chk.reason}${s.got ? ` (${summary()} so far)` : ""}` };
+        if (chk.tool) holdItem(bot, chk.tool);
+        s.breakingSince = ctx.now; s.needTicks = breakTicks(b.typeId, inv);
+        lookAt(bot, t);
+    }
+    swing(bot);
+    if (ctx.now - s.breakingSince < s.needTicks) return undefined;
+    const r = harvestBlock(bot, t);
+    s.breakingSince = 0; s.target = null;
+    if (!r.ok) { s.skip.add(blockKey(t)); return undefined; }
+    s.got += r.got;
+    collectNearbyItems(bot, 4);
+    return undefined;
+}
+
 H.gather = {
     start: (a, ctx) => {
-        if (hasJob(ctx.bot)) return { done: true, result: "already on a gathering job (use stop first)" };
-        const m = String(a.material).toLowerCase().replace(/\s+/g, "_").replace(/^minecraft:/, "");
-        const kind = /log|wood|tree|oak|spruce|birch|jungle|acacia|dark_oak|mangrove|cherry/.test(m) ? "chop" : "mine";
-        let want = m === "wood" || m === "logs" || m === "log" ? null : m.replace(/_log$/, "");
-        if (kind === "mine" && /^(stone|cobblestone|dirt|sand|gravel|anything|ore|ores)$/.test(m)) want = null;
-        const owner = ctx.brain.ownerPlayer();
-        const ok = assignFriendTask(ctx.bot, owner || null, kind, { want, amount: a.amount || 16, durationTicks: 20 * 60 * 6 });
-        if (!ok) return { done: true, result: "could not start the job" };
-        return { kind, want: want || "anything", started: ctx.now };
+        const bot = ctx.bot;
+        const m = String(a.material || "").toLowerCase().replace(/\s+/g, "_").replace(/^minecraft:/, "");
+        const amount = Math.max(1, Math.min(64, Number(a.amount) || 16));
+        const mm = materialMatcher(m);
+        if (mm.food) {
+            let animals = [];
+            try { animals = bot.dimension.getEntities({ location: bot.location, maxDistance: 40, families: ["animal"] }).filter(e => !/wolf|cat|horse|donkey|mule|parrot|llama|dolphin|turtle|bee|fox|panda|ocelot|axolotl|frog|allay|camel|sniffer|armadillo|villager/.test(e.typeId)); } catch (e) { /* ignore */ }
+            animals.sort((p, q) => dist(bot.location, p.location) - dist(bot.location, q.location));
+            if (!animals.length) return { done: true, result: "no animals nearby to hunt; explore for cows, pigs, sheep or chickens, pick sweet berries, or harvest crops" };
+            const prey = animals[0];
+            ctx.actuator.enqueueFront({ type: "pick_up" });
+            ctx.actuator.enqueueFront({ type: "attack", name: prey.typeId.replace(/^.*:/, "") });
+            return { done: true, result: `hunting a ${nameOf(prey.typeId)} ${Math.round(dist(bot.location, prey.location))}m away for food` };
+        }
+        if (mm.crop) {
+            const plant = findBlocks(bot, b => b.typeId.includes(mm.crop), 16, 3, 1)[0];
+            if (!plant) return { done: true, result: `no ${mm.label} growing nearby` };
+            ctx.actuator.enqueueFront({ type: "interact", x: plant.x, y: plant.y, z: plant.z });
+            return { done: true, result: `going to pick ${mm.label} at ${fmtPos(plant)}` };
+        }
+        if (!isPlayerBody(bot)) return legacyGatherStart(a, ctx, m);
+        return { pred: mm.pred, label: mm.label, amount, got: 0, started: ctx.now, skip: new Set(), searches: 0, breakingSince: 0, needTicks: 0, walkSince: 0, target: null };
     },
-    step: (s, ctx) => {
-        const t = getFriendTask(ctx.bot);
-        if (!t) { collectNearbyItems(ctx.bot, 6); const inv = inventoryMap(ctx.bot); return { done: true, result: `${s.kind} job finished (${s.want}); inventory now has ${Object.entries(inv).slice(0, 6).map(([id, n]) => nameOf(id) + " x" + n).join(", ") || "nothing new"}` }; }
-        if (ctx.now - s.started > 20 * 60 * 6) return { done: true, result: `${s.kind} job still running in the background` };
-        return undefined;
-    },
+    step: (s, ctx) => (s.pred ? harvestStep(s, ctx) : legacyGatherStep(s, ctx)),
 };
+
+// Dig a staircase down, mining every ore that comes within reach, with the usual care: never
+// into lava, bridge over caves, a torch every few steps, and a turn every so often so the
+// stairs stay close to where they started.
+function mineStep(s, ctx) {
+    const bot = ctx.bot, dim = bot.dimension;
+    const foundText = () => Object.entries(s.found).map(([id, n]) => `${nameOf(id)} x${n}`).join(", ") || "no ore";
+    const finish = (why) => { stopMoving(bot); return { done: true, result: `${why}; now at ${fmtPos(bot.location)}, dug ${s.dug} blocks, found ${foundText()}` }; };
+    const fx = Math.floor(bot.location.x), fy = Math.floor(bot.location.y), fz = Math.floor(bot.location.z);
+    if (fy <= s.targetY) return finish(`reached y ${fy}`);
+    if (ctx.now - s.started > 20 * 60 * 6) return finish("stopped after six minutes of digging");
+    if (s.breaking) {
+        swing(bot);
+        if (ctx.now - s.breakingSince < s.needTicks) return undefined;
+        const b = s.breaking; s.breaking = null;
+        const r = harvestBlock(bot, b);
+        if (r.ok) { s.dug++; if (isOreId(r.id)) for (const d of r.drops) s.found[d.id] = (s.found[d.id] || 0) + d.n; }
+        else s.skip.add(blockKey(b));
+        return undefined;
+    }
+    const inv = invWithHand(bot);
+    const beginBreak = (b) => {
+        const chk = harvestCheck(b.typeId, inv);
+        if (!chk.ok) { s.skip.add(blockKey(b)); s.lastRefusal = chk.reason; return false; }
+        if (chk.tool) holdItem(bot, chk.tool);
+        s.breaking = { x: b.x, y: b.y, z: b.z }; s.breakingSince = ctx.now; s.needTicks = breakTicks(b.typeId, inv);
+        lookAt(bot, b);
+        return true;
+    };
+    const ore = findBlocks(bot, b => isOreId(b.typeId) && !s.skip.has(blockKey(b)) && dist(eye(bot), center(b)) <= REACH, 3, 2, 1)[0];
+    if (ore && beginBreak(ore)) return undefined;
+    const [dx, dz] = s.dir;
+    const nx = fx + dx, nz = fz + dz, ny = fy - 1;
+    const cell = `${nx},${ny},${nz}`;
+    const under = blockAt(dim, nx, ny - 1, nz);
+    const around = [blockAt(dim, nx, ny, nz), blockAt(dim, nx, ny + 1, nz), under, blockAt(dim, nx + dx, ny, nz + dz), blockAt(dim, nx + dx, ny + 1, nz + dz), blockAt(dim, nx, ny - 2, nz), blockAt(dim, nx + dz, ny, nz + dx), blockAt(dim, nx - dz, ny, nz - dx)];
+    if (around.some(b => b && /lava/.test(b.typeId))) return finish("LAVA next to the stairs, stopped digging (pour water on it or dig elsewhere)");
+    if (under && (under.isAir || under.isLiquid)) {
+        const fill = Object.keys(inv).find(id => /cobblestone|cobbled_deepslate|dirt$|netherrack|:stone$|planks$/.test(id));
+        if (!fill) return finish(under.isLiquid ? "water below the next step, stopped" : "a cave opened up below; stopped (carry cobblestone to bridge gaps)");
+        const r = placeBlock(bot, { x: nx, y: ny - 1, z: nz }, fill);
+        if (!r.ok) return finish("could not secure the next step: " + r.reason);
+    }
+    for (const y of [ny + 1, ny]) {
+        const b = blockAt(dim, nx, y, nz);
+        if (!b || !solid(b)) continue;
+        if (beginBreak(b)) return undefined;
+        return finish(`cannot dig through ${nameOf(b.typeId)}${s.lastRefusal ? " (" + s.lastRefusal + ")" : ""}`);
+    }
+    // the step is clear: walk down onto it
+    if (Math.floor(bot.location.x) === nx && Math.floor(bot.location.z) === nz && Math.floor(bot.location.y) === ny) {
+        if (s.lastCell !== cell) {
+            s.lastCell = cell; s.stairs++; s.walkTicks = 0;
+            if (s.stairs % 6 === 0 && (inv["minecraft:torch"] || 0) > 0) placeBlock(bot, { x: fx, y: fy + 1, z: fz }, "minecraft:torch");
+            if (s.stairs % 8 === 0) s.dir = [-s.dir[1], s.dir[0]];
+        }
+        return undefined;
+    }
+    goTo(bot, { x: nx + 0.5, y: ny, z: nz + 0.5 }, "walk", PRIO, true);
+    s.walkTicks = (s.walkTicks || 0) + STEP;
+    if (s.walkTicks > 20 * 8) { s.walkTicks = 0; s.dir = [-s.dir[1], s.dir[0]]; }
+    return undefined;
+}
 
 H.mine_down = {
     start: (a, ctx) => {
-        if (hasJob(ctx.bot)) return { done: true, result: "already on a job" };
-        const ok = assignFriendTask(ctx.bot, ctx.brain.ownerPlayer() || null, "mine", { want: null, amount: 24, durationTicks: 20 * 60 * 5 });
-        return ok ? { started: ctx.now } : { done: true, result: "could not start mining" };
+        const bot = ctx.bot;
+        if (!isPlayerBody(bot)) {
+            if (hasJob(bot)) return { done: true, result: "already on a job" };
+            const ok = assignFriendTask(bot, ctx.brain.ownerPlayer() || null, "mine", { want: null, amount: 24, durationTicks: 20 * 60 * 5 });
+            return ok ? { kind: "mine", want: "anything", started: ctx.now } : { done: true, result: "could not start mining" };
+        }
+        if (!bestTool(invWithHand(bot), "pickaxe")) return { done: true, result: "mine_down needs a pickaxe (craft a wooden_pickaxe: 3 planks + 2 sticks)" };
+        const depth = Math.max(4, Math.min(60, Number(a.depth) || 16));
+        const floor = bot.dimension.id === "minecraft:overworld" ? -59 : 6;
+        const yaw = (() => { try { return bot.getRotation().y; } catch (e) { return 0; } })();
+        const snapped = Math.round(((yaw % 360) + 360) % 360 / 90) % 4;
+        const dirs = [[0, 1], [-1, 0], [0, -1], [1, 0]];
+        return { phase: "dig", dir: dirs[snapped], targetY: Math.max(floor, Math.floor(bot.location.y) - depth), started: ctx.now, dug: 0, found: {}, stairs: 0, breaking: null, breakingSince: 0, needTicks: 0, skip: new Set() };
     },
-    step: H.gather.step,
+    step: (s, ctx) => (s.phase ? mineStep(s, ctx) : legacyGatherStep(s, ctx)),
 };
 
 H.explore = {
@@ -428,9 +697,8 @@ H.explore = {
         if (ctx.now - s.started > MOVE_TIMEOUT) { stopMoving(bot); return { done: true, result: `explored for a while, now at ${fmtPos(bot.location)}` }; }
         if (!s.top || ctx.now - (s.topAt || 0) > 80) { s.top = findSafeSpot(bot.dimension, s.target.x, s.target.z, bot.location.y); s.topAt = ctx.now; }
         goTo(bot, s.top || s.target, "sprint", PRIO, true);
-        const moved = dist(bot.location, s.lastPos); s.stuck = moved < 0.15 ? s.stuck + 1 : 0; s.lastPos = { ...bot.location };
-        if (s.stuck === 6) { try { jump(bot); } catch (e) { /* ignore */ } }
-        if (s.stuck > 30) { stopMoving(bot); return { done: true, result: `blocked while exploring at ${fmtPos(bot.location)}` }; }
+        const stuck = walkProgress(bot, s, s.top || s.target);
+        if (stuck > 30 || (s.hardBlock || 0) > 2) { stopMoving(bot); return { done: true, result: `blocked while exploring at ${fmtPos(bot.location)}` }; }
         return undefined;
     },
 };
@@ -532,9 +800,36 @@ H.place_torch = {
     },
 };
 
+const FOOD_VALUE = { cooked_beef: 8, cooked_porkchop: 8, rabbit_stew: 10, pumpkin_pie: 8, golden_carrot: 6, cooked_mutton: 6, cooked_salmon: 6, cooked_chicken: 6, mushroom_stew: 6, beetroot_soup: 6, suspicious_stew: 6, honey_bottle: 6, bread: 5, baked_potato: 5, cooked_rabbit: 5, cooked_cod: 5, golden_apple: 4, enchanted_golden_apple: 4, apple: 4, rotten_flesh: 4, beef: 3, porkchop: 3, carrot: 3, rabbit: 3, mutton: 2, salmon: 2, chicken: 2, cod: 2, sweet_berries: 2, glow_berries: 2, melon_slice: 2, cookie: 2, tropical_fish: 1, dried_kelp: 1, potato: 1, beetroot: 1 };
+function foodValue(id) {
+    const key = String(id).replace(/^minecraft:/, "");
+    if (FOOD_VALUE[key] !== undefined) return FOOD_VALUE[key];
+    try { const f = new ItemStack(id, 1).getComponent("minecraft:food"); if (f) return f.nutrition || 4; } catch (e) { /* not an item */ }
+    return 0;
+}
+// A real player's hunger bar (an attribute on the player entity); null for entity bots.
+export function hungerOf(bot) { try { const h = bot.getComponent("minecraft:player.hunger"); if (h && typeof h.currentValue === "number") return h; } catch (e) { /* not a player */ } return null; }
+
 H.eat = {
     start: (a, ctx) => {
         const bot = ctx.bot;
+        if (isPlayerBody(bot)) {
+            const inv = inventoryMap(bot);
+            const h = hungerOf(bot);
+            const hunger = h ? Math.round(h.currentValue) : null;
+            if (hunger !== null && hunger >= 20) return { done: true, result: "not hungry (hunger 20/20)" };
+            const edible = Object.keys(inv).filter(id => foodValue(id) > 0 && !/rotten_flesh|spider_eye|pufferfish|poisonous_potato|:chicken$|raw_/.test(id)).sort((p, q) => foodValue(q) - foodValue(p));
+            const pick = edible[0] || Object.keys(inv).find(id => /rotten_flesh|:chicken$/.test(id));
+            if (!pick) return { done: true, result: "nothing to eat (hunt animals with gather food, pick sweet berries, harvest crops or craft bread)" };
+            const nutrition = foodValue(pick);
+            takeItems(containerOf(bot), pick, 1);
+            let applied = false;
+            try { if (h) { h.setCurrentValue(Math.min(20, h.currentValue + nutrition)); applied = true; } } catch (e) { /* fall back to the effect */ }
+            try { const sat = bot.getComponent("minecraft:player.saturation"); if (sat) sat.setCurrentValue(Math.min(20, (sat.currentValue || 0) + nutrition * 1.2)); } catch (e) { /* optional */ }
+            if (!applied) { try { bot.runCommand(`effect @s saturation 1 ${Math.max(0, Math.min(5, Math.round(nutrition / 4) - 1))} true`); } catch (e) { /* ignore */ } }
+            try { bot.dimension.playSound("random.eat", bot.location); bot.playAnimation("animation.humanoid.consumables"); } catch (e) { /* ignore */ }
+            return { done: true, result: `ate ${nameOf(pick)}${hunger !== null ? ` (hunger now ${Math.min(20, hunger + nutrition)}/20)` : ""}` };
+        }
         const food = virtualFood(bot);
         if (Object.values(food).some(n => n > 0)) { try { bot.addTag("on_eat"); } catch (e) { /* ignore */ } return { until: ctx.now + 20 * 4, virtual: true }; }
         const c = containerOf(bot);
@@ -558,7 +853,7 @@ function equipBest(bot, tool) {
     const rank = TOOL_RANK[tool] || WEAPON_RANK;
     const best = rank.map(r => (r.includes(":") ? r : "minecraft:" + r)).find(id => inv[id]);
     if (!best) return null;
-    try { takeItems(c, best, 1); bot.runCommand(`replaceitem entity @s slot.weapon.mainhand 0 ${best}`); } catch (e) { return null; }
+    if (!holdItem(bot, best)) return null;
     return best;
 }
 
@@ -624,8 +919,7 @@ H.use_item = {
             try { const f = new ItemStack(id, 1).getComponent("minecraft:food"); if (f) nutrition = f.nutrition || 4; } catch (e) { /* ignore */ }
             if (nutrition) { takeItems(c, id, 1); bot.addEffect("instant_health", 1, { amplifier: 0, showParticles: false }); bot.playAnimation("eat_item_custom"); return { done: true, result: `ate ${nameOf(id)}` }; }
             // Generic: hold it (modded tools/weapons/gadgets work through the engine when held).
-            takeItems(c, id, 1);
-            bot.runCommand(`replaceitem entity @s slot.weapon.mainhand 0 ${id}`);
+            if (!holdItem(bot, id)) return { done: true, result: `could not take ${nameOf(id)} in hand` };
             return { done: true, result: `now holding ${nameOf(id)}${isModdedId(id) ? " (a modded item; its own effects apply while held or when it hits something)" : ""}` };
         } catch (e) {
             return { done: true, result: `use_item failed: ${e?.message || e}` };
@@ -802,16 +1096,62 @@ H.interact = {
     },
 };
 
+function playerSleepStep(s, ctx) {
+    const bot = ctx.bot;
+    const t = world.getTimeOfDay();
+    const wake = () => { try { bot.removeTag("is_sleeping"); } catch (e) { /* ignore */ } ctx.brain.sleptSince = true; };
+    if (!s.asleep) {
+        if (!near(bot, s.spot, 1.8)) {
+            if (ctx.now - s.started > 20 * 30) { stopMoving(bot); return { done: true, result: "could not get to the bed" }; }
+            goTo(bot, s.spot, "walk", PRIO, true); walkProgress(bot, s, s.spot);
+            return undefined;
+        }
+        stopMoving(bot);
+        try { bot.runCommand(`spawnpoint @s ${s.bedPos.x} ${s.bedPos.y} ${s.bedPos.z}`); } catch (e) { /* ignore */ }
+        try { bot.teleport({ x: s.bedPos.x + 0.5, y: s.bedPos.y + 0.56, z: s.bedPos.z + 0.5 }); } catch (e) { /* ignore */ }
+        try { bot.addTag("is_sleeping"); } catch (e) { /* ignore */ }
+        ctx.brain.memory.home = ctx.brain.memory.home || { ...s.bedPos, dim: bot.dimension.id };
+        s.asleep = true; s.sleptAt = ctx.now;
+        return undefined;
+    }
+    // In bed. The night passes once everyone else is in bed too (or nobody else is here).
+    let others = []; try { others = world.getAllPlayers().filter(p => p.id !== bot.id); } catch (e) { /* ignore */ }
+    const awake = others.filter(p => { try { return !p.isSleeping; } catch (e) { return true; } });
+    if (t >= 500 && t < 12000) { wake(); return { done: true, result: "woke up; it is morning" }; }
+    if (!awake.length && ctx.now - s.sleptAt >= 100) {
+        try { world.setTimeOfDay(1000); } catch (e) { /* ignore */ }
+        try { bot.dimension.runCommand("weather clear"); } catch (e) { /* ignore */ }
+        wake();
+        return { done: true, result: "slept through the night; it is morning (spawn point set at the bed)" };
+    }
+    if (ctx.now - s.sleptAt > 20 * 60 * 3) { wake(); return { done: true, result: `rested by the bed, but ${awake.map(p => p.name).join(", ")} stayed up so the night went on` }; }
+    return undefined;
+}
+
 H.sleep = {
     start: (a, ctx) => {
         const bot = ctx.bot;
         const t = world.getTimeOfDay();
         if (t > 1000 && t < 12000) return { done: true, result: "it is daytime, no need to sleep" };
-        const bed = findBlocks(bot, b => b.typeId === "minecraft:bed", 12, 3, 1)[0];
+        let bed = findBlocks(bot, b => b.typeId === "minecraft:bed", 12, 3, 1)[0];
+        if (!bed) {
+            // carrying a bed: put it down next to where we stand
+            const inv = inventoryMap(bot);
+            const bedItem = Object.keys(inv).find(id => /:bed$|_bed$/.test(id));
+            if (bedItem) {
+                const bx = Math.floor(bot.location.x), by = Math.floor(bot.location.y), bz = Math.floor(bot.location.z);
+                for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+                    const spot = blockAt(bot.dimension, bx + dx, by, bz + dz), below = blockAt(bot.dimension, bx + dx, by - 1, bz + dz);
+                    if (spot && below && spot.isAir && solid(below)) { const r = placeBlock(bot, { x: bx + dx, y: by, z: bz + dz }, bedItem); if (r.ok) { bed = blockAt(bot.dimension, bx + dx, by, bz + dz); break; } }
+                }
+            }
+        }
+        if (!bed && isPlayerBody(bot)) return { done: true, result: "no bed nearby: craft one (3 wool + 3 planks) and carry it, or light the area and stay busy until morning" };
         const spot = bed ? { x: bed.x + 0.5, y: bed.y + 0.6, z: bed.z + 0.5 } : null;
-        return { spot, started: ctx.now, asleep: false, bedPos: bed ? { x: bed.x, y: bed.y, z: bed.z } : null };
+        return { spot, started: ctx.now, asleep: false, bedPos: bed ? { x: bed.x, y: bed.y, z: bed.z } : null, player: isPlayerBody(bot) };
     },
     step: (s, ctx) => {
+        if (s.player) return playerSleepStep(s, ctx);
         const bot = ctx.bot;
         const t = world.getTimeOfDay();
         if (s.asleep) {
@@ -1065,6 +1405,8 @@ export class Actuator {
             let extra = "";
             if (a.type === "build") extra = ` (${s.placed}/${s.steps.length} blocks)`;
             else if (a.type === "move_to" || a.type === "explore") extra = ` (${Math.round(dist(this.bot.location, s.target))}m to go)`;
+            else if (a.type === "gather" && s.pred) extra = ` (${s.got}/${s.amount} ${s.label})`;
+            else if (a.type === "mine_down" && s.phase) extra = ` (at y ${Math.floor(this.bot.location.y)}, going to y ${s.targetY}, ${s.dug} dug)`;
             parts.push(`${a.type}${extra} for ${Math.round((system.currentTick - this.current.startedTick) / 20)}s`);
         }
         if (this.queue.length) parts.push(`queued: ${this.queue.map(a => a.type).join(", ")}`);

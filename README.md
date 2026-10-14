@@ -80,9 +80,15 @@ self and plans; `!ai thoughts on` shows the decisions as they happen.
 
 The bridge account's player is that AI. It stands in the world as a real
 player, so it gets a brain of its own: it walks by stepping its real body,
-builds, mines and fights through the same actions as any bot, and its chat
-goes out as genuine chat from that account. `!ai bridgeplays off` turns it
-back into a plain relay.
+slips around trees and digs through hills that block its way, chops and
+mines by the survival rules (the right tool, the real break time, the real
+drops, wear on the tool), fills its real hunger bar when it eats, sleeps in
+a bed and sets its spawn there, builds and fights through the same actions
+as any bot, and its chat goes out as genuine chat from that account. When
+you go to bed its account turns in too, so the night can pass. If a
+decision fails (a rate limit, a bad key, a timeout) the reason is said in
+chat instead of the player silently standing still. `!ai bridgeplays off`
+turns it back into a plain relay.
 
 ## Who lives in your world
 

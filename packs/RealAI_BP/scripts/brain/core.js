@@ -319,7 +319,7 @@ export class BotBrain {
             endThink(this.sched, nowTick, false, false);
             if (res.type === "bad_json") this.problems.push("your reply must be exactly one JSON object with the fields shown in the format");
             if (res.type === "no_transport" || res.type === "config" || /no API key/.test(res.error || "")) manager.reportConfigProblem(res.error);
-            else console.warn(`[RealAI] ${this.name}: ${res.error}`);
+            else { console.warn(`[RealAI] ${this.name}: ${res.error}`); this.reportThinkFailure(res); }
             return;
         }
         this.thinks++;
@@ -335,6 +335,21 @@ export class BotBrain {
         this.saveMemory();
         if (manager.debug) console.warn(`[RealAI] ${this.name} (${res.provider}/${res.model}, ${Date.now() - started}ms): ${reply.thought} | say=${reply.say} | ${reply.actions.map(a => a.type).join(",")}`);
         if (getWorldConfig().showThoughts) this.showThought(reply, res);
+    }
+
+    // A failed decision is visible in chat (rate limited), so a bot standing still is never a mystery.
+    reportThinkFailure(res) {
+        const now = system.currentTick;
+        if (now - (this.failureToldAt || -Infinity) < 20 * 90) return;
+        this.failureToldAt = now;
+        const err = String(res.error || "unknown error").replace(/\s+/g, " ").slice(0, 160);
+        let hint = "";
+        if (/429|rate.?limit|quota|RESOURCE_EXHAUSTED|too many/i.test(err)) hint = " (the provider is rate limiting: a free tier allows only a few requests a minute; retrying more slowly)";
+        else if (/401|403|API key|invalid|PERMISSION_DENIED|unauthori/i.test(err)) hint = " (check the key: bash ~/real-ai/bridge/phone.sh setup)";
+        else if (/timeout|timed out/i.test(err)) hint = " (the model took too long; trying again)";
+        else if (res.type === "bad_json") hint = " (the model's answer was not valid JSON; asking again)";
+        else if (/bridge|offline|transport/i.test(err)) hint = " (is the bridge still running on the phone?)";
+        manager.announce(`§c[Real AI] ${this.name} could not decide: ${err}${hint}`);
     }
 
     // Let nearby players watch the decision: the model's own reasoning plus what it chose to do.
@@ -888,7 +903,29 @@ class BrainManager {
                 for (const [, br] of allBrains()) { try { br.noteEvent("dawn", "a new day begins; think about what you want from it"); } catch (e) { /* ignore */ } }
             }
             this.lastTimeLabel = label;
+            this.bedtimeWatch();
         } catch (e) { /* ignore */ }
+    }
+
+    // A human in bed cannot skip the night while the AI's own account stands around awake: once
+    // every other player is in bed, the AI's body turns in as well and the night passes.
+    bedtimeWatch() {
+        const bp = this.bridgePlayer();
+        const brains = allBrains();
+        if (!bp || !brains.has(bp.id)) { this.bedChecks = 0; return; }
+        const t = world.getTimeOfDay();
+        const night = t >= 12000 || t < 500;
+        const others = world.getAllPlayers().filter(p => p.id !== bp.id);
+        const inBed = others.length > 0 && others.every(p => { try { return !!p.isSleeping; } catch (e) { return false; } });
+        if (!night || !inBed) { this.bedChecks = 0; return; }
+        this.bedChecks = (this.bedChecks || 0) + 1;
+        if (this.bedChecks < 2) return;
+        this.bedChecks = 0;
+        try { world.setTimeOfDay(1000); } catch (e) { /* ignore */ }
+        try { bp.dimension.runCommand("weather clear"); } catch (e) { /* ignore */ }
+        const b = brains.get(bp.id);
+        if (b) { b.sleptSince = true; try { b.actuator.stopAll(); } catch (e) { /* ignore */ } b.noteEvent("dawn", "you went to bed when the others did and slept through the night; a new day begins"); }
+        this.announce(`§7[Real AI] ${bp.name} went to bed too. Good morning.`);
     }
 
     residentsStatus() {

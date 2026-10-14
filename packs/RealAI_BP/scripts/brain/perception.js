@@ -190,7 +190,12 @@ export function observe(bot, brain, extras = {}) {
     obs.maxHealth = h ? h.max : 20;
     const food = virtualFood(bot);
     const foodCount = Object.values(food).reduce((a, b) => a + (b || 0), 0);
-    obs.hunger = `${foodCount} food items carried`;
+    if (bot.typeId === "minecraft:player") {
+        // the bridge account's own body: a real hunger bar
+        let hunger = null;
+        try { const h = bot.getComponent("minecraft:player.hunger"); if (h && typeof h.currentValue === "number") hunger = Math.round(h.currentValue); } catch (e) { /* older API */ }
+        obs.hunger = hunger === null ? "unknown (eat when you have not for a while)" : `${hunger}/20${hunger <= 6 ? " (starving: eat now)" : hunger <= 12 ? " (hungry)" : ""}`;
+    } else obs.hunger = `${foodCount} food items carried`;
     try { obs.onFire = !!bot.getComponent(EntityComponentTypes.OnFire); } catch (e) { /* ignore */ }
     try { obs.inWater = !!bot.isInWater; } catch (e) { /* ignore */ }
     const status = [];

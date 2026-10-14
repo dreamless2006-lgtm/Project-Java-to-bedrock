@@ -142,6 +142,8 @@ export class Bridge {
             this.helloSentAt = Date.now();
             this.outQueue.length = 0;
             this.reconnectDelay = 5000;
+            // every frame is a /scriptevent command; without this the server tells every operator about each one
+            this.outQueue.push("/gamerule sendcommandfeedback false");
             this.sendToAddon({ t: "hello", v: 1, name: opts.username, version: VERSION, providers: Object.keys(PROVIDERS).filter(id => !PROVIDERS[id].needsKey || this.cfg.providers[id]?.apiKey) });
         });
         client.on("text", p => this.onText(p));

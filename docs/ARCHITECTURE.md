@@ -77,7 +77,17 @@ With `bridgePlays` (default on) the manager finds the bridge's player
 `bridge`. Scripts cannot push a real player, so `actuator.js` moves a player
 body by stepping its position along the ground every tick
 (`stepPlayerBody`, 0.2 to 0.28 blocks per tick, snapping to standable
-blocks). Its chat is sent to the bridge as `chat_out`, which the bridge
+blocks, never onto lava, sliding sideways past a post or a trunk; a slide
+that lasts more than a few blocks is a wall and the body stops so the
+handler can dig through plain terrain with `clearPath`). A player body
+cannot use the legacy job worker, so `gather` and `mine_down` run as script
+state machines on it: `harvest.js` (pure) knows what a block drops, which
+tool and tier it needs and how long it takes to break; `harvestBlock`
+removes the block, hands the drops to the inventory and wears the tool.
+`eat` fills the player's own hunger attribute (`minecraft:player.hunger`),
+`sleep` lies on a bed, sets the spawn point and lets the night pass once
+every other player is in bed; `bedtimeWatch` in the manager does the same
+when the humans go to bed first. Its chat is sent to the bridge as `chat_out`, which the bridge
 turns into a real `text` packet from the account (whispers become `/tell`).
 While the bridge player has a brain the addon sends `anchor {off: true}`
 so the bridge stops teleporting itself around.

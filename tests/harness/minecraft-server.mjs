@@ -191,7 +191,7 @@ export class Entity {
     getProperty() { return undefined; } setProperty() {}
 }
 export class Player extends Entity {
-    constructor(name, dimension, location) { super("minecraft:player", dimension, location); this.name = name; this.nameTag = name; this.commandPermissionLevel = 1; this.playerPermissionLevel = 1; this.messages = []; this.families = new Set(["player", "mob"]); }
+    constructor(name, dimension, location) { super("minecraft:player", dimension, location); this.name = name; this.nameTag = name; this.commandPermissionLevel = 1; this.playerPermissionLevel = 1; this.messages = []; this.families = new Set(["player", "mob"]); this.selectedSlotIndex = 0; this.components["minecraft:player.hunger"] = { currentValue: 20, effectiveMax: 20, setCurrentValue(v) { this.currentValue = Math.max(0, Math.min(20, v)); return true; } }; this.components["minecraft:player.saturation"] = { currentValue: 5, effectiveMax: 20, setCurrentValue(v) { this.currentValue = Math.max(0, Math.min(20, v)); return true; } }; }
     sendMessage(m) { const text = typeof m === "string" ? m : JSON.stringify(m); this.messages.push(text); log.messages.push(`[to ${this.name}] ${text}`); }
     getGameMode() { return "survival"; }
     playSound() {}

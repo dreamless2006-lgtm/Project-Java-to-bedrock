@@ -70,7 +70,10 @@ role).
 
 Join the world. When the bridge connects you see its account join like any
 player; a few seconds later that player starts moving and talking: it is
-the AI, playing in person. `!ai status` shows `bridge (<gamertag>)` as the
+the AI, playing in person (the bridge also turns off `sendcommandfeedback`
+so its script events do not show up as chat lines). If it stands still,
+read the chat: a failed decision is reported there with its cause, usually
+a free-tier rate limit. `!ai status` shows `bridge (<gamertag>)` as the
 transport and lists every thinking player with its provider and model. For
 more AI players, `!ai players <n>` spawns named residents that join next to
 you. Put several keys in `config.json` and the residents are spread

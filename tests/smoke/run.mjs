@@ -286,8 +286,87 @@ check(residents().length === 8, "still 8 residents after the respawn: " + reside
         check(bb.memory.mission.dragon === true && (log.chat.some(l => l.includes("beat the game")) || steve.messages.some(l => l.includes("beat the game"))), "killing the dragon counts as beating the game");
     }
 }
+// Eighth cycle: the body itself works the world. The bridge player chops a tree by hand, digs
+// through a hill that blocks its way, mines a staircase with a wooden pickaxe, eats to fill a
+// real hunger bar, sleeps in a bed, and a failed decision is said out loud.
+{
+    const bb = gate.getBrain(relay.id);
+    if (bb) {
+        const bx = 200, bz = 200;
+        const inv = relay.getComponent("minecraft:inventory").container;
+        const count = (id) => { let n = 0; for (let i = 0; i < inv.size; i++) { const st = inv.getItem(i); if (st && st.typeId === id) n += st.amount; } return n; };
+        // its own thinks drain the action results into observations; keep a copy so checks can read them
+        const bbResults = [];
+        const origDrainB = bb.actuator.drainResults.bind(bb.actuator);
+        bb.actuator.drainResults = () => { const r = origDrainB(); bbResults.push(...r); return r; };
+        const last = () => (bb.actuator.results.length ? bb.actuator.results : bbResults).slice(-1)[0] || "";
+        const act = (...a) => { if (bb.actuator.current?.action.type === "wait") bb.actuator.finish("wait cancelled"); bb.actuator.enqueue(a); };
+        const idle = () => !bb.actuator.current && !bb.actuator.queue.length;
+        relay.teleport({ x: bx + 0.5, y: 64, z: bz + 0.5 });
+        // a tree five blocks east: a trunk of five logs under a crown of leaves
+        for (let y = 64; y <= 68; y++) overworld._set(bx + 5, y, bz, "minecraft:oak_log");
+        for (let y = 67; y <= 69; y++) for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) if (dx || dz) overworld._set(bx + 5 + dx, y, bz + dz, "minecraft:oak_leaves");
+        act({ type: "gather", material: "oak_log", amount: 4 });
+        await run(1500, 10, idle);
+        check(count("minecraft:oak_log") >= 4 && /gathered 4 oak logs/.test(last()), "the bridge player chopped four logs by hand: " + last());
+        check(overworld.getBlock({ x: bx + 5, y: 64, z: bz }).isAir, "the trunk's lowest log is gone");
+        act({ type: "gather", material: "diamond", amount: 1 });
+        await run(400, 10, idle);
+        check(/no diamond ore/.test(last()), "asking for what is not there ends with a clear answer: " + last());
+        // a hill across the way to a spot twelve blocks west: three high, far too wide to walk around
+        for (let dz = -10; dz <= 10; dz++) for (let y = 64; y <= 66; y++) overworld._set(bx - 4, y, bz + dz, "minecraft:dirt");
+        act({ type: "move_to", x: bx - 12, y: 64, z: bz });
+        await run(1500, 10, idle);
+        check(Math.hypot(relay.location.x - (bx - 12 + 0.5), relay.location.z - (bz + 0.5)) < 2.5, "it dug through the hill and arrived: " + last() + " at " + JSON.stringify(relay.location));
+        check(count("minecraft:dirt") >= 2, "the dirt it dug is in its inventory: " + count("minecraft:dirt"));
+        // mine down with a wooden pickaxe: a staircase, cobblestone in the bag, six levels lower
+        act({ type: "mine_down", depth: 6 });
+        await run(100, 10, idle);
+        check(/needs a pickaxe/.test(last()), "mining without a pickaxe is refused with the recipe: " + last());
+        inv.addItem(new ItemStack("minecraft:wooden_pickaxe", 1));
+        const yBefore = relay.location.y;
+        act({ type: "mine_down", depth: 6 });
+        await run(2500, 10, idle);
+        check(relay.location.y <= yBefore - 6 + 0.01 && /reached y/.test(last()), `it dug a staircase down (${yBefore} -> ${relay.location.y}): ` + last());
+        check(count("minecraft:cobblestone") >= 3, "the stone it dug became cobblestone in its inventory: " + count("minecraft:cobblestone"));
+        // a real hunger bar: eating bread fills it, and the observation shows it
+        const hungerComp = relay.getComponent("minecraft:player.hunger"); hungerComp.setCurrentValue(6);
+        inv.addItem(new ItemStack("minecraft:bread", 2));
+        act({ type: "eat" });
+        await run(40);
+        check(hungerComp.currentValue === 11 && count("minecraft:bread") === 1, "eating bread fills the real hunger bar: " + last());
+        captured = null; wanted = msg => msg.bot === bb.id; bb.request("how are you?"); await run(200, 5, () => !!captured);
+        const obs8 = captured ? captured.messages[captured.messages.length - 1].content : "";
+        if (captured) fromBridge({ t: "result", turnId: captured.turnId, ok: true, text: IDLE, usage: { input: 1, output: 1 }, model: "mock", provider: "anthropic", attempts: 1 });
+        captured = null; wanted = null;
+        check(/hunger 11\/20/.test(obs8), "the observation shows the hunger bar");
+        // night: it goes to bed, and once everyone else is in bed too the night passes
+        const others = world.getAllPlayers().filter(p => p.id !== relay.id);
+        relay.teleport({ x: bx + 0.5, y: 64, z: bz + 20.5 });
+        overworld._set(bx + 2, 64, bz + 20, "minecraft:bed");
+        world.setTimeOfDay(14000);
+        act({ type: "sleep" });
+        await run(300, 10, () => relay.hasTag("is_sleeping"));
+        check(relay.hasTag("is_sleeping") && log.commands.some(c => /spawnpoint @s 202 64 220/.test(c)), "it lies down in the bed and sets its spawn there: " + last());
+        check(world.getTimeOfDay() === 14000, "the night goes on while the others are up");
+        for (const p of others) p.isSleeping = true;
+        await run(300, 10, () => !bb.actuator.current);
+        check(world.getTimeOfDay() === 1000 && /slept through the night/.test(last()), "with everyone in bed the night passes: " + last());
+        for (const p of others) p.isSleeping = false;
+        // the other way round: the humans go to bed while the AI is up; its account turns in too
+        world.setTimeOfDay(15000); for (const p of others) p.isSleeping = true;
+        await run(320);
+        check(world.getTimeOfDay() === 1000 && log.chat.some(l => /went to bed too/.test(l)), "when the humans sleep, the AI's account sleeps as well so the night can pass");
+        for (const p of others) p.isSleeping = false; world.setTimeOfDay(6000);
+        // a failed decision is said out loud, with the usual cause
+        captured = null; wanted = msg => msg.bot === bb.id; bb.request("anything?"); await run(200, 5, () => !!captured);
+        if (captured) fromBridge({ t: "result", turnId: captured.turnId, ok: false, error: "429 RESOURCE_EXHAUSTED: quota exceeded", provider: "gemini" });
+        captured = null; wanted = null; await run(20);
+        check(log.chat.some(l => /could not decide: 429/.test(l) && /rate limiting/.test(l)), "a provider failure is explained in chat: " + log.chat.slice(-1));
+    }
+}
 check(log.errors.length === 0, "no engine-level errors after lifecycle: " + log.errors.slice(0, 3).join(" | "));
-const lateWarnings = log.warnings.filter(w => /\[RealAI\]/.test(w) && !/started|connected|unavailable/.test(w));
+const lateWarnings = log.warnings.filter(w => /\[RealAI\]/.test(w) && !/started|connected|unavailable|quota exceeded/.test(w));
 check(lateWarnings.length === 0, "no late [RealAI] warnings: " + lateWarnings.slice(0, 3).join(" | "));
 
 if (fails.length) { console.log("\nFAILED:\n - " + fails.join("\n - ")); console.log("\nwarnings:\n" + log.warnings.slice(0, 15).join("\n")); process.exit(1); }
