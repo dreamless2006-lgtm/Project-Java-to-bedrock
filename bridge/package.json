@@ -1,6 +1,6 @@
 {
   "name": "real-ai-bridge",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "type": "module",
   "description": "Joins a Bedrock Realm/world as a player and relays bot thinking between the Real AI addon and LLM providers (Claude, ChatGPT, Grok, Gemini, Player2, local models).",

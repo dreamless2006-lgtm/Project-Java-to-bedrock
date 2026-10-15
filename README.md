@@ -162,6 +162,38 @@ is under its crosshair, and which ways it has not been yet. Walking over snow,
 grass, carpets, signs and flowers is walking, not a wall; fences and walls
 are walls; routes round obstacles are planned.
 
+It works the world with its hands the way a person does, from where the
+crosshair is: **mine** holds the attack button on the block it looks at until
+it breaks (right tool, real break time, drops picked up), **place** puts the
+block in its hand on the face it looks at, **use** is the right click (open a
+door or chest, eat, ride), **hit** is a left click at a creature, **hold**
+picks a hotbar slot or an item, and its hotbar and what the crosshair is on are
+part of what it reads each turn.
+
+**It has eyes, too.** Each turn carries a picture of what the AI sees right
+now, in the direction its head is turned, drawn by casting a line of sight
+through every cell of a small screen: the left picture says what is there (a
+letter per material: `T` tree, `#` rock, `*` ore, `~` water, `B` built, `D`
+door, `H` a hostile creature...) and the right one how far (a digit per
+distance band). People and creatures are drawn where they stand and are hidden
+behind walls; turning its head changes the picture. `!ai see` prints it for you.
+
+## Watch the game through its eyes
+
+An operator can sit in the AI's head: **`!ai sight`** (or *Watch the AI* in the
+menu). You become an invisible spectator whose screen is the AI's own view,
+turned the way it turns, every tick; an action bar shows what it is doing and
+thinking. Your own controls are locked while you watch, and nothing in the
+world can see or touch you.
+
+* `!ai sight behind` puts the camera over its shoulder, `!ai sight eyes` back in
+  its head, `!ai sight body` skips the camera API (if the picture looks wrong,
+  your own spectator body takes the AI's view instead), `!ai sight Name` picks
+  another AI.
+* `!ai sight off` puts you back where you were with your game mode and controls;
+  `!ai sight stay` leaves the view but keeps you beside the AI.
+* If the game restarts while you watch, you get everything back when you rejoin.
+
 ## What you need (plain language)
 
 Minecraft Bedrock on a phone, console or PC cannot talk to the internet from
@@ -258,6 +290,8 @@ account: [docs/SETUP-DEDICATED-SERVER.md](docs/SETUP-DEDICATED-SERVER.md). Desig
   `/realai:talk Ellie "hi"` whispers.
 * `!ai status` lists the residents and every thinking bot; `!ai memory Ellie`,
   `!ai pause`, `!ai budget`.
+* Operators: `!ai sight` watches through the AI's eyes (see above), `!ai see` prints
+  the picture its model is given.
 * Operators: `!ai players 8`, `!ai thoughts on`, `!ai mix on`, `!ai bridgeplays on`,
   `!ai provider anthropic`, `!ai model claude-haiku-5-5`, `!ai volume 2`,
   `!ai rules Speak Spanish`, `!ai callbyname on`,

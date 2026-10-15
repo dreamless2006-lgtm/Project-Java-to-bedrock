@@ -193,6 +193,28 @@ thing, and note the person. `BotBrain.upkeep` (every five seconds on a
 player body) points out a nearly full bag, a tool about to break and no
 food; `apply` adds a problem when the model waited with plans pending.
 
+Sight and the view. `observe` adds `sight`, the picture `sight.js` draws from the
+bot's eyes along the head's current direction (`currentView` in `actuator.js`, so a
+turn asked a moment ago counts) with the people and creatures from the entity scan
+over it; spectators are skipped (they are invisible in the game too, and they do not
+count as awake players for `bedtimeWatch`). The legend is in the stable system prompt
+(`legendText()`), so the per-turn cost is the picture alone (about 13 lines); the
+world setting `sight` (default on) turns it off. Crosshair actions in `actuator.js`
+(`mine`, `place`, `use`, `hit`, `hold`) work on `crosshair()` (a block ray with the
+face it came in through) and `entityInSight()`; `look_at` and the walker's own turns
+record the head's pending direction (`setView`) because the game shows a turn a tick
+or two late.
+
+`sightcam.js` runs a per-tick loop while anyone watches: the viewer is a spectator
+whose body is kept at the AI's eyes (the game only loads the world near a body), the
+camera preset `minecraft:free` is set to the AI's head location and rotation each tick
+(behind: pulled in along a ray so it does not pass through a wall), camera and
+movement input are locked, and the action bar shows the AI's current action and last
+thought (`BotBrain.lastThought`). The previous game mode and place are written to a
+dynamic property on the viewer first; leaving, the AI going away, or the viewer
+rejoining after a restart restores them. If `Player.camera` throws, the viewer's own
+body is turned to the AI's view instead (`!ai sight body` forces that).
+
 Independence (`independent`, default true; pinned by the bridge's hello
 when its config sets it): `commands.js` refuses the steering commands
 (STEERING set), the hub shows talk and memory only, server rules are not
@@ -279,6 +301,8 @@ bots, up to `maxBrains`). The original random spawner is behind the
 | `terrain.js` | what a block means to a walking body (passable, solid, tall, hazard, lava, water) | yes |
 | `path.js` | A* over block cells: eight-way, jumps, drops, partial paths, corner clearance | yes |
 | `senses.js` | the eyes: walk survey, line-of-sight rays, sights, what is under the crosshair | yes |
+| `sight.js` | the picture of the view: a ray cast through every cell of a small screen (material letters beside distance digits, people and creatures drawn over the world), the legend the prompt carries | yes |
+| `sightcam.js` | the operator's spectator view: free camera at the AI's eyes (or over its shoulder, or the viewer's own body), input lock, game mode and place restored on leaving and after a restart | in-game |
 | `around.js` | the "Around you" report and the explored-columns memory | in-game (reads the dimension) |
 | `perception.js` | observation from the live world | in-game |
 | `actuator.js` | every action on the real body | in-game |

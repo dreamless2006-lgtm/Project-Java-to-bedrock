@@ -20,8 +20,8 @@ import { REPLY_SCHEMA } from "../packs/RealAI_BP/scripts/brain/action_schema.js"
 import { Body } from "./body.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const VERSION = "0.3.0";
-const EXPECT_ADDON = "2.10.0";          // the pack build whose addon walks this bridge's body
+const VERSION = "0.3.1";
+const EXPECT_ADDON = "2.11.0";          // the pack build whose addon walks this bridge's body
 const SCRIPT_EVENT = "realai:in";
 const ENV_KEYS = {
     anthropic: "ANTHROPIC_API_KEY", openai: "OPENAI_API_KEY", xai: "XAI_API_KEY", gemini: "GEMINI_API_KEY",

@@ -15,11 +15,14 @@
 // Everything that could leave a player stuck (locked controls, spectator mode, a camera that never ends) is
 // written to the player first and undone when they leave, when the AI goes away, and when the world loads again.
 
-import { world, system, GameMode, InputPermissionCategory } from "@minecraft/server";
+import * as mc from "@minecraft/server";      // a namespace, so a game that lacks one of the optional names loses the view rather than the whole pack
+import { world, system } from "@minecraft/server";
 import { allBrains } from "./gate.js";
 import { idAtFor } from "./around.js";
 import { castDir } from "./senses.js";
 
+const SPECTATOR = mc.GameMode?.Spectator ?? "Spectator";
+const LOCKS = [mc.InputPermissionCategory?.Camera ?? 1, mc.InputPermissionCategory?.Movement ?? 2];
 const KEY = "realai:watching";          // on the viewer: { gm, home } while the view is on, so a restart can undo it
 const MODES = ["eyes", "behind", "body"];
 const BEHIND = 3.4;                     // blocks back from the head in "behind"
@@ -49,7 +52,7 @@ export function isWatching(viewer) { return watching.has(viewer?.id); }
 function say(viewer, text) { try { viewer.sendMessage(text); } catch (e) { /* ignore */ } }
 
 function setLocked(viewer, locked) {
-    for (const c of [InputPermissionCategory.Camera, InputPermissionCategory.Movement]) {
+    for (const c of LOCKS) {
         try { viewer.inputPermissions.setPermissionCategory(c, !locked); } catch (e) { /* older game: the controls stay */ }
     }
 }
@@ -85,7 +88,7 @@ export function startWatching(viewer, query, opts = {}) {
     let home = null;
     try { const l = viewer.location; home = { x: l.x, y: l.y, z: l.z, dim: viewer.dimension.id }; } catch (e) { /* ignore */ }
     try { viewer.setDynamicProperty(KEY, JSON.stringify({ gm: prev, home })); } catch (e) { /* ignore */ }
-    try { if (lower(prev) !== "spectator") viewer.setGameMode(GameMode.Spectator); } catch (e) { /* the view works without it */ }
+    try { if (lower(prev) !== "spectator") viewer.setGameMode(SPECTATOR); } catch (e) { /* the view works without it */ }
     setLocked(viewer, true);
     watching.set(viewer.id, { viewer, target: t.name, mode, prev, home, since: system.currentTick, fallback: mode === "body", missing: 0, camOk: false, tp: 0 });
     ensureTimer();

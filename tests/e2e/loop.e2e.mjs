@@ -306,6 +306,34 @@ try {
     act({ type: "move_to", x: tx0 + 14, y: 64, z: tz0 });
     await drive(20000, idle);
     check(flat(at(), { x: tx0 + 14.5, z: tz0 + 0.5 }) < 2.5 && Math.abs(at().z - tg.z) < 4, `through a belt of tall grass in a straight line: ${lastResult().slice(0, 90)}`);
+
+    // ---- 11. crosshair work through the real wire: look at a block, mine it, place one back; the picture the model reads follows the head ----
+    await lab(520);
+    {
+        const cx = Math.floor(at().x), cz = Math.floor(at().z);
+        for (let dx = -2; dx <= 6; dx++) for (let dz = -4; dz <= 4; dz++) for (let y = 64; y <= 68; y++) overworld._set(cx + dx, y, cz + dz, "minecraft:air");
+        for (let y = 64; y <= 65; y++) overworld._set(cx + 4, y, cz, "minecraft:oak_log");
+        results().length = 0;
+        act({ type: "look", facing: "east" }); await drive(600);
+        brain._around = null;
+        const o = observe(body, brain, {});
+        const rows = String(o.sight).split("\n").slice(2, 15);
+        check(/^Sight: facing E/.test(o.sight) && rows.slice(5, 9).some(r => /T/.test(r.slice(2, 35))), "the picture the model reads shows the trunk straight ahead:\n" + o.sight);
+        act({ type: "look", facing: "south" }); await drive(600);
+        brain._around = null;
+        check(!observe(body, brain, {}).sight.split("\n").slice(2, 15).some(r => /T/.test(r.slice(2, 35))), "turned away, the trunk is out of the picture");
+        const before = logs();
+        act({ type: "look_at", x: cx + 4, y: 65, z: cz }); await drive(600);
+        results().length = 0;
+        act({ type: "mine", count: 1 });
+        await drive(8000, idle);
+        check(/mined 1 block/.test(lastResult()) && overworld.getBlock({ x: cx + 4, y: 65, z: cz }).isAir && logs() === before + 1, `mine breaks the block under the crosshair and the drop is in the bag (${lastResult().slice(0, 100)}; logs ${before} -> ${logs()})`);
+        act({ type: "look_at", x: cx + 4, y: 64, z: cz }); await drive(600);
+        results().length = 0;
+        act({ type: "place", block: "oak_log" });
+        await drive(3000, idle);
+        check(/placed/.test(lastResult()) && overworld.getBlock({ x: cx + 3, y: 64, z: cz }).typeId === "minecraft:oak_log", `place puts a block on the face it looks at (${lastResult().slice(0, 100)})`);
+    }
     clearInterval(rec);
 } catch (e) {
     fails.push("test aborted: " + (e && e.stack || e));
