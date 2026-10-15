@@ -14,6 +14,7 @@ import { EquipmentSlot, GameMode, ItemStack, system, world } from '@minecraft/se
 import { CRAVING_LANG } from '../pregnancy/data.js';
 import { clampLevel } from '../pregnancy/state.js';
 import { FULLNESS } from './families.js';
+import { openPregnancyMenu } from '../jenny/belly_scenes.js';
 import { accelerate, accelerateGradually, calmDown, delayPregnancy, duplicateBabies, familyOf, getRecord, harmPregnancy, healPregnancy, induceFetalMovement, isIncapacitated, isTamed, nameOf, onEatSpicyFood, particles, playSound } from './system.js';
 
 /** @typedef {import('@minecraft/server').Player} Player */
@@ -82,17 +83,6 @@ function milk(/** @type {MobRecord} */ record, /** @type {Player} */ player) {
 }
 
 /** A belly touch: the pat sound from P2 and relief of the belly-rubs need from P3. */
-function touchBelly(/** @type {MobRecord} */ record) {
-  const p = record.data.pregnancy;
-  if (!p) return;
-  if (p.phase >= 2) playSound(record.entity, 'minepreggo.belly_touch', 0.7);
-  if (p.phase >= 3 && p.symptoms.BELLY_RUBS !== undefined) {
-    p.bellyRubs = clampLevel(p.bellyRubs - 4);
-    if (p.bellyRubs <= 8) delete p.symptoms.BELLY_RUBS;
-    particles(record.entity, 'minecraft:heart_particle', 3);
-  }
-  record.save();
-}
 
 /** Craving check and feeding with one of her foods. */
 function feed(/** @type {MobRecord} */ record, /** @type {Player} */ player, /** @type {string} */ item) {
@@ -165,8 +155,15 @@ export function chooseAction(player, target, item) {
   const { data } = record;
   const id = item?.typeId;
 
+  // Crouching with an empty hand on a pregnant female opens her pregnancy menu (the belly scenes,
+  // help with the birth): one of your own tamed females, or any of the Jenny port's girls.
+  if (!id && player.isSneaking && data.pregnancy && (family.external || isTamed(target))) {
+    return () => void openPregnancyMenu(player, record).catch((error) => console.warn(`[minepreggo] pregnancy menu: ${error}`));
+  }
+
   const tamed = isTamed(target);
-  if (tamed && !isOwner(record, player)) return undefined;
+  // (The Jenny port's girls flag is_tamed for their own undressed state; they have no owner.)
+  if (tamed && !family.external && !isOwner(record, player)) return undefined;
   /** A potion that cannot act on her says why instead of being drunk by the same tap. */
   const explain = (/** @type {string} */ key) => () => player.onScreenDisplay.setActionBar({ translate: key, with: { rawtext: [nameOf(target)] } });
   const drink = () => {
@@ -230,7 +227,7 @@ export function chooseAction(player, target, item) {
       drink();
     };
   }
-  if (!tamed) return undefined;
+  if (!tamed || family.external) return undefined;
   if (isIncapacitated(record)) return () => particles(target, 'minecraft:villager_angry', 2);
 
   const p = data.pregnancy;
@@ -238,7 +235,6 @@ export function chooseAction(player, target, item) {
     const canMilk = p ? p.phase >= 2 && p.milking >= 5 : (data.lactation?.level ?? 0) >= 5;
     return canMilk ? () => milk(record, player) : undefined;
   }
-  if (!id && player.isSneaking && p) return () => touchBelly(record);
   if (id && family.foods[id] !== undefined) {
     const craving = p?.symptoms.CRAVING !== undefined && p.craving > 2;
     if (data.fullness < FULLNESS.eatBelow || craving || data.savage) return () => feed(record, player, id);

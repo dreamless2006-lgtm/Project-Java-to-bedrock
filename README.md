@@ -52,7 +52,7 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
 A world keeps the pack versions it was created with, and Bedrock keeps older imports next to the
 new one. After importing a newer `.mcaddon`, open the world's settings and, under **Behavior
 Packs** *and* **Resource Packs**, remove Minepreggo from the active packs and add it again. The
-join message shows both versions (`[Minepreggo 0.4.1, resources 0.4.1]`); while the resources
+join message shows both versions (`[Minepreggo 0.5.0, resources 0.5.0]`); while the resources
 version lags behind, the models, bellies and animations are the old ones, whatever the scripts do.
 Old versions can be deleted in Settings → Storage.
 
@@ -289,6 +289,11 @@ undressed, scene stage), the babies kick, and she gives birth; every potion work
 older pack's Jenny Bed lets a tamed Minepreggo female of yours be taken to bed for a 50-second scene
 that leaves her pregnant: pick her on the bed and she walks over (or is placed on it after 20 s),
 the scene is shown from a camera beside the bed, and with the port installed her sounds play along.
-The Jenny girls' bellies are round shells in each girl's own skin tone. The guide book's "Jenny mod"
-chapter has the details. Like the jar's assets, nothing of theirs is committed; the import folders
+The Jenny girls' bellies are smooth, round shells in each girl's own skin tone, and each girl has
+her own labor: she bends over her belly in a contraction, crouches before the birth, lies back with
+her knees up to give birth (a newborn slides out with each push), and her babies are her own items.
+When she is pregnant, her babies kick and her belly tightens during scenes, hers and the Jenny Bed's.
+Crouch and use an empty hand on a pregnant female for her pregnancy menu: rub her belly, feel the
+baby, or help her give birth (tap sneak to push, the babies are born into your arms). The guide
+book's "Jenny mod" chapter has the details. Like the jar's assets, nothing of theirs is committed; the import folders
 are git-ignored.

@@ -4,13 +4,16 @@
 // it, the player is held in place behind her playing the older Jenny pack's player animation, a
 // scene camera frames the two (the way the fapcraft Jenny's scenes are shown from a camera instead
 // of the player's eyes), the fapcraft Jenny's scene sounds are cued like her bed scene, and 50
-// seconds later (the length of that pack's scene) she is pregnant. Her pose is the sitting one of
-// her own model; nothing new is animated here.
+// seconds later (the length of that pack's scene) she is pregnant. She is on all fours on the bed
+// (the 'scene' pose, solved onto each family's rig by tools/gen-scene-poses.mjs), rocking to the
+// beat of the player's animation. When she is already pregnant, her babies kick in bursts and, late
+// in the pregnancy, her belly tightens in contractions through the scene (rhythm.js).
 
 import { EasingType, EntityTypes, InputPermissionCategory, system, world } from '@minecraft/server';
 import { ENTITY_IDS } from '../generated/ids.js';
 import { babiesFromPotion } from '../pregnancy/math.js';
-import { familyOf, getRecord, isIncapacitated, isTamed, nameOf, ownerOf, particles, playSound, setScenePose, startPregnancy } from '../mobs/system.js';
+import { familyOf, getRecord, isIncapacitated, isTamed, nameOf, ownerOf, particles, playSound, setScenePose, setSceneState, startPregnancy } from '../mobs/system.js';
+import { KICKS_FROM, Rhythm, announce } from './rhythm.js';
 
 /** @typedef {import('@minecraft/server').Entity} Entity */
 /** @typedef {import('@minecraft/server').Player} Player */
@@ -24,7 +27,10 @@ export const SCENE_TICKS = 1000;
 export const WALK_TICKS = 400;
 const PLAYER_ANIMATION = 'animation.minepreggo.jenny_bed.player_scene';
 const CONTROLLER = 'minepreggo_bed_scene';
-const POSE = 'incapacitated';
+const POSE = 'scene';
+/** When the scene speeds up (the cues' fast part) and when it peaks. */
+const FAST_FROM = 26 * 20;
+const PEAK_FROM = 44 * 20;
 const LOCKED = [InputPermissionCategory.Movement, InputPermissionCategory.Camera, InputPermissionCategory.Jump, InputPermissionCategory.Sneak];
 /** The distance from the bed's middle within which she lies down at once instead of walking. */
 const NEAR = 2.5;
@@ -100,6 +106,7 @@ export function hasPort() {
  * @property {number} until the tick the scene ends
  * @property {number} cue the next sound cue to play
  * @property {boolean} pregnantBefore
+ * @property {Rhythm} rhythm what her belly does through the scene when she is pregnant
  */
 
 /** @type {Map<string, Scene>} by her entity id */
@@ -218,6 +225,7 @@ export function startScene(record, player, bed) {
     until: system.currentTick + SCENE_TICKS,
     cue: 0,
     pregnantBefore: !!(data.pregnancy || data.wild || data.pending),
+    rhythm: new Rhythm(),
   };
   scenes.set(entity.id, scene);
   byPlayer.set(player.id, entity.id);
@@ -262,6 +270,7 @@ export function endScene(/** @type {Scene} */ scene, /** @type {boolean} */ fini
   const entity = world.getEntity(scene.id);
   if (!entity?.isValid) return;
   const record = getRecord(entity);
+  setSceneState(record, 'none');
   setScenePose(record, null);
   if (!finished) return;
   const name = nameOf(entity);
@@ -271,6 +280,25 @@ export function endScene(/** @type {Scene} */ scene, /** @type {boolean} */ fini
     particles(entity, 'minecraft:heart_particle', 8, 1.5);
     tell('minepreggo.bed.pregnant');
   } else tell('minepreggo.bed.finished');
+}
+
+/** How intense the scene is now, 0..1: slow at first, fast later, peaking at the end. */
+export function heatOf(/** @type {number} */ elapsed) {
+  return elapsed >= PEAK_FROM ? 1 : elapsed >= FAST_FROM ? 0.75 : 0.3;
+}
+
+/** A pregnant female's belly through the scene: kicks in bursts, contractions late in the pregnancy. */
+function beat(/** @type {Entity} */ entity, /** @type {Player} */ player, /** @type {Scene} */ scene) {
+  const record = getRecord(entity);
+  const p = record.data.pregnancy;
+  if (!p || p.phase < KICKS_FROM) return;
+  const next = scene.rhythm.step(p.phase, heatOf(system.currentTick - scene.start), system.currentTick);
+  if (!next) return;
+  setSceneState(record, next.state, next.kick);
+  const said = announce(next);
+  if (!said) return;
+  player.onScreenDisplay.setActionBar({ translate: said.key, with: { rawtext: [nameOf(entity)] } });
+  playSound(entity, said.sound, said.volume);
 }
 
 /** Plays the sound cues due since the last check, at her. */
@@ -299,6 +327,7 @@ system.runInterval(() => {
       continue;
     }
     if (hasPort()) playCues(entity, scene);
+    beat(entity, /** @type {Player} */ (player), scene);
     // Both are kept in place (a push, a slide down the bed), and the camera stays where it is.
     if ((system.currentTick - scene.start) % 20 === 0) {
       hold(/** @type {Player} */ (player), scene);

@@ -101,6 +101,12 @@
             },
             {
               "incapacitated": "v.pose == 'incapacitated'"
+            },
+            {
+              "scene": "v.pose == 'scene'"
+            },
+            {
+              "scene_sit": "v.pose == 'scene_sit'"
             }
           ]
         },
@@ -233,6 +239,28 @@
             }
           ],
           "blend_transition": 0.2
+        },
+        "scene": {
+          "animations": [
+            "scene_pose"
+          ],
+          "transitions": [
+            {
+              "default": "!(v.pose == 'scene')"
+            }
+          ],
+          "blend_transition": 0.4
+        },
+        "scene_sit": {
+          "animations": [
+            "scene_sit_pose"
+          ],
+          "transitions": [
+            {
+              "default": "!(v.pose == 'scene_sit')"
+            }
+          ],
+          "blend_transition": 0.4
         }
       }
     }

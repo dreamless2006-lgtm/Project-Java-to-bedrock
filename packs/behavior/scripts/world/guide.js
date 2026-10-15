@@ -75,14 +75,17 @@ export const CHAPTERS = [
     body:
       'Zombie girls, creeper girls, slime girls and ender women spawn like their vanilla cousins; some are already pregnant and cannot be tamed.\n\n' +
       'Tame one with her food: villager brain (dropped by villagers, illagers and witches you kill), activated gunpowder (redstone + gunpowder), refined chorus shards / ender slime jelly, or a stuffed mushroom.\n\n' +
-      'Use a Potion of Impregnation on a tamed mob. Feed her when hungry or she turns savage. As her owner: feed the craved food, milk her with a glass bottle (P2+), crouch and interact with an empty hand to rub her belly (P3+). Acceleration and inducement potions work on her too. Birth happens on its own.',
+      'Use a Potion of Impregnation on a tamed mob. Feed her when hungry or she turns savage. As her owner: feed the craved food, milk her with a glass bottle (P2+), crouch and interact with an empty hand when she is pregnant for her pregnancy menu (rub her belly, feel the baby, help her give birth). Acceleration and inducement potions work on her too. Birth happens on its own.',
   },
   {
     title: 'Jenny mod',
     body:
       'The Jenny Mod Java Port girls (Jenny, Bia, Slime, Luna, Galath, Allie, Manglelie, Bee, Kobold and Ellie) are part of this add-on and of its mob system. The scenes that can get them pregnant do: Doggy for Jenny and Slime, Prone Doggy for Bia, Sitting for Luna, Cowgirl and Threesome for Galath (Manglelie too), Reverse Cowgirl for Allie, the Bee scene, Mating for Kobold, Cowgirl and Missionary for Ellie. Oral and anal scenes do not.\n\n' +
       'The pregnancy is then the Minepreggo one: the belly grows with the phases on her dressed, undressed and scene bodies, the babies kick, and she gives birth. Every potion works on her too, and Debug tools > Nearest mob jumps her ahead.\n\n' +
-      'The Jenny Bed (creative inventory, or Give items here) is for the Minepreggo females: place it, stand one of your tamed females within 5 blocks, use the bed and choose her. A 50 second scene follows and she comes out pregnant. A small house with a bed spawns now and then in forests and plains.',
+      'The Jenny Bed (creative inventory, or Give items here) is for the Minepreggo females: place it, stand one of your tamed females within 5 blocks, use the bed and choose her. A 50 second scene follows and she comes out pregnant. A small house with a bed spawns now and then in forests and plains.\n\n' +
+      'When she is already pregnant, her babies kick in bursts during a scene and, from P6, her belly tightens in contractions now and then: in the Jenny Bed scene and in the Jenny girls\' own scenes alike.\n\n' +
+      'Crouch and use an empty hand on a pregnant female (your own tamed one, or any Jenny girl) for her pregnancy menu: Rub her belly (eases her need for belly rubs, the babies kick back), Feel the baby (they kick into your hands, and you count their heartbeats), and in labor Help her give birth: tap sneak to push with her, every baby is born into your arms, jump to stop.\n\n' +
+      'Each Jenny girl has her own labor and birth: she bends over her belly in a contraction, crouches before the birth, lies back with her knees up to give birth, and her baby is hers (Jenny\'s Baby, Luna\'s Baby, ...). Use a baby to cuddle it.',
   },
   {
     title: 'Commands',

@@ -6,6 +6,7 @@
 // controller per size (like the other females) with the mod's Alex "extra" texture of that phase.
 // Measured from the Jenny-mod style of rig (body > upperBody > hip > torso ...), which every girl of
 // the Jenny Mod Java Port uses.
+import { anglesForFront, rotateBedrock } from './bedrock-math.mjs';
 
 /** The player torso box the mod's bellies are built around. */
 const PLAYER_BOX = [[-4, 4], [12, 24], [-2, 2]];
@@ -14,15 +15,7 @@ const NOT_TRUNK = /arm|leg|head|boob|booty|cheek|vagina|tail|wing|hair|eye|mouth
 
 const round = (/** @type {number} */ v) => Math.round(v * 10000) / 10000;
 
-/** Rotates a vector by Bedrock bone angles (degrees, x then y then z), as tools/lib/kick-clamp.mjs does. */
-function rotate(/** @type {number[]} */ v, /** @type {number[]} */ deg) {
-  const rad = deg.map((d) => (d * Math.PI) / 180);
-  let [x, y, z] = v;
-  [y, z] = [y * Math.cos(rad[0]) - z * Math.sin(rad[0]), y * Math.sin(rad[0]) + z * Math.cos(rad[0])];
-  [x, z] = [x * Math.cos(rad[1]) + z * Math.sin(rad[1]), -x * Math.sin(rad[1]) + z * Math.cos(rad[1])];
-  [x, y] = [x * Math.cos(rad[2]) - y * Math.sin(rad[2]), x * Math.sin(rad[2]) + y * Math.cos(rad[2])];
-  return [x, y, z];
-}
+const rotate = rotateBedrock;
 
 /**
  * @typedef {object} Body what a belly is fitted to
@@ -112,7 +105,7 @@ function bounds(/** @type {{ cube: any, bone: any }[]} */ items) {
 }
 
 /** Texel coordinates on the skin texture for a horizontal span (-1..1 of the belly's half width) and a height (-1..1 of its half height). */
-const SKIN = { size: 64, radius: 26 };
+const SKIN = { size: 128, radius: 52 };
 const texel = (/** @type {number} */ f) => Math.round((SKIN.size / 2 + Math.max(-1, Math.min(1, f)) * SKIN.radius) * 100) / 100;
 
 /**
@@ -258,4 +251,190 @@ export function fitBelly(playerBody, id, body) {
       },
     ],
   };
+}
+
+// ---- the smooth shell -----------------------------------------------------------------------------
+
+/** How far under the shell's surface a kick dome rests (what its pulse pushes it out by, plus the bulge). */
+export const KICK_INSET = 0.6;
+/** Where the belly is fullest, as a fraction of its height from the bottom: below the navel. */
+const FULLEST = 0.45;
+
+/** The radius of the belly's horizontal section at height fraction t (0 bottom .. 1 top), as a fraction of its widest. */
+function profile(/** @type {number} */ t) {
+  const u = (t - FULLEST) / (t < FULLEST ? FULLEST : 1 - FULLEST);
+  return Math.pow(Math.max(0, 1 - u * u), 0.62);
+}
+
+export const anglesForNormal = anglesForFront;
+
+/**
+ * Turns a fitted belly (fitBelly) into a smooth one: the mod's boxes make way for a shell of thin
+ * slabs, each turned to lie tangent to a pregnant profile (an ellipsoid-like surface fullest below
+ * the navel, as wide as a bit more than her torso, as deep as the mod's belly of that size would be
+ * on her), each slab's outer face mapped onto the skin texture (tools/lib/belly-skin.mjs) by its
+ * position so the gradient shades the whole thing round. The kick bones become domes (three
+ * stacked slabs) resting KICK_INSET under the surface on mounts turned to the local normal, so a
+ * kick pushes straight out of the skin wherever it is.
+ * @param {any} fitted a geometry file from fitBelly
+ * @param {Body} body the waist box the belly was fitted to
+ * @param {{ rows?: number, steps?: number }} [options]
+ */
+export function smoothBelly(fitted, body, { rows = 16, steps = 12 } = {}) {
+  const doc = JSON.parse(JSON.stringify(fitted));
+  const g = doc['minecraft:geometry'][0];
+  const byName = new Map(g.bones.map((/** @type {any} */ b) => [b.name, b]));
+  const belly = byName.get('belly');
+  if (!belly) throw new Error(`${g.description.identifier}: no belly bone`);
+  const children = (/** @type {string} */ n) => g.bones.filter((/** @type {any} */ b) => b.parent === n).map((/** @type {any} */ b) => b.name);
+  const subtree = (/** @type {string} */ n) => [n, ...children(n).flatMap(subtree)];
+  const names = subtree('belly');
+  const isKick = (/** @type {string} */ n) => /kick$/.test(n);
+  const boxes = names.filter((n) => !isKick(n) && !/_mount$/.test(n)).flatMap((n) => (byName.get(n)?.cubes ?? []).map((/** @type {any} */ cube) => ({ cube, bone: byName.get(n) })));
+  if (!boxes.length) throw new Error(`${g.description.identifier}: the belly has no cubes`);
+  const { lo, hi } = bounds(boxes);
+  const [bx, by, bz] = body.box;
+  const torsoHalf = bx[1], boxHeight = by[1] - by[0], torsoDepth = bz[1] - bz[0];
+  const sx = (bx[1] - bx[0]) / (PLAYER_BOX[0][1] - PLAYER_BOX[0][0]);
+  const sz = torsoDepth / (PLAYER_BOX[2][1] - PLAYER_BOX[2][0]);
+  // Width: the fitted belly's, but never much more than her torso; height: from just under the
+  // waist bottom to where the fitted belly ends under her chest; depth: the mod's belly on her,
+  // scaled by her width rather than her (shallow) torso, measured from a plane inside the torso.
+  const W = Math.min((hi[0] - lo[0]) / 2, torsoHalf * 1.15);
+  const y0 = Math.max(lo[1], by[0] - 0.1 * boxHeight);
+  const y1 = Math.max(y0 + 2, Math.min(hi[1], by[1] - 0.15 * boxHeight));
+  const H = y1 - y0;
+  const zBack = bz[0] + torsoDepth * 0.45;
+  // The mod's depth on her, eased toward (never past) her belly's height: every size is deeper than
+  // the one before, and a late belly stays round instead of growing into a tube.
+  const reach = Math.max(0.35, (hi[2] - lo[2]) * (sx / sz) * 0.85 - (zBack - hi[2]) * 0.5);
+  const D = Math.max(0.35, 0.98 * H * Math.tanh((1.1 * reach) / H));
+  /** A point of the surface at height fraction t and angle phi (0 = straight ahead, +/- pi/2 = the sides). */
+  const point = (/** @type {number} */ t, /** @type {number} */ phi) => {
+    const r = profile(t);
+    return [W * r * Math.sin(phi), y0 + t * H, zBack - D * r * Math.cos(phi)];
+  };
+  const normal = (/** @type {number} */ t, /** @type {number} */ phi) => {
+    const e = 1e-3;
+    const a = point(t, phi + e).map((v, k) => v - point(t, phi - e)[k]);
+    const b = point(Math.min(1, t + e), phi).map((v, k) => v - point(Math.max(0, t - e), phi)[k]);
+    let n = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+    const len = Math.hypot(...n) || 1;
+    n = n.map((v) => v / len);
+    // outward: away from the belly's axis (which runs up the back plane)
+    const out = [point(t, phi)[0], 0, point(t, phi)[2] - zBack];
+    if (n[0] * out[0] + n[2] * out[2] < 0) n = n.map((v) => -v);
+    return n;
+  };
+  const dist = (/** @type {number[]} */ a, /** @type {number[]} */ b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+  const R = SKIN.radius, C = SKIN.size / 2;
+  /** The texture rectangle a patch of the shell shows: its position on the gradient, its size in proportion to the belly. */
+  const patchUv = (/** @type {number} */ t, /** @type {number} */ phi, /** @type {number} */ a, /** @type {number} */ b) => {
+    const u = C + Math.sin(phi) * R, v = C - (2 * t - 1) * R;
+    const w = Math.max(0.5, (a / (2 * W)) * 2 * R), h = Math.max(0.5, (b / H) * 2 * R);
+    const face = { uv: [round(u - w / 2), round(v - h / 2)], uv_size: [round(w), round(h)] };
+    const strip = { uv: [round(u - 0.5), round(v - h / 2)], uv_size: [1, round(h)] };
+    const flat = { uv: [round(u - w / 2), round(v - 0.5)], uv_size: [round(w), 1] };
+    return { north: face, south: face, east: strip, west: strip, up: flat, down: flat };
+  };
+  const THICK = 0.6, OVERLAP = 1.12;
+  /** @type {any[]} */
+  const cubes = [];
+  const T0 = 0.035, T1 = 0.965;
+  // The shell wraps from side to side and ends on the plane inside the torso, where the torso hides its rim.
+  const PHI = Math.PI / 2;
+  for (let i = 0; i < rows; i++) {
+    const ta = T0 + ((T1 - T0) * i) / rows, tb = T0 + ((T1 - T0) * (i + 1)) / rows, tc = (ta + tb) / 2;
+    for (let j = 0; j < steps; j++) {
+      const pa = -PHI + (2 * PHI * j) / steps, pb = -PHI + (2 * PHI * (j + 1)) / steps, pc = (pa + pb) / 2;
+      const centre = point(tc, pc);
+      const n = normal(tc, pc);
+      const a = dist(point(tc, pa), point(tc, pb)) * OVERLAP;
+      const b = dist(point(ta, pc), point(tb, pc)) * OVERLAP;
+      if (a < 0.15 || b < 0.15) continue;
+      // the slab sits a little inside the surface, its outer face just proud of it
+      const pivot = centre.map((v, k) => v - n[k] * 0.2);
+      cubes.push({
+        origin: [round(pivot[0] - a / 2), round(pivot[1] - b / 2), round(pivot[2] - THICK / 2)],
+        size: [round(a), round(b), THICK],
+        pivot: pivot.map(round),
+        rotation: anglesForNormal(n),
+        uv: patchUv(tc, pc, a, b),
+      });
+    }
+  }
+  // The underside: a flat cap closing the bottom.
+  const rb = profile(T0 + 0.02);
+  if (W * rb > 0.3) {
+    const a = 2 * W * rb * 1.05, b = D * rb * 1.1;
+    cubes.push({ origin: [round(-a / 2), round(y0), round(zBack - b)], size: [round(a), 0.5, round(b)], uv: patchUv(0.02, 0, a, 1) });
+  }
+  belly.cubes = cubes;
+  delete belly.rotation;
+  // The kicks: domes on mounts turned to the local normal, resting KICK_INSET under the surface.
+  const kickBones = names.filter(isKick);
+  /** @type {any[]} */
+  const mounts = [];
+  for (const name of kickBones) {
+    const bone = byName.get(name);
+    const cube = bone?.cubes?.[0];
+    if (!bone || !cube) continue;
+    const c = cube.origin.map((/** @type {number} */ o, /** @type {number} */ k) => o + cube.size[k] / 2);
+    const t = Math.max(0.1, Math.min(0.9, (c[1] - y0) / H));
+    const phi = Math.max(-1.2, Math.min(1.2, Math.atan2(c[0] / Math.max(0.5, W), Math.max(0.05, (zBack - c[2]) / Math.max(0.5, D)))));
+    const surface = point(t, phi);
+    const n = normal(t, phi);
+    const width = Math.max(1.2, Math.min(cube.size[0], 2 * W * 0.55));
+    const height = width * 0.55;
+    // the mount sits at the dome's base, so the dome rises along the mount's -z out of the skin
+    const base = surface.map((v, k) => v - n[k] * (KICK_INSET + height));
+    const centre = { uv: [SKIN.size / 2 - 4, SKIN.size / 2 - 4], uv_size: [8, 8] };
+    const uv = { north: centre, south: centre, east: centre, west: centre, up: centre, down: centre };
+    const layer = (/** @type {number} */ w, /** @type {number} */ z0, /** @type {number} */ z1) => ({ origin: [round(base[0] - w / 2), round(base[1] - w / 2), round(base[2] - z1)], size: [round(w), round(w), round(z1 - z0)], uv });
+    bone.cubes = [layer(width, 0, height * 0.35), layer(width * 0.72, height * 0.35, height * 0.7), layer(width * 0.42, height * 0.7, height)];
+    bone.parent = `${name}_mount`;
+    bone.pivot = base.map(round);
+    delete bone.rotation;
+    mounts.push({ name: `${name}_mount`, parent: 'belly', pivot: base.map(round), rotation: anglesForNormal(n) });
+  }
+  // The mod's rotated side and bottom boxes go; the kicks stay on their mounts.
+  g.bones = [...g.bones.filter((/** @type {any} */ b) => !names.includes(b.name) || b.name === 'belly'), ...mounts, ...kickBones.map((n) => byName.get(n)).filter(Boolean)];
+  g.description.texture_width = SKIN.size;
+  g.description.texture_height = SKIN.size;
+  return doc;
+}
+
+/**
+ * Adds the newborn to a belly geometry: a tiny baby (head, body, arms and legs) under her hip at
+ * the bottom of her waist, head first, drawn from the middle of the skin texture. It is hidden
+ * (scale 0) by the newborn animation except while she pushes during the birth, when it slides out
+ * with her push (tools/lib/belly-render.mjs).
+ * @param {any} doc a belly geometry file from smoothBelly
+ * @param {Body} body the waist box the belly was fitted to
+ */
+export function addNewborn(doc, body) {
+  const g = doc['minecraft:geometry'][0];
+  if (g.bones.some((/** @type {any} */ b) => b.name === 'newborn')) return doc;
+  const [bx, by, bz] = body.box;
+  const s = Math.max(0.6, Math.min(1.1, (bx[1] - bx[0]) / 6.5));
+  const pivot = [0, round(by[0] + 0.4), round((bz[0] + bz[1]) / 2)];
+  const c = SKIN.size / 2;
+  const skin = { uv: [c - 4, c - 4], uv_size: [8, 8] };
+  const uv = { north: skin, south: skin, east: skin, west: skin, up: skin, down: skin };
+  const box = (/** @type {number[]} */ origin, /** @type {number[]} */ size) => ({ origin: origin.map((v, k) => round(pivot[k] + v * s)), size: size.map((v) => round(v * s)), uv });
+  // head down: the head hangs below the pivot, the body above it
+  g.bones.push({
+    name: 'newborn',
+    parent: 'hip',
+    pivot,
+    cubes: [
+      box([-1.3, -2.8, -1.3], [2.6, 2.6, 2.6]),
+      box([-1.1, -0.2, -0.9], [2.2, 2.8, 1.8]),
+      box([-1.9, -0.6, -0.5], [0.8, 2.0, 0.8]),
+      box([1.1, -0.6, -0.5], [0.8, 2.0, 0.8]),
+      box([-1.0, 2.6, -0.5], [0.9, 1.8, 0.9]),
+      box([0.1, 2.6, -0.5], [0.9, 1.8, 0.9]),
+    ],
+  });
+  return doc;
 }

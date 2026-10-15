@@ -7,10 +7,14 @@ import { dirname, join } from 'node:path';
 const ROOT = new URL('../', import.meta.url).pathname;
 const BP = join(ROOT, 'packs/behavior');
 
+// What tools/import-jenny.mjs merges in (the Jenny port, the girls' babies) is not in every build,
+// so it is not part of what the self-check expects.
 function* files(dir) {
   for (const name of readdirSync(dir)) {
     const path = join(dir, name);
-    if (statSync(path).isDirectory()) yield* files(path);
+    if (statSync(path).isDirectory()) {
+      if (name !== 'jenny_port') yield* files(path);
+    }
     else if (name.endsWith('.json')) yield path;
   }
 }

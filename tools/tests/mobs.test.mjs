@@ -2,7 +2,8 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Mob, Player, ItemStack, system } from './mock-server.mjs';
+import { Mob, Player, ItemStack, system, world } from './mock-server.mjs';
+import { BELLY_SCENE_TICKS, bellySceneOf } from '../../packs/behavior/scripts/jenny/belly_scenes.js';
 import { STEP, accelerate, getRecord, induceFetalMovement, onDeath, onHurt, setPhase, startPregnancy, tickMob } from '../../packs/behavior/scripts/mobs/system.js';
 import { chooseAction } from '../../packs/behavior/scripts/mobs/interact.js';
 import { birthTicks, FAMILIES } from '../../packs/behavior/scripts/mobs/families.js';
@@ -95,7 +96,7 @@ test('hunger makes a tamed mob savage and her food calms her down again', () => 
   assert.ok(mob.events.includes('minepreggo:calm_down'));
 });
 
-test('cravings want the matching food; milking and belly rubs relieve their needs', () => {
+test('cravings want the matching food; milking and belly rubs relieve their needs', async () => {
   const mob = new Mob('minepreggo:zombie_girl', { tamed: true });
   const owner = new Player('Mom');
   const record = getRecord(/** @type {any} */ (mob));
@@ -117,10 +118,22 @@ test('cravings want the matching food; milking and belly rubs relieve their need
   assert.ok(owner.inventory.includes('minepreggo:zombie_breast_milk_bottle'));
   assert.equal(p.milking, 7);
 
+  // Crouching with an empty hand opens her pregnancy menu; rubbing her belly is a scene that eases the need.
   owner.isSneaking = true;
+  owner.formSelections = [0];
+  world.players.push(owner);
+  world.getDimension('minecraft:overworld').entities.push(mob);
   chooseAction(/** @type {any} */ (owner), /** @type {any} */ (mob), undefined)?.();
-  assert.equal(p.bellyRubs, 8);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(owner.forms.at(-1).buttons.length, 3, 'rub her belly, feel the baby, OK');
+  assert.ok(bellySceneOf(/** @type {any} */ (mob)), 'the rub begins');
+  assert.equal(p.bellyRubs, 10);
+  system.tick(BELLY_SCENE_TICKS.rub + 20);
+  assert.ok(!bellySceneOf(/** @type {any} */ (mob)));
+  assert.ok(p.bellyRubs <= 8);
   assert.equal(p.symptoms.BELLY_RUBS, undefined);
+  world.players.pop();
+  mob.isValid = false;
 });
 
 test('only the owner can care for a tamed mob, but anyone can give a wild one the potion', () => {

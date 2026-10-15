@@ -30,7 +30,9 @@
             "postbirth",
             "miscarriage",
             "belly_rubs",
-            "incapacitated"
+            "incapacitated",
+            "scene",
+            "scene_sit"
           ],
           "default": "none",
           "client_sync": true
@@ -72,6 +74,17 @@
             "p7",
             "p8",
             "p9"
+          ],
+          "default": "none",
+          "client_sync": true
+        },
+        "minepreggo:scene": {
+          "type": "enum",
+          "values": [
+            "none",
+            "calm",
+            "kicking",
+            "contraction"
           ],
           "default": "none",
           "client_sync": true

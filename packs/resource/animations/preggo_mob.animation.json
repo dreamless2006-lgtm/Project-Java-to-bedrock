@@ -253,24 +253,24 @@
         "front_kick": {
           "position": [
             0,
-            0,
-            "-(v.k_front_kick_z + 1.50) * math.pow(math.max(0.0, math.sin(q.life_time * 90.0 + 0.0)), 8.0)"
+            "0.35 * math.sin(q.life_time * 24.8 + 0.0) * math.pow(math.max(0.0, math.sin(q.life_time * 80.0 + 0.0)), 3.0)",
+            "-(v.k_front_kick_z + 1.50) * math.pow(math.max(0.0, math.sin(q.life_time * 80.0 + 0.0)), 3.0)"
           ],
           "scale": [
-            "1.0 + 0.35 * math.pow(math.max(0.0, math.sin(q.life_time * 90.0 + 0.0)), 8.0)",
-            "1.0 + 0.35 * math.pow(math.max(0.0, math.sin(q.life_time * 90.0 + 0.0)), 8.0)",
+            "1.0 + 0.30 * math.pow(math.max(0.0, math.sin(q.life_time * 80.0 + 0.0)), 3.0)",
+            "1.0 + 0.30 * math.pow(math.max(0.0, math.sin(q.life_time * 80.0 + 0.0)), 3.0)",
             "1.0"
           ]
         },
         "right_kick": {
           "position": [
             0,
-            0,
-            "-(v.k_right_kick_z + 1.20) * math.pow(math.max(0.0, math.sin(q.life_time * 90.0 + 200.0)), 8.0)"
+            "0.30 * math.sin(q.life_time * 24.8 + 200.0) * math.pow(math.max(0.0, math.sin(q.life_time * 80.0 + 200.0)), 3.0)",
+            "-(v.k_right_kick_z + 1.20) * math.pow(math.max(0.0, math.sin(q.life_time * 80.0 + 200.0)), 3.0)"
           ],
           "scale": [
-            "1.0 + 0.25 * math.pow(math.max(0.0, math.sin(q.life_time * 90.0 + 200.0)), 8.0)",
-            "1.0 + 0.25 * math.pow(math.max(0.0, math.sin(q.life_time * 90.0 + 200.0)), 8.0)",
+            "1.0 + 0.22 * math.pow(math.max(0.0, math.sin(q.life_time * 80.0 + 200.0)), 3.0)",
+            "1.0 + 0.22 * math.pow(math.max(0.0, math.sin(q.life_time * 80.0 + 200.0)), 3.0)",
             "1.0"
           ]
         }
@@ -282,36 +282,36 @@
         "front_kick": {
           "position": [
             0,
-            0,
-            "-(v.k_front_kick_z + 1.75) * math.pow(math.max(0.0, math.sin(q.life_time * 120.0 + 0.0)), 8.0)"
+            "0.40 * math.sin(q.life_time * 31.0 + 0.0) * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 0.0)), 3.0)",
+            "-(v.k_front_kick_z + 1.75) * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 0.0)), 3.0)"
           ],
           "scale": [
-            "1.0 + 0.40 * math.pow(math.max(0.0, math.sin(q.life_time * 120.0 + 0.0)), 8.0)",
-            "1.0 + 0.40 * math.pow(math.max(0.0, math.sin(q.life_time * 120.0 + 0.0)), 8.0)",
+            "1.0 + 0.38 * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 0.0)), 3.0)",
+            "1.0 + 0.38 * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 0.0)), 3.0)",
             "1.0"
           ]
         },
         "left_kick": {
           "position": [
             0,
-            0,
-            "-(v.k_left_kick_z + 1.60) * math.pow(math.max(0.0, math.sin(q.life_time * 120.0 + 120.0)), 8.0)"
+            "0.35 * math.sin(q.life_time * 31.0 + 120.0) * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 120.0)), 3.0)",
+            "-(v.k_left_kick_z + 1.60) * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 120.0)), 3.0)"
           ],
           "scale": [
-            "1.0 + 0.35 * math.pow(math.max(0.0, math.sin(q.life_time * 120.0 + 120.0)), 8.0)",
-            "1.0 + 0.35 * math.pow(math.max(0.0, math.sin(q.life_time * 120.0 + 120.0)), 8.0)",
+            "1.0 + 0.32 * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 120.0)), 3.0)",
+            "1.0 + 0.32 * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 120.0)), 3.0)",
             "1.0"
           ]
         },
         "right_kick": {
           "position": [
             0,
-            0,
-            "-(v.k_right_kick_z + 1.60) * math.pow(math.max(0.0, math.sin(q.life_time * 120.0 + 240.0)), 8.0)"
+            "0.35 * math.sin(q.life_time * 31.0 + 240.0) * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 240.0)), 3.0)",
+            "-(v.k_right_kick_z + 1.60) * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 240.0)), 3.0)"
           ],
           "scale": [
-            "1.0 + 0.35 * math.pow(math.max(0.0, math.sin(q.life_time * 120.0 + 240.0)), 8.0)",
-            "1.0 + 0.35 * math.pow(math.max(0.0, math.sin(q.life_time * 120.0 + 240.0)), 8.0)",
+            "1.0 + 0.32 * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 240.0)), 3.0)",
+            "1.0 + 0.32 * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 240.0)), 3.0)",
             "1.0"
           ]
         }
@@ -323,61 +323,78 @@
         "front_kick": {
           "position": [
             0,
-            0,
-            "-(v.k_front_kick_z + 2.00) * math.pow(math.max(0.0, math.sin(q.life_time * 150.0 + 0.0)), 8.0)"
+            "0.45 * math.sin(q.life_time * 38.8 + 0.0) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 0.0)), 3.0)",
+            "-(v.k_front_kick_z + 2.00) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 0.0)), 3.0)"
           ],
           "scale": [
-            "1.0 + 0.50 * math.pow(math.max(0.0, math.sin(q.life_time * 150.0 + 0.0)), 8.0)",
-            "1.0 + 0.50 * math.pow(math.max(0.0, math.sin(q.life_time * 150.0 + 0.0)), 8.0)",
+            "1.0 + 0.48 * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 0.0)), 3.0)",
+            "1.0 + 0.48 * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 0.0)), 3.0)",
             "1.0"
           ]
         },
         "left_kick": {
           "position": [
             0,
-            0,
-            "-(v.k_left_kick_z + 1.90) * math.pow(math.max(0.0, math.sin(q.life_time * 150.0 + 72.0)), 8.0)"
+            "0.40 * math.sin(q.life_time * 38.8 + 72.0) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 72.0)), 3.0)",
+            "-(v.k_left_kick_z + 1.90) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 72.0)), 3.0)"
           ],
           "scale": [
-            "1.0 + 0.45 * math.pow(math.max(0.0, math.sin(q.life_time * 150.0 + 72.0)), 8.0)",
-            "1.0 + 0.45 * math.pow(math.max(0.0, math.sin(q.life_time * 150.0 + 72.0)), 8.0)",
+            "1.0 + 0.42 * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 72.0)), 3.0)",
+            "1.0 + 0.42 * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 72.0)), 3.0)",
             "1.0"
           ]
         },
         "right_kick": {
           "position": [
             0,
-            0,
-            "-(v.k_right_kick_z + 1.90) * math.pow(math.max(0.0, math.sin(q.life_time * 150.0 + 144.0)), 8.0)"
+            "0.40 * math.sin(q.life_time * 38.8 + 144.0) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 144.0)), 3.0)",
+            "-(v.k_right_kick_z + 1.90) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 144.0)), 3.0)"
           ],
           "scale": [
-            "1.0 + 0.45 * math.pow(math.max(0.0, math.sin(q.life_time * 150.0 + 144.0)), 8.0)",
-            "1.0 + 0.45 * math.pow(math.max(0.0, math.sin(q.life_time * 150.0 + 144.0)), 8.0)",
+            "1.0 + 0.42 * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 144.0)), 3.0)",
+            "1.0 + 0.42 * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 144.0)), 3.0)",
             "1.0"
           ]
         },
         "top_kick": {
           "position": [
             0,
-            0,
-            "-(v.k_top_kick_z + 1.80) * math.pow(math.max(0.0, math.sin(q.life_time * 150.0 + 216.0)), 8.0)"
+            "0.35 * math.sin(q.life_time * 38.8 + 216.0) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 216.0)), 3.0)",
+            "-(v.k_top_kick_z + 1.80) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 216.0)), 3.0)"
           ],
           "scale": [
-            "1.0 + 0.40 * math.pow(math.max(0.0, math.sin(q.life_time * 150.0 + 216.0)), 8.0)",
-            "1.0 + 0.40 * math.pow(math.max(0.0, math.sin(q.life_time * 150.0 + 216.0)), 8.0)",
+            "1.0 + 0.38 * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 216.0)), 3.0)",
+            "1.0 + 0.38 * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 216.0)), 3.0)",
             "1.0"
           ]
         },
         "bottom_kick": {
           "position": [
             0,
-            0,
-            "-(v.k_bottom_kick_z + 1.80) * math.pow(math.max(0.0, math.sin(q.life_time * 150.0 + 288.0)), 8.0)"
+            "0.35 * math.sin(q.life_time * 38.8 + 288.0) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 288.0)), 3.0)",
+            "-(v.k_bottom_kick_z + 1.80) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 288.0)), 3.0)"
           ],
           "scale": [
-            "1.0 + 0.40 * math.pow(math.max(0.0, math.sin(q.life_time * 150.0 + 288.0)), 8.0)",
-            "1.0 + 0.40 * math.pow(math.max(0.0, math.sin(q.life_time * 150.0 + 288.0)), 8.0)",
+            "1.0 + 0.38 * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 288.0)), 3.0)",
+            "1.0 + 0.38 * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 288.0)), 3.0)",
             "1.0"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.contraction_wave": {
+      "loop": true,
+      "bones": {
+        "belly": {
+          "position": [
+            0,
+            "0.45 * (v.cw * (0.5 - 0.5 * math.cos(q.life_time * 60.0)))",
+            "-0.3 * (v.cw * (0.5 - 0.5 * math.cos(q.life_time * 60.0)))"
+          ],
+          "scale": [
+            "1.0 - 0.03 * (v.cw * (0.5 - 0.5 * math.cos(q.life_time * 60.0)))",
+            "1.0 + 0.035 * (v.cw * (0.5 - 0.5 * math.cos(q.life_time * 60.0)))",
+            "1.0 + 0.07 * (v.cw * (0.5 - 0.5 * math.cos(q.life_time * 60.0)))"
           ]
         }
       }

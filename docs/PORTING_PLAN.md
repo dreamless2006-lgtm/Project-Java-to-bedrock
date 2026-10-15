@@ -143,6 +143,52 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   when hers is small). The client falls back to `q.variant` and to the pose when the phase
   property is unknown, and the mob system rewrites the phase property every tick (records from
   versions that only set it through entity events, wild mobs that only kept the variant).
+- ✅ **Labor and birth for every Jenny girl, smooth bellies and kicks, scenes for pregnant girls, their babies (0.5.0).**
+  *Rotation convention.* `tools/lib/bedrock-math.mjs` is now the one place that turns bones the way
+  the game does (X, then Y, then Z about the pivot; on the file's axes p' = q + Rz(-z) Ry(+y)
+  Rx(-x) (p - q)), checked against Blockbench's importer and the vanilla sneaking, riding and bob
+  animations. The kick-room measurement and the belly fit had X, Y and Z mirrored, and the 0.4.1
+  shell turned its side slabs the wrong way; all of them use it now. `tools/lib/geo-render.mjs`
+  renders geometry under any pose to PNG (`tools/render-preview.mjs`, `tools/render-poses.mjs`,
+  into the git-ignored dist/preview/), which is how every pose and belly below was looked at.
+  *Poses.* `tools/lib/pose-solve.mjs` carries a pose from one rig to another: each limb's change of
+  world orientation from its neutral stance (or an absolute orientation, for authored poses), the
+  pelvis moving like the source's hip joints scaled to her leg length, solved back into rotation
+  and position channels, knees and elbows bent or kept straight. `tools/lib/scene-poses.mjs` gives
+  each Jenny girl, from her own idle stance: a contraction bent over her belly with both hands on
+  it (rocking with the belly's six-second wave), a crouched pre-birth with her knees bent and apart,
+  the mod's birth lying back with her knees raised and apart, the mod's post-birth, sitting with the
+  babies kicking, morning sickness and miscarriage (replacing her own animations on those bones),
+  back pain and water breaking (on top of her walk), on all fours for the Jenny Bed, and sitting
+  back on her hands for the belly scenes; her eyes squeeze shut, her mouth opens and she blushes in
+  pain (the rigs slide expressions forward like their own blink), tails curl, Galath's wings droop
+  and the bee's buzz, ears go flat. A pose controller per girl plays them only in her everyday state
+  (skin 0, Ellie's stage-hidden flag), cross-faded. The slime girl's dress, hat and top (a second
+  chain of bones) follow her body. A newborn under her hip slides out with each push of the birth.
+  Our humanoid females get the two scene poses solved onto their rigs (`tools/gen-scene-poses.mjs`,
+  part of `npm run import`); the monster bodies keep their stance in a scene.
+  *Smooth belly.* The Jenny girls' bellies are a shell of thin slabs, each turned to lie on a
+  pregnant profile (fullest below the navel, as wide as a bit more than her torso, as deep as the
+  mod's belly of the size on her eased toward her belly's height so a late belly stays round), on a
+  128 px gradient of her skin; the kicks are domes on mounts turned to the skin, pushing straight
+  out of it. *Smooth movement.* Kicks and contractions ease in and out (`v.kick_w` and `v.cw` follow
+  their state over about a second and two seconds, by `q.delta_time`), every kick layer (the mod's
+  keyframed kicks, the pulses, the push) is weighted by it, kick pulses are broad rolling bumps that
+  drift along the skin, belly sizes cross-fade, and the belly tightens in a contraction wave during
+  a contraction or pre-birth, on every female, every Jenny girl and the player.
+  *Scenes.* A new property `minepreggo:scene` (none, calm, kicking, contraction) carries what her
+  belly does during a scene; `jenny/rhythm.js` chooses bursts of kicks from P3 and contractions from
+  P6, more often the hotter the scene. It runs through the Jenny Bed scene (she is now on all fours,
+  rocking to the player animation's beat) and through the Jenny girls' own scenes, on her and on
+  the stage entity that plays Jenny's and Ellie's (the stages now carry every property and the belly
+  animation). Crouching with an empty hand on a pregnant female (your own tamed one, or any Jenny
+  girl, whose own menu now waits for a plain interaction) opens her pregnancy menu
+  (`jenny/belly_scenes.js`): rub her belly (the babies kick back, her belly-rubs need eases),
+  feel the baby (they kick into your hands; you count their heartbeats) and, in labor, help her give
+  birth: every sneak press moves the labor on, each baby is born into your arms, jump stops. Each is
+  framed by a scene camera with a player animation (`animations/scene_player.animation.json`).
+  *Babies.* Each Jenny girl's babies are her own item (Jenny's Baby ... Ellie's Baby) with an icon
+  drawn from her skin and hair colours and her kind's trait; using any baby cuddles it.
 - ✅ **Kicks that show, round bellies in her own skin, the walk to the bed (0.4.1).** Kicks: the
   mod's keyframed kicks are long loops with sparse keyframes, and a controller state starts all of
   its animations once on entry, so between the first beat and the next state change the kick cubes

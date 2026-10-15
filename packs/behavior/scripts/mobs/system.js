@@ -158,7 +158,76 @@ export function dropItem(/** @type {Entity} */ entity, /** @type {string} */ ite
   const { x, y, z } = entity.location;
   const view = entity.getViewDirection();
   const at = inFront ? { x: x + view.x * 0.8, y: y + 0.8, z: z + view.z * 0.8 } : { x, y: y + 0.5, z };
-  entity.dimension.spawnItem(new ItemStack(item, 1), at);
+  entity.dimension.spawnItem(stackOf(item), at);
+}
+
+/** An item stack, or a human baby when the item is not in this build (a Jenny girl's baby without the import). */
+function stackOf(/** @type {string} */ item) {
+  try {
+    return new ItemStack(item, 1);
+  } catch {
+    return new ItemStack('minepreggo:baby_human', 1);
+  }
+}
+
+/**
+ * A baby is born: into the arms of the player helping her (jenny/belly_scenes.js), else onto the ground in front of her.
+ * @param {MobRecord} record @param {string} item
+ */
+function deliverBaby(record, item) {
+  const { entity } = record;
+  const helper = record.birthHelper ? world.getEntity(record.birthHelper) : undefined;
+  if (helper?.isValid && helper.typeId === 'minecraft:player' && helper.dimension.id === entity.dimension.id) {
+    const d = Math.hypot(helper.location.x - entity.location.x, helper.location.y - entity.location.y, helper.location.z - entity.location.z);
+    if (d <= 8) {
+      const stack = stackOf(item);
+      const leftover = /** @type {any} */ (helper.getComponent('minecraft:inventory'))?.container?.addItem(stack);
+      if (leftover) helper.dimension.spawnItem(leftover, helper.location);
+      /** @type {Player} */ (helper).sendMessage({ translate: 'minepreggo.birth.caught', with: { rawtext: [nameOf(entity)] } });
+      particles(entity, 'minecraft:heart_particle', 6, 1.0);
+      return;
+    }
+  }
+  dropItem(entity, item, true);
+}
+
+/**
+ * Her belly is rubbed (a touch, or a belly scene): the touch sound from P2, and from P3 a belly-rubs
+ * need eases by `amount` (gone below 8), with hearts.
+ * @param {MobRecord} record @param {number} amount
+ */
+export function rubBelly(record, amount) {
+  const p = record.data.pregnancy;
+  if (!p) return;
+  if (p.phase >= 2) playSound(record.entity, 'minepreggo.belly_touch', 0.7);
+  if (p.phase >= 3 && p.symptoms.BELLY_RUBS !== undefined) {
+    p.bellyRubs = clampLevel(p.bellyRubs - amount);
+    if (p.bellyRubs <= 8) delete p.symptoms.BELLY_RUBS;
+    particles(record.entity, 'minecraft:heart_particle', 3);
+  }
+  record.save();
+}
+
+/**
+ * The player helping her pushes with her (jenny/belly_scenes.js): labor before the birth or the
+ * current baby's birth moves on by `ticks`. Returns whether there was anything to push.
+ * @param {MobRecord} record @param {number} ticks
+ */
+export function assistPush(record, ticks) {
+  const p = record.data.pregnancy;
+  const pain = /** @type {PainInstance | null | undefined} */ (p?.pain);
+  if (!p || !pain) return false;
+  if (pain.type === 'PREBIRTH') {
+    pain.elapsed = Math.min(pain.duration, pain.elapsed + ticks);
+    return true;
+  }
+  const birth = /** @type {{ remaining: number } | null} */ (/** @type {unknown} */ (p.birth));
+  if (pain.type === 'BIRTH' && birth) {
+    birth.remaining = Math.max(1, birth.remaining - ticks);
+    record.sent = { ...record.sent, growth: undefined };
+    return true;
+  }
+  return false;
 }
 
 /** Keeps an incapacitated mob in place and harmless until the next update. */
@@ -573,7 +642,7 @@ function evaluateLabor(/** @type {MobRecord} */ record) {
         return;
       }
       tryHurt(record);
-      dropItem(entity, family.babyItem, true);
+      deliverBaby(record, family.babyItem);
       particles(entity, 'minecraft:redstone_ore_dust_particle', 10, 0.4);
       playSound(entity, 'minepreggo.splash', 0.3);
       const next = p.womb.shift();
@@ -759,10 +828,20 @@ export function debugPose(/** @type {MobRecord} */ record, /** @type {string} */
 /** Dynamic property set while a debug command forces the client state. */
 const FORCED = 'minepreggo:forced';
 
-/** A Jenny Bed scene (jenny/scenes.js) owns her pose while it runs; null gives it back. */
+/** A scene (jenny/scenes.js, jenny/belly_scenes.js) owns her pose while it runs; null gives it and her belly back. */
 export function setScenePose(/** @type {MobRecord} */ record, /** @type {string | null} */ pose) {
-  record.scene = pose ? { pose } : null;
+  record.scene = pose ? { ...(record.scene ?? {}), pose } : null;
   record.sent = {};
+}
+
+/**
+ * What her belly does during a scene (jenny/rhythm.js): a burst of kicks of `kick` strength, a
+ * contraction, calm, or 'none' when the scene is over (her own state shows again).
+ * @param {MobRecord} record @param {'none' | 'calm' | 'kicking' | 'contraction'} state @param {number} [kick]
+ */
+export function setSceneState(record, state, kick = 1) {
+  if (state === 'none' && !record.scene?.pose) record.scene = null;
+  else record.scene = { ...(record.scene ?? {}), state, kick };
 }
 
 /** Ends a forced client state: the real phase comes back at once (the wild-spawn detection reads it). */
@@ -792,7 +871,9 @@ function syncClient(/** @type {MobRecord} */ record) {
   const { entity, sent } = record;
   if ((record.debugUntil ?? 0) > system.currentTick) return;
   const state = clientState(record);
-  if (record.scene) state.pose = record.scene.pose;
+  if (record.scene?.pose) state.pose = record.scene.pose;
+  if (record.scene?.state === 'kicking' && record.scene.kick !== undefined) state.kick = record.scene.kick;
+  const scene = record.scene?.state ?? 'none';
   // The belly is rendered from this property alone, so it is kept equal to the real phase every
   // tick: mobs saved by versions that only set it through entity events never had it, and the
   // debug command overrides it for a while.
@@ -801,12 +882,20 @@ function syncClient(/** @type {MobRecord} */ record) {
   if (sent.pose !== state.pose) entity.setProperty('minepreggo:pose', (sent.pose = state.pose));
   if (sent.kick !== state.kick) entity.setProperty('minepreggo:kick', (sent.kick = state.kick));
   if (sent.growth !== state.growth) entity.setProperty('minepreggo:growth', (sent.growth = state.growth));
+  if (sent.scene !== scene) {
+    sent.scene = scene;
+    try {
+      entity.setProperty('minepreggo:scene', scene);
+    } catch {
+      // a body saved before this property existed reloads with it; nothing to show until then
+    }
+  }
 }
 
 /** Whether a pain or labor keeps her from moving and fighting right now. */
 export function isIncapacitated(/** @type {MobRecord} */ record) {
   const { pregnancy: p, wild } = record.data;
-  if (record.scene) return true;
+  if (record.scene?.pose) return true;
   if (wild) return wild.incapacitated;
   const pain = /** @type {(PainInstance & { incapacitating?: boolean }) | null | undefined} */ (p?.pain);
   return !!pain && (INCAPACITATING.has(pain.type) || !!pain.incapacitating);

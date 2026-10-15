@@ -20,9 +20,11 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { strFromU8, unzipSync } from 'fflate';
-import { fitBelly, measureBody, roundBelly } from './lib/belly-fit.mjs';
-import { BELLY_ANIMATIONS, BELLY_PROPERTY, FAMILY_TAG, MINEPREGGO_PROPERTIES, MOD, PHASES, bellyIndex, bellyPreAnimation, initializers, kickRoomLines, phaseEvents } from './lib/belly-render.mjs';
-import { bellyTexture, skinTone } from './lib/belly-skin.mjs';
+import { BABY_LOOKS, babyIcon } from './lib/baby-icon.mjs';
+import { addNewborn, fitBelly, measureBody, smoothBelly } from './lib/belly-fit.mjs';
+import { BELLY_ANIMATIONS, FAMILY_TAG, MINEPREGGO_PROPERTIES, MOD, PHASES, bellyPreAnimation, initializers, kickRoomLines, phaseEvents } from './lib/belly-render.mjs';
+import { bellyTexture, hairTone, skinTone } from './lib/belly-skin.mjs';
+import { girlPoseAnimations } from './lib/scene-poses.mjs';
 import { stringifyEntity } from './lib/entity-json.mjs';
 import { dropStructureEntities, parseNbt, renameStrings, writeNbt } from './lib/nbt.mjs';
 import { decodePng, encodePng } from './lib/png.mjs';
@@ -38,6 +40,23 @@ export const PORT_GIRLS = ['fapcraft:jenny', 'kum:bia', 'kum:slime_girl', 'kum:l
 export const PORT_STAGES = ['jhjenjava:jenny_stage', 'jhelliedev:ellie_stage'];
 /** Which girl a stage stands in for (her skin tone is the stage belly's). */
 const STAGE_OF = /** @type {Record<string, string>} */ ({ 'jhjenjava:jenny_stage': 'fapcraft:jenny', 'jhelliedev:ellie_stage': 'jhelliedev:ellie' });
+/** When a girl is in her own everyday state (not in one of her scenes): only then do our poses play on her. */
+const NORMAL = /** @type {Record<string, string>} */ ({ 'jhelliedev:ellie': "!q.property('jhelliedev:stage_hidden')" });
+const normalOf = (/** @type {string} */ id) => NORMAL[id] ?? 'q.skin_id == 0';
+/** The newborn: hidden but while she pushes during the birth, then it slides out with each push. */
+const NEWBORN = {
+  [`animation.${MOD}.jp_newborn`]: {
+    loop: true,
+    bones: {
+      newborn: {
+        scale: "v.pose == 'birth' ? math.clamp(v.push * 1.8 - 0.25, 0.0, 1.0) : 0.0",
+        position: [0, '-3.4 * math.clamp(v.push, 0.0, 1.0)', '-0.6 * math.clamp(v.push, 0.0, 1.0)'],
+        rotation: ["v.pose == 'birth' ? 6.0 * math.sin(q.life_time * 240.0) : 0.0", 0, "v.pose == 'birth' ? 4.0 * math.sin(q.life_time * 170.0) : 0.0"],
+      },
+    },
+  },
+};
+
 /** The older pack's ids and ours. */
 const OLD = { bed: 'cumin:jenny_bed', bedState: 'bridge:block_rotation', jenny: 'cumin:jenny' };
 
@@ -103,7 +122,31 @@ const playerBodies = PHASES.map((p) => {
   if (!existsSync(file)) throw new Error(`${file} is missing: run tools/import-jar.mjs first`);
   return parse(readFileSync(file, 'utf8'));
 });
-const counts = { files: 0, scripts: 0, girls: 0, bellies: 0, sounds: 0 };
+/** The mod's labor animations come from the humanoid creeper girl (a plain standing humanoid). */
+const creeper = (() => {
+  const geometryFile = join(RP, 'models/entity', MOD, 'humanoid_creeper_girl.geo.json');
+  const animationFile = join(RP, 'animations', MOD, 'humanoid_creeper_girl.animation.json');
+  if (!existsSync(geometryFile) || !existsSync(animationFile)) throw new Error('the humanoid creeper girl is missing: run tools/import-jar.mjs first');
+  const prefix = `animation.${MOD}.humanoid_creeper_girl.`;
+  const animations = Object.fromEntries(Object.entries(parse(readFileSync(animationFile, 'utf8')).animations).map(([k, v]) => [k.startsWith(prefix) ? k.slice(prefix.length) : k, v]));
+  return { geometry: parse(readFileSync(geometryFile, 'utf8'))['minecraft:geometry'][0], animations };
+})();
+
+/**
+ * A girl's pose controller: one state per pose, entered while the pose property says so and she is
+ * in her everyday state, cross-faded in and out.
+ * @param {string[]} poses
+ */
+function poseController(poses) {
+  /** @type {Record<string, unknown>} */
+  const states = { default: { transitions: poses.map((pose) => ({ [pose]: `v.jp_normal && v.pose == '${pose}'` })) } };
+  for (const pose of poses) {
+    states[pose] = { animations: [`mp_pose_${pose}`], transitions: [{ default: `!v.jp_normal || !(v.pose == '${pose}')` }], blend_transition: 0.45 };
+  }
+  return { initial_state: 'default', states };
+}
+
+const counts = { files: 0, scripts: 0, girls: 0, bellies: 0, sounds: 0, poses: 0, babies: 0 };
 
 // ---- the Jenny Mod Java Port -----------------------------------------------------------------------
 if (portBP && portRP) {
@@ -143,13 +186,23 @@ if (portBP && portRP) {
     if (PORT_GIRLS.includes(id)) {
       e.description.properties = { ...(e.description.properties ?? {}), ...MINEPREGGO_PROPERTIES };
       e.events = { ...(e.events ?? {}), ...phaseEvents() };
+      // Sneaking with an empty hand opens our pregnancy menu, so their own menu waits for a plain interaction.
+      for (const components of [e.components, ...Object.values(e.component_groups ?? {})]) {
+        for (const interaction of components?.['minecraft:interact']?.interactions ?? []) {
+          const on = interaction.on_interact;
+          if (!on || JSON.stringify(on.filters ?? {}).includes('is_sneaking')) continue;
+          const notSneaking = { test: 'is_sneaking', subject: 'other', value: false };
+          on.filters = on.filters ? { all_of: [...(Array.isArray(on.filters) ? on.filters : [on.filters]), notSneaking] } : notSneaking;
+        }
+      }
       for (const components of [e.components, ...Object.values(e.component_groups ?? {})]) {
         const family = components?.['minecraft:type_family']?.family;
         if (Array.isArray(family) && !family.includes(FAMILY_TAG)) family.push(FAMILY_TAG);
       }
       counts.girls++;
     } else if (PORT_STAGES.includes(id)) {
-      e.description.properties = { ...(e.description.properties ?? {}), [`${MOD}:belly`]: BELLY_PROPERTY };
+      // The stage plays her scene in her place: it shows her belly, her kicks and her contractions (port.js copies them over).
+      e.description.properties = { ...(e.description.properties ?? {}), ...MINEPREGGO_PROPERTIES };
     }
     writeFile(file, stringifyEntity(doc));
     counts.files++;
@@ -162,6 +215,8 @@ if (portBP && portRP) {
   const rcDefs = {};
   /** @type {{ file: string, doc: any }[]} */
   const clientDocs = [];
+  /** @type {Record<string, any>} their animations by id (her idle is her neutral stance) */
+  const portAnimations = {};
   for (const [file, data] of Object.entries(portRP)) {
     if (file === 'manifest.json' || file === 'pack_icon.png' || file === 'texts/languages.json') continue;
     const [dir] = file.split('/');
@@ -202,6 +257,7 @@ if (portBP && portRP) {
       clientDocs.push({ file: join(RP, 'entity', PORT, rest), doc: parse(rewrite(strFromU8(data))) });
     } else if (['animations', 'animation_controllers', 'attachables'].includes(dir)) {
       writeFile(join(RP, dir, PORT, rest), json ? rewrite(strFromU8(data)) : data);
+      if (dir === 'animations' && json) Object.assign(portAnimations, parse(rewrite(strFromU8(data))).animations ?? {});
     } else {
       continue;
     }
@@ -211,6 +267,8 @@ if (portBP && portRP) {
   // Each girl's skin tone, from her own texture, for her belly and her stage's.
   /** @type {Map<string, number[]>} girl id -> [r, g, b] */
   const tones = new Map();
+  /** @type {Map<string, number[]>} girl id -> her hair colour */
+  const hairs = new Map();
   for (const { doc } of clientDocs) {
     const d = doc['minecraft:client_entity'].description;
     if (!PORT_GIRLS.includes(d.identifier)) continue;
@@ -218,7 +276,11 @@ if (portBP && portRP) {
     const geometryKey = ['default', 'normal', 'dressed'].find((k) => d.geometry?.[k]);
     const geometry = geometryKey ? geometries.get(d.geometry[geometryKey]) : undefined;
     const texture = textureKey ? join(RP, `${d.textures[textureKey]}.png`) : undefined;
-    if (geometry && texture && existsSync(texture)) tones.set(d.identifier, skinTone(decodePng(new Uint8Array(readFileSync(texture))), geometry));
+    if (geometry && texture && existsSync(texture)) {
+      const png = decodePng(new Uint8Array(readFileSync(texture)));
+      tones.set(d.identifier, skinTone(png, geometry));
+      hairs.set(d.identifier, hairTone(png, geometry));
+    }
   }
   const toneOf = (/** @type {string} */ id) => tones.get(id) ?? tones.get(STAGE_OF[id] ?? '') ?? [224, 188, 160];
 
@@ -226,6 +288,8 @@ if (portBP && portRP) {
   // per size fitted to that body in her skin tone, shown under the same visibility as that body.
   /** @type {Record<string, unknown>} */
   const bellyControllers = {};
+  /** @type {Record<string, unknown>} */
+  const poseControllers = {};
   for (const { file, doc } of clientDocs) {
     const d = doc['minecraft:client_entity'].description;
     const id = d.identifier;
@@ -267,7 +331,7 @@ if (portBP && portRP) {
           const visibility = set.visibilities.includes('true') ? undefined : set.visibilities.join(' || ');
           for (const p of PHASES) {
             const geometryId = `geometry.${MOD}.jp_${slug(id)}_${n}_belly_p${p}`;
-            const belly = roundBelly(fitBelly(playerBodies[p], geometryId, set.body));
+            const belly = addNewborn(smoothBelly(fitBelly(playerBodies[p], geometryId, set.body), set.body), set.body);
             writeFile(join(RP, 'models/entity', PORT, MOD, `${slug(id)}_${n}_belly_p${p}.geo.json`), JSON.stringify(belly, null, 2) + '\n');
             if (n === 0) firstSet.push(belly['minecraft:geometry'][0]);
             d.geometry[`minepreggo_belly_${n}_p${p}`] = geometryId;
@@ -280,13 +344,29 @@ if (portBP && portRP) {
         d.render_controllers = entries;
         d.scripts ??= {};
         const pre = (d.scripts.pre_animation ?? []).filter((/** @type {string} */ l) => !/^v\.(bp|phase|pose|pregnant_pose|push|kick|kicking|kl|belly_growth|k_[a-z_]+|kr_f)\s*=/.test(l));
+        // Girls and the stages that play their scenes: the belly, the kicks, the contractions, the newborn.
+        pre.push(...bellyPreAnimation(), ...kickRoomLines('v.bp', (p) => firstSet[p]));
+        d.animations = { ...(d.animations ?? {}), ...BELLY_ANIMATIONS, newborn: `animation.${MOD}.jp_newborn`, belly_controller: `controller.animation.${MOD}.belly` };
+        const animate = (d.scripts.animate ?? []).filter((/** @type {unknown} */ a) => a !== 'belly_controller' && a !== 'newborn' && a !== 'mp_pose_controller');
         if (girl) {
-          pre.push(...bellyPreAnimation(), ...kickRoomLines('v.bp', (p) => firstSet[p]));
-          d.animations = { ...(d.animations ?? {}), ...BELLY_ANIMATIONS, belly_controller: `controller.animation.${MOD}.belly` };
-          d.scripts.animate = [...(d.scripts.animate ?? []).filter((/** @type {unknown} */ a) => a !== 'belly_controller'), 'belly_controller'];
-        } else {
-          pre.push(`v.bp = ${bellyIndex(`q.property('${MOD}:belly')`)};`);
+          // Her pregnancy and scene poses, solved onto her rig from her own idle stance (tools/lib/scene-poses.mjs).
+          const geometryKey = ['default', 'normal', 'dressed'].find((k) => d.geometry?.[k]);
+          const geometry = geometryKey ? geometries.get(d.geometry[geometryKey]) : undefined;
+          const idle = d.animations.idle ? portAnimations[d.animations.idle] : undefined;
+          const poses = geometry && girlPoseAnimations({ geometry, idle, sourceGeometry: creeper.geometry, sourceAnimations: creeper.animations, prefix: `animation.${MOD}.jp_${slug(id)}` });
+          if (poses) {
+            const file = { format_version: '1.8.0', animations: Object.fromEntries(Object.values(poses).map(({ id: animationId, animation }) => [animationId, animation])) };
+            writeFile(join(RP, 'animations', PORT, MOD, `${slug(id)}_poses.animation.json`), JSON.stringify(file) + '\n');
+            for (const [pose, { id: animationId }] of Object.entries(poses)) d.animations[`mp_pose_${pose}`] = animationId;
+            const controllerId = `controller.animation.${MOD}.jp_${slug(id)}.pose`;
+            poseControllers[controllerId] = poseController(Object.keys(poses));
+            d.animations.mp_pose_controller = controllerId;
+            pre.push(`v.jp_normal = ${normalOf(id)};`);
+            animate.push('mp_pose_controller');
+            counts.poses += Object.keys(poses).length;
+          }
         }
+        d.scripts.animate = [...animate, 'newborn', 'belly_controller'];
         d.scripts.pre_animation = pre;
         d.scripts.initialize = initializers(pre, d.scripts.initialize ?? []);
       }
@@ -294,6 +374,35 @@ if (portBP && portRP) {
     writeFile(file, JSON.stringify(doc, null, 2) + '\n');
   }
   writeFile(join(RP, 'render_controllers', PORT, 'minepreggo_bellies.render_controllers.json'), JSON.stringify({ format_version: '1.10.0', render_controllers: bellyControllers }, null, 2) + '\n');
+  writeFile(join(RP, 'animation_controllers', PORT, 'minepreggo_poses.animation_controllers.json'), JSON.stringify({ format_version: '1.10.0', animation_controllers: poseControllers }, null, 2) + '\n');
+  writeFile(join(RP, 'animations', PORT, MOD, 'newborn.animation.json'), JSON.stringify({ format_version: '1.8.0', animations: NEWBORN }, null, 2) + '\n');
+
+  // Each girl's baby: an item with an icon in her colours (her skin, her hair, her kind's trait).
+  const itemTextures = parse(readFileSync(join(RP, 'textures', PORT, 'item_texture.json'), 'utf8'));
+  /** @type {string[]} */
+  const babyLang = [];
+  for (const girl of PORT_GIRLS) {
+    const look = BABY_LOOKS[girl];
+    const name = `baby_${slug(girl)}`;
+    const icon = `textures/${PORT}/${MOD}/${name}`;
+    writeFile(join(RP, `${icon}.png`), encodePng(babyIcon({ skin: toneOf(girl), hair: hairs.get(girl) ?? [110, 80, 60], ...look })));
+    itemTextures.texture_data[`${MOD}_${name}`] = { textures: icon };
+    const item = {
+      format_version: '1.26.30',
+      'minecraft:item': {
+        description: { identifier: `${MOD}:${name}`, menu_category: { category: 'items' } },
+        components: { 'minecraft:icon': `${MOD}_${name}`, 'minecraft:display_name': { value: `item.${MOD}.${name}` }, 'minecraft:max_stack_size': 1 },
+      },
+    };
+    writeFile(join(BP, 'items', PORT, MOD, `${name}.json`), JSON.stringify(item, null, 2) + '\n');
+    babyLang.push(`item.${MOD}.${name}=${look.name}'s Baby`);
+    counts.babies++;
+  }
+  writeFile(join(RP, 'textures', PORT, 'item_texture.json'), JSON.stringify(itemTextures, null, 2) + '\n');
+  for (const file of readdirSync(join(RP, 'texts')).filter((f) => f.endsWith('.lang'))) {
+    const path = join(RP, 'texts', file);
+    writeFileSync(path, readFileSync(path, 'utf8').replace(/\n?$/, '\n') + `${babyLang.join('\n')}\n`);
+  }
 } else {
   console.warn('warning: the Jenny Mod Java Port .mcaddon (BP + RP) is not in vendor/jenny/; its girls are not imported');
 }
@@ -327,5 +436,5 @@ if (oldRP && oldBP) {
 }
 
 if (portBP && portRP) {
-  console.log(`Jenny Mod Java Port: ${counts.files} files, ${counts.scripts} scripts, ${counts.sounds} sounds, ${counts.girls} girls in the mob system, ${counts.bellies} belly render controllers`);
+  console.log(`Jenny Mod Java Port: ${counts.files} files, ${counts.scripts} scripts, ${counts.sounds} sounds, ${counts.girls} girls in the mob system, ${counts.bellies} belly render controllers, ${counts.poses} pregnancy and scene poses, ${counts.babies} babies`);
 }

@@ -7,7 +7,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { writeEntityJson } from './lib/entity-json.mjs';
-import { BELLY_ANIMATIONS, BELLY_PROPERTY, MOD, PHASES, bellyController, bellyIndex, initializers, kickRoomLines } from './lib/belly-render.mjs';
+import { BELLY_ANIMATIONS, BELLY_PROPERTY, MINEPREGGO_PROPERTIES, MOD, PHASES, POSES, bellyController, bellyIndex, contractionWaveAnimation, initializers, kickPulseAnimations, kickRoomLines, kickStateLines, playerKickStateLines } from './lib/belly-render.mjs';
 
 const ROOT = new URL('../', import.meta.url).pathname;
 const RP = join(ROOT, 'packs/resource');
@@ -44,6 +44,27 @@ write(join(RP, 'animation_controllers/belly.animation_controllers.json'), {
     [`controller.animation.${MOD}.belly_navel`]: bellyController(true),
   },
 });
+
+// ---- the kick pulses and the contraction wave every female and the player share ---------------------
+{
+  const file = join(RP, 'animations/preggo_mob.animation.json');
+  const doc = read(file);
+  Object.assign(doc.animations, kickPulseAnimations(), contractionWaveAnimation());
+  write(file, doc);
+}
+
+// ---- the scene poses in the pain controller: on all fours for the bed, sitting for a belly scene ----
+{
+  const file = join(RP, 'animation_controllers/preggo_mob.animation_controllers.json');
+  const doc = read(file);
+  const pain = doc.animation_controllers[`controller.animation.${MOD}.preggo_mob.pain`];
+  for (const pose of ['scene', 'scene_sit']) {
+    pain.states[pose] = { animations: [`${pose}_pose`], transitions: [{ default: `!(v.pose == '${pose}')` }], blend_transition: 0.4 };
+    const into = pain.states.default.transitions;
+    if (!into.some((/** @type {Record<string, string>} */ t) => pose in t)) into.push({ [pose]: `v.pose == '${pose}'` });
+  }
+  write(file, doc);
+}
 
 // ---- each family ---------------------------------------------------------------------------------
 for (const [family, texture] of Object.entries(FAMILIES)) {
@@ -89,7 +110,11 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
   ];
 
   // pre_animation: the belly size from the enum property, else the phase, the variant, or a pregnancy pose.
-  const pre = d.scripts.pre_animation.filter((/** @type {string} */ line) => !line.startsWith('v.bp =') && !line.startsWith('v.phase = v.phase >= 0 ?') && !line.startsWith('v.phase = v.bp') && !line.startsWith('v.kr_f =') && !line.startsWith('v.k_'));
+  const pre = d.scripts.pre_animation.filter((/** @type {string} */ line) => !line.startsWith('v.bp =') && !line.startsWith('v.phase = v.phase >= 0 ?') && !line.startsWith('v.phase = v.bp') && !line.startsWith('v.kr_f =') && !line.startsWith('v.k_') && !/^v\.(kicking|scene|contracting|kick_w|cw) =/.test(line) && !line.startsWith("v.kick = v.pose == 'incapacitated'") && !line.startsWith("v.kick = (v.pose == 'incapacitated'"));
+  // The kick and contraction state with eased weights, right after the kick strength is read.
+  const kickAt = pre.findIndex((/** @type {string} */ line) => line.startsWith("v.kick = q.property('minepreggo:kick')"));
+  if (kickAt < 0) throw new Error(`${family}: no kick line`);
+  pre.splice(kickAt + 1, 0, ...kickStateLines());
   const at = pre.findIndex((/** @type {string} */ line) => line.startsWith('v.pregnant_pose ='));
   if (at < 0) throw new Error(`${family}: no v.pregnant_pose line`);
   pre.splice(at + 1, 0,
@@ -109,11 +134,16 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
   }
   d.animations.belly_controller = `controller.animation.${MOD}.${navel ? 'belly_navel' : 'belly'}`;
   for (const [name, id] of Object.entries(BELLY_ANIMATIONS)) d.animations[name] ??= id;
+  // Her scene poses (tools/gen-scene-poses.mjs solves them onto her rig); a monster body (four
+  // legs, a jelly) keeps her own stance in a scene.
+  const monster = family.startsWith('monster_');
+  d.animations.scene_pose = monster ? d.animations.idle : `animation.${MOD}.${family}.scene`;
+  d.animations.scene_sit_pose = monster ? d.animations.idle : `animation.${MOD}.${family}.scene_sit`;
   const animate = d.scripts.animate.filter((/** @type {string | Record<string, string>} */ a) => !(typeof a === 'object' && BELLY_ANIMATE.test(Object.keys(a)[0])) && a !== 'belly_controller');
   const pain = animate.indexOf('pain_controller');
   animate.splice(pain < 0 ? animate.length : pain + 1, 0, 'belly_controller');
   d.scripts.animate = animate;
-  for (const name of ['belly_low', 'belly_medium', 'belly_high', 'belly_growth', 'fetal_push', 'birth_push', 'belly_hidden', 'kick_i', 'kick_ii', 'kick_iii', ...PHASES.filter((p) => p >= 3).flatMap((p) => [`fetal_p${p}_i`, `fetal_p${p}_ii`, `fetal_p${p}_iii`])]) {
+  for (const name of ['belly_low', 'belly_medium', 'belly_high', 'belly_growth', 'fetal_push', 'birth_push', 'belly_hidden', 'kick_i', 'kick_ii', 'kick_iii', 'contraction_wave', ...PHASES.filter((p) => p >= 3).flatMap((p) => [`fetal_p${p}_i`, `fetal_p${p}_ii`, `fetal_p${p}_iii`])]) {
     if (!d.animations[name]) throw new Error(`${family}: the belly controller needs animation "${name}"`);
   }
   // Every Molang variable the pre_animation keeps between frames starts at 0, or the game logs
@@ -127,6 +157,8 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
   const e = bpDoc['minecraft:entity'];
   rejectedFields(e);
   e.description.properties['minepreggo:belly'] = BELLY_PROPERTY;
+  e.description.properties['minepreggo:pose'] = { ...e.description.properties['minepreggo:pose'], values: POSES };
+  e.description.properties['minepreggo:scene'] = MINEPREGGO_PROPERTIES['minepreggo:scene'];
   for (const [name, event] of Object.entries(e.events)) {
     // An event is a flat step or a sequence of steps; the properties go on the step that sets the phase (else the first).
     const steps = Array.isArray(event.sequence) ? event.sequence : [event];
@@ -154,10 +186,23 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
     d.textures[`minepreggo_alex_p${p}_extra`] = `textures/${MOD}/entity/player/predefined/alex/alex_p${p}_extra`;
   }
   delete d.textures.minepreggo_alex_extra_all;
-  // The port's kicks: the kick cubes pulse to just beyond the skin while she is kicking, by strength.
+  // The port's kicks: the kick cubes pulse to just beyond the skin while she is kicking, by strength,
+  // faded in and out by the eased variable.kick_w like the mod's keyframed kicks and the push.
+  /** @param {string} name @param {string} weight */
+  const setEntry = (name, weight) => {
+    const at = d.scripts.animate.findIndex((/** @type {string | Record<string, string>} */ a) => typeof a === 'object' && name in a);
+    if (at >= 0) d.scripts.animate[at] = { [name]: weight };
+    else d.scripts.animate.push({ [name]: weight });
+  };
+  for (const p of PHASES.filter((n) => n >= 3)) for (const [n, strength] of [['i', 0], ['ii', 1], ['iii', 2]]) {
+    if (d.animations[`minepreggo_fetal_p${p}_${n}`]) setEntry(`minepreggo_fetal_p${p}_${n}`, `variable.kick_w * (variable.mp_phase == ${p} && variable.mp_kick == ${strength})`);
+  }
+  if (d.animations.minepreggo_fetal_push) setEntry('minepreggo_fetal_push', 'variable.kick_w * variable.mp_pregnant');
+  d.animations.minepreggo_contraction_wave = `animation.${MOD}.contraction_wave`;
+  setEntry('minepreggo_contraction_wave', 'variable.mp_pregnant');
   for (const [n, strength] of [['i', 0], ['ii', 1], ['iii', 2]]) {
     d.animations[`minepreggo_kick_${n}`] = `animation.${MOD}.kick_${n}`;
-    const entry = { [`minepreggo_kick_${n}`]: `variable.mp_pregnant && variable.kicking && variable.mp_phase >= 3 && variable.mp_kick == ${strength}` };
+    const entry = { [`minepreggo_kick_${n}`]: `variable.kick_w * (variable.mp_pregnant && variable.mp_phase >= 3 && variable.mp_kick == ${strength})` };
     const at = d.scripts.animate.findIndex((/** @type {string | Record<string, string>} */ a) => typeof a === 'object' && `minepreggo_kick_${n}` in a);
     if (at >= 0) d.scripts.animate[at] = entry;
     else d.scripts.animate.push(entry);
@@ -168,7 +213,10 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
     d.render_controllers.push({ [`controller.render.${MOD}.player_belly_custom_p${p}`]: `${belly} && !variable.mp_predefined && variable.mp_bp == ${p}` });
     d.render_controllers.push({ [`controller.render.${MOD}.player_belly_predefined_p${p}`]: `${belly} && variable.mp_predefined && variable.mp_bp == ${p}` });
   }
-  const pre = d.scripts.pre_animation.filter((/** @type {string} */ line) => !line.startsWith('variable.mp_bp =') && !line.startsWith('variable.mp_phase = variable.mp_phase >= 0 ?') && !line.startsWith('variable.mp_phase = variable.mp_bp') && !line.startsWith('variable.kr_f =') && !line.startsWith('v.k_') && !line.startsWith('v.kr_f'));
+  const pre = d.scripts.pre_animation.filter((/** @type {string} */ line) => !line.startsWith('variable.mp_bp =') && !line.startsWith('variable.mp_phase = variable.mp_phase >= 0 ?') && !line.startsWith('variable.mp_phase = variable.mp_bp') && !line.startsWith('variable.kr_f =') && !line.startsWith('v.k_') && !line.startsWith('v.kr_f') && !/^variable\.(kicking|contracting|kick_w|cw) =/.test(line));
+  const kickingAt = pre.findIndex((/** @type {string} */ line) => line.startsWith('variable.mp_labor ='));
+  if (kickingAt < 0) throw new Error('player: no mp_labor line');
+  pre.splice(kickingAt + 1, 0, ...playerKickStateLines());
   const at = pre.findIndex((/** @type {string} */ line) => line.startsWith('variable.mp_pose ='));
   if (at < 0) throw new Error('player: no mp_pose line');
   pre.splice(at + 1, 0,

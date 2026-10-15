@@ -177,7 +177,8 @@ const HUMAN = {
 export const PORT_GIRL_FAMILIES = Object.fromEntries(
   ['fapcraft:jenny', 'kum:bia', 'kum:slime_girl', 'kum:luna', 'kum:galath', 'jhallie4:allie', 'kum:manglelie', 'jhbee24:bee', 'jhkobold:kobold', 'jhelliedev:ellie'].map((id) => [
     id,
-    /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN }),
+    // Her babies are her own (tools/import-jenny.mjs makes a baby item in her colours for each girl).
+    /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: `minepreggo:baby_${id.split(':')[1]}` }),
   ])
 );
 export const COURTING_TICKS = 60;

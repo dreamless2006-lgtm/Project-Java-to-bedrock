@@ -18,6 +18,8 @@ import './mobs/commands.js';
 import './jenny/port.js';
 import './jenny/scenes.js';
 import './jenny/bed.js';
+import './jenny/belly_scenes.js';
+import './items/babies.js';
 
 // The Jenny Mod Java Port's own scripts, merged into this pack by tools/import-jenny.mjs when its
 // packs are in vendor/jenny/ (a build without them simply has no Jenny girls).

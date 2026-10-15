@@ -65,7 +65,7 @@ export class MobRecord {
     /** @type {MobData} */
     this.data = { ...newMobData(), ...read(entity) };
     this.dirty = false;
-    /** @type {{ pose?: string, kick?: number, growth?: number }} values last written to entity properties */
+    /** @type {{ pose?: string, kick?: number, growth?: number, scene?: string }} values last written to entity properties */
     this.sent = {};
     /** @type {{ x: number, z: number } | undefined} */
     this.lastPosition = undefined;
@@ -74,8 +74,15 @@ export class MobRecord {
     this.selfHurtTick = -1;
     /** while in the future, the debug command owns the client properties */
     this.debugUntil = 0;
-    /** @type {{ pose: string } | null} while set, a Jenny Bed scene owns her pose (jenny/scenes.js) */
+    /**
+     * While set, a scene owns part of what the client shows (jenny/scenes.js, jenny/belly_scenes.js,
+     * jenny/port.js): her pose, and what her belly does during it (a burst of kicks of a strength,
+     * a contraction, calm).
+     * @type {{ pose?: string, state?: 'none' | 'calm' | 'kicking' | 'contraction', kick?: number } | null}
+     */
     this.scene = null;
+    /** @type {string | undefined} the player helping her give birth, who catches the babies (jenny/belly_scenes.js) */
+    this.birthHelper = undefined;
   }
 
   save() {

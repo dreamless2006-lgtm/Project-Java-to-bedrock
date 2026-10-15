@@ -7,6 +7,7 @@
 // (v.k_<bone>_x/_y/_z, written per entity by tools/gen-belly-render.mjs): the kick's peak always
 // sits just beyond the skin, never further, and the kick's scale is capped so it never grows into a
 // block. Channels that barely move (a jitter) are only clamped, not stretched.
+import { rotateAbout } from './bedrock-math.mjs';
 
 export const KICK_BONES = ['front_kick', 'left_kick', 'right_kick', 'top_kick', 'bottom_kick'];
 /** How far a kick shows beyond the skin at its peak, in model units: forward, sideways and up/down. */
@@ -105,16 +106,8 @@ export function kickRoom(geometry) {
   const children = (/** @type {string} */ n) => geometry.bones.filter((b) => b.parent === n).map((b) => b.name);
   const subtree = (/** @type {string} */ n) => [n, ...children(n).flatMap(subtree)];
   // A cube's box after its bone's rotation about the bone's pivot (the big bellies are built from
-  // cubes turned by 90 degrees), as the axis-aligned bounds of its eight corners.
-  const rotate = (/** @type {number[]} */ v, /** @type {number[]} */ deg, /** @type {number[]} */ pivot) => {
-    const rad = deg.map((d) => (d * Math.PI) / 180);
-    let [x, y, z] = v.map((c, k) => c - pivot[k]);
-    const rx = (/** @type {number} */ a) => { const [cy, cz] = [y * Math.cos(a) - z * Math.sin(a), y * Math.sin(a) + z * Math.cos(a)]; y = cy; z = cz; };
-    const ry = (/** @type {number} */ a) => { const [cx, cz] = [x * Math.cos(a) + z * Math.sin(a), -x * Math.sin(a) + z * Math.cos(a)]; x = cx; z = cz; };
-    const rz = (/** @type {number} */ a) => { const [cx, cy] = [x * Math.cos(a) - y * Math.sin(a), x * Math.sin(a) + y * Math.cos(a)]; x = cx; y = cy; };
-    rx(rad[0]); ry(rad[1]); rz(rad[2]);
-    return [x + pivot[0], y + pivot[1], z + pivot[2]];
-  };
+  // cubes turned by 90 degrees), as the axis-aligned bounds of its eight corners, turned the game's way.
+  const rotate = rotateAbout;
   const box = (/** @type {any} */ cube, /** @type {any} */ bone) => {
     const i = cube.inflate ?? 0;
     const lo = cube.origin.map((/** @type {number} */ o) => o - i);
@@ -133,6 +126,12 @@ export function kickRoom(geometry) {
   for (const bone of KICK_BONES) {
     const cubes = byName.get(bone)?.cubes;
     if (!cubes?.length) continue;
+    // A kick dome on a mount (the smooth shells of tools/lib/belly-fit.mjs) rests a fixed KICK_INSET
+    // under the skin along the mount's own -z: that is its room out, and it can slide a little sideways.
+    if (byName.has(`${bone}_mount`)) {
+      room[bone] = { x: 1, y: 1, z: 0.6 };
+      continue;
+    }
     const kick = union(cubes.map((cube) => ({ cube, bone: undefined })));
     const r = (/** @type {number} */ v) => Math.max(0, Math.round(v * 100) / 100);
     room[bone] = {

@@ -1,13 +1,13 @@
 // A character's skin tone and a belly texture in it. The tone is sampled from her own texture (the
 // lower half of her head's front face: cheeks and chin, where every Jenny-mod girl shows skin), and
-// the belly texture is a 64 x 64 radial gradient of that tone, lighter in the middle and darker at
+// the belly texture is a 128 x 128 radial gradient of that tone, lighter in the middle and darker at
 // the rim, with a navel below the middle: the round belly shell (tools/lib/belly-fit.mjs) maps each
 // of its cubes onto this texture by position, so the gradient shades it round.
 import { blank } from './png.mjs';
 
 /** @typedef {import('./png.mjs').Image} Image */
 
-export const SKIN_TEXTURE_SIZE = 64;
+export const SKIN_TEXTURE_SIZE = 128;
 
 /** The north (front) face of a cube in texture pixels: box UVs follow Blockbench's layout, per-face UVs are read as given. */
 function frontFace(/** @type {any} */ cube, /** @type {number} */ sx, /** @type {number} */ sy) {
@@ -89,4 +89,26 @@ export function bellyTexture(tone, size = SKIN_TEXTURE_SIZE) {
     }
   }
   return image;
+}
+
+/**
+ * Her hair colour [r, g, b]: the median of the top face of her head (where every Jenny-mod girl's
+ * hair is), else a soft brown.
+ * @param {Image} png her texture
+ * @param {{ description: { texture_width: number, texture_height: number }, bones: any[] }} geometry
+ */
+export function hairTone(png, geometry) {
+  const sx = png.width / geometry.description.texture_width;
+  const sy = png.height / geometry.description.texture_height;
+  const head = geometry.bones.find((b) => b.name === 'head')?.cubes?.[0];
+  if (!head) return [110, 80, 60];
+  let region;
+  if (Array.isArray(head.uv)) {
+    const [w, , d] = head.size.map((/** @type {number} */ n) => Math.max(1, Math.ceil(n - 1e-6)));
+    region = { u: (head.uv[0] + d) * sx, v: head.uv[1] * sy, w: w * sx, h: d * sy };
+  } else if (head.uv?.up) {
+    const { uv, uv_size: size } = head.uv.up;
+    region = { u: Math.min(uv[0], uv[0] + size[0]) * sx, v: Math.min(uv[1], uv[1] + size[1]) * sy, w: Math.abs(size[0]) * sx, h: Math.abs(size[1]) * sy };
+  }
+  return (region && sample(png, region)) ?? [110, 80, 60];
 }
