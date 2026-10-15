@@ -31,7 +31,13 @@ const sortFlags = (set) => [...set].sort((a, b) => (INPUT_ORDINAL[a] ?? 999) - (
 export class Body {
     constructor(opts = {}) {
         this.eye = typeof opts.eyeHeight === "number" ? opts.eyeHeight : EYE_HEIGHT;
-        this.startGameEyeLevel = !!opts.startGameEyeLevel;   // flip if a server turns out to send start_game at eye level
+        // Where start_game (and change_dimension) put the player: "eye" (PocketMine, Dragonfly), "feet"
+        // (what ViaBedrock and Oomph read from BDS) or "auto": servers that keep a rewind history are
+        // read as BDS (feet), the others as eye. The first correction or addon report that is about
+        // 1.62 blocks off in height flips a wrong guess (see calibrate), so this only shapes the first moments.
+        this.startConvention = opts.startConvention === "eye" || opts.startGameEyeLevel === true ? "eye" : opts.startConvention === "feet" ? "feet" : "auto";
+        this.startIsEye = this.startConvention === "eye";
+        this.calibrated = this.startConvention !== "auto";
         this.runtimeId = 0n;
         this.pos = null;             // feet {x, y, z}; null until start_game
         this.vel = { x: 0, y: 0, z: 0 };
@@ -65,9 +71,10 @@ export class Body {
     onStartGame(p) {
         try { this.runtimeId = BigInt(p.runtime_entity_id ?? 0); } catch (e) { this.runtimeId = 0n; }
         const v = p.player_position || { x: 0, y: 64, z: 0 };
-        this.pos = { x: Number(v.x) || 0, y: (Number(v.y) || 0) - (this.startGameEyeLevel ? this.eye : 0), z: Number(v.z) || 0 };
-        if (p.rotation) { this.pitch = Number(p.rotation.x) || 0; this.yaw = Number(p.rotation.z) || 0; }
         this.rewindSize = Math.max(1, Number(p.rewind_history_size) || 40);
+        if (this.startConvention === "auto" && !this.calibrated) this.startIsEye = !(Number(p.rewind_history_size) > 0);
+        this.pos = { x: Number(v.x) || 0, y: (Number(v.y) || 0) - (this.startIsEye ? this.eye : 0), z: Number(v.z) || 0 };
+        if (p.rotation) { this.pitch = Number(p.rotation.x) || 0; this.yaw = Number(p.rotation.z) || 0; }
         this.gameMode = p.player_gamemode ?? null;
         this.tick = 0n;
         this.vel = { x: 0, y: 0, z: 0 };
@@ -105,7 +112,9 @@ export class Body {
         if (p.prediction_type && p.prediction_type !== "player") return false;
         let t = null; try { t = BigInt(p.tick); } catch (e) { t = null; }
         if (t !== null && (t > this.tick || t < this.tick - BigInt(this.rewindSize) || t < this.teleportTick)) return false;
-        this.pos = this.fromEye(p.position);
+        const fixed = this.fromEye(p.position);
+        this.calibrate(fixed);
+        this.pos = fixed;
         if (p.delta) this.vel = { x: Number(p.delta.x) || 0, y: Number(p.delta.y) || 0, z: Number(p.delta.z) || 0 };
         if (typeof p.on_ground === "boolean") { this.onGround = p.on_ground; if (p.on_ground) this.floor = this.pos.y; }
         this.jumpDelay = 0;
@@ -122,15 +131,30 @@ export class Body {
         return true;
     }
 
+    /** Dead: the death screen is up. No input is sent until the server has respawned us. */
+    markDead() {
+        this.alive = false; this.target = null; this.vel = { x: 0, y: 0, z: 0 };
+        this.jumping = false; this.jumpRequested = false; this.sprinting = false; this.pendingTeleport = false;
+        this.deaths = (this.deaths || 0) + 1;
+    }
+
+    /** The packets that press the Respawn button; attempt 1 is the vanilla click, later ones also say "ready" for servers that never answer the click. */
+    respawnPackets(attempt = 1) {
+        const rid = this.runtimeId;
+        const out = [{ name: "player_action", params: { runtime_entity_id: rid, action: "respawn", position: { x: 0, y: 0, z: 0 }, result_position: { x: 0, y: 0, z: 0 }, face: 0 } }];
+        if (attempt >= 2) out.push({ name: "respawn", params: { position: { x: 0, y: 0, z: 0 }, state: 2, runtime_entity_id: rid } });
+        return out;
+    }
+
     /**
-     * Respawn handshake: the server sends state 0 (searching for spawn) and then state 1 (ready to
-     * spawn) with the spawn position; the client answers with a player_action "respawn" and a
-     * respawn packet with state 2. Returns the packets to send as [{name, params}].
+     * The server's side of the respawn exchange: state 0 (searching for a spawn) and state 1 (ready,
+     * with the spawn position). The client starts the exchange by pressing Respawn (respawnPackets)
+     * and closes it with state 2 once the server says it is ready. Returns packets to send.
      */
     onRespawn(p) {
         if (!this.isMe(p.runtime_entity_id)) return [];
         const state = Number(p.state);
-        if (state === 0) { this.alive = false; this.target = null; this.vel = { x: 0, y: 0, z: 0 }; this.jumping = false; this.sprinting = false; return []; }
+        if (state === 0) { if (this.alive) this.markDead(); return []; }
         if (state !== 1) return [];
         this.pos = this.fromEye(p.position);
         this.vel = { x: 0, y: 0, z: 0 };
@@ -138,17 +162,15 @@ export class Body {
         this.onGround = true;
         this.alive = true;
         this.target = null;
-        const rid = this.runtimeId;
-        return [
-            { name: "player_action", params: { runtime_entity_id: rid, action: "respawn", position: { x: 0, y: 0, z: 0 }, result_position: { x: 0, y: 0, z: 0 }, face: -1 } },
-            { name: "respawn", params: { position: { x: 0, y: 0, z: 0 }, state: 2, runtime_entity_id: rid } },
-        ];
+        this.pendingTeleport = true;       // the server also teleports us to the spawn: acknowledge it
+        this.teleportFeet = { ...this.pos };
+        return [{ name: "respawn", params: { position: { x: 0, y: 0, z: 0 }, state: 2, runtime_entity_id: this.runtimeId } }];
     }
 
     /** change_dimension: the server moves us to another dimension; the client shows a loading screen. */
     onChangeDimension(p) {
         const v = p.position || {};
-        this.pos = { x: Number(v.x) || 0, y: Number(v.y) || 0, z: Number(v.z) || 0 };
+        this.pos = { x: Number(v.x) || 0, y: (Number(v.y) || 0) - (this.startIsEye ? this.eye : 0), z: Number(v.z) || 0 };
         this.vel = { x: 0, y: 0, z: 0 };
         this.floor = this.pos.y;
         this.target = null;
@@ -178,6 +200,7 @@ export class Body {
      */
     anchorFrom(feet) {
         if (!this.pos || !feet || typeof feet.x !== "number" || this.pendingTeleport || this.dimensionChange) return false;
+        this.calibrate(feet);
         const gap = Math.hypot(feet.x - this.pos.x, (typeof feet.y === "number" ? feet.y : this.pos.y) - this.pos.y, feet.z - this.pos.z);
         if (gap <= 1.5) { this.anchorGaps = 0; return false; }
         if (++this.anchorGaps < 2) return false;
@@ -187,6 +210,23 @@ export class Body {
         this.floor = this.pos.y;
         this.onGround = true;
         this.resyncs++;
+        return true;
+    }
+
+    /**
+     * The server's own idea of where our feet are, against ours: a height gap of about 1.62 blocks
+     * with the same horizontal position is the signature of the wrong start_game convention. Flip the
+     * guess once (it also decides how change_dimension is read) and report it.
+     */
+    calibrate(truthFeet) {
+        if (this.calibrated || !this.pos || !truthFeet || typeof truthFeet.y !== "number") return false;
+        const flat = Math.hypot(truthFeet.x - this.pos.x, truthFeet.z - this.pos.z);
+        const dy = truthFeet.y - this.pos.y;
+        if (flat > 0.6) return false;
+        if (Math.abs(Math.abs(dy) - this.eye) > 0.3) { if (Math.abs(dy) < 0.3) this.calibrated = true; return false; }
+        this.startIsEye = dy < 0 ? true : false;      // we were 1.62 too high: the server meant eye level; too low: it meant feet
+        this.calibrated = true;
+        this.convention = this.startIsEye ? "eye" : "feet";
         return true;
     }
 
@@ -323,7 +363,7 @@ export class Body {
     /** Where the body is, for logs and the addon. */
     status() {
         const r2 = (n) => +Number(n).toFixed(2);
-        return { ready: this.ready, alive: this.alive, pos: this.pos ? { x: r2(this.pos.x), y: r2(this.pos.y), z: r2(this.pos.z) } : null, vel: { x: r2(this.vel.x), y: r2(this.vel.y), z: r2(this.vel.z) }, floor: r2(this.floor), yaw: Math.round(this.yaw), onGround: this.onGround, walking: !!this.target, target: this.target ? { x: r2(this.target.x), y: r2(this.target.y), z: r2(this.target.z) } : null, sprinting: this.sprinting, jumping: this.jumping, pendingTeleport: this.pendingTeleport, dimensionChange: !!this.dimensionChange, tick: Number(this.tick), corrections: this.corrections, teleports: this.teleports, resyncs: this.resyncs, gameMode: this.gameMode };
+        return { ready: this.ready, alive: this.alive, startIsEye: this.startIsEye, calibrated: this.calibrated, pos: this.pos ? { x: r2(this.pos.x), y: r2(this.pos.y), z: r2(this.pos.z) } : null, vel: { x: r2(this.vel.x), y: r2(this.vel.y), z: r2(this.vel.z) }, floor: r2(this.floor), yaw: Math.round(this.yaw), onGround: this.onGround, walking: !!this.target, target: this.target ? { x: r2(this.target.x), y: r2(this.target.y), z: r2(this.target.z) } : null, sprinting: this.sprinting, jumping: this.jumping, pendingTeleport: this.pendingTeleport, dimensionChange: !!this.dimensionChange, tick: Number(this.tick), corrections: this.corrections, teleports: this.teleports, resyncs: this.resyncs, gameMode: this.gameMode };
     }
 
     // ---- helpers ----

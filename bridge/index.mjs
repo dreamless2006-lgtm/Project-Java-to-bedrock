@@ -109,7 +109,7 @@ export class Bridge {
         this.reconnectDelay = 5000;
         this.lastAnchor = 0;
         this.anchorTarget = null;
-        this.body = new Body();          // our own player body: position, walking, the per-tick input packet
+        this.body = this.newBody();      // our own player body: position, walking, the per-tick input packet
         this.inputFailures = 0;
     }
 
@@ -160,12 +160,21 @@ export class Bridge {
         client.on("move_player", p => { try { if (this.body.onMovePlayer(p)) log("debug", `server moved us (${p.mode}) to`, JSON.stringify(this.body.status().pos)); } catch (e) { /* ignore */ } });
         client.on("correct_player_move_prediction", p => { try { if (this.body.onCorrection(p) && this.body.corrections % 20 === 1) log("debug", `movement corrected by the server (${this.body.corrections} so far) to`, JSON.stringify(this.body.status().pos)); } catch (e) { /* ignore */ } });
         client.on("set_entity_motion", p => { try { this.body.onMotion(p); } catch (e) { /* ignore */ } });
-        client.on("respawn", p => { try { for (const pk of this.body.onRespawn(p)) this.client.queue(pk.name, pk.params); if (Number(p.state) === 1 && this.body.isMe(p.runtime_entity_id)) log("info", "respawning at", JSON.stringify(this.body.status().pos)); } catch (e) { log("warn", "respawn:", e?.message || e); } });
+        client.on("respawn", p => {
+            try {
+                const wasDead = !this.body.alive;
+                for (const pk of this.body.onRespawn(p)) this.client.queue(pk.name, pk.params);
+                if (Number(p.state) === 1 && this.body.isMe(p.runtime_entity_id)) { log("info", "respawned at", JSON.stringify(this.body.status().pos)); this.stopRespawnLoop(); }
+                else if (wasDead === false && !this.body.alive) this.onDeath("respawn screen");
+            } catch (e) { log("warn", "respawn:", e?.message || e); }
+        });
         client.on("change_dimension", p => { try { for (const pk of this.body.onChangeDimension(p)) this.client.queue(pk.name, pk.params); log("info", `changing dimension (${p.dimension}) to`, JSON.stringify(this.body.status().pos)); } catch (e) { log("warn", "change_dimension:", e?.message || e); } });
         client.on("player_action", p => { try { for (const pk of this.body.onPlayerAction(p)) this.client.queue(pk.name, pk.params); } catch (e) { /* ignore */ } });
         client.on("set_player_game_type", p => { this.body.gameMode = p.gamemode; log("info", "game mode is now", p.gamemode); });
-        client.on("set_health", p => { log("debug", "health", p.health); try { if (Number(p.health) <= 0 && this.body.alive) { this.body.alive = false; this.body.target = null; log("info", "this body died; waiting for the respawn handshake"); } } catch (e) { /* ignore */ } });
-        client.on("entity_event", p => { try { if (p.event_id === "hurt_animation" && this.body.isMe(p.runtime_entity_id)) log("info", "ouch: this body was hit"); } catch (e) { /* ignore */ } });
+        client.on("set_health", p => { log("debug", "health", p.health); try { if (Number(p.health) <= 0) this.onDeath("health 0"); } catch (e) { /* ignore */ } });
+        // BDS reports health changes as the "minecraft:health" attribute rather than set_health
+        client.on("update_attributes", p => { try { if (!this.body.isMe(p.runtime_entity_id)) return; const h = (p.attributes || []).find(a => a.name === "minecraft:health"); if (h) { log("debug", "health", h.current); if (Number(h.current) <= 0) this.onDeath("health attribute 0"); else if (!this.body.alive && this.respawnTimer && Number(h.current) > 0 && this._respawnSent) { /* the server healed us: the respawn went through */ } } } catch (e) { /* ignore */ } });
+        client.on("entity_event", p => { try { if (!this.body.isMe(p.runtime_entity_id)) return; if (p.event_id === "hurt_animation") log("info", "ouch: this body was hit"); else if (p.event_id === "death_animation") this.onDeath("death event"); } catch (e) { /* ignore */ } });
         client.on("update_abilities", p => { try { const layers = (p.abilities || []).map(l => `${l.type}${l.enabled?.invulnerable ? "(invulnerable)" : ""}`); log("debug", "abilities:", layers.join(", ")); if ((p.abilities || []).some(l => l.type === "loading_screen")) log("debug", "a loading-screen ability layer is active on this body"); } catch (e) { /* ignore */ } });
         client.on("text", p => this.onText(p));
         client.on("disconnect", p => { this.spawned = false; this._spawnWanted = false; log("warn", "disconnected:", p?.message || p?.reason || ""); this.scheduleReconnect(); });
@@ -216,6 +225,42 @@ export class Bridge {
         // One player_auth_input every tick (50 ms), like a real client: it carries where we are,
         // which way we walk, and the acknowledgement of teleports. Without it the body stands frozen.
         this.bodyTimer = setInterval(() => this.bodyTick(), 50);
+    }
+
+    // ---- death and respawn: nobody presses the Respawn button for the AI, so the bridge does ----
+    onDeath(why) {
+        if (!this.body.alive) { if (!this.respawnTimer) this.startRespawnLoop(); return; }
+        this.body.markDead();
+        log("info", `this body died (${why}); pressing Respawn`);
+        this.sendToAddon({ t: "died", why });
+        this.startRespawnLoop();
+    }
+
+    startRespawnLoop() {
+        if (this.respawnTimer || !this.client) return;
+        let attempt = 0;
+        const step = () => {
+            this.respawnTimer = null;
+            if (!this.client || !this.spawned || this.body.alive) return;
+            attempt++;
+            try { for (const pk of this.body.respawnPackets(attempt)) this.client.queue(pk.name, pk.params); this._respawnSent = true; }
+            catch (e) { log("warn", "respawn request failed:", e?.message || e); }
+            this.respawnTimer = setTimeout(step, attempt < 3 ? 1500 : 4000);
+        };
+        this.respawnTimer = setTimeout(step, 1200);       // the death screen takes a moment to appear
+    }
+
+    stopRespawnLoop() { if (this.respawnTimer) { clearTimeout(this.respawnTimer); this.respawnTimer = null; } this._respawnSent = false; }
+
+    newBody() { return new Body({ startConvention: this.cfg.connect?.startConvention }); }
+
+    // A vanilla client puts its own account id (XUID) in every chat packet, and strict servers kick a client whose chat does not carry it.
+    chatXuid() {
+        try {
+            const x = this.client?.profile?.xuid;
+            if (x && String(x) !== "0") return String(x);
+            return this.cfg.connect?.offline ? "0" : "";   // an offline login claims XUID "0"; a signed-in one without a profile id keeps the old empty value
+        } catch (e) { return ""; }
     }
 
     helloMessage(username) {
@@ -299,7 +344,8 @@ export class Bridge {
         if (this.stopped || this._reconnecting) return;
         this._reconnecting = true;
         clearInterval(this.pumpTimer); clearInterval(this.pingTimer); clearInterval(this.anchorTimer); clearInterval(this.bodyTimer);
-        this.body = new Body();
+        this.stopRespawnLoop();
+        this.body = this.newBody();
         const d = this.reconnectDelay;
         this.reconnectDelay = Math.min(120_000, d * 2);
         log("info", `reconnecting in ${Math.round(d / 1000)}s`);
@@ -366,7 +412,7 @@ export class Bridge {
                 if (!text || !this.client) break;
                 if (msg.to) { this.outQueue.push(`/tell "${String(msg.to).replace(/"/g, "")}" ${text}`); break; }
                 try {
-                    this.client.queue("text", { type: "chat", needs_translation: false, category: "authored", source_name: this.client.username, message: text, xuid: "", platform_chat_id: "", has_filtered_message: false, filtered_message: "" });
+                    this.client.queue("text", { type: "chat", needs_translation: false, category: "authored", source_name: this.client.username, message: text, xuid: this.chatXuid(), platform_chat_id: "", has_filtered_message: false, filtered_message: "" });
                 } catch (e) { log("warn", "chat failed:", e?.message || e); }
                 break;
             }

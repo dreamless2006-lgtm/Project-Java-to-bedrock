@@ -103,6 +103,8 @@ test("look turns the head; body_status and probes are answered", async () => {
 test("a respawn and a dimension change are answered through the body", async () => {
     const { b, queued } = fakeBridge();
     spawn(b, queued); queued.length = 0;
+    b.body.markDead();
+    for (const pk of b.body.respawnPackets(1)) b.client.queue(pk.name, pk.params);
     for (const pk of b.body.onRespawn({ runtime_entity_id: 5n, position: { x: 1, y: 65 + EYE_HEIGHT, z: 1 }, state: 1 })) b.client.queue(pk.name, pk.params);
     assert.deepEqual(queued.map(q => q.name), ["player_action", "respawn"]);
     queued.length = 0;
@@ -110,4 +112,22 @@ test("a respawn and a dimension change are answered through the body", async () 
     for (const pk of b.body.onPlayerAction({ action: "dimension_change_ack" })) b.client.queue(pk.name, pk.params);
     assert.deepEqual(queued.map(q => q.name), ["serverbound_loading_screen", "player_action", "serverbound_loading_screen"]);
     assert.deepEqual(queued[2].params, { type: 2, loading_screen_id: 4 });
+});
+
+test("death: the bridge presses Respawn by itself, again with 'ready' when the server stays quiet, and stops once it is back", async () => {
+    const { b, queued } = fakeBridge();
+    spawn(b, queued); queued.length = 0;
+    b.onDeath("test");
+    assert.equal(b.body.alive, false);
+    assert.ok(b.toAddonHasDied === undefined);
+    await new Promise(r => setTimeout(r, 1300));
+    assert.deepEqual(queued.map(q => q.name), ["player_action"], "the first press");
+    assert.equal(queued[0].params.action, "respawn");
+    await new Promise(r => setTimeout(r, 1700));
+    assert.ok(queued.map(q => q.name).includes("respawn"), "later presses also say ready");
+    for (const pk of b.body.onRespawn({ runtime_entity_id: 5n, position: { x: 0, y: 64 + EYE_HEIGHT, z: 0 }, state: 1 })) b.client.queue(pk.name, pk.params);
+    b.stopRespawnLoop();
+    const n = queued.length;
+    await new Promise(r => setTimeout(r, 1700));
+    assert.equal(queued.length, n, "no more presses once it is alive");
 });

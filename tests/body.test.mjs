@@ -122,7 +122,7 @@ test("server teleports, corrections and motion are adopted; a teleport is acknow
     assert.ok(b.vel.y === 0.4 && !b.onGround, "knockback sets the velocity");
 });
 
-test("respawn handshake answers the server in order and resets the body; dead bodies send nothing", () => {
+test("respawn: the body presses the button, closes the exchange when the server is ready, and sends nothing while dead", () => {
     const b = new Body(); start(b);
     b.walkTo({ x: 0, y: 64, z: 0 });
     assert.deepEqual(b.onRespawn({ runtime_entity_id: 7n, position: { x: 0, y: 0, z: 0 }, state: 0 }), []);
@@ -130,14 +130,22 @@ test("respawn handshake answers the server in order and resets the body; dead bo
     const t = b.tick;
     assert.equal(b.step(), null);
     assert.equal(b.tick, t + 1n, "the tick keeps counting while dead");
+    const click = b.respawnPackets(1);
+    assert.equal(click.length, 1);
+    assert.equal(click[0].name, "player_action"); assert.equal(click[0].params.action, "respawn"); assert.equal(click[0].params.runtime_entity_id, 7n);
+    const retry = b.respawnPackets(2);
+    assert.deepEqual(retry.map(p => p.name), ["player_action", "respawn"]);
+    assert.equal(retry[1].params.state, 2);
     const out = b.onRespawn({ runtime_entity_id: 7n, position: { x: 3, y: 65 + EYE_HEIGHT, z: 4 }, state: 1 });
-    assert.equal(out.length, 2);
-    assert.equal(out[0].name, "player_action"); assert.equal(out[0].params.action, "respawn"); assert.equal(out[0].params.face, -1);
-    assert.equal(out[1].name, "respawn"); assert.equal(out[1].params.state, 2); assert.equal(out[1].params.runtime_entity_id, 7n);
+    assert.equal(out.length, 1);
+    assert.equal(out[0].name, "respawn"); assert.equal(out[0].params.state, 2); assert.equal(out[0].params.runtime_entity_id, 7n);
     assert.equal(b.alive, true);
     assert.deepEqual(b.pos, { x: 3, y: 65, z: 4 });
+    assert.ok(b.step().input_data.includes("handled_teleport"), "the spawn teleport is acknowledged");
     assert.deepEqual(b.step().input_data, ["block_breaking_delay_enabled", "vertical_collision"]);
     assert.deepEqual(b.onRespawn({ runtime_entity_id: 7n, position: { x: 0, y: 0, z: 0 }, state: 2 }), []);
+    b.markDead();
+    assert.equal(b.alive, false); assert.equal(b.deaths, 2, "once for the server's state 0, once now");
 });
 
 test("dimension change: loading screen start with the id, ack and end when the server acknowledges", () => {
