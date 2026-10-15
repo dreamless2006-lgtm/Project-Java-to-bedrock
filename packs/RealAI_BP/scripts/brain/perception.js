@@ -193,11 +193,11 @@ export function observe(bot, brain, extras = {}) {
         const r = bot.getRotation();
         markVisited(brain.visited, bot.dimension.id, loc.x, loc.z);
         const c = brain._around;
-        const fresh = c && system.currentTick - c.tick < 60 && Math.hypot(c.x - loc.x, c.z - loc.z) < 2 && Math.abs(c.yaw - r.y) < 20 && c.dim === bot.dimension.id;
+        const fresh = c && system.currentTick - c.tick < 40 && Math.hypot(c.x - loc.x, c.z - loc.z) < 1.5 && Math.abs(c.yaw - r.y) < 15 && Math.abs((c.pitch ?? 0) - r.x) < 10 && c.dim === bot.dimension.id;
         if (!fresh) {
             const rep = aroundReport(bot, { yaw: r.y, visited: brain.visited });
             const look = lookingAt((x, y, z) => { try { const b = bot.dimension.getBlock({ x, y, z }); return b ? b.typeId : null; } catch (e2) { return null; } }, { x: loc.x, y: loc.y + 1.62, z: loc.z }, r.y, r.x);
-            brain._around = { tick: system.currentTick, x: loc.x, z: loc.z, yaw: r.y, dim: bot.dimension.id, text: rep.text, looking: look.id ? `looking at ${look.id} ${look.dist}m away` : "looking at open air" };
+            brain._around = { tick: system.currentTick, x: loc.x, z: loc.z, yaw: r.y, pitch: r.x, dim: bot.dimension.id, text: rep.text, looking: look.id ? `looking at ${look.id} ${look.dist}m away` : "looking at open air" };
         }
         obs.surroundings = brain._around.text;
         obs.looking = brain._around.looking;

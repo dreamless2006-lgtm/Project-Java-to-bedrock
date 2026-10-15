@@ -271,8 +271,11 @@ bot opens its card.
 Run the self-test on the phone, with the bridge stopped (Ctrl+C):
 
 ```
-bash ~/real-ai/bridge/phone.sh selftest
+bash ~/real-ai/bridge/phone.sh selftest      # on a computer: node index.mjs --selftest  (in the bridge folder)
 ```
+
+(If this phone installed the bridge before this version, run plain `bash ~/real-ai/bridge/phone.sh` once
+first so it updates itself, stop it with Ctrl+C, then run the selftest.)
 
 It joins, walks, sprints, steps back and turns the head with the same key
 presses the AI uses, asks the server where the body really is, and prints

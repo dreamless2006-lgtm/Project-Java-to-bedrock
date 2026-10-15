@@ -119,7 +119,8 @@ test("death: the bridge presses Respawn by itself, again with 'ready' when the s
     spawn(b, queued); queued.length = 0;
     b.onDeath("test");
     assert.equal(b.body.alive, false);
-    assert.ok(b.toAddonHasDied === undefined);
+    const told = b.outQueue.filter(c => /realai:in AIB1\|/.test(c)).map(c => { try { return JSON.parse(c.split("|").slice(3).join("|")); } catch (e) { return null; } }).filter(Boolean);
+    assert.ok(told.some(m => m.t === "died"), "the addon is told: " + JSON.stringify(told.map(m => m.t)));
     await new Promise(r => setTimeout(r, 1300));
     assert.deepEqual(queued.map(q => q.name), ["player_action"], "the first press");
     assert.equal(queued[0].params.action, "respawn");

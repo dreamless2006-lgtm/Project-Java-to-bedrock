@@ -147,7 +147,7 @@ export function handleCommand(player, message) {
             bridge.send({ t: "body_status" });
             system.runTimeout(() => {
                 const st = bridge.bodyStatus;
-                if (!st) return reply(player, ["§cthe bridge did not answer. Its build is too old to report on its body (update it: bash ~/real-ai/bridge/phone.sh), or the connection dropped."]);
+                if (!st) return reply(player, ["§cthe bridge did not answer within three seconds. Its build may be too old to report on its body (update it: bash ~/real-ai/bridge/phone.sh), or the connection is slow or dropped; try again."]);
                 const f = (n) => (typeof n === "number" ? n.toFixed(1) : "?");
                 const lines = [`§b[Real AI] body (as the bridge's client sees it)§r`,
                     `§7at ${st.pos ? `${f(st.pos.x)} ${f(st.pos.y)} ${f(st.pos.z)}` : "?"}, facing yaw ${st.yaw} pitch ${st.pitch}, ${st.alive ? "alive" : "§cDEAD (respawning)§7"}, ${st.onGround ? "on the ground" : "in the air"}, ${st.gameMode ?? "?"}`,
@@ -156,7 +156,7 @@ export function handleCommand(player, message) {
                 try { const b = [...allBrains().values()].find(x => x.settings.mode === "bridge"); if (b) { const l = b.bot.location; lines.push(`§7the game has it at ${f(l.x)} ${f(l.y)} ${f(l.z)}; the bridge walks it: ${bridgeWalks(b.bot) ? "yes" : "§cno"}`); } } catch (e) { /* ignore */ }
                 if (st.corrections + st.teleports > 30) lines.push("§eMany pull-backs: the server may not accept this client's movement. On the phone: bash ~/real-ai/bridge/phone.sh selftest");
                 reply(player, lines);
-            }, 30);
+            }, 60);
             return;
         }
         case "where": {

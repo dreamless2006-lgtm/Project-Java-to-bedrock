@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { survey, castRay, sights, lookingAt, describeRow, describeAround, COMPASS, compassOf, yawOf, yawFromWord, wrapYaw } from "../packs/RealAI_BP/scripts/brain/senses.js";
+import { survey, castRay, sights, landmarks, probeAhead, lookingAt, describeRow, describeAround, COMPASS, compassOf, yawOf, yawFromWord, wrapYaw } from "../packs/RealAI_BP/scripts/brain/senses.js";
 
 // ground at y = 63 (solid), air above; rows override single cells
 const world = (rows = {}, fill) => {
@@ -122,4 +122,67 @@ test("lookingAt and the prompt line", () => {
     assert.match(text, /S \(ahead\): 5 then a wall of oak_log/);
     assert.match(text, /N: 24 clear/);
     assert.match(text, /unexplored/);
+});
+
+test("landmarks: a tree three blocks off any line of sight is still found, with a direction and a distance", () => {
+    const rows = {};
+    for (let y = 64; y <= 68; y++) rows[`12,${y},3`] = "minecraft:oak_log";
+    for (let y = 67; y <= 69; y++) for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) if (dx || dz) rows[`${12 + dx},${y},${3 + dz}`] = "minecraft:oak_leaves";
+    const at = world(rows);
+    const eye = { x: 0.5, y: 65.62, z: 0.5 };
+    assert.ok(!sights(at, eye).find(s => s.dir === "E").seen.some(x => x.cls === "tree"), "the rays alone miss it");
+    const lm = landmarks(at, feet);
+    const e = lm.find(s => s.dir === "E").seen.find(x => x.cls === "tree");
+    assert.ok(e && e.dist >= 10 && e.dist <= 14, "the grid finds it to the east: " + JSON.stringify(lm.find(s => s.dir === "E")));
+    // water and lava at the surface, a building wall
+    const w = {}; for (let x = 8; x <= 14; x++) for (let z = -8; z <= -2; z++) w[`${x},63,${z}`] = "minecraft:water";
+    assert.ok(landmarks(world(w), feet).some(s => s.seen.some(x => x.cls === "water")));
+    const b = {}; for (let y = 64; y <= 66; y++) for (let z = -6; z <= 6; z++) b[`15,${y},${z}`] = "minecraft:oak_planks";
+    assert.ok(landmarks(world(b), feet).find(s => s.dir === "E").seen.some(x => x.cls === "built"));
+    assert.deepEqual(landmarks(world(), feet).flatMap(s => s.seen), [], "nothing on an empty plain");
+});
+
+test("probeAhead: the first change of level or the first thing in the way, and where it begins", () => {
+    const f = { x: 0.5, y: 64, z: 0.5 };
+    let r = probeAhead(world(), f, 0, 1, 2.5);
+    assert.deepEqual(r, { ok: true, floor: 64, climb: false, edge: undefined });
+    const ledge = {}; for (let z = 2; z <= 10; z++) for (let x = -2; x <= 2; x++) ledge[`${x},64,${z}`] = "minecraft:dirt";
+    r = probeAhead(world(ledge), f, 0, 1, 3);
+    assert.equal(r.ok, true); assert.equal(r.floor, 65); assert.equal(r.climb, true);
+    assert.ok(r.edge > 1.0 && r.edge < 1.7, "the ledge starts about 1.5 ahead: " + r.edge);
+    const wall = {}; for (let z = 4; z <= 4; z++) for (let x = -3; x <= 3; x++) for (let y = 64; y <= 66; y++) wall[`${x},${y},${z}`] = "minecraft:stone_bricks";
+    r = probeAhead(world(wall), f, 0, 1, 5);
+    assert.equal(r.ok, false); assert.equal(r.stop, "wall"); assert.ok(r.at > 3 && r.at < 4.2);
+    const pit = {}; for (let z = 3; z <= 8; z++) for (let x = -3; x <= 3; x++) for (let y = 20; y <= 63; y++) pit[`${x},${y},${z}`] = "minecraft:air";
+    r = probeAhead(world(pit), f, 0, 1, 5);
+    assert.equal(r.ok, false); assert.equal(r.stop, "drop");
+    const step = {}; for (let z = 2; z <= 10; z++) for (let x = -2; x <= 2; x++) step[`${x},63,${z}`] = "minecraft:air";
+    r = probeAhead(world(step), f, 0, 1, 3);
+    assert.equal(r.ok, true); assert.equal(r.floor, 63); assert.equal(r.climb, false);
+});
+
+test("a path block or farmland under the feet (63.9375) is flat ground, not a staircase of walls", () => {
+    const rows = {};
+    for (let x = -30; x <= 30; x++) for (let z = -30; z <= 30; z++) rows[`${x},63,${z}`] = "minecraft:grass_path";
+    const r = survey(world(rows), { x: 0.5, y: 63.9375, z: 0.5 });
+    for (const row of r) { assert.equal(row.stop, "clear", row.dir + ": " + describeRow(row)); assert.equal(row.climbs, 0, row.dir); }
+    assert.equal(probeAhead(world(rows), { x: 0.5, y: 63.9375, z: 0.5 }, 1, 0, 2).climb, false);
+});
+
+test("sight classes: terracotta, cactus, glowstone and geode basalt are not buildings, trees or rock", () => {
+    const eye = { x: 0.5, y: 65.62, z: 0.5 };
+    const one = (id) => { const rows = { "10,65,0": id }; return sights(world(rows), eye).find(s => s.dir === "E").seen.map(x => x.cls); };
+    assert.deepEqual(one("minecraft:orange_terracotta"), [], "badlands are not a village");
+    assert.deepEqual(one("minecraft:cactus"), [], "a cactus is not a tree");
+    assert.deepEqual(one("minecraft:glowstone"), []);
+    assert.ok(!one("minecraft:smooth_basalt").includes("built"), "geode basalt is rock, not masonry");
+    assert.deepEqual(one("minecraft:oak_planks"), ["built"]);
+    assert.deepEqual(one("minecraft:spruce_log"), ["tree"]);
+});
+
+test("the floor is not a sight: standing on planks, rays that land on the floor ahead are ignored", () => {
+    const rows = {}; for (let x = -40; x <= 40; x++) for (let z = -40; z <= 40; z++) rows[`${x},63,${z}`] = "minecraft:oak_planks";
+    const seen = sights(world(rows), { x: 0.5, y: 65.62, z: 0.5 }, { pitches: [-30, -8, 0, 7], max: 48 });
+    for (const s of seen) assert.deepEqual(s.seen, [], s.dir);
+    assert.ok(seen.every(s => s.open), "and the level view is open");
 });

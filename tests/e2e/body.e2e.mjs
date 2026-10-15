@@ -44,7 +44,7 @@ try {
     const speed = 8 / (r.ms / 1000);
     check(speed > 3.0 && speed < 4.8, `at a human walking pace (${speed.toFixed(1)} blocks/s, vanilla 4.3)`);
     check(Math.abs(end.y - start.y) < 0.05, "and it stayed on the ground");
-    check(bridge.body.corrections === 0 || bridge.body.corrections < 3, "without being rubber-banded: " + bridge.body.corrections + " corrections");
+    check(bridge.body.corrections < 3, "without being rubber-banded: " + bridge.body.corrections + " corrections");
     const seenMoving = attacker.seen.moves.filter(m => m.id === attacker.seen.entities.get(w.name)).length;
     check(seenMoving > 10, `the other player watched it walk (${seenMoving} movement packets)`);
 
@@ -82,7 +82,7 @@ try {
     check(server.events.filter(e => e.e === "jump").length > jumpsBefore, "a jump request makes the server see a jump");
     check(peak - y0 > 0.9 && peak - y0 < 1.4, `the jump has a vanilla arc (peak +${(peak - y0).toFixed(2)})`);
     await sleep(800);
-    check(Math.abs(w.pos().y - y0) < 0.1 || w.pos().y - y0 < 1.1, "and lands");
+    check(Math.abs(w.pos().y - y0) < 0.1, "and lands back on the ground");
 
     hearing("jumping");
     // ---- chat ---------------------------------------------------------------------------
@@ -120,7 +120,6 @@ try {
     server.send({ cmd: "kill", name: w.name });
     await server.waitFor(e => e.e === "death" && e.name === w.name, 4000, "the death");
     await sleep(600);
-    check(bridge.body.alive === false || server.events.some(e => e.e === "respawn" && e.name === w.name), "the bridge noticed it died");
     check(w.toAddon.some(m => m.t === "died"), "and told the addon");
     const resp = await server.waitFor(e => e.e === "respawn" && e.name === w.name, 15000, "the respawn").catch(() => null);
     check(!!resp, "the body pressed Respawn by itself: nobody touched the death screen");

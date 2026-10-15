@@ -3,31 +3,36 @@
 #   curl -sL https://raw.githubusercontent.com/dreamless2006-lgtm/Project-Java-to-bedrock/ccr-72baab68-lqswgf/bridge/phone.sh | bash
 # Run the same line again later to update and start again.
 set -e
-BRANCH="ccr-72baab68-lqswgf"
-REPO="https://github.com/dreamless2006-lgtm/Project-Java-to-bedrock.git"
-DIR="$HOME/real-ai"
-if command -v pkg >/dev/null 2>&1; then
-    pkg install -y nodejs-lts git >/dev/null 2>&1 || pkg install -y nodejs-lts git
-    command -v termux-wake-lock >/dev/null 2>&1 && termux-wake-lock || true
-fi
-command -v node >/dev/null 2>&1 || { echo "Node.js is missing. In Termux run: pkg install nodejs-lts git"; exit 1; }
-if [ -d "$DIR/.git" ]; then
-    git -C "$DIR" pull --ff-only origin "$BRANCH" || echo "WARNING: could not update Real AI (no network, or local changes); starting the version already installed"
-else
-    git clone --depth 1 -b "$BRANCH" "$REPO" "$DIR"
-fi
-cd "$DIR/bridge"
-# No C++ compiler on a phone: skip native builds (raknet-native); the bridge uses the JavaScript RakNet.
-if [ ! -f node_modules/.realai-ok ]; then
-    rm -rf node_modules
-    npm install --ignore-scripts --no-audit --no-fund
-    touch node_modules/.realai-ok
-fi
-echo
-echo "Real AI bridge is installed in $DIR. Starting it (first run asks a few questions)..."
-echo "Next time, just run:  bash ~/real-ai/bridge/phone.sh"
-echo
-if [ "$1" = "setup" ]; then exec node index.mjs --setup < /dev/tty; fi
-if [ "$1" = "debug" ]; then exec node index.mjs --log debug < /dev/tty; fi
-if [ "$1" = "selftest" ]; then exec node index.mjs --selftest < /dev/tty; fi
-exec node index.mjs < /dev/tty
+# The whole script is read before anything runs: the update below replaces this very file, and bash reads a script as it goes.
+main() {
+    BRANCH="ccr-72baab68-lqswgf"
+    REPO="https://github.com/dreamless2006-lgtm/Project-Java-to-bedrock.git"
+    DIR="$HOME/real-ai"
+    if command -v pkg >/dev/null 2>&1; then
+        pkg install -y nodejs-lts git >/dev/null 2>&1 || pkg install -y nodejs-lts git
+        command -v termux-wake-lock >/dev/null 2>&1 && termux-wake-lock || true
+    fi
+    command -v node >/dev/null 2>&1 || { echo "Node.js is missing. In Termux run: pkg install nodejs-lts git"; exit 1; }
+    if [ -d "$DIR/.git" ]; then
+        git -C "$DIR" pull --ff-only origin "$BRANCH" || echo "WARNING: could not update Real AI (no network, or local changes); starting the version already installed"
+    else
+        git clone --depth 1 -b "$BRANCH" "$REPO" "$DIR"
+    fi
+    cd "$DIR/bridge"
+    # No C++ compiler on a phone: skip native builds (raknet-native); the bridge uses the JavaScript RakNet.
+    if [ ! -f node_modules/.realai-ok ]; then
+        rm -rf node_modules
+        npm install --ignore-scripts --no-audit --no-fund
+        touch node_modules/.realai-ok
+    fi
+    echo
+    echo "Real AI bridge is installed in $DIR. Starting it (first run asks a few questions)..."
+    echo "Next time, just run:  bash ~/real-ai/bridge/phone.sh"
+    echo
+    if [ "$1" = "setup" ]; then exec node index.mjs --setup < /dev/tty; fi
+    if [ "$1" = "debug" ]; then exec node index.mjs --log debug < /dev/tty; fi
+    if [ "$1" = "selftest" ]; then exec node index.mjs --selftest < /dev/tty; fi
+    exec node index.mjs < /dev/tty
+}
+main "$@"
+exit $?

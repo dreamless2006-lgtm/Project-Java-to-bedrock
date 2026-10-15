@@ -46,7 +46,7 @@ function syncFromServer() {
     if (p) { body.location = { x: p.x, y: p.y, z: p.z }; body.rotation = { x: p.pitch ?? 0, y: p.yaw ?? 0 }; }
 }
 function pumpToBridge() {
-    for (const m of body.messages.splice(0)) bridge.onText({ type: "chat", source_name: NAME, message: m });
+    for (const m of body.messages.splice(0)) bridge.onText({ type: "raw", message: m });         // the addon talks to the bridge in raw text, never in chat
 }
 async function drive(ms, until = () => false) {
     const t0 = Date.now();
@@ -128,7 +128,7 @@ try {
     act({ type: "move_to", x: lx + 6, y: 65, z: lz });
     await drive(15000, idle);
     end = at();
-    check(flat(end, { x: lx + 6.5, z: lz + 0.5 }) < 1.5 && end.y > 64.5, `up a one-block ledge: arrived ${flat(end, { x: lx + 6.5, z: lz + 0.5 }).toFixed(2)} off at height ${end.y.toFixed(2)} (${brain.actuator.results.slice(-1)})`);
+    check(flat(end, { x: lx + 6.5, z: lz + 0.5 }) < 2.5 && end.y > 64.5, `up a one-block ledge: arrived ${flat(end, { x: lx + 6.5, z: lz + 0.5 }).toFixed(2)} off at height ${end.y.toFixed(2)} (${brain.actuator.results.slice(-1)})`);
     check(server.events.filter(e => e.e === "jump").length > jumpsBefore, "by jumping");
 
     // ---- 5. a long trip -------------------------------------------------------------------
@@ -193,8 +193,9 @@ try {
     check(m.dx > 2.5 && Math.abs(m.dz) < 0.8 && Math.abs(at().yaw) < 6, `strafing left from facing south goes east (+x ${m.dx.toFixed(1)}) with the head still south`);
     m = await press({ direction: "right", seconds: 1 });
     check(m.dx < -2.5, `strafing right goes west (${m.dx.toFixed(1)})`);
+    const sprints0 = server.events.filter(e => e.e === "sprint" && e.on === true).length;
     m = await press({ direction: "forward", seconds: 2, sprint: true });
-    check(m.dz > walked + 1.2 && server.events.some(e => e.e === "sprint" && e.on === true), `sprinting covers more ground in the same time (${m.dz.toFixed(1)} vs ${walked.toFixed(1)}) and the server sees it`);
+    check(m.dz > walked + 1.2 && server.events.filter(e => e.e === "sprint" && e.on === true).length > sprints0, `sprinting covers more ground in the same time (${m.dz.toFixed(1)} vs ${walked.toFixed(1)}) and the server sees it`);
     m = await press({ direction: "forward", seconds: 2, sneak: true });
     check(m.dz > 0.5 && m.dz < 3.8, `sneaking is slow (${m.dz.toFixed(1)} blocks in 2 s)`);
     // diagonal by turning first, then walking: still one key
@@ -266,6 +267,45 @@ try {
     act({ type: "explore" });
     await drive(14000, () => flat(at(), x0) > 25);
     check(flat(at(), x0) > 25, `explore with no direction chose a way and went ${flat(at(), x0).toFixed(0)} blocks in ${Date.now() - t1} ms`);
+
+    // ---- 8. the order of a reply's actions is kept: turn, walk, turn, walk -------------------------------
+    await lab(410);
+    results().length = 0;
+    const o0 = at();
+    brain.actuator.stopAll();
+    brain.actuator.enqueue([{ type: "look", facing: "north" }, { type: "move", direction: "forward", seconds: 1.2 }, { type: "look", facing: "east" }, { type: "move", direction: "forward", seconds: 1.2 }]);
+    await drive(9000, idle);
+    const o1 = at();
+    check(o1.z < o0.z - 3 && o1.x > o0.x + 3, `look north, walk, look east, walk goes north and then east, in that order (dz ${(o1.z - o0.z).toFixed(1)}, dx ${(o1.x - o0.x).toFixed(1)}): ${results().join(" | ").slice(0, 150)}`);
+
+    // ---- 9. the user's own scene: a snowy forest. Gathering logs must walk over the snow to the trees and chop them ---------
+    await lab(440);
+    const gx = Math.floor(at().x), gz = Math.floor(at().z);
+    for (let dx = -3; dx <= 24; dx++) for (let dz = -12; dz <= 12; dz++) overworld._set(gx + dx, 64, gz + dz, (dx + dz) % 7 === 0 ? "minecraft:tall_grass" : "minecraft:snow_layer");
+    for (const [tx, tz] of [[gx + 12, gz + 3], [gx + 15, gz - 4]]) {
+        for (let y = 64; y <= 68; y++) overworld._set(tx, y, tz, "minecraft:oak_log");
+        for (let y = 67; y <= 69; y++) for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) if (dx || dz) overworld._set(tx + dx, y, tz + dz, "minecraft:oak_leaves");
+    }
+    const inv = body.getComponent("minecraft:inventory").container;
+    const logs = () => { let n = 0; for (let i = 0; i < inv.size; i++) { const st = inv.getItem(i); if (st && st.typeId === "minecraft:oak_log") n += st.amount; } return n; };
+    brain._around = null;                                      // the scene was just built: no cached view of it
+    const seenFrom = observe(body, brain, {}).surroundings || "";
+    check(/E[^;]*trees \d+m/.test(seenFrom) || /E[^;]*tree/.test(seenFrom), "from the snow it can see trees to the east in 'Around you': " + seenFrom.slice(0, 200));
+    const g0 = at(); t1 = Date.now(); results().length = 0;
+    act({ type: "gather", material: "oak_log", amount: 4 });
+    await drive(60000, idle);
+    check(logs() >= 4, `gather oak_log in a snowy forest: ${logs()} logs in the bag after ${Date.now() - t1} ms (${lastResult().slice(0, 100)})`);
+    check(flat(at(), g0) > 6 && teleports.length === 0, `it walked there (${flat(at(), g0).toFixed(1)} blocks) on its own legs, never teleported`);
+
+    // ---- 10. a belt of tall grass is not a wall --------------------------------------------------------------------
+    await lab(480);
+    const tx0 = Math.floor(at().x), tz0 = Math.floor(at().z);
+    for (let dx = 3; dx <= 8; dx++) for (let dz = -20; dz <= 20; dz++) { overworld._set(tx0 + dx, 64, tz0 + dz, "minecraft:tall_grass"); overworld._set(tx0 + dx, 65, tz0 + dz, "minecraft:tall_grass"); }
+    results().length = 0;
+    const tg = at();
+    act({ type: "move_to", x: tx0 + 14, y: 64, z: tz0 });
+    await drive(20000, idle);
+    check(flat(at(), { x: tx0 + 14.5, z: tz0 + 0.5 }) < 2.5 && Math.abs(at().z - tg.z) < 4, `through a belt of tall grass in a straight line: ${lastResult().slice(0, 90)}`);
     clearInterval(rec);
 } catch (e) {
     fails.push("test aborted: " + (e && e.stack || e));

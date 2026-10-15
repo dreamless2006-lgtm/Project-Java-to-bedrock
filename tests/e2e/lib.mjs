@@ -19,9 +19,10 @@ export async function startServer({ port = 19138, env = {} } = {}) {
         const dir = mkdtempSync(join(tmpdir(), "realai-df-"));
         bin = join(dir, "df-server");
         const r = spawnSync(go, ["build", "-o", bin, "."], { cwd: join(HERE, "dragonfly"), encoding: "utf8" });
-        if (r.status !== 0) throw new Error("could not build the Dragonfly test server: " + (r.stderr || r.stdout));
+        if (r.error || r.status !== 0) throw new Error("could not build the Dragonfly test server (is Go installed? set GO_BIN to its path, or DF_SERVER_BIN to a built server): " + (r.error?.message || r.stderr || r.stdout));
     }
     const child = spawn(bin, [], { env: { ...process.env, DF_ADDR: `127.0.0.1:${port}`, ...env }, stdio: ["pipe", "pipe", "inherit"] });
+    process.on("exit", () => { try { child.kill("SIGKILL"); } catch (e) { /* already gone */ } });     // never leave the server holding the port
     const events = [];
     const waiters = [];
     const rl = createInterface({ input: child.stdout });

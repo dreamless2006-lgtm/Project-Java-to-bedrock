@@ -102,18 +102,43 @@ south. `Body.press`/`release`/`setLook` are the key and head API.
 Seeing and moving, in the addon: `terrain.js` (pure) classifies blocks once for
 everyone (air, passable: snow layers, grass, carpets, signs, flowers; water;
 lava; hazard; solid; tall: fences and walls), so the walker's footing check and
-`path.js` never disagree about what is a wall. `path.js` plans far goals in
-segments, heads for the closest reachable point when there is no way all the way,
-flags climbs as jumps, and keeps 0.35 blocks off corners when it smooths a route.
+`path.js` never disagree about what is a wall. `path.js` heads for the closest
+reachable point when there is no way all the way, flags climbs as jumps, needs
+head room at the departure level for a step down, and keeps 0.35 blocks off
+corners when it smooths a route; the walker (`stepPlayerBody`) plans far goals
+in 24-block segments, plans again whenever it is more than a block from its goal
+(at most every ten ticks, and after a failed plan not for two seconds), probes
+0.3 blocks beyond its next step because the body is 0.6 wide, and sends the
+height it really stands at, not the block index, so a snow layer or a path block
+is not a step.
 `senses.js` (pure) is the eyes: `survey` (how far the ground goes on in each of
 eight directions and why it ends), `castRay`/`sights` (what a line of sight hits:
-trees, ore, water, lava, built things, far rock), `lookingAt`, `probeStep` (the
-cell a held key is about to enter). `around.js` turns those into the "Around you"
+trees, ore, water, lava, built things, far rock; the floor is not a sight),
+`landmarks` (a coarse grid over 24 to 32 blocks that finds a tree three blocks off
+every line of sight), `lookingAt`, `probeAhead` (the first change of level, or the
+first wall, drop, water or lava, along the way a held key is carrying the body; it
+looks 1.7 blocks ahead walking, 2.3 sprinting and 2.2 further when hopping,
+because a key released now still carries the body on). `around.js` turns those into the "Around you"
 line of every observation and the `look_around` report, and remembers which 16x16
 columns have been walked (`unexplored`). The actions `look`, `look_around`, `move`
 and `jump` are in `actuator.js`; `move` and `look_around` are `fast` handlers,
 stepped every tick by `Actuator.pulse` from the per-tick layer (the rest of the
 actuator is supervised every ten ticks), so a key is never released late.
+
+The body also takes what the server says seriously: after a
+`correct_player_move_prediction` it adopts the server's state for that tick and
+replays the inputs it has sent since (`advance`/`hist`), as a vanilla client does,
+so a link with latency settles after one correction; the addon's position reports
+are judged against the body's last few ticks, not its present position; the ground
+height comes from the server's own reports (`fg`, on ground) so slabs, snow layers
+and path blocks need no table; a step down counts only once the body is past its
+edge, a ledge once it is reached, and the hop to a ledge keeps that ledge as the
+ground until the body has landed; a walk target lapses after two seconds without a
+fresh frame. Input ticks are numbered from zero by default; `connect.tickBase:
+"server"` continues from start_game's tick, and the bridge flips the numbering
+itself once (and says so) when keys are held for twenty seconds, nothing moves
+and nothing objects. Frames from the addon are accepted only from raw/json text,
+never from a player's chat, whisper or announcement.
 
 Diagnosis: the bridge counts the ticks a move key was down and the real distance
 the addon reports the body moved (`Body.intentTicks`, `truthMoved`); every five
@@ -131,8 +156,9 @@ within ten blocks) and a creeper within four blocks; each reflex has a
 cooldown and is reported to the model as a `hurt` event. Death keeps the
 brain on the player body (`brain.dead` until the `playerSpawn` respawn),
 records `memory.deathPos`, stops the actuator, and the respawn event tells the
-model where its items lie; the bridge answers the server's respawn packets
-(player_action respawn, respawn state 2) immediately.
+model where its items lie; the bridge presses Respawn itself (player_action
+respawn) about 1.2 s after the death, again after 1.5 s and 4 s if the server
+has not answered, and sends respawn state 2 when the server says it is ready.
 
 The per-tick layer (`BotBrain.fastTick`, run by the manager every tick for
 player bodies) is where the body is better than a human hand: `path.js`
@@ -165,12 +191,14 @@ and that players' asks are requests between equals.
 
 With `bridgePlays` (default on) the manager finds the bridge's player
 (`transportInfo().bridgePlayer`) and gives it a `BotBrain` with mode
-`bridge`. Scripts cannot push a real player, so `actuator.js` moves a player
-body by stepping its position along the ground every tick
-(`stepPlayerBody`, 0.2 to 0.28 blocks per tick, snapping to standable
-blocks, never onto lava, sliding sideways past a post or a trunk; a slide
-that lasts more than a few blocks is a wall and the body stops so the
-handler can dig through plain terrain with `clearPath`). A player body
+`bridge`. Scripts cannot push a real player. When the bridge has a body (its
+hello says `body: 1`), `stepPlayerBody` sends it footing points (`walk` frames
+every two ticks, never a teleport) and the bridge's client walks there itself;
+only other player bodies (tests, older bridges) are stepped by teleport, 0.2 to
+0.28 blocks per tick, snapping to standable blocks, never onto lava, sliding
+sideways past a post or a trunk; a slide that lasts more than a few blocks is a
+wall and the body stops so the handler can dig through plain terrain with
+`clearPath` (soft blocks such as grass and snow layers are never dug). A player body
 cannot use the legacy job worker, so `gather` and `mine_down` run as script
 state machines on it: `harvest.js` (pure) knows what a block drops, which
 tool and tier it needs and how long it takes to break; `harvestBlock`
@@ -185,8 +213,11 @@ so the bridge stops teleporting itself around.
 
 ## Testing against a real server
 
-`npm run e2e` starts a real Bedrock server (Dragonfly v0.11.5, `tests/e2e/dragonfly`, needs Go
-to build once; `DF_SERVER_BIN` can name a built binary) and joins it with the real bridge
+`npm run e2e` starts a real Bedrock server (Dragonfly v0.11.5, `tests/e2e/dragonfly`; it needs
+Go, which fetches the toolchain the module asks for, and builds it on every run unless `DF_SERVER_BIN`
+names a built binary: `go build -o /tmp/df-server .` in that folder; `GO_BIN` names the go
+executable; the scripts share UDP ports 19138 and 19139, so run one at a time, and `pkill -x df-server`
+clears a server a crashed run left behind) and joins it with the real bridge
 (`bridge/node_modules` must hold `bedrock-protocol`). Every assertion is about what the
 server sees: the body is on the ground, walks at 4.3 blocks/s and sprints at 5.6, turns its
 head, jumps with the vanilla arc, is hit and killed by another player, respawns by itself and

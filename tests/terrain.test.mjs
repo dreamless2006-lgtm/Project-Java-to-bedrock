@@ -9,9 +9,9 @@ const world = (rows = {}) => {
 };
 
 test("kinds: what a body walks through, over, and into", () => {
-    for (const id of ["minecraft:snow_layer", "minecraft:short_grass", "minecraft:red_carpet", "minecraft:dandelion", "minecraft:torch", "minecraft:oak_sign", "minecraft:rail", "minecraft:oak_sapling", "minecraft:ladder", "minecraft:vine"]) assert.equal(kindOf(id), "passable", id);
+    for (const id of ["minecraft:snow_layer", "minecraft:short_grass", "minecraft:red_carpet", "minecraft:dandelion", "minecraft:torch", "minecraft:oak_sign", "minecraft:rail", "minecraft:tall_grass", "minecraft:sunflower", "minecraft:rose_bush", "minecraft:lilac", "minecraft:short_dry_grass", "minecraft:frog_spawn", "minecraft:trip_wire", "minecraft:oak_sapling", "minecraft:ladder", "minecraft:vine"]) assert.equal(kindOf(id), "passable", id);
     for (const id of ["minecraft:stone", "minecraft:oak_planks", "minecraft:stone_slab", "minecraft:oak_stairs", "minecraft:snow", "minecraft:ice", "minecraft:oak_log", "minecraft:chest", "minecraft:grass_block"]) assert.equal(kindOf(id), "solid", id);
-    for (const id of ["minecraft:oak_fence", "minecraft:cobblestone_wall", "minecraft:oak_fence_gate", "minecraft:iron_bars"]) assert.equal(kindOf(id), "tall", id);
+    for (const id of ["minecraft:oak_fence", "minecraft:cobblestone_wall", "minecraft:fence_gate", "minecraft:spruce_fence_gate", "minecraft:iron_bars"]) assert.equal(kindOf(id), "tall", id);
     assert.equal(kindOf("minecraft:air"), "air");
     assert.equal(kindOf("minecraft:water"), "water");
     assert.equal(kindOf("minecraft:flowing_lava"), "lava");
@@ -67,4 +67,32 @@ test("a far goal gives a partial path towards it instead of nothing; a jump flag
     assert.ok(up.ok && up.path.some(p => p.jump), "the climb is flagged as a jump");
     const far = findPath(world(), { x: 0.5, y: 64, z: 0.5 }, { x: 24.5, y: 64, z: 0.5 }, { ignoreGoalY: true });
     assert.ok(far.ok && !far.partial);
+});
+
+test("plants without collision are not walls; roots that are blocks are", () => {
+    for (const id of ["minecraft:tall_grass", "minecraft:large_fern", "minecraft:peony", "minecraft:tall_seagrass", "minecraft:closed_eyeblossom", "minecraft:crimson_roots", "minecraft:hanging_roots", "minecraft:nether_sprouts"]) assert.equal(kindOf(id), "passable", id);
+    for (const id of ["minecraft:dirt_with_roots", "minecraft:mangrove_roots", "minecraft:muddy_mangrove_roots", "minecraft:piston_head", "minecraft:piston_arm_collision"]) assert.equal(kindOf(id), "solid", id);
+    for (const id of ["minecraft:portal", "minecraft:end_portal"]) assert.equal(kindOf(id), "hazard", id);
+    for (const id of ["minecraft:chain", "minecraft:end_rod", "minecraft:fence_gate"]) assert.equal(kindOf(id), "tall", id);
+});
+
+test("only things that hurt from next door count as danger beside the path", () => {
+    const berries = world({ "7,64,5": "minecraft:sweet_berry_bush" });
+    assert.equal(nearDanger(berries, 6, 64, 5), false, "a berry bush beside the path is fine");
+    assert.equal(nearDanger(world({ "6,64,5": "minecraft:sweet_berry_bush" }), 6, 64, 5), true, "in the cell it is not");
+    assert.equal(nearDanger(world({ "7,64,5": "minecraft:cactus" }), 6, 64, 5), true);
+    assert.equal(nearDanger(world({ "7,64,5": "minecraft:web" }), 6, 64, 5), false);
+});
+
+test("stepping down needs head room at the departure level", () => {
+    // ground top at y=64 for x<=4; a hollow beyond with its floor top at 63 and spruce leaves over it at y=65:
+    // a body at feet 64 would walk into the leaves before it could drop
+    const rows = {};
+    for (let x = 5; x <= 12; x++) for (let z = -3; z <= 3; z++) { rows[`${x},63,${z}`] = "minecraft:air"; rows[`${x},65,${z}`] = "minecraft:spruce_leaves"; }
+    const r = findPath(world(rows), { x: 4.5, y: 64, z: 0.5 }, { x: 9.5, y: 63, z: 0.5 }, { allowPartial: false });
+    assert.ok(!r.ok, "no way in: " + JSON.stringify(r.path));
+    // with the leaves gone the same drop works
+    const open = {}; for (let x = 5; x <= 12; x++) for (let z = -3; z <= 3; z++) open[`${x},63,${z}`] = "minecraft:air";
+    const r2 = findPath(world(open), { x: 4.5, y: 64, z: 0.5 }, { x: 9.5, y: 63, z: 0.5 }, { allowPartial: false });
+    assert.ok(r2.ok && r2.path[r2.path.length - 1].y === 63, "drops into the hollow: " + JSON.stringify(r2).slice(0, 100));
 });

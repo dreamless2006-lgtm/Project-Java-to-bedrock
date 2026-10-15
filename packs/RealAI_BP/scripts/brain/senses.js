@@ -12,6 +12,10 @@
 
 import { kindOf, canStand } from "./terrain.js";
 
+// Feet sit on top of the ground, a little above it: 63.9375 on a path block or farmland, 63.875 on soul sand, 64.0 plus a hair
+// when standing on something. This much is added before taking the cell the feet are in.
+const FEET_EPS = 0.15;
+
 export const COMPASS = [
     { name: "N", dx: 0, dz: -1 }, { name: "NE", dx: 1, dz: -1 }, { name: "E", dx: 1, dz: 0 }, { name: "SE", dx: 1, dz: 1 },
     { name: "S", dx: 0, dz: 1 }, { name: "SW", dx: -1, dz: 1 }, { name: "W", dx: -1, dz: 0 }, { name: "NW", dx: -1, dz: -1 },
@@ -88,7 +92,7 @@ function probeColumn(at, px, py, pz, cx, cz, maxDrop) {
  */
 export function survey(idAt, feet, { max = 24, maxDrop = 3 } = {}) {
     const at = cached(idAt);
-    const x0 = Math.floor(feet.x), z0 = Math.floor(feet.z), y0 = Math.floor(feet.y + 0.05);
+    const x0 = Math.floor(feet.x), z0 = Math.floor(feet.z), y0 = Math.floor(feet.y + FEET_EPS);
     const rows = [];
     for (const c of COMPASS) {
         const diag = c.dx !== 0 && c.dz !== 0;
@@ -160,10 +164,10 @@ export function castRay(idAt, origin, yaw, pitch, maxDist = 40) {
 }
 
 const CLASSES = [
-    ["tree", /_log$|_wood$|_leaves$|_hyphae$|_stem$|mangrove_roots|^minecraft:(bamboo|cactus)$/],
+    ["tree", /_log$|_wood$|_leaves$|_hyphae$|_stem$|mangrove_roots|^minecraft:bamboo$/],
     ["ore", /_ore$|ancient_debris/],
-    ["built", /_planks$|_door$|_trapdoor$|_stairs$|_slab$|_fence|_gate$|glass|bookshelf|_bed$|^minecraft:bed$|crafting_table|furnace|smoker|chest|barrel|brick|torch|lantern|_sign$|ladder|_wool$|_carpet$|concrete|hay_block|cobblestone|_wall$|iron_bars|campfire|anvil|lectern|cauldron|bell|farmland|_terracotta$|smooth_|polished_|cut_|chiseled_/],
-    ["rock", /stone|deepslate|granite|diorite|andesite|tuff|basalt|netherrack|obsidian|bedrock|calcite|dripstone|blackstone|end_stone|prismarine/],
+    ["built", /_planks$|_door$|_trapdoor$|_stairs$|_slab$|_fence|_gate$|glass|bookshelf|_bed$|^minecraft:bed$|crafting_table|furnace|smoker|chest|barrel|brick|torch|lantern|_sign$|ladder|_wool$|_carpet$|concrete|hay_block|cobblestone|_wall$|iron_bars|campfire|anvil|lectern|cauldron|bell|farmland|smooth_(stone|sandstone|quartz|red_sandstone)|polished_|cut_|chiseled_/],
+    ["rock", /^minecraft:(stone|deepslate|cobbled_deepslate|granite|diorite|andesite|tuff|calcite|netherrack|basalt|smooth_basalt|blackstone|end_stone|obsidian|crying_obsidian|bedrock|dripstone_block|prismarine|sandstone|red_sandstone)$/],
     ["ice", /ice$|snow/],
     ["sand", /sand|gravel|clay|mud|dirt|grass_block|podzol|mycelium|moss|path/],
 ];
@@ -182,6 +186,7 @@ const REPORT = new Set(["tree", "ore", "water", "lava", "built"]);
  */
 export function sights(idAt, eye, { pitches = [-25, 0, 8], max = 40 } = {}) {
     const at = cached(idAt);
+    const minY = Math.floor(eye.y - 1.62 + FEET_EPS);     // what lies below the feet is the ground, not a sight
     const out = [];
     for (const c of COMPASS) {
         const yaw = yawOf(c);
@@ -190,7 +195,7 @@ export function sights(idAt, eye, { pitches = [-25, 0, 8], max = 40 } = {}) {
         for (const p of pitches) {
             const r = castRay(at, eye, yaw, p, max);
             if (p === 0 && !r.hit && !r.unloaded) open = true;
-            if (!r.hit) continue;
+            if (!r.hit || r.hit.y < minY) continue;
             const cls = sightClass(r.hit.id, r.hit.kind);
             const cur = best.get(cls);
             if (!cur || r.hit.dist < cur.dist) best.set(cls, { cls, dist: Math.round(r.hit.dist), id: short(r.hit.id), x: r.hit.x, y: r.hit.y, z: r.hit.z });
@@ -199,6 +204,41 @@ export function sights(idAt, eye, { pitches = [-25, 0, 8], max = 40 } = {}) {
         out.push({ dir: c.name, seen, open });
     }
     return out;
+}
+
+/**
+ * What stands out within `radius` blocks, in any direction, found on a coarse grid (one column in `stride`): the canopy and
+ * trunks of trees at head and crown height, walls of buildings, water and lava at the surface. A line of sight is a thin thing and misses
+ * a tree three blocks off its axis; a tree's crown is five blocks wide, so a grid with a stride of three cannot miss one.
+ * -> [{ dir, seen: [{cls, dist, n}] }] per compass sector, nearest first.
+ */
+export function landmarks(idAt, feet, { radius = 24, stride = 3 } = {}) {
+    const at = cached(idAt);
+    const fx = Math.floor(feet.x), fz = Math.floor(feet.z), fy = Math.floor(feet.y + FEET_EPS);
+    const sectors = new Map(COMPASS.map(c => [c.name, new Map()]));
+    const note = (dir, cls, d) => {
+        const m = sectors.get(dir); const cur = m.get(cls);
+        if (!cur) m.set(cls, { cls, dist: d, n: 1 }); else { cur.n++; if (d < cur.dist) cur.dist = d; }
+    };
+    for (let dx = -radius; dx <= radius; dx += stride) {
+        for (let dz = -radius; dz <= radius; dz += stride) {
+            const d = Math.hypot(dx, dz);
+            if (d < 3 || d > radius) continue;
+            const dir = compassOf(Math.atan2(-dx, dz) / RAD).name;
+            const x = fx + dx, z = fz + dz;
+            let id = at(x, fy + 4, z);
+            if (id && /_leaves$|_log$|_wood$|_hyphae$/.test(id)) { note(dir, "tree", d); continue; }
+            id = at(x, fy + 2, z);
+            if (id && /_log$|_wood$|_hyphae$/.test(id)) { note(dir, "tree", d); continue; }
+            if (id && sightClass(id, kindOf(id)) === "built") { note(dir, "built", d); continue; }
+            id = at(x, fy, z);
+            if (id && sightClass(id, kindOf(id)) === "built") { note(dir, "built", d); continue; }
+            const k = kindOf(at(x, fy - 1, z));
+            if (k === "water") note(dir, "water", d);
+            else if (k === "lava") note(dir, "lava", d);
+        }
+    }
+    return COMPASS.map(c => ({ dir: c.name, seen: [...sectors.get(c.name).values()].map(e => ({ ...e, dist: Math.round(e.dist) })).sort((a, b) => a.dist - b.dist) }));
 }
 
 /** The block under the crosshair, or what is (not) there. */
@@ -215,7 +255,7 @@ export function describeAround(rows, seen, facing, { visited } = {}) {
     for (const r of rows) {
         let t = `${r.dir}${r.dir === facing ? " (ahead)" : ""}: ${describeRow(r)}`;
         const s = bySeen.get(r.dir);
-        const sights = s && s.seen.length ? s.seen.slice(0, 3).map(x => `${x.cls === "tree" ? "trees" : x.cls} ${x.dist}m`).join(", ") : "";
+        const sights = s && s.seen.length ? s.seen.slice(0, 3).map(x => `${x.cls === "tree" && (x.n || 1) > 1 ? "trees" : x.cls} ${x.dist}m${(x.n || 1) > 2 ? " x" + x.n : ""}`).join(", ") : "";
         if (sights) t += ` [${sights}]`;
         else if (s && s.open) t += " [far view open]";
         if (visited && r.steps >= 8 && !visited(r.end)) t += " (unexplored)";
@@ -231,7 +271,7 @@ export function describeAround(rows, seen, facing, { visited } = {}) {
  */
 export function probeStep(idAt, feet, ahead, { maxDrop = 3 } = {}) {
     const at = cached(idAt);
-    const px = Math.floor(feet.x), pz = Math.floor(feet.z), y = Math.floor(feet.y + 0.05);
+    const px = Math.floor(feet.x), pz = Math.floor(feet.z), y = Math.floor(feet.y + FEET_EPS);
     const cx = Math.floor(ahead.x), cz = Math.floor(ahead.z);
     if (cx === px && cz === pz) return { ok: true, y, climb: false };
     if (cx !== px && cz !== pz) {
@@ -247,7 +287,7 @@ export function probeStep(idAt, feet, ahead, { maxDrop = 3 } = {}) {
 
 /** What is overhead: "open sky" or "a roof of <block> N blocks up". */
 export function describeAbove(idAt, feet, max = 24) {
-    const x = Math.floor(feet.x), z = Math.floor(feet.z), y = Math.floor(feet.y + 0.05);
+    const x = Math.floor(feet.x), z = Math.floor(feet.z), y = Math.floor(feet.y + FEET_EPS);
     for (let d = 2; d <= max; d++) {
         const id = idAt(x, y + d, z);
         if (id === null || id === undefined) return "unknown overhead";
@@ -255,4 +295,30 @@ export function describeAbove(idAt, feet, max = 24) {
         if (k !== "air" && k !== "passable") return `${short(id)} ${d - 1} above your head`;
     }
     return "open sky";
+}
+
+/**
+ * The way ahead of a body holding a key: walks along (hx, hz) from `feet` for `reach` blocks and reports the first
+ * thing that changes. -> { ok: true, floor, climb, edge } where `edge` is the distance at which the ground level changes
+ * to `floor` (undefined, with floor the current level, when it does not within reach) | { ok: false, stop, block, fall, at }.
+ */
+export function probeAhead(idAt, feet, hx, hz, reach = 1.8, { maxDrop = 3 } = {}) {
+    const at = cached(idAt);
+    let px = Math.floor(feet.x), pz = Math.floor(feet.z);
+    const y = Math.floor(feet.y + FEET_EPS);
+    for (let d = 0.2; d <= reach + 1e-9; d += 0.2) {
+        const cx = Math.floor(feet.x + hx * d), cz = Math.floor(feet.z + hz * d);
+        if (cx === px && cz === pz) continue;
+        if (cx !== px && cz !== pz) {
+            for (const [sx, sz] of [[cx, pz], [px, cz]]) for (const dy of [0, 1]) {
+                const k = kindOf(at(sx, y + dy, sz));
+                if (k !== "air" && k !== "passable" && k !== null) return { ok: false, stop: "wall", block: short(at(sx, y + dy, sz)), at: d };
+            }
+        }
+        const r = probeColumn(at, px, y, pz, cx, cz, maxDrop);
+        if (r.stop) return { ok: false, stop: r.stop, block: r.block, fall: r.fall, at: d };
+        if (r.y !== y) return { ok: true, floor: r.y, climb: !!r.climb, edge: Math.max(0, d - 0.1) };
+        px = cx; pz = cz;
+    }
+    return { ok: true, floor: y, climb: false, edge: undefined };
 }

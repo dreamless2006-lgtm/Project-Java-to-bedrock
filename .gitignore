@@ -24,3 +24,4 @@ bridge/node_modules/
 bridge/node_modules
 bridge/.auth-cache/
 bridge/config.local.json
+bridge/config.json

@@ -584,7 +584,7 @@ check(residents().length === 8, "still 8 residents after the respawn: " + reside
         await run(5);
         check(otherMsgs.filter(m => m.t === "body_status").length === bodyAsks + 1, "!ai body asks the bridge for its body report");
         fromBridge({ t: "body", ready: true, alive: true, pos: { x: 1, y: 64, z: 2 }, yaw: 90, pitch: 0, onGround: true, walking: false, keys: { f: 1, s: 0, sprint: true, sneak: false, jump: false }, corrections: 3, teleports: 0, resyncs: 1, tick: 500, startIsEye: true, calibrated: true, gameMode: "survival" });
-        await run(40);
+        await run(70);
         const bodyText = steve.messages.slice(-6).join("\n");
         check(/body \(as the bridge/.test(bodyText) && /3 corrections/.test(bodyText) && /holding keys f1/.test(bodyText), "and prints it: " + bodyText.split("\n").slice(0, 3).join(" | ").slice(0, 160));
         // the bridge's config pins the setting: with independent false the same commands work

@@ -89,6 +89,21 @@ for (const m of manifests) {
     }
 }
 
+// One version everywhere: both packs' headers and modules, the build the addon announces to the bridge, and the build the bridge expects.
+{
+    const vers = new Map();
+    for (const m of manifests) {
+        const j = JSON.parse(stripJsonComments(readFileSync(m, "utf8")));
+        if (j.header?.version) vers.set(relative(ROOT, m) + " header", j.header.version.join("."));
+        for (const mod of j.modules ?? []) if (Array.isArray(mod.version)) vers.set(relative(ROOT, m) + " module " + mod.type, mod.version.join("."));
+    }
+    const grab = (file, re) => { try { return re.exec(readFileSync(join(ROOT, file), "utf8"))?.[1]; } catch { return undefined; } };
+    vers.set("ADDON_BUILD (bridge_channel.js)", grab("packs/RealAI_BP/scripts/brain/bridge_channel.js", /ADDON_BUILD = "([\d.]+)"/));
+    vers.set("EXPECT_ADDON (bridge/index.mjs)", grab("bridge/index.mjs", /EXPECT_ADDON = "([\d.]+)"/));
+    const distinct = new Set([...vers.values()]);
+    if (distinct.size !== 1) failures.push("the pack version is not the same everywhere: " + [...vers].map(([k, v]) => `${k}=${v}`).join(", "));
+}
+
 // Import graph: every relative import must resolve to a file inside the pack.
 for (const f of files.filter(f => f.endsWith(".js"))) {
     const src = readFileSync(f, "utf8");

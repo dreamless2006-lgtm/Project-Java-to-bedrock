@@ -362,6 +362,16 @@ test("a step down holds until the body has passed the edge; a ledge is hopped by
         if (d.onGround && d.pos.y === 65) break;
     }
     assert.equal(d.pos.y, 65); assert.equal(jumps, 1, "one hop"); assert.ok(top > 65.0);
+    // once up, the addon sees only level ground ahead (no floor in its frames): the body must not sink back into the ledge
+    const e = new Body(); start(e, { x: 0, y: 64, z: 0 }); e.setLook(0, 0);
+    let sank = false;
+    for (let i = 0; i < 60; i++) {
+        if (e.pos.z < 2.6) e.press({ f: 1, ms: 250, floor: 65, ed: 2.0 - e.pos.z, at: { x: 0, z: e.pos.z } });
+        else e.press({ f: 1, ms: 250 });                  // past the ledge's edge the frames carry no level change
+        e.step();
+        if (i > 30 && e.pos.y < 64.99) sank = true;
+    }
+    assert.equal(sank, false, "stays on top of the ledge: y " + e.pos.y);
 });
 
 test("a single jump frame hops once; a jump request that finds no ground lapses; stopping clears it", () => {

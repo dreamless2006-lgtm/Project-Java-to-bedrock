@@ -82,9 +82,10 @@ the AI, playing in person (the bridge also turns off `sendcommandfeedback`
 so its script events do not show up as chat lines). If it stands still,
 read the chat: a failed decision is reported there with its cause, usually
 a free-tier rate limit. To test the body without waiting for the model, an
-operator can type `!ai walk <gamertag> 5 0` and watch it walk five blocks;
-`!ai where <gamertag>` shows where the server keeps it and what its walker
-is doing. With `!ai debug on` the bridge's log prints a `probe:` line every
+operator can run `!ai where <gamertag>` (where the server keeps it and what its
+walker is doing) and `!ai body` (how the bridge's client sees it); the movement
+test `!ai walk <gamertag> 5 0` only works when `independent` is off (see below).
+The bridge's own `--selftest` walks the body without the AI at all. With `!ai debug on` the bridge's log prints a `probe:` line every
 second comparing the server's position with its own, and reports every hit
 the body takes. The bridge puts its account into survival on join (set
 `connect.gamemode` to `null` in `config.json` to leave the game mode alone);
@@ -93,7 +94,7 @@ and the log says so. The body has reflexes of its own: hit by a monster it
 fights back within a tick (or runs when low on health or from a creeper),
 on fire it heads for the nearest water, in lava it climbs out; the model
 hears about each reflex on its next turn and can override it. When the
-body dies the bridge answers the respawn screen at once, the brain stays
+body dies the bridge presses Respawn by itself within a couple of seconds, the brain stays
 with the body, and the AI is told where its items fell so it can go back
 for them. Below the model there is a per-tick layer that never waits for a
 decision: paths are planned through the blocks around (round walls and
@@ -132,7 +133,11 @@ interacting with a bot opens its card.
 
 ### When the AI player does not move
 
-1. Phone, bridge stopped: `bash ~/real-ai/bridge/phone.sh selftest`. It walks, sprints, steps back
+1. Phone, bridge stopped: `bash ~/real-ai/bridge/phone.sh selftest` (on a computer: `node index.mjs
+   --selftest` in the bridge folder; the first run after an update of an older install must be a plain
+   `bash ~/real-ai/bridge/phone.sh` once, Ctrl+C, then the selftest, because bash was still reading the
+   old script when it replaced it). It does not tell the pack about itself, so the AI stays out of the
+   way. It walks, sprints, steps back
    and turns the body with the AI's own key presses and reads the position the server really has
    (the account must be an Operator with cheats on for that; stand on flat ground). PASS means the
    server accepts the body's movement; FAIL says what the server did instead.

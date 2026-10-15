@@ -8,7 +8,7 @@
 
 import { kindOf, isOpen, isGround, canStand, nearDanger } from "./terrain.js";
 
-export const PATH_DEFAULTS = { maxNodes: 1200, maxDrop: 3, allowWater: true, goalRadius: 1.0, maxDetour: 2.5, detourSlack: 6, ignoreGoalY: false, allowPartial: true, minProgress: 3 };
+export const PATH_DEFAULTS = { maxNodes: 1200, maxDrop: 3, allowWater: true, goalRadius: 1.0, maxDetour: 4, detourSlack: 16, ignoreGoalY: false, allowPartial: true, minProgress: 3 };
 
 export function isPassable(id, allowWater) { return isOpen(kindOf(id), allowWater); }
 export function isSolidId(id) { return isGround(kindOf(id), false); }
@@ -57,7 +57,7 @@ export function findPath(blockAt, start, goal, opts = {}) {
             let ny = null, extra = 0;
             if (standable(nx, n.y, nz)) { ny = n.y; }
             else if (standable(nx, n.y + 1, nz) && passable(n.x, n.y + 2, n.z)) { ny = n.y + 1; extra = 0.8; }
-            else { for (let d = 1; d <= o.maxDrop; d++) { if (!passable(nx, n.y - d + 1, nz)) break; if (standable(nx, n.y - d, nz)) { ny = n.y - d; extra = 0.2 * d; break; } } }
+            else if (passable(nx, n.y + 1, nz)) { for (let d = 1; d <= o.maxDrop; d++) { if (!passable(nx, n.y - d + 1, nz)) break; if (standable(nx, n.y - d, nz)) { ny = n.y - d; extra = 0.2 * d; break; } } }   // stepping off an edge happens at head height: the cell above the departure level must be open too
             if (ny === null) continue;
             const stepCost = (diag ? 1.4142 : 1) + extra + (kindOf(at(nx, ny, nz)) === "water" ? 1 : 0);
             const g = n.g + stepCost;

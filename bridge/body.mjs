@@ -57,6 +57,8 @@ export class Body {
         this.hist = [];              // per-tick input records, so a correction can be replayed (see onCorrection)
         this.posHist = [];           // where we were over the last few ticks, to judge the addon's (late) position reports
         this.autoHop = false;        // the next tick should jump: a ledge is ahead
+        this.hopTo = null;           // the level a hop is on its way up to: it stays the ground until the body has landed there
+        this.hopLeft = 0;
         this.jumpReqLeft = 0;
         this.targetLeft = Infinity;  // ticks the walk target stays valid without a fresh walk frame
         this.movementInfo = null;
@@ -119,6 +121,7 @@ export class Body {
         this.pos = feet;
         this.vel = { x: 0, y: 0, z: 0 };
         this.floor = feet.y;
+        this.hopTo = null;
         if (typeof p.yaw === "number") this.yaw = p.yaw;
         if (typeof p.pitch === "number") this.pitch = p.pitch;
         if (typeof p.on_ground === "boolean") this.onGround = p.on_ground;
@@ -169,7 +172,7 @@ export class Body {
     /** Dead: the death screen is up. No input is sent until the server has respawned us. */
     markDead() {
         this.alive = false; this.target = null; this.vel = { x: 0, y: 0, z: 0 };
-        this.jumping = false; this.jumpRequested = false; this.sprinting = false; this.sneaking = false; this.keys = null; this.pendingTeleport = false;
+        this.jumping = false; this.jumpRequested = false; this.sprinting = false; this.sneaking = false; this.keys = null; this.hopTo = null; this.pendingTeleport = false;
         this.deaths = (this.deaths || 0) + 1;
     }
 
@@ -462,6 +465,7 @@ export class Body {
         const prevY = this.pos.y;
         this.pos.x += this.vel.x; this.pos.y += this.vel.y; this.pos.z += this.vel.z;
         const floorY = this.supportY(spec);
+        if (spec && spec.edgeS !== undefined && floorY === spec.floor && floorY > this.floor + 0.3) { this.hopTo = floorY; this.hopLeft = 40; }
         if (spec && spec.edgeS !== undefined && floorY < this.floor - 0.6) this.floor = floorY;      // stepped off the old level: it is gone, whatever the keys do next
         if (this.pos.y <= floorY + 1e-9) {
             if (prevY >= floorY - 1e-9 || (prevGround && floorY - prevY <= PHYS.stepHeight)) {
@@ -489,6 +493,11 @@ export class Body {
 
     /** The height of the ground under the body for these inputs (see press: the level ahead counts once the body has reached it). */
     supportY(spec) {
+        // a hop up to a ledge: the addon's view moves on to the next stretch of ground while the body is still in the air
+        if (this.hopTo !== null) {
+            if (--this.hopLeft > 0 && (!this.onGround || this.pos.y < this.hopTo - 1e-9)) return this.hopTo;
+            this.hopTo = null;
+        }
         if (!spec) return this.floor;
         if (spec.tgt) return Math.hypot(spec.tgt.x - this.pos.x, spec.tgt.z - this.pos.z) < 1.2 ? spec.tgt.y : this.floor;
         if (spec.edgeS === undefined) return spec.floor;
