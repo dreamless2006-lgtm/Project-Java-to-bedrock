@@ -1,7 +1,7 @@
 // Executes the model's actions on the bot body. One action runs at a time;
 // long-running ones are state machines stepped every 10 ticks. Every action
 // ends with a one-line result that goes into the next observation.
-import { world, system, ItemStack, EntityComponentTypes, EquipmentSlot, EntityDamageCause } from "@minecraft/server";
+import { world, system, ItemStack, EntityComponentTypes, EquipmentSlot, EntityDamageCause, BlockTypes } from "@minecraft/server";
 import { requestMove, releaseMove, NAV } from "../ai_navigation.js";
 import { jump, faceBlock } from "../ai_player_physics.js";
 import { assignFriendTask, getFriendTask, hasJob } from "../ai_task_worker.js";
@@ -33,7 +33,8 @@ const ARMOR_RANK = ["netherite", "diamond", "iron", "chainmail", "golden", "leat
 const DIM_IDS = { overworld: "minecraft:overworld", nether: "minecraft:nether", end: "minecraft:the_end" };
 
 // ---------------------------------------------------------------- helpers ---
-function eye(bot) { return { x: bot.location.x, y: bot.location.y + 1.62, z: bot.location.z }; }
+function eyeHeight(bot) { try { return bot.isSneaking ? 1.27 : 1.62; } catch (e) { return 1.62; } }
+function eye(bot) { return { x: bot.location.x, y: bot.location.y + eyeHeight(bot), z: bot.location.z }; }
 function center(p) { return { x: Math.floor(p.x) + 0.5, y: Math.floor(p.y) + 0.5, z: Math.floor(p.z) + 0.5 }; }
 function blockAt(dim, x, y, z) { try { return dim.getBlock({ x: Math.floor(x), y: Math.floor(y), z: Math.floor(z) }); } catch (e) { return undefined; } }
 function near(bot, target, r) { return dist(bot.location, target) <= r; }
@@ -205,7 +206,7 @@ function setView(bot, yaw, pitch) {
 }
 /** Where the head points right now (a turn asked for a moment ago counts): { yaw, pitch }. */
 export function currentView(bot) { return viewOf(bot); }
-function eyeOf(bot) { const l = bot.location; return { x: l.x, y: l.y + 1.62, z: l.z }; }
+function eyeOf(bot) { const l = bot.location; return { x: l.x, y: l.y + eyeHeight(bot), z: l.z }; }
 /** The block under the crosshair, in words. */
 function describeLooking(bot, view) {
     const l = lookingAt(idAtFor(bot.dimension), eyeOf(bot), view.yaw, view.pitch);
@@ -240,6 +241,7 @@ function entityInSight(bot, reach = REACH, blockDist = Infinity) {
     return best;
 }
 const INTERACTABLE = /door|trapdoor|fence_gate|chest|barrel|shulker_box|furnace|smoker|crafting_table|anvil|enchanting_table|brewing_stand|loom|grindstone|stonecutter|cartography_table|smithing_table|_bed$|^minecraft:bed$|button|lever|lectern|jukebox|note_block|bell|cauldron|composter|campfire|respawn_anchor|beacon|hopper|dropper|dispenser|repeater|comparator|daylight_detector/;
+const HOLDS_THINGS = /chest|barrel|shulker_box|furnace|smoker|hopper|dropper|dispenser|brewing_stand|lectern|jukebox|crafter|decorated_pot/;
 const FOOD = /bread|apple|carrot|potato|beef|porkchop|mutton|chicken|rabbit|cod|salmon|cookie|melon_slice|pie|stew|soup|berries|dried_kelp|beetroot|honey_bottle/;
 function entityName(e) { try { return e.nameTag || String(e.typeId).replace(/^.*:/, ""); } catch (x) { return "creature"; } }
 /** The hotbar as the model reads it: "1 wooden_pickaxe*, 2 oak_planks x12" (* = in hand). */
@@ -343,25 +345,31 @@ function placeBlock(bot, pos, blockId) {
     if (!b.isAir && !b.isLiquid && !/grass$|tallgrass|snow_layer|fern|double_plant|seagrass/.test(b.typeId)) return { ok: false, reason: `${nameOf(b.typeId)} is already there` };
     const c = containerOf(bot);
     const inv = inventoryMap(bot);
+    let taken = false;
     if (!cfg().freeBuild) {
         if (!inv[blockId]) return { ok: false, reason: `no ${nameOf(blockId)} in inventory` };
-        takeItems(c, blockId, 1);
+        takeItems(c, blockId, 1); taken = true;
     } else if (inv[blockId]) {
-        takeItems(c, blockId, 1);
+        takeItems(c, blockId, 1); taken = true;
     }
     try {
         lookAt(bot, { x, y, z });
         try { bot.playAnimation("set_block"); } catch (e) { /* ignore */ }
         const r = dim.runCommand(`setblock ${x} ${y} ${z} ${blockId}`);
         if (!r || r.successCount === 0) {
-            if (!cfg().freeBuild) giveItems(c, blockId, 1);
+            if (taken) giveItems(c, blockId, 1);
             return { ok: false, reason: `cannot place ${nameOf(blockId)} (unknown block?)` };
         }
         try { dim.playSound(/wool|cloth/.test(blockId) ? "dig.cloth" : /planks|log|wood/.test(blockId) ? "dig.wood" : "dig.stone", { x, y, z }); } catch (e) { /* ignore */ }
         return { ok: true };
     } catch (e) {
+        if (taken) giveItems(c, blockId, 1);          // a command that fails with an error (not a block, bad syntax) must not eat the item
         return { ok: false, reason: String(e?.message || e) };
     }
+}
+/** Is this item a block that can be set in the world (a sword, a bucket or a seed is not)? */
+function isBlockItem(id) {
+    try { return !!BlockTypes.get(id); } catch (e) { return true; }
 }
 
 function swing(bot) {
@@ -393,6 +401,9 @@ function holdItem(bot, typeId) {
         for (let i = 0; i < c.size; i++) { let st; try { st = c.getItem(i); } catch (e) { continue; } if (st && st.typeId === typeId) { idx = i; break; } }
         if (idx < 0) return false;
         const sel = typeof bot.selectedSlotIndex === "number" ? bot.selectedSlotIndex : 0;
+        if (idx !== sel && idx < 9) {
+            try { bot.selectedSlotIndex = idx; if (bot.selectedSlotIndex === idx) return true; } catch (e) { /* fall back to moving the item */ }
+        }
         if (idx !== sel) {
             try { c.swapItems(idx, sel, c); }
             catch (e) { try { const a = c.getItem(idx), b = c.getItem(sel); c.setItem(sel, a); c.setItem(idx, b); } catch (e2) { return false; } }
@@ -699,6 +710,7 @@ H.mine = {
         const t = crosshair(bot, REACH);
         if (!t) return finish(`nothing in reach under the crosshair (${describeLooking(bot, viewOf(bot))}): step closer, or look at the block`);
         if (t.kind === "water" || t.kind === "lava") return finish(`the crosshair is on ${nameOf(t.id)}, which cannot be mined`);
+        if (HOLDS_THINGS.test(t.id)) return finish(`the ${nameOf(t.id)} holds things that would be lost: take them out first (open_container), or break it on purpose with break_block`);
         const key = `${t.x},${t.y},${t.z}`;
         if (!s.target || s.target.key !== key) {                 // a new block, or the head moved off the one being mined: the progress starts again, as in the game
             const chk = harvestCheck(t.id, inv);
@@ -732,6 +744,7 @@ H.place = {
         if (pos.x === bx && pos.z === bz && (pos.y === by || pos.y === by + 1)) return { done: true, result: "that spot is where you stand: step back, or look at another face of the block" };
         const id = a.block ? materialBlockId(bot, a.block) : heldId(bot);
         if (!id) return { done: true, result: "your hand is empty: hold a block first (hold), or name one with block" };
+        if (!isBlockItem(id)) return { done: true, result: `${nameOf(id)} is not a block: hold a block to place it, or use it with "use"` };
         const r = placeBlock(bot, pos, id);
         if (r.ok) rememberContainer(ctx, pos, id);
         return { done: true, result: r.ok ? `placed ${nameOf(id)} at ${fmtPos(pos)} on the ${nameOf(t.id)}` : `could not place ${nameOf(id)}: ${r.reason}` };
@@ -748,7 +761,7 @@ H.use = {
         if (e) { const name = entityName(e.entity); ctx.actuator.enqueueFront({ type: "interact", name }); return { done: true, result: `using the ${name} in front of you` }; }
         const held = heldId(bot);
         if (t && INTERACTABLE.test(t.id)) { ctx.actuator.enqueueFront({ type: "interact", x: t.x, y: t.y, z: t.z }); return { done: true, result: `using the ${nameOf(t.id)} in front of you` }; }
-        if (held && FOOD.test(held)) { ctx.actuator.enqueueFront({ type: "eat" }); return { done: true, result: `eating (${nameOf(held)} in hand)` }; }
+        if (held && FOOD.test(held) && !/bucket|on_a_stick/.test(held)) { ctx.actuator.enqueueFront({ type: "eat" }); return { done: true, result: `eating (${nameOf(held)} in hand)` }; }
         if (held && t) { const r = H.place.start({}, ctx); if (/^placed/.test(r.result)) return r; }
         if (held) { ctx.actuator.enqueueFront({ type: "use_item", item: held }); return { done: true, result: `using ${nameOf(held)}` }; }
         return { done: true, result: `nothing to use: your hand is empty and ${t ? "the " + nameOf(t.id) + " in front of you does nothing" : "nothing is in front of you"}` };
@@ -1920,7 +1933,7 @@ export class Actuator {
         const d = dist(this.bot.location, t.location);
         const busy = this.current && this.current.action.type !== "wait";
         if (d > 4 && !busy) goTo(this.bot, t.location, d > 10 ? "sprint" : "walk", NAV.FOLLOW + 1, true);
-        else if (!busy && d <= 4) { releaseMove(this.bot, SOURCE); if (now % 40 < STEP) lookAtThing(this.bot, t.location); }
+        else if (!busy && d <= 4) { releaseMove(this.bot, SOURCE); if (now % 40 < STEP && !this.queue.length) lookAtThing(this.bot, t.location); }
     }
 
     cancelFollow() { this.follow = null; }

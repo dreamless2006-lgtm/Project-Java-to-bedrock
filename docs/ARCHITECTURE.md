@@ -205,12 +205,7 @@ face it came in through) and `entityInSight()`; `look_at` and the walker's own t
 record the head's pending direction (`setView`) because the game shows a turn a tick
 or two late.
 
-The live view is not in the game. `viewstream.js` streams the AI's pose, state and
-the blocks around it to the bridge, but only while the bridge's website has a viewer
-(the bridge sends `view` on/off frames), and `bridge/web.mjs` serves them to the
-browser; see [WEBVIEW.md](WEBVIEW.md) for the wire format, the renderer and the
-security notes. Nobody is made a spectator and no controls, cameras or game modes are
-touched. Players in spectator mode (if anyone is) are skipped by the AI's senses.
+The AI's live view is planned as a website served by the bridge on the phone (docs/WEBVIEW.md); it is not part of this build, and nothing in the game puts a person in the AI's place. Players in spectator mode (if anyone is) are skipped by the AI's senses and do not hold up its sleep.
 
 Independence (`independent`, default true; pinned by the bridge's hello
 when its config sets it): `commands.js` refuses the steering commands
@@ -299,8 +294,7 @@ bots, up to `maxBrains`). The original random spawner is behind the
 | `path.js` | A* over block cells: eight-way, jumps, drops, partial paths, corner clearance | yes |
 | `senses.js` | the eyes: walk survey, line-of-sight rays, sights, what is under the crosshair | yes |
 | `sight.js` | the picture of the view: a ray cast through every cell of a small screen (material letters beside distance digits, people and creatures drawn over the world), the legend the prompt carries | yes |
-| `voxel.js` | a box of blocks as a message: palette, run-length coding, base64 without Buffer/atob; the pack, Node and the page all run this file | yes |
-| `viewstream.js` | in-game: while the bridge's website has a viewer, streams the AI's pose, state and the blocks around it to the bridge | in-game |
+| `voxel.js` | a box of blocks as a message: palette, run-length coding, base64 without Buffer/atob (for the planned phone-side view, docs/WEBVIEW.md) | yes |
 | `around.js` | the "Around you" report and the explored-columns memory | in-game (reads the dimension) |
 | `perception.js` | observation from the live world | in-game |
 | `actuator.js` | every action on the real body | in-game |

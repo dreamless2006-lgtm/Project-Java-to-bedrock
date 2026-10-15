@@ -178,18 +178,12 @@ door, `H` a hostile creature...) and the right one how far (a digit per
 distance band). People and creatures are drawn where they stand and are hidden
 behind walls; turning its head changes the picture. `!ai see` prints it for you.
 
-## Watch the AI on the phone: a website, not part of the game
+## Watching the AI
 
-The bridge on the phone also runs a small website. Open the address it prints
-(`http://127.0.0.1:8787/`) in the phone's browser and you see the AI play: a
-live 3D picture from its eyes (or from behind it, or from anywhere you drag),
-its health, hunger and hotbar, what it is doing and thinking, the chat, and
-the exact text picture its model is given each turn. Nothing happens in the
-game for this: nobody becomes a spectator and no controls are locked. Use
-Android's split-screen or a floating window to have it next to Minecraft, or
-set `"web": { "lan": true }` in `config.json` to open it on another device on
-the same Wi-Fi (the bridge then prints an address with a secret key). Details,
-the data format and the security notes are in [docs/WEBVIEW.md](docs/WEBVIEW.md).
+Not in this build: a phone-side website that shows the AI's live view (planned, designed in
+[docs/WEBVIEW.md](docs/WEBVIEW.md); nothing in the game is touched for it). For now, `!ai thoughts on`
+shows its reasoning in chat, `!ai see` prints the text picture of its view that its model is given each
+turn, and `!ai where` / `!ai body` show where it is and how the server sees its body.
 
 ## What you need (plain language)
 

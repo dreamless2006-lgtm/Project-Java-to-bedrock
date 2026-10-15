@@ -1,5 +1,7 @@
 # The AI view: a website on the phone
 
+> **Status: planned, not built yet.** Only the block codec (`voxel.js`) exists. This is the design the work will follow.
+
 The bridge (the Node program on the phone) serves a small website. Open it in
 the phone's browser and you watch the AI play: a live 3D first-person picture of
 what it sees, what it is holding, how healthy it is, what it is doing and

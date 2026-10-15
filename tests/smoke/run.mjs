@@ -379,6 +379,37 @@ check(residents().length === 8, "still 8 residents after the respawn: " + reside
             await run(10, 5, idle);
             check(/^hold: (holding|slot 1 is empty)/.test(last()), "hold by slot: " + last());
             bb.actuator.stopAll();
+            // review fixes: an item the game cannot place as a block is not eaten by a failed place
+            {
+                inv.addItem(new ItemStack("minecraft:diamond_sword", 1));
+                const origRun = overworld.runCommand.bind(overworld);
+                overworld.runCommand = (cmd) => { if (/^setblock .* minecraft:diamond_sword/.test(cmd)) throw new Error("CommandError: unknown block"); return origRun(cmd); };
+                act({ type: "look", pitch: 45, yaw: 0 });
+                act({ type: "place", block: "diamond_sword" });
+                await run(30, 5, idle);
+                overworld.runCommand = origRun;
+                check(count("minecraft:diamond_sword") === 1, "a place that fails with an error gives the item back: swords " + count("minecraft:diamond_sword") + " (" + last() + ")");
+            }
+            // mining a chest would lose what is inside it: refused
+            overworld._set(px, 65, pz + 2, "minecraft:chest");
+            act({ type: "look", pitch: 0, yaw: 0 });
+            act({ type: "mine" });
+            await run(60, 10, idle);
+            check(/holds things/.test(last()) && overworld.getBlock({ x: px, y: 65, z: pz + 2 }).typeId === "minecraft:chest", "mine leaves a chest alone: " + last());
+            overworld._set(px, 65, pz + 2, "minecraft:air");
+            // the tool is selected, not swapped in: the hotbar keeps its order
+            {
+                overworld._set(px, 65, pz + 2, "minecraft:oak_log");
+                for (let i = 0; i < 9; i++) inv.setItem(i, undefined);
+                inv.setItem(0, new ItemStack("minecraft:oak_planks", 20));
+                inv.setItem(5, new ItemStack("minecraft:wooden_axe", 1));
+                relay.selectedSlotIndex = 0;
+                act({ type: "mine" });
+                await run(300, 10, idle);
+                check(inv.getItem(0)?.typeId === "minecraft:oak_planks" && inv.getItem(5)?.typeId === "minecraft:wooden_axe" && relay.selectedSlotIndex === 5, `the axe is taken into the hand by selecting its slot, the planks stay where they were (slot 0 ${inv.getItem(0)?.typeId}, slot 5 ${inv.getItem(5)?.typeId}, selected ${relay.selectedSlotIndex}): ` + last());
+                inv.setItem(5, undefined); relay.selectedSlotIndex = 0;
+            }
+            bb.actuator.stopAll();
         }
         // mine down with a wooden pickaxe: a staircase, cobblestone in the bag, six levels lower
         act({ type: "mine_down", depth: 6 });

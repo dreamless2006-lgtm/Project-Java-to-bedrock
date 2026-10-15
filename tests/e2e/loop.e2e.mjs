@@ -326,12 +326,12 @@ try {
         act({ type: "look_at", x: cx + 4, y: 65, z: cz }); await drive(600);
         results().length = 0;
         act({ type: "mine", count: 1 });
-        await drive(8000, idle);
+        await drive(8000, () => results().length > 0 && idle());
         check(/mined 1 block/.test(lastResult()) && overworld.getBlock({ x: cx + 4, y: 65, z: cz }).isAir && logs() === before + 1, `mine breaks the block under the crosshair and the drop is in the bag (${lastResult().slice(0, 100)}; logs ${before} -> ${logs()})`);
         act({ type: "look_at", x: cx + 4, y: 64, z: cz }); await drive(600);
         results().length = 0;
         act({ type: "place", block: "oak_log" });
-        await drive(3000, idle);
+        await drive(4000, () => results().length > 0 && idle());
         check(/placed/.test(lastResult()) && overworld.getBlock({ x: cx + 3, y: 64, z: cz }).typeId === "minecraft:oak_log", `place puts a block on the face it looks at (${lastResult().slice(0, 100)})`);
     }
     clearInterval(rec);
