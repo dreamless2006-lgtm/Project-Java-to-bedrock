@@ -104,6 +104,7 @@ export const EntityDamageCause = { magic: 'magic', entityExplosion: 'entityExplo
 export const EquipmentSlot = { Mainhand: 'Mainhand', Offhand: 'Offhand', Chest: 'Chest' };
 export const GameMode = { Survival: 'Survival', Creative: 'Creative', Adventure: 'Adventure', Spectator: 'Spectator' };
 export const InputButton = { Jump: 'Jump', Sneak: 'Sneak' };
+export const InputPermissionCategory = { Camera: 1, Movement: 2, LateralMovement: 4, Sneak: 5, Jump: 6, Mount: 7, Dismount: 8, MoveForward: 9, MoveBackward: 10, MoveLeft: 11, MoveRight: 12 };
 export const ButtonState = { Pressed: 'Pressed', Released: 'Released' };
 
 const ITEM_JSON = new Map([...jsonFiles(join(PACK, 'items'))].map((j) => [j['minecraft:item'].description.identifier, j['minecraft:item']]));
@@ -183,10 +184,19 @@ export class Player {
       spawnParticle: () => {},
       spawnItem: (stack) => self.dropped.push(stack.typeId),
       getEntities: (options) => world.getDimension('minecraft:overworld').getEntities(options),
+      getPlayers: (options) => world.getDimension('minecraft:overworld').getPlayers(options),
       getBlock: (location) => world.getDimension('minecraft:overworld').getBlock(location),
       createExplosion: (location, radius, options) => world.getDimension('minecraft:overworld').createExplosion(location, radius, options),
     };
     this.onScreenDisplay = { setActionBar: (m) => self.messages.push(m) };
+    /** playAnimation calls: { name, options } */
+    this.animations = [];
+    /** InputPermissionCategory -> enabled, as set through inputPermissions */
+    this.permissions = new Map();
+    this.inputPermissions = { setPermissionCategory: (category, enabled) => void self.permissions.set(category, enabled) };
+  }
+  playAnimation(name, options = {}) {
+    this.animations.push({ name, options });
   }
   getComponent(id) {
     return this.components[id];
@@ -260,16 +270,24 @@ world.getDimension = (id) => {
       createExplosion: (location, radius, options) => dimension.explosions.push({ location, radius, options }),
       /** A flat world: solid ground at y < 64, air above, full skylight. */
       getBlock: ({ x, y, z }) => ({ x, y, z, isAir: y >= 64, isLiquid: false, typeId: y >= 64 ? 'minecraft:air' : 'minecraft:stone', getSkyLightLevel: () => 15, getLightLevel: () => 15 }),
-      /** Supports the query options the scripts use: type, location + maxDistance, closest. */
+      /** Supports the query options the scripts use: type, families, location + maxDistance, closest. */
       getEntities(options = {}) {
         let found = dimension.entities.filter((e) => e.isValid);
         if (options.type) found = found.filter((e) => e.typeId === options.type);
-        if (options.families) found = found.filter((e) => e.typeId.startsWith('minepreggo:'));
+        if (options.families) found = found.filter((e) => options.families.some((f) => (e.families ?? []).includes(f)));
         if (options.location && options.maxDistance !== undefined) {
           const d = (e) => Math.hypot(e.location.x - options.location.x, e.location.y - options.location.y, e.location.z - options.location.z);
           found = found.filter((e) => d(e) <= options.maxDistance).sort((a, b) => d(a) - d(b));
         }
         if (options.closest !== undefined) found = found.slice(0, options.closest);
+        return found;
+      },
+      getPlayers(options = {}) {
+        let found = world.players.filter((p) => p.isValid);
+        if (options.location && options.maxDistance !== undefined) {
+          const d = (e) => Math.hypot(e.location.x - options.location.x, e.location.y - options.location.y, e.location.z - options.location.z);
+          found = found.filter((e) => d(e) <= options.maxDistance).sort((a, b) => d(a) - d(b));
+        }
         return found;
       },
     };
@@ -284,10 +302,14 @@ world.getEntity = (id) => [...world.players, ...[...dimensions.values()].flatMap
  * events of DESIGN.md (only their effect on properties and tamed state is modelled).
  */
 export class Mob {
-  constructor(typeId = 'minepreggo:zombie_girl', { tamed = false, phase = -1, variant = undefined } = {}) {
+  constructor(typeId = 'minepreggo:zombie_girl', { tamed = false, phase = -1, variant = undefined, families = ['minepreggo_preggo_mob', 'mob'] } = {}) {
     /** minecraft:variant of the phase component groups (phase + 1); a spawn event's property may or may not be visible */
     this.variant = variant ?? phase + 1;
     this.typeId = typeId;
+    /** minecraft:type_family, which getEntities({ families }) matches */
+    this.families = families;
+    this.teleports = [];
+    this.animations = [];
     this.id = `mob-${nextEntityId++}`;
     this.isValid = true;
     this.isOnGround = true;
@@ -308,8 +330,19 @@ export class Mob {
       spawnParticle: () => {},
       spawnItem: (stack) => self.dropped.push(stack.typeId),
       getEntities: (options) => world.getDimension('minecraft:overworld').getEntities(options),
+      getPlayers: (options) => world.getDimension('minecraft:overworld').getPlayers(options),
       getBlock: (location) => world.getDimension('minecraft:overworld').getBlock(location),
     };
+  }
+  teleport(location, options = {}) {
+    this.teleports.push({ location, options });
+    this.location = { ...location };
+  }
+  getRotation() {
+    return { x: 0, y: 0 };
+  }
+  playAnimation(name, options = {}) {
+    this.animations.push({ name, options });
   }
   getComponent(id) {
     if (id === 'minecraft:is_tamed') return this.tamed ? {} : undefined;

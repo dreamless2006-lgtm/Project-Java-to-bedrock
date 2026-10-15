@@ -143,14 +143,39 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   when hers is small). The client falls back to `q.variant` and to the pose when the phase
   property is unknown, and the mob system rewrites the phase property every tick (records from
   versions that only set it through entity events, wild mobs that only kept the variant).
-- ✅ **Kick cubes cannot leave the belly (0.3.9).** The mod's keyframed kicks were authored for one
-  model; across the ten per-phase models some of them travel further sideways or forward than the
-  belly's box allows, which is what looked like particles floating in front of her. The importer
-  now wraps every kick-bone position keyframe (`tools/lib/kick-clamp.mjs`) in Molang that clamps
-  it to the room the current belly size leaves on that axis plus a small bulge (1.25 forward, 1.0
-  sideways and vertically) and caps kick scales at 1.25; the generator measures that room per kick
-  cube, axis and belly size from the rotated belly cubes and writes it into every female's and the
-  player's pre_animation (`v.k_<bone>_x/_y/_z`).
+- ✅ **The Jenny add-ons merged in (0.4.0).** `vendor/jenny/` (git-ignored) takes the Jenny Mod
+  Java Port `.mcaddon` and the older Jenny `.mcpack` pair; `tools/import-jenny.mjs` (run by
+  `npm run import`) merges them into these two packs. The port's content goes under `jenny_port/`
+  sub-folders (texture, sound and loot paths rewritten; its `sound_definitions.json`,
+  `sounds.json` and `item_texture.json` become overlays that `tools/build.mjs` merges while
+  packaging; its UI files and translations are appended), its scripts are patched for Script API
+  2.x (`getAllPlayers`, `applyKnockback`) and loaded by our entry point with a dynamic import, and
+  its ten girls (Jenny, Bia, Slime, Luna, Galath, Allie, Manglelie, Bee, Kobold, Ellie) get the
+  Minepreggo properties, set_property-only phase events and the preggo-mob family
+  (`mobs/families.js` marks them `external`: their own payment/undressing, none of our taming,
+  hunger or savage state, and their variant never counts as a phase). `jenny/port.js` listens to
+  their data-driven scene events: a scene that can get her pregnant (Jenny and Slime doggy, Bia
+  prone, Luna sitting, Galath cowgirl/threesome with Manglelie, Allie reverse cowgirl, the Bee
+  scene, Kobold mating, Ellie cowgirl/missionary chosen on her stage) makes her pregnant when it
+  finishes; oral and anal scenes do not. Bellies: for every render controller of a girl or stage
+  whose geometry has a hip, `tools/lib/belly-fit.mjs` rescales the mod's predefined pregnant player
+  belly (cubes, kick bones, per-face UVs) onto that body's waist box and hangs it under copies of
+  her root-to-hip bone chain, one geometry per size, with render controllers under the same
+  visibility as that body; the stage entities copy the girl's belly size when they spawn. The older
+  pack contributes the Jenny Bed (`minepreggo:jenny_bed`, modern block with a script component and
+  a `minepreggo:facing` state), the player's scene animation, the scene sound and the house
+  structure (entity removed, bed renamed through `tools/lib/nbt.mjs`): a tamed Minepreggo female of
+  the player's near the bed can be chosen on it for a 50-second scene (`jenny/scenes.js`: she sits,
+  the player is held in place and animated) that leaves her pregnant.
+- ✅ **Kicks surface, never float (0.3.9, reworked in 0.4.0).** The mod's keyframed kicks were
+  authored for one model; across the per-phase models the kick cube rests at a different depth, so
+  a fixed amount either never reached the skin (nothing showed) or shot out of it (a floating cube).
+  `tools/lib/kick-clamp.mjs` now rewrites every kick-bone position keyframe as its share of the
+  channel's peak travel times the room the current belly size leaves on that axis plus a small bulge
+  (1.5 forward, 1.25 sideways and vertically), so each kick's peak sits just beyond the skin;
+  channels under half a unit are only clamped and kick scales are capped at 1.25. The generator
+  measures that room per kick cube, axis and belly size from the rotated belly cubes and writes it
+  into every female's, the player's and the Jenny girls' pre_animation (`v.k_<bone>_x/_y/_z`).
 - ✅ **Kicks as bulges (0.3.8).** The kick cubes rest 1 to 10 units inside the belly depending on
   the size, and the mod's own per-phase `fetal_movement_pN` animations move them by exactly the
   right distance; the port's procedural push layers used to add a fixed 2-5 units on top, which

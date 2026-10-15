@@ -52,7 +52,7 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
 A world keeps the pack versions it was created with, and Bedrock keeps older imports next to the
 new one. After importing a newer `.mcaddon`, open the world's settings and, under **Behavior
 Packs** *and* **Resource Packs**, remove Minepreggo from the active packs and add it again. The
-join message shows both versions (`[Minepreggo 0.3.9, resources 0.3.9]`); while the resources
+join message shows both versions (`[Minepreggo 0.4.0, resources 0.4.0]`); while the resources
 version lags behind, the models, bellies and animations are the old ones, whatever the scripts do.
 Old versions can be deleted in Settings → Storage.
 
@@ -238,7 +238,10 @@ Requires Node.js 20+.
 ```sh
 npm install
 cp /path/to/minepreggo-official-1.3.2-mc1.20.1.jar vendor/   # or pass the path to `npm run import`
-npm run import   # extracts textures, sounds, translations, models, animations and icon into packs/
+mkdir -p vendor/jenny                                         # optional: the Jenny add-ons to merge in
+cp "/path/to/Jenny-Mod-Java-Port-v2.7.2.mcaddon" /path/to/jenny*.mcpack vendor/jenny/
+npm run import   # extracts textures, sounds, translations, models, animations and icon into packs/,
+                 # then merges the Jenny add-ons (tools/import-jenny.mjs) when vendor/jenny/ has them
 npm run check    # type-checks scripts, validates JSON against Mojang's schemas and cross-references
 npm test         # unit tests, model conversion checks, pregnancy simulations (players and mobs) and a
                  # smoke test that loads the whole script entry point against the mocked game API
@@ -273,5 +276,16 @@ packs/resource/   resource pack: client entities, render and animation controlle
 tools/            import-jar.mjs, validate.mjs, build.mjs, lib/ (Java model converter),
                   bedrock-schemas/ (Mojang's JSON schemas), lang/ (strings the port adds), tests/
 docs/             porting plan and known differences
-vendor/           your local copy of the mod jar (git-ignored)
+vendor/           your local copy of the mod jar, and vendor/jenny/ the Jenny add-ons (git-ignored)
 ```
+
+## The Jenny add-ons
+
+With the Jenny Mod Java Port `.mcaddon` and the older Jenny `.mcpack` pair in `vendor/jenny/`,
+`npm run import` merges them into the two packs (one behavior pack, one resource pack): the port's
+girls keep their own scripts, menus and scenes and join the Minepreggo mob system, so a scene that
+can get a girl pregnant does, her belly grows with the phases on every body she renders (dressed,
+undressed, scene stage), the babies kick, and she gives birth; every potion works on her too. The
+older pack's Jenny Bed lets a tamed Minepreggo female of yours be taken to bed for a 50-second scene
+that leaves her pregnant. The guide book's "Jenny mod" chapter has the details. Like the jar's
+assets, nothing of theirs is committed; the import folders are git-ignored.

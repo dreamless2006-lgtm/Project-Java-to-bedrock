@@ -3,8 +3,10 @@
 // durations), the item classes (nutrition, craving gratification) and MinepreggoConfig (hunger).
 // Nothing here touches the game API.
 
+import { CRAVING_ITEMS } from '../pregnancy/data.js';
+
 /** @typedef {import('../pregnancy/data.js').Craving} Craving */
-/** @typedef {'ZOMBIE' | 'CREEPER' | 'ENDER' | 'SLIME'} MobSpecies */
+/** @typedef {'ZOMBIE' | 'CREEPER' | 'ENDER' | 'SLIME' | 'HUMAN'} MobSpecies */
 /** @typedef {'HUMANOID' | 'MONSTER'} Creature */
 
 /**
@@ -18,11 +20,12 @@
  * @property {string} deadFetusItem
  * @property {string} milkItem
  * @property {number} [hungerP0] ticks per fullness point in P0, when not the P1 value
+ * @property {boolean} [external] a girl of another add-on (the Jenny Mod Java Port): her own taming, no hunger or savage state of ours
  */
 
-/** PregnancySystemHelper.calculateBirthDuration / calculatePostBirthDuration, per baby. */
-const BIRTH_TICKS = { ZOMBIE: 300, CREEPER: 200, SLIME: 200, ENDER: 350 };
-const POST_BIRTH_TICKS = { ZOMBIE: 150, CREEPER: 100, SLIME: 100, ENDER: 200 };
+/** PregnancySystemHelper.calculateBirthDuration / calculatePostBirthDuration, per baby (HUMAN: the player's values). */
+const BIRTH_TICKS = { ZOMBIE: 300, CREEPER: 200, SLIME: 200, ENDER: 350, HUMAN: 250 };
+const POST_BIRTH_TICKS = { ZOMBIE: 150, CREEPER: 100, SLIME: 100, ENDER: 200, HUMAN: 150 };
 
 /** Ticks one baby takes to be born: 200 + species + 100 for monster creatures. */
 export const birthTicks = (/** @type {Family} */ family) => 200 + BIRTH_TICKS[family.species] + (family.creature === 'MONSTER' ? 100 : 0);
@@ -133,7 +136,50 @@ export const COURTERS = /** @type {Record<MobSpecies, string[]>} */ ({
   CREEPER: ['minecraft:creeper'],
   ENDER: ['minecraft:enderman'],
   SLIME: ['minecraft:slime'],
+  HUMAN: [],
 });
+
+/** The human foods of the mod and plain vanilla meals, with their nutrition (the Jenny port's girls eat like the player). */
+const HUMAN = {
+  foods: {
+    'minepreggo:candy_apple': 3,
+    'minepreggo:chili_poppers': 5,
+    'minepreggo:chocolate_bar': 3,
+    'minepreggo:cucumber': 2,
+    'minepreggo:french_fries': 4,
+    'minepreggo:hot_chicken': 8,
+    'minepreggo:lemon': 1,
+    'minepreggo:lemon_drop': 2,
+    'minepreggo:lemon_ice_cream': 3,
+    'minepreggo:lemon_ice_popsicles': 3,
+    'minepreggo:pickle': 2,
+    'minepreggo:stuffed_mushroom': 4,
+    'minepreggo:chili_pepper': 1,
+    'minecraft:bread': 5,
+    'minecraft:apple': 4,
+    'minecraft:cooked_beef': 8,
+    'minecraft:cooked_porkchop': 8,
+    'minecraft:cooked_chicken': 6,
+    'minecraft:baked_potato': 5,
+    'minecraft:cookie': 2,
+  },
+  cravings: CRAVING_ITEMS,
+  babyItem: 'minepreggo:baby_human',
+  deadFetusItem: 'minepreggo:dead_human_fetus',
+  milkItem: 'minepreggo:human_breast_milk_bottle',
+};
+
+/**
+ * The Jenny Mod Java Port's girls (merged by tools/import-jenny.mjs): human women of another add-on.
+ * Their own scenes get them pregnant (jenny/port.js); the pregnancy, belly, kicks and birth are ours.
+ * @type {Record<string, Family>}
+ */
+export const PORT_GIRL_FAMILIES = Object.fromEntries(
+  ['fapcraft:jenny', 'kum:bia', 'kum:slime_girl', 'kum:luna', 'kum:galath', 'jhallie4:allie', 'kum:manglelie', 'jhbee24:bee', 'jhkobold:kobold', 'jhelliedev:ellie'].map((id) => [
+    id,
+    /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN }),
+  ])
+);
 export const COURTING_TICKS = 60;
 export const COURTING_RANGE = 2;
 
@@ -194,6 +240,7 @@ export const FAMILIES = {
     deadFetusItem: 'minepreggo:dead_slime_fetus',
     milkItem: 'minepreggo:slime_breast_milk_bottle',
   },
+  ...PORT_GIRL_FAMILIES,
 };
 
 /** Tamed mobs: fullness points per meal are capped like Java's DataHungry (0-30, eats below 20). */

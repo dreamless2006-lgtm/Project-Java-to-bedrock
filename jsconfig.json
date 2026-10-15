@@ -15,5 +15,8 @@
   "include": [
     "packs/behavior/scripts/**/*.js",
     "tools/types/*.d.ts"
+  ],
+  "exclude": [
+    "packs/behavior/scripts/jenny_port/**"
   ]
 }

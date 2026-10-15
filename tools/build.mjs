@@ -6,7 +6,7 @@
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { zipSync } from 'fflate';
+import { strFromU8, strToU8, zipSync } from 'fflate';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PACKS = [
@@ -58,6 +58,8 @@ function referencedAssets(rpDir) {
     const inner = relative(rpDir, file).split(sep).join('/');
     if (file.endsWith('.json') && !isDefinitions(inner)) visit(JSON.parse(readFileSync(file, 'utf8')));
   }
+  // Blocks name their geometry from the behavior pack.
+  for (const file of walk(join(ROOT, 'packs/behavior/blocks'))) if (file.endsWith('.json')) visit(JSON.parse(readFileSync(file, 'utf8')));
   return refs;
 }
 
@@ -84,6 +86,24 @@ for (const pack of PACKS) {
     if (isImported(inner) && !isUsed(inner, file, used)) continue;
     entries[`${pack.name}/${inner}`] = new Uint8Array(readFileSync(file));
   }
+}
+
+// The imported Jenny Mod Java Port's definitions merge into our files the game reads once per pack
+// (tools/import-jenny.mjs writes them as "jenny_port" overlays, which are not shipped themselves).
+const OVERLAYS = [
+  ['Minepreggo_RP/sounds/sound_definitions.json', 'Minepreggo_RP/sounds/jenny_port/sound_definitions.json', (/** @type {any} */ base, /** @type {any} */ add) => Object.assign(base.sound_definitions, add.sound_definitions ?? {})],
+  ['Minepreggo_RP/sounds.json', 'Minepreggo_RP/jenny_port/sounds.json', (/** @type {any} */ base, /** @type {any} */ add) => {
+    Object.assign(((base.entity_sounds ??= {}).entities ??= {}), add.entity_sounds?.entities ?? {});
+    if (add.individual_event_sounds?.events) Object.assign(((base.individual_event_sounds ??= {}).events ??= {}), add.individual_event_sounds.events);
+  }],
+  ['Minepreggo_RP/textures/item_texture.json', 'Minepreggo_RP/textures/jenny_port/item_texture.json', (/** @type {any} */ base, /** @type {any} */ add) => Object.assign(base.texture_data, add.texture_data ?? {})],
+];
+for (const [target, overlay, merge] of OVERLAYS) {
+  if (!entries[overlay]) continue;
+  const base = JSON.parse(strFromU8(entries[target]));
+  merge(base, JSON.parse(strFromU8(entries[overlay])));
+  entries[target] = strToU8(JSON.stringify(base, null, 2) + '\n');
+  delete entries[overlay];
 }
 
 const out = join(ROOT, 'dist', `minepreggo-${version}.mcaddon`);

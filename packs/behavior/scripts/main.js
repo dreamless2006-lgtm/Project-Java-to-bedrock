@@ -15,3 +15,11 @@ import './pregnancy/attacks.js';
 import './pregnancy/commands.js';
 import './mobs/index.js';
 import './mobs/commands.js';
+import './jenny/port.js';
+import './jenny/scenes.js';
+import './jenny/bed.js';
+
+// The Jenny Mod Java Port's own scripts, merged into this pack by tools/import-jenny.mjs when its
+// packs are in vendor/jenny/ (a build without them simply has no Jenny girls).
+const PORT_SCRIPTS = './jenny_port/main.js';
+import(PORT_SCRIPTS).catch((error) => console.warn(`[minepreggo] Jenny Mod Java Port scripts not loaded: ${error}`));

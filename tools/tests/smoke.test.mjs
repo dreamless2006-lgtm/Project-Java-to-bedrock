@@ -7,10 +7,11 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { decodePng } from '../lib/png.mjs';
 import { join, relative } from 'node:path';
-import { BlockTypes, EntityDamageCause, EntityTypes, ItemStack, ItemTypes, Mob, Player, customComponents, customComponentsOf, emit, startup, system, world } from './mock-server.mjs';
+import { BlockTypes, EntityDamageCause, EntityTypes, InputPermissionCategory, ItemStack, ItemTypes, Mob, Player, customComponents, customComponentsOf, emit, startup, system, world } from './mock-server.mjs';
 import '../../packs/behavior/scripts/main.js';
 import { selfCheck } from '../../packs/behavior/scripts/world/banner.js';
 import { getRecord } from '../../packs/behavior/scripts/pregnancy/system.js';
@@ -50,6 +51,10 @@ function command(player, id, message) {
   return player.messages.slice(before).map(text).join('\n');
 }
 
+/** Our own client / behavior entity files (the imported Jenny port's sit in jenny_port/ sub-folders). */
+const entityFiles = () => readdirSync(join(RP, 'entity')).filter((f) => f.endsWith('.json'));
+const behaviorEntityFiles = () => readdirSync(join(BP, 'entities')).filter((f) => f.endsWith('.json'));
+
 const overworld = world.getDimension('minecraft:overworld');
 const player = new Player('Steve');
 world.players.push(player);
@@ -82,7 +87,7 @@ test('no pack file path is longer than the platforms allow', () => {
   assert.deepEqual(long, [], `paths over ${MAX_PATH} characters`);
   // Shipped textures are the ones the entity files reference; the import keeps those short too.
   const referenced = new Set();
-  for (const file of readdirSync(join(RP, 'entity'))) {
+  for (const file of entityFiles()) {
     const client = json(join(RP, 'entity', file))['minecraft:client_entity'].description;
     for (const texture of Object.values(client.textures ?? {})) referenced.add(`${texture}.png`);
   }
@@ -93,6 +98,7 @@ test('no pack file path is longer than the platforms allow', () => {
 test('startup registers every custom component an item or block uses', () => {
   startup();
   for (const path of files(join(BP, 'items'))) {
+    if (path.includes('jenny_port')) continue; // the Jenny port's items have their own scripts
     const item = json(join(BP, 'items', path))['minecraft:item'];
     for (const component of Object.keys(item.components).filter((k) => k.startsWith('minepreggo:'))) {
       assert.ok(customComponents.items.has(component), `${path} uses ${component}`);
@@ -105,7 +111,7 @@ test('startup registers every custom component an item or block uses', () => {
     }
   }
   assert.ok(customComponents.items.size >= 5);
-  assert.equal(customComponents.blocks.size, 1);
+  assert.deepEqual([...customComponents.blocks.keys()].sort(), ['minepreggo:crop', 'minepreggo:jenny_bed']);
 });
 
 test('joining: banner, gender form, self-check green, body properties synced', async () => {
@@ -123,7 +129,8 @@ test('joining: banner, gender form, self-check green, body properties synced', a
   system.tick(40);
   const check = player.messages.find((m) => text(m).includes('minepreggo.selfcheck"'));
   assert.ok(check, 'the self-check line is sent two seconds after joining');
-  assert.equal((text(check).match(/minepreggo\.selfcheck\.ok/g) ?? []).length, 4);
+  // mobs, items, crops, player visuals, and the Jenny port's girls when vendor/jenny/ was imported.
+  assert.equal((text(check).match(/minepreggo\.selfcheck\.ok/g) ?? []).length, existsSync(join(BP, 'entities/jenny_port')) ? 5 : 4);
   assert.doesNotMatch(text(check), /selfcheck\.fail/);
 
   // player/body.js pushed the choice to the player entity (what the resource pack renders from).
@@ -283,7 +290,7 @@ test('every entity, item and block the scripts name exists in the pack', () => {
   const named = new Set(scripts.match(/minepreggo:[a-z0-9_]+/g));
   const known = new Set([...ItemTypes.getAll(), ...BlockTypes.getAll(), ...EntityTypes.getAll()].map((t) => t.id));
   // Properties, dynamic properties, events, components, sounds and command ids are not game objects.
-  const notObjects = /^minepreggo:(phase|pose|kick|growth|gender|skin|savage|age|mob|crop|food_effects|impregnation_potion|pregnancy_acceleration|gradual_pregnancy_acceleration|breast_milk|pregnancy|female|pending|set_|on_tame|become_savage|calm_down|spawn_natural|hostile|tamed|tameable|fetal_movement_inducer|guide_given|guide$|belly$|forced|zero_gravity_belly$|metabolism_control$|eternal_pregnancy$|potion_effects$|debug|attack_impregnation|mob_courted|belly_touch|stomach_growls|pregnant_preggo_mob_death|player_|preggo_mob|loaded|selfcheck|hud|gender_)/;
+  const notObjects = /^minepreggo:(phase|pose|kick|growth|gender|skin|savage|age|mob|crop|food_effects|impregnation_potion|pregnancy_acceleration|gradual_pregnancy_acceleration|breast_milk|pregnancy|female|pending|set_|on_tame|become_savage|calm_down|spawn_natural|hostile|tamed|tameable|fetal_movement_inducer|guide_given|guide$|belly$|forced|zero_gravity_belly$|metabolism_control$|eternal_pregnancy$|potion_effects$|debug|attack_impregnation|mob_courted|belly_touch|stomach_growls|pregnant_preggo_mob_death|player_|preggo_mob|loaded|selfcheck|hud|gender_|facing|jenny_scene|bed\.|port\.)/;
   const missing = [...named].filter((id) => !notObjects.test(id) && !known.has(id) && !id.startsWith('minepreggo:baby_'));
   assert.deepEqual(missing, [], 'ids used by the scripts that no JSON defines');
 });
@@ -494,7 +501,7 @@ test('the debug command forces a kick the client renders from and reports the pr
   assert.match(command(tester, 'minepreggo:debug', ''), /you: minecraft:player: phase=\d+ belly=\\"p\d\\" pose=\\"fetal_movement\\" kick=2/);
   system.tick(200);
   assert.equal(tester.getProperty('minepreggo:pose'), 'none', 'back to the real state after 10 s');
-  for (const file of readdirSync(join(RP, 'entity'))) {
+  for (const file of entityFiles()) {
     const entity = json(join(RP, 'entity', file))['minecraft:client_entity'].description;
     const monster = /^(monster_|ender_woman)/.test(file);
     assert.ok(Object.values(entity.animations).includes(monster ? 'animation.minepreggo.fetal_push_monster' : 'animation.minepreggo.fetal_push'), `${file} plays its kind's fetal movement`);
@@ -602,7 +609,7 @@ test('the belly follows the real phase every tick, and the debug command can for
 });
 
 test('the client renders a belly even when the phase property never arrives', () => {
-  for (const file of readdirSync(join(RP, 'entity'))) {
+  for (const file of entityFiles()) {
     const pre = json(join(RP, 'entity', file))['minecraft:client_entity'].description.scripts.pre_animation;
     if (file === 'player.entity.json') {
       const i = pre.findIndex((/** @type {string} */ line) => line.startsWith('variable.mp_bp = variable.mp_bp >= 0 ?'));
@@ -865,7 +872,7 @@ test('the guide book gives every potion and the book itself', async () => {
   const reader = new Player('Giver');
   reader.location = { x: 800, y: 64, z: 800 };
   world.players.push(reader);
-  const ids = new Set(ItemTypes.getAll().map((t) => t.id));
+  const ids = new Set([...ItemTypes.getAll(), ...BlockTypes.getAll()].map((t) => t.id));
   const flat = (/** @type {any[]} */ items) => items.flatMap((i) => (i.menu ? flat(i.menu) : [i]));
   const leaves = flat(GIVE_MENU);
   assert.ok(leaves.length >= 40, `${leaves.length} items to give`);
@@ -891,7 +898,7 @@ test('the guide book gives every potion and the book itself', async () => {
 
 test("the game's own parser rules hold: float literals, flat component parameters, recipe unlocks, no rejected fields, initialized Molang variables", async () => {
   const { integerFloatLiterals, stringifyEntity } = await import('../lib/entity-json.mjs');
-  for (const file of readdirSync(join(BP, 'entities'))) {
+  for (const file of behaviorEntityFiles()) {
     const text = readFileSync(join(BP, 'entities', file), 'utf8');
     assert.deepEqual(integerFloatLiterals(text), [], `${file}: float properties written as floats`);
     assert.match(text, /"minepreggo:growth": \{[^}]*"default": 0\.0/, `${file}: growth default 0.0`);
@@ -911,7 +918,7 @@ test("the game's own parser rules hold: float literals, flat component parameter
     }
   }
   // Every recipe unlocks.
-  for (const file of readdirSync(join(BP, 'recipes'))) {
+  for (const file of readdirSync(join(BP, 'recipes')).filter((f) => f.endsWith('.json'))) {
     const doc = json(join(BP, 'recipes', file));
     const recipe = Object.entries(doc).find(([k]) => k.startsWith('minecraft:recipe_'))?.[1];
     assert.ok(Array.isArray(recipe?.unlock) && recipe.unlock.length > 0, `${file}: unlock data`);
@@ -924,7 +931,7 @@ test("the game's own parser rules hold: float literals, flat component parameter
   assert.ok(eater.getEffect('minecraft:nausea') && eater.getEffect('minecraft:hunger'), 'both effects from the string');
   world.players.pop();
   // Every variable a pre_animation keeps between frames is initialized, so the first frame never reads an unknown one.
-  for (const file of readdirSync(join(RP, 'entity'))) {
+  for (const file of entityFiles()) {
     const scripts = json(join(RP, 'entity', file))['minecraft:client_entity'].description.scripts;
     const initialized = new Set((scripts.initialize ?? []).map((/** @type {string} */ line) => line.match(/^(?:v|variable)\.([a-z_0-9]+)/)?.[1]));
     for (const line of scripts.pre_animation ?? []) for (const m of line.matchAll(/\b(?:v|variable)\.([a-z_0-9]+)\s*=(?!=)/g)) assert.ok(initialized.has(m[1]), `${file}: variable.${m[1]} initialized`);
@@ -946,7 +953,7 @@ test('kicks are bulges, not loose cubes: the push layers only move the belly, th
   }
   for (const anim of Object.values(animations)) for (const bone of Object.keys(anim.bones ?? {})) assert.doesNotMatch(bone, /_p\d$/, 'no channels for the old merged-model bones');
   // Every female and the player know how deep their kick cube rests for every belly size that has one.
-  for (const file of readdirSync(join(RP, 'entity'))) {
+  for (const file of entityFiles()) {
     const pre = json(join(RP, 'entity', file))['minecraft:client_entity'].description.scripts.pre_animation;
     const line = pre.find((/** @type {string} */ l) => l.startsWith('v.k_front_kick_z ='));
     assert.ok(line, `${file}: kick reach`);
@@ -969,9 +976,15 @@ test('no kick cube can leave the belly: every kick keyframe is clamped to the me
   const { clampKicks, kickRoom, KICK_BONES } = await import('../lib/kick-clamp.mjs');
   // The clamp wraps the mod's numbers in Molang that cannot exceed the room plus the bulge.
   const clamped = clampKicks({ bones: { left_kick: { position: { '1.0': { post: [8, 0, -4] } }, scale: { '1.0': { post: [1.6, 1, 1] } } }, belly: { scale: [1, 1, 1] } } });
-  assert.deepEqual(clamped.bones.left_kick.position['1.0'].post, ['math.clamp(8, -(v.k_left_kick_x + 1.00), (v.k_left_kick_x + 1.00))', 0, 'math.max(-(v.k_left_kick_z + 1.25), -4)']);
+  // The peak of a kick is its share of the room plus the bulge: it always surfaces, never floats.
+  assert.deepEqual(clamped.bones.left_kick.position['1.0'].post, ['((v.k_left_kick_x + 1.25) * 1.0000)', 0, '(-(v.k_left_kick_z + 1.50) * 1.0000)']);
   assert.deepEqual(clamped.bones.left_kick.scale['1.0'].post, [1.25, 1, 1]);
   assert.deepEqual(clamped.bones.belly, { scale: [1, 1, 1] }, 'the belly itself is untouched');
+  // Half-way keyframes keep the kick's own curve; a jitter (under half a unit) is only clamped.
+  const curve = clampKicks({ bones: { front_kick: { position: { '0.0': [0, 0, 0], '0.5': [0, 0, -2], '1.0': [0, 0, -4] } } } });
+  assert.deepEqual(curve.bones.front_kick.position['0.5'], [0, 0, '(-(v.k_front_kick_z + 1.50) * 0.5000)']);
+  const jitter = clampKicks({ bones: { top_kick: { position: [0.2, 0, -0.3] } } });
+  assert.deepEqual(jitter.bones.top_kick.position, ['math.clamp(0.2, -(v.k_top_kick_x + 1.25), (v.k_top_kick_x + 1.25))', 0, 'math.max(-(v.k_top_kick_z + 1.50), -0.3)']);
   // The room is measured from the belly's box, cubes rotated as the game rotates them.
   const room = kickRoom({ bones: [
     { name: 'belly', pivot: [0, 0, 0] },
@@ -991,7 +1004,7 @@ test('no kick cube can leave the belly: every kick keyframe is clamped to the me
     for (const vector of vectors) vector.forEach((component, axis) => {
       // z may stay a bare positive number: that is a move backwards, deeper into the belly.
       if (typeof component === 'number') assert.ok(component === 0 || (axis === 2 && component > 0), `${name} ${bone}: a bare outward position value escaped the clamp (${component})`);
-      else assert.match(String(component), /^math\.(clamp|max)\(/, `${name} ${bone}: ${component}`);
+      else assert.match(String(component), /^(math\.(clamp|max)\(|\(-?\(v\.k_)/, `${name} ${bone}: ${component}`);
     });
     if (vectors.some((vector) => vector.some((component) => typeof component === 'string'))) clampedChannels++;
     const scale = anim.bones[bone].scale;
@@ -1000,7 +1013,7 @@ test('no kick cube can leave the belly: every kick keyframe is clamped to the me
   }
   assert.ok(clampedChannels >= 20, `${clampedChannels} clamped kick channels`);
   // Every female and the player carry the room of every kick cube for every belly size that has it.
-  for (const file of readdirSync(join(RP, 'entity'))) {
+  for (const file of entityFiles()) {
     const pre = json(join(RP, 'entity', file))['minecraft:client_entity'].description.scripts.pre_animation;
     for (const bone of KICK_BONES) for (const axis of ['x', 'y', 'z']) {
       const line = pre.find((/** @type {string} */ l) => l.startsWith(`v.k_${bone}_${axis} =`));
@@ -1009,4 +1022,144 @@ test('no kick cube can leave the belly: every kick keyframe is clamped to the me
     }
     assert.ok(pre.some((/** @type {string} */ l) => l === 'v.kr_f = v.k_front_kick_z;'), `${file}: the navel reach is the front kick's room`);
   }
+});
+
+test('the Jenny Bed: a tamed female of yours lies down, the player is held and animated, and 50 seconds later she is pregnant', async () => {
+  const girl = new Mob('minepreggo:humanoid_slime_girl', { tamed: true });
+  girl.location = { x: 10, y: 64, z: 10 };
+  overworld.entities.push(girl);
+  const owner = new Player('Bedder');
+  owner.location = { x: 11, y: 64, z: 10 };
+  world.players.push(owner);
+  const bed = customComponents.blocks.get('minepreggo:jenny_bed');
+  assert.ok(bed, 'the bed block component is registered');
+  // Placing the bed turns it the way the player faces (the old pack's rotation values).
+  const placing = { player: { getRotation: () => ({ x: 0, y: 90 }) }, permutationToPlace: { withState: (/** @type {string} */ k, /** @type {number} */ v) => ({ state: { [k]: v } }) } };
+  bed.beforeOnPlayerPlace(placing);
+  assert.equal(placing.permutationToPlace.state['minepreggo:facing'], 4);
+  const block = { location: { x: 10, y: 64, z: 10 }, center: () => ({ x: 10.5, y: 64.5, z: 10.5 }), dimension: overworld, permutation: { getState: () => 3 } };
+  owner.formSelections = [0];
+  bed.onPlayerInteract({ block, player: owner });
+  await flush();
+  assert.ok(owner.forms.at(-1).buttons.length >= 1, 'the bed lists the female next to it');
+  assert.equal(owner.permissions.get(InputPermissionCategory.Movement), false, 'the player is held in place');
+  assert.equal(owner.animations.at(-1)?.name, 'animation.minepreggo.jenny_bed.player_scene', "the old pack's player animation plays");
+  system.tick(STEP);
+  assert.equal(girl.getProperty('minepreggo:pose'), 'incapacitated', 'she sits for the scene');
+  assert.ok(girl.teleports.length >= 1, 'she is placed on the bed');
+  system.tick(1000 + STEP);
+  const record = getMobRecord(girl);
+  assert.ok(record.data.pregnancy, 'pregnant when the scene is over');
+  assert.equal(girl.getProperty('minepreggo:phase'), 0);
+  assert.equal(owner.permissions.get(InputPermissionCategory.Movement), true, 'the player is released');
+  assert.equal(owner.animations.at(-1)?.name, 'animation.humanoid.base_pose');
+  assert.notEqual(girl.getProperty('minepreggo:pose'), 'incapacitated', 'her pose is hers again');
+  assert.ok(owner.messages.some((m) => text(m).includes('minepreggo.bed.pregnant')));
+  world.players.pop();
+  girl.isValid = false;
+  emit(world.afterEvents.entityRemove, { removedEntityId: girl.id });
+});
+
+test('the Jenny Mod Java Port girls: a scene that can get her pregnant does when it finishes, others do not, her looks never count as a pregnancy, and her stage shows her belly', () => {
+  const jenny = new Mob('fapcraft:jenny', { variant: 3 }); // her variant is her own skin, not a phase
+  jenny.location = { x: 20, y: 64, z: 20 };
+  overworld.entities.push(jenny);
+  system.tick(STEP);
+  assert.equal(getMobRecord(jenny).data.wild, null, 'her variant is not a wild pregnancy');
+  const scene = (/** @type {Mob} */ entity, /** @type {string} */ eventId) => emit(world.afterEvents.dataDrivenEntityTrigger, { entity, eventId });
+  scene(jenny, 'jhjenjava:start_blowjob');
+  scene(jenny, 'jhjenjava:finish_stage');
+  assert.equal(getMobRecord(jenny).data.pregnancy, null, 'an oral scene changes nothing');
+  scene(jenny, 'jhjenjava:start_doggy_action');
+  scene(jenny, 'jhjenjava:finish_stage');
+  assert.ok(getMobRecord(jenny).data.pregnancy, 'pregnant after her doggy scene');
+  assert.equal(jenny.getProperty('minepreggo:phase'), 0);
+  assert.ok(jenny.events.includes('minepreggo:set_phase_0'));
+  // Ellie's scene is chosen on her stage entity.
+  const ellie = new Mob('jhelliedev:ellie');
+  ellie.location = { x: 30, y: 64, z: 30 };
+  const stage = new Mob('jhelliedev:ellie_stage', { families: ['jhelliedev_stage'] });
+  stage.location = { x: 31, y: 64, z: 30 };
+  overworld.entities.push(ellie, stage);
+  scene(stage, 'jhelliedev:start_scene_missionary');
+  scene(ellie, 'jhelliedev:finish_stage');
+  assert.ok(getMobRecord(ellie).data.pregnancy, 'Ellie is pregnant after her missionary scene');
+  // Galath's threesome gets Manglelie pregnant too; her anal scene gets nobody pregnant.
+  const galath = new Mob('kum:galath');
+  galath.location = { x: 40, y: 64, z: 40 };
+  const manglelie = new Mob('kum:manglelie');
+  manglelie.location = { x: 41, y: 64, z: 40 };
+  overworld.entities.push(galath, manglelie);
+  scene(galath, 'jh:start_anal');
+  scene(galath, 'jh:finish');
+  assert.equal(getMobRecord(galath).data.pregnancy, null);
+  scene(galath, 'jh:start_threesome');
+  scene(galath, 'jh:finish');
+  assert.ok(getMobRecord(galath).data.pregnancy && getMobRecord(manglelie).data.pregnancy);
+  // A stage spawned next to a pregnant girl shows her belly size.
+  const jennyStage = new Mob('jhjenjava:jenny_stage', { families: ['jenny_stage'] });
+  jennyStage.location = { x: 21, y: 64, z: 20 };
+  overworld.entities.push(jennyStage);
+  mobs.setPhase(getMobRecord(jenny), 3);
+  emit(world.afterEvents.entitySpawn, { entity: jennyStage, cause: 'Spawned' });
+  assert.equal(jennyStage.getProperty('minepreggo:belly'), 'p3');
+  // Her own undressed state flags is_tamed: no hunger or savage state of ours.
+  jenny.tamed = true;
+  system.tick(STEP);
+  assert.equal(getMobRecord(jenny).data.fullness, 14, 'fullness untouched');
+  for (const e of [jenny, ellie, stage, galath, manglelie, jennyStage]) {
+    e.isValid = false;
+    emit(world.afterEvents.entityRemove, { removedEntityId: e.id });
+  }
+});
+
+test('the merged Jenny Mod Java Port: patched entities, bellies under every body, scripts for Script API 2.x, the house without its NPC', async () => {
+  const dir = join(BP, 'entities/jenny_port');
+  if (!existsSync(dir)) {
+    console.log('  (vendor/jenny/ not imported, skipped)');
+    return;
+  }
+  const jenny = json(join(dir, 'jenny.json'))['minecraft:entity'];
+  for (const p of ['minepreggo:phase', 'minepreggo:belly', 'minepreggo:pose', 'minepreggo:kick', 'minepreggo:growth']) assert.ok(jenny.description.properties[p], p);
+  assert.ok(jenny.components['minecraft:type_family'].family.includes('minepreggo_preggo_mob'));
+  assert.ok(jenny.events['minepreggo:set_phase_5'] && jenny.events['minepreggo:set_not_pregnant']);
+  assert.match(readFileSync(join(dir, 'jenny.json'), 'utf8'), /"default": 0\.0/, 'the float default keeps its decimal point');
+  const client = json(join(RP, 'entity/jenny_port/jenny.json'))['minecraft:client_entity'].description;
+  const bellyRcs = client.render_controllers.filter((/** @type {any} */ rc) => typeof rc === 'object' && Object.keys(rc)[0].includes('.jp_jenny_'));
+  assert.ok(bellyRcs.length >= 10, 'ten belly render controllers per body');
+  for (const rc of bellyRcs) assert.match(Object.values(rc)[0], /^v\.bp == \d( && \(.*\))?$/);
+  assert.ok(client.animations.belly_controller && client.scripts.animate.includes('belly_controller'));
+  assert.ok(client.scripts.pre_animation.some((/** @type {string} */ l) => l.startsWith('v.k_front_kick_z =')), 'kick room lines');
+  assert.ok(client.scripts.initialize.includes('variable.bp = 0.0;'));
+  const belly = json(join(RP, 'models/entity/jenny_port/minepreggo/jenny_0_belly_p7.geo.json'))['minecraft:geometry'][0];
+  const names = belly.bones.map((/** @type {any} */ b) => b.name);
+  assert.deepEqual(names.slice(0, 3), ['body', 'upperBody', 'hip'], 'the belly hangs under her own bone chain');
+  assert.equal(belly.bones.find((/** @type {any} */ b) => b.name === 'belly').parent, 'hip');
+  assert.ok(names.includes('front_kick') && names.includes('top_kick'));
+  const bellyCube = belly.bones.find((/** @type {any} */ b) => b.name === 'belly').cubes[0];
+  assert.ok(bellyCube.size[0] < 8 && bellyCube.size[0] > 4, `the belly is fitted to her torso (${bellyCube.size[0]} wide)`);
+  assert.ok(bellyCube.uv.north, 'box UVs became per-face UVs so the texels scale with the cube');
+  // Their scripts: patched for Script API 2.x and still valid JavaScript.
+  for (const f of readdirSync(join(BP, 'scripts/jenny_port'))) {
+    const source = readFileSync(join(BP, 'scripts/jenny_port', f), 'utf8');
+    assert.doesNotMatch(source, /getAllPlayers/, f);
+    assert.doesNotMatch(source, /applyKnockback\([^{]/, f);
+    const check = spawnSync(process.execPath, ['--check', join(BP, 'scripts/jenny_port', f)]);
+    assert.equal(check.status, 0, `${f}: ${check.stderr}`);
+  }
+  // The stage entities carry the belly size and render it.
+  const stage = json(join(dir, 'jenny_stage.json'))['minecraft:entity'];
+  assert.ok(stage.description.properties['minepreggo:belly']);
+  const stageClient = json(join(RP, 'entity/jenny_port/jenny_stage.json'))['minecraft:client_entity'].description;
+  assert.ok(stageClient.render_controllers.some((/** @type {any} */ rc) => typeof rc === 'object' && Object.keys(rc)[0].includes('jp_jenny_stage')));
+  // The house: blocks only, with our bed block and state.
+  const { parseNbt, get } = await import('../lib/nbt.mjs');
+  const house = readFileSync(join(BP, 'structures/minepreggo/jenny_house.mcstructure'));
+  const tree = parseNbt(new Uint8Array(house));
+  assert.equal(get(get(tree[0][1].value, 'structure').value, 'entities').value.items.length, 0, 'no entity in the house');
+  assert.ok(house.includes('minepreggo:jenny_bed') && house.includes('minepreggo:facing') && !house.includes('bridge:block_rotation'));
+  // The UI and the overlays the build merges are in place; nothing imported is tracked by git.
+  assert.ok(existsSync(join(RP, 'ui/_ui_defs.json')) && existsSync(join(RP, 'sounds/jenny_port/sound_definitions.json')) && existsSync(join(RP, 'textures/jenny_port/item_texture.json')));
+  const tracked = spawnSync('git', ['ls-files', '--', 'packs/behavior/entities/jenny_port', 'packs/resource/entity/jenny_port', 'packs/resource/ui', 'packs/behavior/structures'], { cwd: ROOT });
+  assert.equal(tracked.stdout.toString().trim(), '', 'imported Jenny files are git-ignored');
 });

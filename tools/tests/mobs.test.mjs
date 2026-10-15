@@ -159,17 +159,19 @@ test('losing all pregnancy health makes her miscarry, dropping dead fetuses', ()
 test('every family in the scripts has an entity, and every item it names exists', async () => {
   const { readdirSync, readFileSync } = await import('node:fs');
   const root = new URL('../../packs/behavior/', import.meta.url);
-  const entities = readdirSync(new URL('entities/', root)).map((f) => JSON.parse(readFileSync(new URL(`entities/${f}`, root), 'utf8'))['minecraft:entity'].description.identifier);
-  const items = new Set();
-  const walk = (/** @type {URL} */ dir) => {
+  // Our files plus the imported Jenny port's (jenny_port/ sub-folders), whose girls are families too.
+  const ids = (/** @type {URL} */ dir, /** @type {string} */ key, /** @type {Set<string>} */ out = new Set()) => {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      if (entry.isDirectory()) walk(new URL(`${entry.name}/`, dir));
-      else items.add(JSON.parse(readFileSync(new URL(entry.name, dir), 'utf8'))['minecraft:item'].description.identifier);
+      if (entry.isDirectory()) ids(new URL(`${entry.name}/`, dir), key, out);
+      else if (entry.name.endsWith('.json')) out.add(JSON.parse(readFileSync(new URL(entry.name, dir), 'utf8'))[key].description.identifier);
     }
+    return out;
   };
-  walk(new URL('items/', root));
+  const entities = ids(new URL('entities/', root), 'minecraft:entity');
+  const items = ids(new URL('items/', root), 'minecraft:item');
   for (const [id, family] of Object.entries(FAMILIES)) {
-    assert.ok(entities.includes(id), `${id} has no entity file`);
+    if (family.external && !entities.has(id)) continue; // the Jenny port is only there once vendor/jenny/ is imported
+    assert.ok(entities.has(id), `${id} has no entity file`);
     const named = [...family.tamingItems, ...Object.keys(family.foods), ...Object.keys(family.cravings), family.babyItem, family.deadFetusItem, family.milkItem];
     for (const item of named) assert.ok(item.startsWith('minecraft:') || items.has(item), `${id}: ${item} is not an item`);
   }

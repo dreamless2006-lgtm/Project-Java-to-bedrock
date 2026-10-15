@@ -24,11 +24,14 @@ const NS = 'minepreggo';
 const errors = [];
 const fail = (file, msg) => errors.push(`${relative(ROOT, file).split(sep).join('/')}: ${msg}`);
 
+// The Jenny Mod Java Port's files (merged by tools/import-jenny.mjs under jenny_port/ and ui/) are
+// another add-on's, in its own formats: the game validates them, this does not.
+const IMPORTED_DIRS = new Set(['jenny_port', 'ui']);
 function* walk(dir, ext) {
   if (!existsSync(dir)) return;
   for (const entry of readdirSync(dir)) {
     const path = join(dir, entry);
-    if (statSync(path).isDirectory()) yield* walk(path, ext);
+    if (statSync(path).isDirectory()) { if (!IMPORTED_DIRS.has(entry)) yield* walk(path, ext); }
     else if (path.endsWith(ext)) yield path;
   }
 }

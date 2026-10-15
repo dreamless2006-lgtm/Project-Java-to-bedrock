@@ -105,6 +105,14 @@
           "name": "sounds/minepreggo/pregnant_preggo_mob_death"
         }
       ]
+    },
+    "minepreggo.jenny_scene": {
+      "category": "neutral",
+      "sounds": [
+        {
+          "name": "sounds/minepreggo/jenny_bed/scene"
+        }
+      ]
     }
   }
 }

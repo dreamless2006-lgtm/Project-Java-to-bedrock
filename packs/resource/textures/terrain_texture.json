@@ -27,6 +27,9 @@
     },
     "minepreggo_cucumbers_stage3": {
       "textures": "textures/minepreggo/block/cucumbers_stage3"
+    },
+    "minepreggo_jenny_bed": {
+      "textures": "textures/minepreggo/block/jenny_bed"
     }
   }
 }

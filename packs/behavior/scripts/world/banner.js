@@ -4,6 +4,7 @@
 // registered, and the ones it rejected are named.
 import { BlockTypes, EntityTypes, ItemTypes, system, world } from '@minecraft/server';
 import { BLOCK_IDS, ENTITY_IDS, ITEM_IDS } from '../generated/ids.js';
+import { PORT_GIRL_IDS } from '../jenny/port.js';
 import { VERSION } from '../version.js';
 
 /** @typedef {{ total: number, missing: string[] }} Registry */
@@ -30,11 +31,14 @@ export function selfCheck(player) {
   } catch {
     visuals = false;
   }
+  // The Jenny Mod Java Port's girls, merged in by tools/import-jenny.mjs; a build without its packs has none and says nothing.
+  const port = compare(PORT_GIRL_IDS, (id) => EntityTypes.get(id));
   return {
     entities: compare(ENTITY_IDS, (id) => EntityTypes.get(id)),
     items: compare(ITEM_IDS, (id) => ItemTypes.get(id)),
     blocks: compare(BLOCK_IDS, (id) => BlockTypes.get(id)),
     visuals,
+    ...(port.missing.length < port.total ? { port } : {}),
   };
 }
 

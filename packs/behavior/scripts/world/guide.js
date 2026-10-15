@@ -78,6 +78,13 @@ export const CHAPTERS = [
       'Use a Potion of Impregnation on a tamed mob. Feed her when hungry or she turns savage. As her owner: feed the craved food, milk her with a glass bottle (P2+), crouch and interact with an empty hand to rub her belly (P3+). Acceleration and inducement potions work on her too. Birth happens on its own.',
   },
   {
+    title: 'Jenny mod',
+    body:
+      'The Jenny Mod Java Port girls (Jenny, Bia, Slime, Luna, Galath, Allie, Manglelie, Bee, Kobold and Ellie) are part of this add-on and of its mob system. The scenes that can get them pregnant do: Doggy for Jenny and Slime, Prone Doggy for Bia, Sitting for Luna, Cowgirl and Threesome for Galath (Manglelie too), Reverse Cowgirl for Allie, the Bee scene, Mating for Kobold, Cowgirl and Missionary for Ellie. Oral and anal scenes do not.\n\n' +
+      'The pregnancy is then the Minepreggo one: the belly grows with the phases on her dressed, undressed and scene bodies, the babies kick, and she gives birth. Every potion works on her too, and Debug tools > Nearest mob jumps her ahead.\n\n' +
+      'The Jenny Bed (creative inventory, or Give items here) is for the Minepreggo females: place it, stand one of your tamed females within 5 blocks, use the bed and choose her. A 50 second scene follows and she comes out pregnant. A small house with a bed spawns now and then in forests and plains.',
+  },
+  {
     title: 'Commands',
     body:
       'Operators can test everything with /scriptevent:\n' +
@@ -146,6 +153,7 @@ export const GIVE_MENU = [
       giver('Eternal Pregnancy', 'minepreggo:eternal_pregnancy_potion'),
     ],
   },
+  giver('Jenny Bed', 'minepreggo:jenny_bed'),
   giver('Guide book', GUIDE),
 ];
 

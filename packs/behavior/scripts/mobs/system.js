@@ -759,6 +759,12 @@ export function debugPose(/** @type {MobRecord} */ record, /** @type {string} */
 /** Dynamic property set while a debug command forces the client state. */
 const FORCED = 'minepreggo:forced';
 
+/** A Jenny Bed scene (jenny/scenes.js) owns her pose while it runs; null gives it back. */
+export function setScenePose(/** @type {MobRecord} */ record, /** @type {string | null} */ pose) {
+  record.scene = pose ? { pose } : null;
+  record.sent = {};
+}
+
 /** Ends a forced client state: the real phase comes back at once (the wild-spawn detection reads it). */
 export function clearDebug(/** @type {MobRecord} */ record) {
   record.debugUntil = 0;
@@ -786,6 +792,7 @@ function syncClient(/** @type {MobRecord} */ record) {
   const { entity, sent } = record;
   if ((record.debugUntil ?? 0) > system.currentTick) return;
   const state = clientState(record);
+  if (record.scene) state.pose = record.scene.pose;
   // The belly is rendered from this property alone, so it is kept equal to the real phase every
   // tick: mobs saved by versions that only set it through entity events never had it, and the
   // debug command overrides it for a while.
@@ -799,6 +806,7 @@ function syncClient(/** @type {MobRecord} */ record) {
 /** Whether a pain or labor keeps her from moving and fighting right now. */
 export function isIncapacitated(/** @type {MobRecord} */ record) {
   const { pregnancy: p, wild } = record.data;
+  if (record.scene) return true;
   if (wild) return wild.incapacitated;
   const pain = /** @type {(PainInstance & { incapacitating?: boolean }) | null | undefined} */ (p?.pain);
   return !!pain && (INCAPACITATING.has(pain.type) || !!pain.incapacitating);
@@ -845,7 +853,8 @@ function tickCourting(/** @type {MobRecord} */ record) {
 export function tickMob(/** @type {Entity} */ entity) {
   const record = getRecord(entity);
   const { data } = record;
-  if (!familyOf(entity)) return record;
+  const family = familyOf(entity);
+  if (!family) return record;
   updateMovement(record);
   // A debug window that ended, or one whose record was lost meanwhile (the flag outlived it).
   if (record.debugUntil ? record.debugUntil <= system.currentTick : entity.getDynamicProperty(FORCED)) clearDebug(record);
@@ -854,7 +863,8 @@ export function tickMob(/** @type {Entity} */ entity) {
   // event added a phase component group, whose variant is phase + 1. (Not while the debug command
   // forces a phase on her.)
   if (!data.pregnancy && !data.wild && !data.post && (record.debugUntil ?? 0) <= system.currentTick) {
-    const spawnedPhase = phaseProperty(entity) >= 0 ? phaseProperty(entity) : variantOf(entity) - 1;
+    // Another add-on's girl uses her variant for her own looks: only the property can mean a phase.
+    const spawnedPhase = phaseProperty(entity) >= 0 ? phaseProperty(entity) : family.external ? -1 : variantOf(entity) - 1;
     if (spawnedPhase >= 0) initWild(record, spawnedPhase);
   }
 
@@ -866,7 +876,8 @@ export function tickMob(/** @type {Entity} */ entity) {
   }
   if (!data.pregnancy && !data.wild && !data.post && !data.pending) tickCourting(record);
   if (data.wild) tickWild(record);
-  if (isTamed(entity)) tickTamed(record);
+  // (The Jenny port's girls flag is_tamed for their own undressed state: no hunger of ours for them.)
+  if (isTamed(entity) && !family.external) tickTamed(record);
   if (data.pregnancy) tickPregnancy(record);
   else if (!data.wild) tickNotPregnant(record);
 

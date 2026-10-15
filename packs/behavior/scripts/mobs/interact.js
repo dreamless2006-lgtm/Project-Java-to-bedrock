@@ -23,7 +23,7 @@ import { accelerate, accelerateGradually, calmDown, delayPregnancy, duplicateBab
 const IMPREGNATION_TICKS = 300;
 const POTION = /^minepreggo:(?:(zombie|creeper|ender|slime|villager)_)?impregnation_potion_(\d)$/;
 /** Which species potion a family accepts besides the human one (Java: the potion converts her own species only). */
-const POTION_SPECIES = { ZOMBIE: 'zombie', CREEPER: 'creeper', ENDER: 'ender', SLIME: 'slime' };
+const POTION_SPECIES = /** @type {Record<import('./families.js').MobSpecies, string>} */ ({ ZOMBIE: 'zombie', CREEPER: 'creeper', ENDER: 'ender', SLIME: 'slime', HUMAN: '' });
 const ACCELERATION = /^minepreggo:(gradual_)?pregnancy_acceleration_potion_(\d)$/;
 const INDUCER = /^minepreggo:fetal_movement_inducer_potion_(\d)$/;
 const DELAY = /^minepreggo:pregnancy_delay_potion_(\d)$/;

@@ -11,5 +11,12 @@ packs/resource/sounds/minepreggo/
 packs/resource/models/entity/minepreggo/
 packs/resource/animations/minepreggo/
 packs/resource/texts/*.lang
+# The Jenny add-ons (vendor/jenny/, merged by tools/import-jenny.mjs): the Jenny Mod Java Port under
+# jenny_port/ sub-folders plus its UI, and the older pack's house structure
+packs/behavior/structures/
+packs/behavior/**/jenny_port/
+packs/resource/**/jenny_port/
+packs/resource/jenny_port/
+packs/resource/ui/
 packs/resource/pack_icon.png
 packs/behavior/pack_icon.png

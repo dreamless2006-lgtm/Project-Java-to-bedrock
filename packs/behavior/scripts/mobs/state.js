@@ -74,6 +74,8 @@ export class MobRecord {
     this.selfHurtTick = -1;
     /** while in the future, the debug command owns the client properties */
     this.debugUntil = 0;
+    /** @type {{ pose: string } | null} while set, a Jenny Bed scene owns her pose (jenny/scenes.js) */
+    this.scene = null;
   }
 
   save() {
