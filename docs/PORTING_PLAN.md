@@ -143,6 +143,39 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   when hers is small). The client falls back to `q.variant` and to the pose when the phase
   property is unknown, and the mob system rewrites the phase property every tick (records from
   versions that only set it through entity events, wild mobs that only kept the variant).
+- ✅ **Crowning in every birth, the kobold's eggs, Actions & Stuff (0.6.0).** *Crowning.* The mod
+  draws its fetus model during a birth (FetusLayer: scaled 0.875, head first, slid out by the
+  push), which the port had not carried over. `tools/lib/crowning.mjs` builds a crowning geometry
+  per mother that copies her bones by name, pivot and rest rotation down to the bone her opening
+  hangs from (her body for the flat humanoids and the player, the jelly for the monster slime girl,
+  the belly of each size for the navel births of the ender woman, the monster creeper girl and a
+  player carrying an ender baby), with the baby under a mount, a slide and a 180-degree turn so its
+  crown leads and sits on the opening at depth 0. The mod's fetus models are converted with the
+  existing bytecode converter (cord dropped, bones renamed so her animations never reach them);
+  the Jenny girls get a small baby in her skin tone at her own rig's opening (her 'vagina' bone
+  when it sits between her legs, which fixes Luna's), turned level in her solved birth pose (Bee's
+  tilted hip). The birth progress the scripts already send (growth during the birth pose) becomes
+  an eased depth: the head crowns by 80 %, the body follows, a little drawn back between pushes
+  (the player's own sneak pushes, a three-second rhythm for mobs) and while the mod's birth pose
+  closes her legs (the crowning animation starts in the same state as her birth pose). The player
+  gets `minepreggo:baby`, the species being born, for the fetus model and texture.
+  *Kobold eggs.* Every kobold birth is an egg (`eggItem`). Late in her pregnancy her Mating scene
+  becomes an egg-laying scene (`jenny/kobold_eggs.js`, through scene hooks in `port.js`): her
+  labor comes on, her belly hardens in contractions while her partner is with her, and after he
+  pulls back (the port's own timing) an egg crowns between her legs (her crowning holds an egg) and
+  is handed to him as her animation lifts it; a second follows; any left come with his help or
+  she lays them alone. Kobold Eggs (our own art, `tools/gen/kobold-egg.mjs`) place as a clutch of
+  up to four that cracks over time, faster with a kobold brooding, and hatches her baby item.
+  *Actions & Stuff.* It is an encrypted Marketplace resource pack that replaces the player model,
+  and client entity files never merge, so its files are neither needed nor used. Two opt-in
+  settings (the guide book's Settings, `player/compat.js`): poses played with `playAnimation` on
+  the games of players who run it (ended on their client by the pose property, played again every
+  few seconds for players who came near), with the belly rub moved to the book; and a belly held in
+  the off-hand (locked, kept on death), an attachable per belly size on bones bound to her body
+  and legs that hides in first person and where our own player model (`variable.mp_native`)
+  draws the belly. Untested in game: whether Actions & Stuff keeps the vanilla bone names (the
+  poses and the attachable rely on them) and which of two player models a game picks when both
+  packs are active (the pack order decides).
 - ✅ **Labor and birth for every Jenny girl, smooth bellies and kicks, scenes for pregnant girls, their babies (0.5.0).**
   *Rotation convention.* `tools/lib/bedrock-math.mjs` is now the one place that turns bones the way
   the game does (X, then Y, then Z about the pivot; on the file's axes p' = q + Rz(-z) Ry(+y)

@@ -52,7 +52,7 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
 A world keeps the pack versions it was created with, and Bedrock keeps older imports next to the
 new one. After importing a newer `.mcaddon`, open the world's settings and, under **Behavior
 Packs** *and* **Resource Packs**, remove Minepreggo from the active packs and add it again. The
-join message shows both versions (`[Minepreggo 0.5.0, resources 0.5.0]`); while the resources
+join message shows both versions (`[Minepreggo 0.6.0, resources 0.6.0]`); while the resources
 version lags behind, the models, bellies and animations are the old ones, whatever the scripts do.
 Old versions can be deleted in Settings → Storage.
 
@@ -291,9 +291,27 @@ that leaves her pregnant: pick her on the bed and she walks over (or is placed o
 the scene is shown from a camera beside the bed, and with the port installed her sounds play along.
 The Jenny girls' bellies are smooth, round shells in each girl's own skin tone, and each girl has
 her own labor: she bends over her belly in a contraction, crouches before the birth, lies back with
-her knees up to give birth (a newborn slides out with each push), and her babies are her own items.
+her knees up to give birth (her baby's head crowns between her legs with each push), and her babies
+are her own items. The kobold lays eggs: late in her pregnancy her Mating scene becomes an
+egg-laying scene, and her eggs placed as a clutch crack and hatch into her baby.
 When she is pregnant, her babies kick and her belly tightens during scenes, hers and the Jenny Bed's.
 Crouch and use an empty hand on a pregnant female for her pregnancy menu: rub her belly, feel the
 baby, or help her give birth (tap sneak to push, the babies are born into your arms). The guide
 book's "Jenny mod" chapter has the details. Like the jar's assets, nothing of theirs is committed; the import folders
 are git-ignored.
+
+## Births and Actions & Stuff
+
+In every birth (the player's, the mod's females' and the Jenny girls') the baby's head crowns at
+the opening, comes out further with each push and slips back a little between pushes, and the
+whole baby slides out just before it is born: the mod's own fetus models for the player and the
+mod's females (navel births come out of the belly), a small baby in her skin tone for the Jenny
+girls (tools/lib/crowning.mjs; `node tools/render-crowning.mjs` renders every mother).
+
+Actions & Stuff replaces the player model, so on a game running it this pack's player body does
+not show (no two resource packs can share the player model). The guide book's Settings page has
+two opt-in switches for it: "My game runs Actions & Stuff" plays the pregnant players' poses on
+that game through the Script API (and moves the belly rub into the book, since crouching and
+looking down is its sit gesture), and "Show my belly to Actions & Stuff players" puts a pregnant
+player's belly in her off-hand, drawn on her body by any player model and hidden where this
+pack's own player model draws it already.
