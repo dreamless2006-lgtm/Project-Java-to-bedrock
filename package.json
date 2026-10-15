@@ -9,6 +9,7 @@
     "test": "node --test",
     "build": "python3 tools/build_mcaddon.py",
     "smoke": "node --import ./tests/harness/register.mjs tests/smoke/run.mjs",
-    "e2e": "node tests/e2e/body.e2e.mjs"
+    "e2e": "node tests/e2e/body.e2e.mjs",
+    "e2e:loop": "node --import ./tests/harness/register.mjs tests/e2e/loop.e2e.mjs"
   }
 }

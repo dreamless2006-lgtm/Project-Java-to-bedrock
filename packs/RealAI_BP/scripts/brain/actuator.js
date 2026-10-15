@@ -16,6 +16,7 @@ import { presetBlueprint } from "./blueprints.js";
 import { dropsOf, harvestCheck, breakTicks, materialMatcher, isOreId, bestTool } from "./harvest.js";
 import { bridge } from "./transport.js";
 import { findPath } from "./path.js";
+import { kindOf, canStand } from "./terrain.js";
 export { presetBlueprint };
 
 const SOURCE = "llm";
@@ -66,18 +67,23 @@ export function stepPlayerBody(bot, now) {
     const loc = bot.location;
     const toGoal = Math.hypot(w.goal.x - loc.x, w.goal.z - loc.z);
     if (toGoal < 0.3) { walkers.delete(bot.id); if (w.sent) bridgeSend({ t: "stop" }); return; }
-    // a path through the blocks around (replanned every few seconds, or when the way is blocked)
-    if (toGoal > 2.5 && (w.path === null && now - w.planAt > 60 || now - w.planAt > 100) && w.replans < 4) {
+    // a path through the blocks around: planned towards the goal (or, for a far goal, towards a point
+    // 24 blocks along the way), replanned when it runs out, when the way is blocked, or every few seconds
+    if (toGoal > 2.5 && (w.path === null && now - w.planAt > 20 || now - w.planAt > 100) && w.replans < 6) {
         w.planAt = now; w.replans++;
         const dim = bot.dimension;
-        const r = findPath((x, y, z) => { const b = blockAt(dim, x, y, z); return b ? b.typeId : null; }, loc, w.goal, { allowWater: w.enterWater, maxNodes: 900 });
-        if (r.ok && r.path.length) { w.path = r.path; w.pathIdx = 0; w.blocked = 0; w.slide = 0; }
+        const far = toGoal > 28, k = 24 / toGoal;
+        const sub = far ? { x: loc.x + (w.goal.x - loc.x) * k, y: loc.y, z: loc.z + (w.goal.z - loc.z) * k } : w.goal;
+        const r = findPath((x, y, z) => { const b = blockAt(dim, x, y, z); return b ? b.typeId : null; }, loc, sub, { allowWater: w.enterWater, maxNodes: 1200, ignoreGoalY: far });
+        if (r.ok && r.path.length) { w.path = r.path; w.pathIdx = 0; w.blocked = 0; w.slide = 0; w.partial = !!r.partial; }
         else w.path = null;
     }
     let target = w.goal;
+    let hintJump = false;
     if (w.path) {
         while (w.pathIdx < w.path.length && Math.hypot(w.path[w.pathIdx].x - loc.x, w.path[w.pathIdx].z - loc.z) < 0.45 && Math.abs(w.path[w.pathIdx].y - loc.y) < 1.1) w.pathIdx++;
-        if (w.pathIdx >= w.path.length) w.path = null; else target = w.path[w.pathIdx];
+        if (w.pathIdx >= w.path.length) { w.path = null; w.planAt = -1000; w.replans = 0; }   // segment done: plan the next one at once
+        else { target = w.path[w.pathIdx]; hintJump = !!target.jump && Math.hypot(target.x - loc.x, target.z - loc.z) < 1.6; }
     }
     w.target = target;
     const dx = target.x - loc.x, dz = target.z - loc.z;
@@ -106,7 +112,7 @@ export function stepPlayerBody(bot, now) {
         if (now - (w.sentAt || -100) >= 2 || Math.abs(move.y - (w.sentY ?? move.y)) > 0.01) {
             const ahead = Math.min(1.5, flat);
             const px = loc.x + (move.x - loc.x) / step * ahead, pz = loc.z + (move.z - loc.z) / step * ahead;
-            bridgeSend({ t: "walk", x: +px.toFixed(2), y: +move.y.toFixed(2), z: +pz.toFixed(2), mode: w.mode === "walk" ? "walk" : "sprint", jump: move.y > loc.y + 0.5 ? 1 : 0, fx: +loc.x.toFixed(2), fy: +loc.y.toFixed(2), fz: +loc.z.toFixed(2) });
+            bridgeSend({ t: "walk", x: +px.toFixed(2), y: +move.y.toFixed(2), z: +pz.toFixed(2), mode: w.mode === "walk" ? "walk" : "sprint", jump: (move.y > loc.y + 0.5 || hintJump) ? 1 : 0, fx: +loc.x.toFixed(2), fy: +loc.y.toFixed(2), fz: +loc.z.toFixed(2) });
             w.sentAt = now; w.sentY = move.y; w.sent = true;
         }
         return;
@@ -115,17 +121,17 @@ export function stepPlayerBody(bot, now) {
     catch (e) { try { bot.teleport(move); } catch (e2) { /* ignore */ } }
 }
 // The height the feet can stand at in column (x, z) within a step of the current height; null when the way is blocked.
+// What counts as open ground or a wall comes from terrain.js, shared with the pathfinder: a snow layer,
+// carpet or flower is not a wall, a fence is.
 function footing(dim, x, y, z, enterWater) {
-    try {
-        const fx = Math.floor(x), fz = Math.floor(z), feet = Math.floor(y);
-        for (const fy of [feet, feet + 1, feet - 1, feet - 2, feet - 3]) {
-            const below = dim.getBlock({ x: fx, y: fy - 1, z: fz }), at = dim.getBlock({ x: fx, y: fy, z: fz }), head = dim.getBlock({ x: fx, y: fy + 1, z: fz });
-            if (!below || !at || !head) continue;
-            if (/lava/.test(below.typeId) || /lava/.test(at.typeId)) return null;
-            const ground = solid(below) || (enterWater && /water/.test(below.typeId));
-            if (ground && !solid(at) && !solid(head)) return fy;
-        }
-    } catch (e) { return y; }   // unloaded chunk: keep the height
+    const idAt = (bx, by, bz) => { try { const b = dim.getBlock({ x: bx, y: by, z: bz }); return b ? b.typeId : null; } catch (e) { return null; } };
+    const fx = Math.floor(x), fz = Math.floor(z), feet = Math.floor(y);
+    for (const fy of [feet, feet + 1, feet - 1, feet - 2, feet - 3]) {
+        const here = kindOf(idAt(fx, fy, fz)), under = kindOf(idAt(fx, fy - 1, fz));
+        if (here === "lava" || under === "lava") return null;
+        const ok = canStand(idAt, fx, fy, fz, enterWater);
+        if (ok === true) return fy;
+    }
     return null;
 }
 export function walkerBlocked(bot) { const w = walkers.get(bot.id); return w ? (w.blocked || 0) : 0; }

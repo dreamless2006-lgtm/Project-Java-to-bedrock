@@ -43,6 +43,11 @@ export async function startServer({ port = 19138 } = {}) {
         last: (name) => [...events].reverse().find(e => e.e === "pos" && e.name === name) || null,
         /** Latest server-side position of a player. */
         pos: (name) => { const e = server.last(name); return e ? { x: e.x, y: e.y, z: e.z, yaw: e.yaw, pitch: e.pitch, health: e.health } : null; },
+        /** The newest of the per-input "move" events (every 50 ms while walking) or the periodic position report. */
+        now: (name) => {
+            const m = [...events].reverse().find(e => (e.e === "move" || e.e === "pos" || e.e === "teleport") && e.name === name);
+            return m ? { x: m.x, y: m.y, z: m.z, yaw: m.yaw, pitch: m.pitch } : null;
+        },
         stop: () => { try { child.kill("SIGKILL"); } catch (e) { /* ignore */ } },
     };
     await server.waitFor(e => e.e === "ready", 20000, "the Dragonfly server to start");

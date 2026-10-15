@@ -37,7 +37,7 @@ test("steps up one block (a jump) and down a drop, but not off a cliff", () => {
     assert.ok(r.ok && last(r).y === 64, "drops back down");
     const cliff = makeWorld();
     for (let x = 5; x <= 20; x++) for (let z = -20; z <= 20; z++) for (let y = 58; y <= 63; y++) cliff.set(x, y, z, "minecraft:air");   // a six-block hole beyond x = 5
-    r = findPath(cliff.at, { x: 0.5, y: 64, z: 0.5 }, { x: 10.5, y: 58, z: 0.5 }, { maxNodes: 600 });
+    r = findPath(cliff.at, { x: 0.5, y: 64, z: 0.5 }, { x: 10.5, y: 58, z: 0.5 }, { maxNodes: 600, allowPartial: false });
     assert.ok(!r.ok, "no six-block drop");
 });
 
@@ -58,9 +58,9 @@ test("never through lava, over water only when allowed", () => {
 test("a huge hill is reported rather than circled, and unloaded chunks stop the search", () => {
     const w = makeWorld();
     for (let z = -40; z <= 40; z++) for (let y = 64; y <= 66; y++) w.set(5, y, z, "minecraft:stone");
-    const r = findPath(w.at, { x: 0.5, y: 64, z: 0.5 }, { x: 10.5, y: 64, z: 0.5 }, { maxNodes: 800 });
+    const r = findPath(w.at, { x: 0.5, y: 64, z: 0.5 }, { x: 10.5, y: 64, z: 0.5 }, { maxNodes: 800, allowPartial: false });
     assert.ok(!r.ok && /budget|too far|no way/.test(r.reason), r.reason);
     assert.ok(r.nodes <= 800);
-    const unloaded = findPath((x, y, z) => (x > 3 ? null : w.at(x, y, z)), { x: 0.5, y: 64, z: 0.5 }, { x: 10.5, y: 64, z: 0.5 }, { maxNodes: 400 });
+    const unloaded = findPath((x, y, z) => (x > 3 ? null : w.at(x, y, z)), { x: 0.5, y: 64, z: 0.5 }, { x: 10.5, y: 64, z: 0.5 }, { maxNodes: 400, allowPartial: false });
     assert.ok(!unloaded.ok);
 });

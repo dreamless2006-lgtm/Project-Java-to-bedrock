@@ -6,15 +6,12 @@
 //   blockAt(x, y, z) returns the block's typeId, or null when the chunk is not loaded.
 //   start/goal are feet positions; the path is a list of feet positions at cell centres.
 
-const AIRLIKE = /^minecraft:(air|cave_air|void_air|tallgrass|short_grass|fern|large_fern|double_plant|snow_layer|torch|.*_torch|redstone_torch|vine|.*_vines|.*_sapling|.*_flower|dandelion|poppy|wither_rose|seagrass|kelp|lily_pad|sweet_berry_bush|.*_carpet|carpet|rail|.*_rail|lever|.*_button|.*_pressure_plate|tripwire|string|web|cobweb|.*_sign|.*_banner|ladder|scaffolding|light_block|structure_void|dead_bush|.*_mushroom|bamboo_sapling|moss_carpet|pink_petals|hanging_roots|glow_lichen|sculk_vein|nether_sprouts|.*_roots|cave_vines.*|spore_blossom|small_dripleaf|big_dripleaf|azalea|flowering_azalea|.*_coral_fan|.*_coral|sea_pickle|frogspawn|.*_candle)$/;
-const WATER = /^minecraft:(water|flowing_water)$/;
-const LAVA = /^minecraft:(lava|flowing_lava)$/;
-const HARMFUL = /^minecraft:(cactus|magma|sweet_berry_bush|wither_rose|fire|soul_fire|campfire|soul_campfire|powder_snow|pointed_dripstone)$/;
+import { kindOf, isOpen, isGround, canStand, nearDanger } from "./terrain.js";
 
-export const PATH_DEFAULTS = { maxNodes: 1200, maxDrop: 3, allowWater: true, goalRadius: 1.0, maxDetour: 2.5, detourSlack: 6 };
+export const PATH_DEFAULTS = { maxNodes: 1200, maxDrop: 3, allowWater: true, goalRadius: 1.0, maxDetour: 2.5, detourSlack: 6, ignoreGoalY: false, allowPartial: true, minProgress: 3 };
 
-export function isPassable(id, allowWater) { return !!id && (AIRLIKE.test(id) || (allowWater && WATER.test(id))); }
-export function isSolidId(id) { return !!id && !AIRLIKE.test(id) && !WATER.test(id) && !LAVA.test(id); }
+export function isPassable(id, allowWater) { return isOpen(kindOf(id), allowWater); }
+export function isSolidId(id) { return isGround(kindOf(id), false); }
 
 // A tiny binary heap keyed on f.
 class Heap {
@@ -30,17 +27,9 @@ export function findPath(blockAt, start, goal, opts = {}) {
     const o = { ...PATH_DEFAULTS, ...opts };
     const cache = new Map();
     const at = (x, y, z) => { const k = x + "," + y + "," + z; let v = cache.get(k); if (v === undefined) { v = blockAt(x, y, z); if (v === undefined) v = null; cache.set(k, v); } return v; };
-    const passable = (x, y, z) => { const id = at(x, y, z); return id !== null && isPassable(id, o.allowWater); };
-    const ground = (x, y, z) => { const id = at(x, y, z); return id !== null && (isSolidId(id) || (o.allowWater && WATER.test(id))); };
-    const dangerous = (x, y, z) => { const id = at(x, y, z); return !!id && (LAVA.test(id) || HARMFUL.test(id)); };
+    const passable = (x, y, z) => { const k = kindOf(at(x, y, z)); return k !== null && isOpen(k, o.allowWater); };
     // can a body stand with its feet in (x, y, z)?
-    const standable = (x, y, z) => {
-        if (!passable(x, y, z) || !passable(x, y + 1, z)) return false;
-        if (!ground(x, y - 1, z)) return false;
-        if (dangerous(x, y - 1, z) || dangerous(x, y, z) || dangerous(x, y + 1, z)) return false;
-        for (const [dx, dz] of DIRS.slice(0, 4)) { if (dangerous(x + dx, y, z + dz) || dangerous(x + dx, y - 1, z + dz)) return false; }
-        return true;
-    };
+    const standable = (x, y, z) => canStand(at, x, y, z, o.allowWater) === true && !nearDanger(at, x, y, z);
     const sx = Math.floor(start.x), sy = Math.floor(start.y), sz = Math.floor(start.z);
     const gx = Math.floor(goal.x), gy = Math.floor(goal.y), gz = Math.floor(goal.z);
     const straight = Math.hypot(gx - sx, gz - sz);
@@ -58,7 +47,7 @@ export function findPath(blockAt, start, goal, opts = {}) {
         nodes++;
         const hn = h(n.x, n.y, n.z);
         if (hn < closestH) { closest = n; closestH = hn; }
-        if (Math.hypot(gx - n.x, gz - n.z) <= o.goalRadius && Math.abs(gy - n.y) <= 2) { found = n; break; }
+        if (Math.hypot(gx - n.x, gz - n.z) <= o.goalRadius && (o.ignoreGoalY || Math.abs(gy - n.y) <= 2)) { found = n; break; }
         if (nodes >= o.maxNodes) break;
         for (const [dx, dz] of DIRS) {
             const nx = n.x + dx, nz = n.z + dz;
@@ -70,7 +59,7 @@ export function findPath(blockAt, start, goal, opts = {}) {
             else if (standable(nx, n.y + 1, nz) && passable(n.x, n.y + 2, n.z)) { ny = n.y + 1; extra = 0.8; }
             else { for (let d = 1; d <= o.maxDrop; d++) { if (!passable(nx, n.y - d + 1, nz)) break; if (standable(nx, n.y - d, nz)) { ny = n.y - d; extra = 0.2 * d; break; } } }
             if (ny === null) continue;
-            const stepCost = (diag ? 1.4142 : 1) + extra + (WATER.test(at(nx, ny, nz) || "") ? 1 : 0);
+            const stepCost = (diag ? 1.4142 : 1) + extra + (kindOf(at(nx, ny, nz)) === "water" ? 1 : 0);
             const g = n.g + stepCost;
             const k = key(nx, ny, nz);
             if (g >= (best.get(k) ?? Infinity)) continue;
@@ -80,17 +69,25 @@ export function findPath(blockAt, start, goal, opts = {}) {
             open.push(m);
         }
     }
-    if (!found) return { ok: false, reason: nodes >= o.maxNodes ? "search budget spent" : "no way through", nodes, closest: { x: closest.x + 0.5, y: closest.y, z: closest.z + 0.5 } };
+    let partial = false;
+    if (!found) {
+        // no way all the way: head for the reachable cell that gets closest, if that is real progress
+        const gained = Math.hypot(gx - sx, gz - sz) - Math.hypot(gx - closest.x, gz - closest.z);
+        if (!o.allowPartial || gained < o.minProgress) return { ok: false, reason: nodes >= o.maxNodes ? "search budget spent" : "no way through", nodes, closest: { x: closest.x + 0.5, y: closest.y, z: closest.z + 0.5 } };
+        found = closest; partial = true;
+    }
     const cells = [];
     for (let n = found; n; n = parent.get(n.k)) cells.push(n);
     cells.reverse();
-    if (found.g > o.maxDetour * straight + o.detourSlack) return { ok: false, reason: "too far around", nodes, length: found.g };
-    const path = smooth(cells, standable).map(c => ({ x: c.x + 0.5, y: c.y, z: c.z + 0.5 }));
-    return { ok: true, path, nodes, length: found.g };
+    if (!partial && found.g > o.maxDetour * straight + o.detourSlack) return { ok: false, reason: "too far around", nodes, length: found.g };
+    const path = smooth(cells, standable, passable).map(c => ({ x: c.x + 0.5, y: c.y, z: c.z + 0.5 }));
+    let prevY = sy;
+    for (const c of path) { c.jump = c.y > prevY; prevY = c.y; }
+    return { ok: true, path, nodes, length: found.g, partial };
 }
 
 // Drop waypoints that a straight walk at the same height would pass through anyway.
-function smooth(cells, standable) {
+function smooth(cells, standable, passable) {
     if (cells.length <= 2) return cells.slice(1);
     const out = [];
     let i = 0;
@@ -98,7 +95,7 @@ function smooth(cells, standable) {
         let j = Math.min(cells.length - 1, i + 8);
         for (; j > i + 1; j--) {
             if (cells[j].y !== cells[i].y) continue;
-            if (clearLine(cells[i], cells[j], standable)) break;
+            if (clearLine(cells[i], cells[j], standable, passable)) break;
         }
         out.push(cells[j]);
         i = j;
@@ -106,12 +103,19 @@ function smooth(cells, standable) {
     return out;
 }
 
-function clearLine(a, b, standable) {
+// A body is 0.6 wide: every sample along the line must have room for that, so a shortcut never
+// clips the corner of a wall (the server would push the body back).
+const HALF_WIDTH = 0.35;
+function clearLine(a, b, standable, passable) {
     const dx = b.x - a.x, dz = b.z - a.z;
-    const n = Math.max(Math.abs(dx), Math.abs(dz)) * 2;
+    const n = Math.max(Math.abs(dx), Math.abs(dz)) * 4;
     for (let s = 1; s < n; s++) {
-        const x = Math.floor(a.x + 0.5 + dx * s / n), z = Math.floor(a.z + 0.5 + dz * s / n);
-        if (!standable(x, a.y, z)) return false;
+        const px = a.x + 0.5 + dx * s / n, pz = a.z + 0.5 + dz * s / n;
+        if (!standable(Math.floor(px), a.y, Math.floor(pz))) return false;
+        for (const [ox, oz] of [[-HALF_WIDTH, -HALF_WIDTH], [HALF_WIDTH, -HALF_WIDTH], [-HALF_WIDTH, HALF_WIDTH], [HALF_WIDTH, HALF_WIDTH]]) {
+            const cx = Math.floor(px + ox), cz = Math.floor(pz + oz);
+            if (!passable(cx, a.y, cz) || !passable(cx, a.y + 1, cz)) return false;
+        }
     }
     return true;
 }
