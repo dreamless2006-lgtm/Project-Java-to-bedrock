@@ -7,7 +7,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { writeEntityJson } from './lib/entity-json.mjs';
-import { BELLY_PROPERTY, MOD, PHASES, bellyController, bellyIndex, initializers, kickRoomLines } from './lib/belly-render.mjs';
+import { BELLY_ANIMATIONS, BELLY_PROPERTY, MOD, PHASES, bellyController, bellyIndex, initializers, kickRoomLines } from './lib/belly-render.mjs';
 
 const ROOT = new URL('../', import.meta.url).pathname;
 const RP = join(ROOT, 'packs/resource');
@@ -108,11 +108,12 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
     d.animations.navel_birth = `animation.${MOD}.navel_birth${birth?.bones?.front_kick ? '_light' : ''}`;
   }
   d.animations.belly_controller = `controller.animation.${MOD}.${navel ? 'belly_navel' : 'belly'}`;
+  for (const [name, id] of Object.entries(BELLY_ANIMATIONS)) d.animations[name] ??= id;
   const animate = d.scripts.animate.filter((/** @type {string | Record<string, string>} */ a) => !(typeof a === 'object' && BELLY_ANIMATE.test(Object.keys(a)[0])) && a !== 'belly_controller');
   const pain = animate.indexOf('pain_controller');
   animate.splice(pain < 0 ? animate.length : pain + 1, 0, 'belly_controller');
   d.scripts.animate = animate;
-  for (const name of ['belly_low', 'belly_medium', 'belly_high', 'belly_growth', 'fetal_push', 'birth_push', 'belly_hidden', ...PHASES.filter((p) => p >= 3).flatMap((p) => [`fetal_p${p}_i`, `fetal_p${p}_ii`, `fetal_p${p}_iii`])]) {
+  for (const name of ['belly_low', 'belly_medium', 'belly_high', 'belly_growth', 'fetal_push', 'birth_push', 'belly_hidden', 'kick_i', 'kick_ii', 'kick_iii', ...PHASES.filter((p) => p >= 3).flatMap((p) => [`fetal_p${p}_i`, `fetal_p${p}_ii`, `fetal_p${p}_iii`])]) {
     if (!d.animations[name]) throw new Error(`${family}: the belly controller needs animation "${name}"`);
   }
   // Every Molang variable the pre_animation keeps between frames starts at 0, or the game logs
@@ -153,6 +154,14 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
     d.textures[`minepreggo_alex_p${p}_extra`] = `textures/${MOD}/entity/player/predefined/alex/alex_p${p}_extra`;
   }
   delete d.textures.minepreggo_alex_extra_all;
+  // The port's kicks: the kick cubes pulse to just beyond the skin while she is kicking, by strength.
+  for (const [n, strength] of [['i', 0], ['ii', 1], ['iii', 2]]) {
+    d.animations[`minepreggo_kick_${n}`] = `animation.${MOD}.kick_${n}`;
+    const entry = { [`minepreggo_kick_${n}`]: `variable.mp_pregnant && variable.kicking && variable.mp_phase >= 3 && variable.mp_kick == ${strength}` };
+    const at = d.scripts.animate.findIndex((/** @type {string | Record<string, string>} */ a) => typeof a === 'object' && `minepreggo_kick_${n}` in a);
+    if (at >= 0) d.scripts.animate[at] = entry;
+    else d.scripts.animate.push(entry);
+  }
   const belly = '((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant';
   d.render_controllers = d.render_controllers.filter((/** @type {string | Record<string, string>} */ rc) => typeof rc === 'string' || !/player_belly_(custom|predefined)/.test(Object.keys(rc)[0]));
   for (const p of PHASES) {

@@ -967,6 +967,28 @@
             "target": "self"
           }
         }
+      },
+      "minepreggo:go_to_bed": {
+        "minecraft:behavior.move_to_block": {
+          "priority": 1,
+          "tick_interval": 1,
+          "start_chance": 1,
+          "search_range": 16,
+          "search_height": 3,
+          "goal_radius": 1.5,
+          "stay_duration": 0,
+          "speed_multiplier": 1.1,
+          "target_selection_method": "nearest",
+          "target_blocks": [
+            "minepreggo:jenny_bed"
+          ],
+          "on_reach": [
+            {
+              "event": "minepreggo:bed_reached",
+              "target": "self"
+            }
+          ]
+        }
       }
     },
     "components": {
@@ -2777,6 +2799,27 @@
         "remove": {
           "component_groups": [
             "minepreggo:tameable"
+          ]
+        }
+      },
+      "minepreggo:go_to_bed": {
+        "add": {
+          "component_groups": [
+            "minepreggo:go_to_bed"
+          ]
+        }
+      },
+      "minepreggo:bed_reached": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:go_to_bed"
+          ]
+        }
+      },
+      "minepreggo:leave_bed": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:go_to_bed"
           ]
         }
       }

@@ -313,7 +313,10 @@
         "belly_hidden": "animation.minepreggo.belly_hidden",
         "fetal_push": "animation.minepreggo.fetal_push_monster",
         "birth_push": "animation.minepreggo.birth_push_monster",
-        "belly_controller": "controller.animation.minepreggo.belly"
+        "belly_controller": "controller.animation.minepreggo.belly",
+        "kick_i": "animation.minepreggo.kick_i",
+        "kick_ii": "animation.minepreggo.kick_ii",
+        "kick_iii": "animation.minepreggo.kick_iii"
       },
       "sound_effects": {
         "jump": "mob.slime.jump",

@@ -143,6 +143,30 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   when hers is small). The client falls back to `q.variant` and to the pose when the phase
   property is unknown, and the mob system rewrites the phase property every tick (records from
   versions that only set it through entity events, wild mobs that only kept the variant).
+- ✅ **Kicks that show, round bellies in her own skin, the walk to the bed (0.4.1).** Kicks: the
+  mod's keyframed kicks are long loops with sparse keyframes, and a controller state starts all of
+  its animations once on entry, so between the first beat and the next state change the kick cubes
+  sat at rest and nothing showed, whatever the clamp did. `animation.minepreggo.kick_i/ii/iii`
+  (`preggo_mob.animation.json`) are expression-only animations with no keyframes to restart: each
+  kick cube of the strength (two, three or five) is pushed out by its measured room plus a bulge
+  (1.5 to 2.0 units) on a sharp sine pulse of the entity's own clock
+  (`math.pow(math.max(0, math.sin(q.life_time * f + phi)), 8)`) and grows as it pushes, so from P3
+  every kick surfaces several times a second next to the mod's keyframed kick, on every female,
+  every Jenny girl (through the shared belly animation list) and the player. Bellies of the Jenny
+  girls: the fitted mod belly (a box with turned slabs, drawn with the player's skin) is replaced by
+  a stepped half-ellipsoid of straight cubes (eight rows, seven angle steps; `roundBelly` in
+  `tools/lib/belly-fit.mjs`) filling the same waist box, textured face by face from a 64x64 gradient
+  in the girl's own skin tone (`tools/lib/belly-skin.mjs`: the median colour of the lower front of
+  her head, else her torso; radial shading, a highlight, a navel) that is bound as
+  `Texture.minepreggo_belly` on all of her belly render controllers; her kick cubes wear the middle
+  of that gradient. The bed scene borrows the fapcraft Jenny's doggy-scene flow: a female chosen on
+  the bed who is not standing next to it walks there on her own (`minepreggo:go_to_bed` component
+  group, `minecraft:behavior.move_to_block` on the bed block whose `on_reach` fires
+  `minepreggo:bed_reached`; one who never arrives is placed on the bed after 20 s), the scene is
+  watched from a free camera beside the bed (eased in, held, cleared when the scene ends; her
+  observer entity was not reused because it needs the player invisible and in creative) and, when
+  the port is installed, her moans, breathing and the bed rustle (the port's own sounds) play on
+  cue; without the port the older pack's scene sound plays as before.
 - ✅ **The Jenny add-ons merged in (0.4.0).** `vendor/jenny/` (git-ignored) takes the Jenny Mod
   Java Port `.mcaddon` and the older Jenny `.mcpack` pair; `tools/import-jenny.mjs` (run by
   `npm run import`) merges them into these two packs. The port's content goes under `jenny_port/`

@@ -204,6 +204,15 @@
               "fetal_p3_iii": "v.kicking && v.kick == 2"
             },
             {
+              "kick_i": "v.kicking && v.kick == 0"
+            },
+            {
+              "kick_ii": "v.kicking && v.kick == 1"
+            },
+            {
+              "kick_iii": "v.kicking && v.kick == 2"
+            },
+            {
               "fetal_push": "v.kicking"
             },
             {
@@ -261,6 +270,15 @@
             },
             {
               "fetal_p4_iii": "v.kicking && v.kick == 2"
+            },
+            {
+              "kick_i": "v.kicking && v.kick == 0"
+            },
+            {
+              "kick_ii": "v.kicking && v.kick == 1"
+            },
+            {
+              "kick_iii": "v.kicking && v.kick == 2"
             },
             {
               "fetal_push": "v.kicking"
@@ -322,6 +340,15 @@
               "fetal_p5_iii": "v.kicking && v.kick == 2"
             },
             {
+              "kick_i": "v.kicking && v.kick == 0"
+            },
+            {
+              "kick_ii": "v.kicking && v.kick == 1"
+            },
+            {
+              "kick_iii": "v.kicking && v.kick == 2"
+            },
+            {
               "fetal_push": "v.kicking"
             },
             {
@@ -379,6 +406,15 @@
             },
             {
               "fetal_p6_iii": "v.kicking && v.kick == 2"
+            },
+            {
+              "kick_i": "v.kicking && v.kick == 0"
+            },
+            {
+              "kick_ii": "v.kicking && v.kick == 1"
+            },
+            {
+              "kick_iii": "v.kicking && v.kick == 2"
             },
             {
               "fetal_push": "v.kicking"
@@ -440,6 +476,15 @@
               "fetal_p7_iii": "v.kicking && v.kick == 2"
             },
             {
+              "kick_i": "v.kicking && v.kick == 0"
+            },
+            {
+              "kick_ii": "v.kicking && v.kick == 1"
+            },
+            {
+              "kick_iii": "v.kicking && v.kick == 2"
+            },
+            {
               "fetal_push": "v.kicking"
             },
             {
@@ -499,6 +544,15 @@
               "fetal_p8_iii": "v.kicking && v.kick == 2"
             },
             {
+              "kick_i": "v.kicking && v.kick == 0"
+            },
+            {
+              "kick_ii": "v.kicking && v.kick == 1"
+            },
+            {
+              "kick_iii": "v.kicking && v.kick == 2"
+            },
+            {
               "fetal_push": "v.kicking"
             },
             {
@@ -556,6 +610,15 @@
             },
             {
               "fetal_p9_iii": "v.kicking && v.kick == 2"
+            },
+            {
+              "kick_i": "v.kicking && v.kick == 0"
+            },
+            {
+              "kick_ii": "v.kicking && v.kick == 1"
+            },
+            {
+              "kick_iii": "v.kicking && v.kick == 2"
             },
             {
               "fetal_push": "v.kicking"
@@ -824,6 +887,15 @@
               "fetal_p3_iii": "v.kicking && v.kick == 2"
             },
             {
+              "kick_i": "v.kicking && v.kick == 0"
+            },
+            {
+              "kick_ii": "v.kicking && v.kick == 1"
+            },
+            {
+              "kick_iii": "v.kicking && v.kick == 2"
+            },
+            {
               "fetal_push": "v.kicking"
             },
             {
@@ -887,6 +959,15 @@
             },
             {
               "fetal_p4_iii": "v.kicking && v.kick == 2"
+            },
+            {
+              "kick_i": "v.kicking && v.kick == 0"
+            },
+            {
+              "kick_ii": "v.kicking && v.kick == 1"
+            },
+            {
+              "kick_iii": "v.kicking && v.kick == 2"
             },
             {
               "fetal_push": "v.kicking"
@@ -954,6 +1035,15 @@
               "fetal_p5_iii": "v.kicking && v.kick == 2"
             },
             {
+              "kick_i": "v.kicking && v.kick == 0"
+            },
+            {
+              "kick_ii": "v.kicking && v.kick == 1"
+            },
+            {
+              "kick_iii": "v.kicking && v.kick == 2"
+            },
+            {
               "fetal_push": "v.kicking"
             },
             {
@@ -1017,6 +1107,15 @@
             },
             {
               "fetal_p6_iii": "v.kicking && v.kick == 2"
+            },
+            {
+              "kick_i": "v.kicking && v.kick == 0"
+            },
+            {
+              "kick_ii": "v.kicking && v.kick == 1"
+            },
+            {
+              "kick_iii": "v.kicking && v.kick == 2"
             },
             {
               "fetal_push": "v.kicking"
@@ -1084,6 +1183,15 @@
               "fetal_p7_iii": "v.kicking && v.kick == 2"
             },
             {
+              "kick_i": "v.kicking && v.kick == 0"
+            },
+            {
+              "kick_ii": "v.kicking && v.kick == 1"
+            },
+            {
+              "kick_iii": "v.kicking && v.kick == 2"
+            },
+            {
               "fetal_push": "v.kicking"
             },
             {
@@ -1149,6 +1257,15 @@
               "fetal_p8_iii": "v.kicking && v.kick == 2"
             },
             {
+              "kick_i": "v.kicking && v.kick == 0"
+            },
+            {
+              "kick_ii": "v.kicking && v.kick == 1"
+            },
+            {
+              "kick_iii": "v.kicking && v.kick == 2"
+            },
+            {
               "fetal_push": "v.kicking"
             },
             {
@@ -1212,6 +1329,15 @@
             },
             {
               "fetal_p9_iii": "v.kicking && v.kick == 2"
+            },
+            {
+              "kick_i": "v.kicking && v.kick == 0"
+            },
+            {
+              "kick_ii": "v.kicking && v.kick == 1"
+            },
+            {
+              "kick_iii": "v.kicking && v.kick == 2"
             },
             {
               "fetal_push": "v.kicking"

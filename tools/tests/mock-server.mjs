@@ -105,6 +105,7 @@ export const EquipmentSlot = { Mainhand: 'Mainhand', Offhand: 'Offhand', Chest: 
 export const GameMode = { Survival: 'Survival', Creative: 'Creative', Adventure: 'Adventure', Spectator: 'Spectator' };
 export const InputButton = { Jump: 'Jump', Sneak: 'Sneak' };
 export const InputPermissionCategory = { Camera: 1, Movement: 2, LateralMovement: 4, Sneak: 5, Jump: 6, Mount: 7, Dismount: 8, MoveForward: 9, MoveBackward: 10, MoveLeft: 11, MoveRight: 12 };
+export const EasingType = { InOutSine: 'InOutSine', Linear: 'Linear', InOutQuad: 'InOutQuad' };
 export const ButtonState = { Pressed: 'Pressed', Released: 'Released' };
 
 const ITEM_JSON = new Map([...jsonFiles(join(PACK, 'items'))].map((j) => [j['minecraft:item'].description.identifier, j['minecraft:item']]));
@@ -194,6 +195,9 @@ export class Player {
     /** InputPermissionCategory -> enabled, as set through inputPermissions */
     this.permissions = new Map();
     this.inputPermissions = { setPermissionCategory: (category, enabled) => void self.permissions.set(category, enabled) };
+    /** camera.setCamera / clear calls: { preset, options } or 'clear' */
+    this.cameras = [];
+    this.camera = { setCamera: (preset, options) => void self.cameras.push({ preset, options }), clear: () => void self.cameras.push('clear') };
   }
   playAnimation(name, options = {}) {
     this.animations.push({ name, options });

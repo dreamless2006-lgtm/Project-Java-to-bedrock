@@ -99,6 +99,8 @@
           "variable.melee_spear_equipped = 0.0;",
           "variable.melee_spear_equipped = 0.0;",
           "variable.melee_spear_equipped = 0.0;",
+          "variable.melee_spear_equipped = 0.0;",
+          "variable.melee_spear_equipped = 0.0;",
           "variable.attack_body_rot_y = 0.0;",
           "variable.belly_growth = 0.0;",
           "variable.boot_layer_visible = 0.0;",
@@ -487,6 +489,15 @@
           },
           {
             "minepreggo_birth_push": "variable.mp_pregnant && variable.mp_pose == 'birth'"
+          },
+          {
+            "minepreggo_kick_i": "variable.mp_pregnant && variable.kicking && variable.mp_phase >= 3 && variable.mp_kick == 0"
+          },
+          {
+            "minepreggo_kick_ii": "variable.mp_pregnant && variable.kicking && variable.mp_phase >= 3 && variable.mp_kick == 1"
+          },
+          {
+            "minepreggo_kick_iii": "variable.mp_pregnant && variable.kicking && variable.mp_phase >= 3 && variable.mp_kick == 2"
           }
         ],
         "variables": {
@@ -627,7 +638,10 @@
         "minepreggo_navel_prebirth": "animation.minepreggo.navel_prebirth",
         "minepreggo_navel_birth": "animation.minepreggo.navel_birth",
         "minepreggo_fetal_push": "animation.minepreggo.fetal_push",
-        "minepreggo_birth_push": "animation.minepreggo.birth_push"
+        "minepreggo_birth_push": "animation.minepreggo.birth_push",
+        "minepreggo_kick_i": "animation.minepreggo.kick_i",
+        "minepreggo_kick_ii": "animation.minepreggo.kick_ii",
+        "minepreggo_kick_iii": "animation.minepreggo.kick_iii"
       },
       "render_controllers": [
         {

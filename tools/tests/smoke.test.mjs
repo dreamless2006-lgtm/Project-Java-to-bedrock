@@ -290,7 +290,7 @@ test('every entity, item and block the scripts name exists in the pack', () => {
   const named = new Set(scripts.match(/minepreggo:[a-z0-9_]+/g));
   const known = new Set([...ItemTypes.getAll(), ...BlockTypes.getAll(), ...EntityTypes.getAll()].map((t) => t.id));
   // Properties, dynamic properties, events, components, sounds and command ids are not game objects.
-  const notObjects = /^minepreggo:(phase|pose|kick|growth|gender|skin|savage|age|mob|crop|food_effects|impregnation_potion|pregnancy_acceleration|gradual_pregnancy_acceleration|breast_milk|pregnancy|female|pending|set_|on_tame|become_savage|calm_down|spawn_natural|hostile|tamed|tameable|fetal_movement_inducer|guide_given|guide$|belly$|forced|zero_gravity_belly$|metabolism_control$|eternal_pregnancy$|potion_effects$|debug|attack_impregnation|mob_courted|belly_touch|stomach_growls|pregnant_preggo_mob_death|player_|preggo_mob|loaded|selfcheck|hud|gender_|facing|jenny_scene|bed\.|port\.)/;
+  const notObjects = /^minepreggo:(phase|pose|kick|growth|gender|skin|savage|age|mob|crop|food_effects|impregnation_potion|pregnancy_acceleration|gradual_pregnancy_acceleration|breast_milk|pregnancy|female|pending|set_|on_tame|become_savage|calm_down|spawn_natural|hostile|tamed|tameable|fetal_movement_inducer|guide_given|guide$|belly$|forced|zero_gravity_belly$|metabolism_control$|eternal_pregnancy$|potion_effects$|debug|attack_impregnation|mob_courted|belly_touch|stomach_growls|pregnant_preggo_mob_death|player_|preggo_mob|loaded|selfcheck|hud|gender_|facing|go_to_bed|leave_bed|bed_reached|jenny_scene|bed\.|port\.)/;
   const missing = [...named].filter((id) => !notObjects.test(id) && !known.has(id) && !id.startsWith('minepreggo:baby_'));
   assert.deepEqual(missing, [], 'ids used by the scripts that no JSON defines');
 });
@@ -972,6 +972,46 @@ test('kicks are bulges, not loose cubes: the push layers only move the belly, th
   for (let phase = 3; phase <= 9; phase++) for (const strength of ['ii', 'iii']) assert.ok(mod[`animation.minepreggo.belly.fetal_movement_p${phase}_${strength}`]?.bones?.front_kick, `the mod's P${phase} ${strength} kick moves the front kick`);
 });
 
+test('kicks always show: expression-driven pulses push each kick cube to the surface and a little beyond, on every female, every port girl and the player', () => {
+  const animations = json(join(RP, 'animations/preggo_mob.animation.json')).animations;
+  const expected = { kick_i: ['front_kick', 'right_kick'], kick_ii: ['front_kick', 'left_kick', 'right_kick'], kick_iii: ['front_kick', 'left_kick', 'right_kick', 'top_kick', 'bottom_kick'] };
+  for (const [name, bones] of Object.entries(expected)) {
+    const anim = animations[`animation.minepreggo.${name}`];
+    assert.ok(anim?.loop === true && !JSON.stringify(anim.bones).includes('"0.0"'), `${name} stays active with no keyframes to restart: its expressions pulse on the entity's clock`);
+    assert.deepEqual(Object.keys(anim.bones), bones, name);
+    for (const [bone, channels] of Object.entries(anim.bones)) {
+      const z = String(channels.position[2]);
+      // Out by the measured room plus a bulge, on a sharp sine pulse of the entity's own clock: it surfaces every beat.
+      assert.match(z, new RegExp(`^-\\(v\\.k_${bone}_z \\+ [12]\\.\\d\\d\\) \\* math\\.pow\\(math\\.max\\(0\\.0, math\\.sin\\(q\\.life_time \\* \\d+\\.0 \\+ \\d+\\.0\\)\\), 8\\.0\\)$`), `${name} ${bone}: ${z}`);
+      assert.equal(channels.position[0], 0);
+      assert.equal(channels.position[1], 0);
+      assert.match(String(channels.scale[0]), /^1\.0 \+ 0\.\d\d \* math\.pow/, `${name} ${bone} grows as it pushes`);
+      assert.equal(channels.scale[2], '1.0', 'never deeper');
+    }
+    const bulges = Object.values(anim.bones).map((c) => Number(/\+ (\d\.\d\d)\)/.exec(String(c.position[2]))?.[1]));
+    assert.ok(bulges.every((b) => b >= 1.2 && b <= 2.0), `${name} bulges ${bulges.join(', ')}`);
+  }
+  // Every belly size that kicks runs the pulse of the current kick strength next to the mod's keyframed kick.
+  const controller = Object.values(json(join(RP, 'animation_controllers/belly.animation_controllers.json')).animation_controllers)[0];
+  for (let phase = 3; phase <= 9; phase++) {
+    const state = controller.states[`p${phase}`].animations.map((/** @type {any} */ a) => (typeof a === 'string' ? [a, ''] : Object.entries(a)[0]));
+    assert.deepEqual(state.find(([a]) => a === 'kick_i'), ['kick_i', 'v.kicking && v.kick == 0'], `p${phase}`);
+    assert.deepEqual(state.find(([a]) => a === 'kick_ii'), ['kick_ii', 'v.kicking && v.kick == 1'], `p${phase}`);
+    assert.deepEqual(state.find(([a]) => a === 'kick_iii'), ['kick_iii', 'v.kicking && v.kick == 2'], `p${phase}`);
+  }
+  for (const file of entityFiles()) {
+    const d = json(join(RP, 'entity', file))['minecraft:client_entity'].description;
+    // The player's entries carry the mod prefix like the rest of the player's animations.
+    for (const kick of ['kick_i', 'kick_ii', 'kick_iii']) assert.equal(d.animations[kick] ?? d.animations[`minepreggo_${kick}`], `animation.minepreggo.${kick}`, `${file}: ${kick}`);
+  }
+  const player = json(join(RP, 'entity/player.entity.json'))['minecraft:client_entity'].description;
+  for (const [n, kick] of ['kick_i', 'kick_ii', 'kick_iii'].entries()) {
+    assert.equal(player.animations[`minepreggo_${kick}`], `animation.minepreggo.${kick}`);
+    const entry = player.scripts.animate.find((/** @type {any} */ a) => typeof a === 'object' && `minepreggo_${kick}` in a);
+    assert.equal(entry?.[`minepreggo_${kick}`], `variable.mp_pregnant && variable.kicking && variable.mp_phase >= 3 && variable.mp_kick == ${n}`);
+  }
+});
+
 test('no kick cube can leave the belly: every kick keyframe is clamped to the measured room of the belly size, on every female and the player', async () => {
   const { clampKicks, kickRoom, KICK_BONES } = await import('../lib/kick-clamp.mjs');
   // The clamp wraps the mod's numbers in Molang that cannot exceed the room plus the bulge.
@@ -1044,6 +1084,10 @@ test('the Jenny Bed: a tamed female of yours lies down, the player is held and a
   assert.ok(owner.forms.at(-1).buttons.length >= 1, 'the bed lists the female next to it');
   assert.equal(owner.permissions.get(InputPermissionCategory.Movement), false, 'the player is held in place');
   assert.equal(owner.animations.at(-1)?.name, 'animation.minepreggo.jenny_bed.player_scene', "the old pack's player animation plays");
+  // The scene is watched from a free camera beside the bed (the fapcraft Jenny's observer idea, without her invisible stand-in).
+  const camera = owner.cameras.at(-1);
+  assert.equal(camera?.preset, 'minecraft:free', 'a free camera frames the scene');
+  assert.ok(camera.options.facingLocation && camera.options.location && camera.options.easeOptions, 'placed, aimed at the pair and eased in');
   system.tick(STEP);
   assert.equal(girl.getProperty('minepreggo:pose'), 'incapacitated', 'she sits for the scene');
   assert.ok(girl.teleports.length >= 1, 'she is placed on the bed');
@@ -1053,11 +1097,60 @@ test('the Jenny Bed: a tamed female of yours lies down, the player is held and a
   assert.equal(girl.getProperty('minepreggo:phase'), 0);
   assert.equal(owner.permissions.get(InputPermissionCategory.Movement), true, 'the player is released');
   assert.equal(owner.animations.at(-1)?.name, 'animation.humanoid.base_pose');
+  assert.equal(owner.cameras.at(-1), 'clear', 'the player gets their own eyes back');
   assert.notEqual(girl.getProperty('minepreggo:pose'), 'incapacitated', 'her pose is hers again');
   assert.ok(owner.messages.some((m) => text(m).includes('minepreggo.bed.pregnant')));
   world.players.pop();
   girl.isValid = false;
   emit(world.afterEvents.entityRemove, { removedEntityId: girl.id });
+});
+
+test('the Jenny Bed: a female further away walks to it on her own (the port Jenny\'s way), the scene starts when she arrives or when she takes too long', async () => {
+  const { requestScene, isWalking, sceneOf, WALK_TICKS } = await import('../../packs/behavior/scripts/jenny/scenes.js');
+  // Every female can walk to a bed: a goal that targets the bed block and reports arrival.
+  for (const file of behaviorEntityFiles().filter((f) => f !== 'player.json')) {
+    const entity = json(join(BP, 'entities', file))['minecraft:entity'];
+    const goal = entity.component_groups['minepreggo:go_to_bed']?.['minecraft:behavior.move_to_block'];
+    assert.ok(goal, `${file}: walks to the bed`);
+    assert.deepEqual(goal.target_blocks, ['minepreggo:jenny_bed']);
+    assert.deepEqual(goal.on_reach, [{ event: 'minepreggo:bed_reached', target: 'self' }]);
+    for (const event of ['minepreggo:go_to_bed', 'minepreggo:bed_reached', 'minepreggo:leave_bed']) assert.ok(entity.events[event], `${file}: ${event}`);
+  }
+  const owner = new Player('Patient');
+  owner.location = { x: 11, y: 64, z: 10 };
+  world.players.push(owner);
+  const bed = { location: { x: 10, y: 64, z: 10 }, facing: 3 };
+  const far = new Mob('minepreggo:zombie_girl', { tamed: true });
+  far.location = { x: 22, y: 64, z: 10 };
+  overworld.entities.push(far);
+  assert.equal(requestScene(getMobRecord(far), owner, bed), 'walking');
+  assert.ok(far.events.includes('minepreggo:go_to_bed') && isWalking(far), 'she sets off');
+  assert.ok(owner.messages.some((m) => text(m).includes('minepreggo.bed.coming')));
+  assert.equal(owner.permissions.get(InputPermissionCategory.Movement), undefined, 'the player is free while she walks');
+  system.tick(STEP);
+  assert.ok(!sceneOf(far), 'no scene before she arrives');
+  // Her goal reports the arrival: the scene starts, the goal is taken away.
+  emit(world.afterEvents.dataDrivenEntityTrigger, { entity: far, eventId: 'minepreggo:bed_reached' });
+  assert.ok(sceneOf(far) && !isWalking(far), 'the scene starts as she arrives');
+  assert.ok(far.events.includes('minepreggo:leave_bed'));
+  assert.equal(owner.cameras.at(-1)?.preset, 'minecraft:free');
+  system.tick(1000 + STEP * 2);
+  assert.ok(getMobRecord(far).data.pregnancy, 'pregnant after the scene');
+  // One who never arrives is placed on the bed when her time is up.
+  const slow = new Mob('minepreggo:ender_woman', { tamed: true });
+  slow.location = { x: 40, y: 64, z: 10 };
+  overworld.entities.push(slow);
+  assert.equal(requestScene(getMobRecord(slow), owner, bed), 'walking');
+  system.tick(WALK_TICKS + STEP);
+  assert.ok(sceneOf(slow) && slow.teleports.length >= 1, 'placed on the bed');
+  system.tick(1000 + STEP * 2);
+  assert.ok(getMobRecord(slow).data.pregnancy);
+  assert.equal(owner.cameras.at(-1), 'clear');
+  world.players.pop();
+  for (const e of [far, slow]) {
+    e.isValid = false;
+    emit(world.afterEvents.entityRemove, { removedEntityId: e.id });
+  }
 });
 
 test('the Jenny Mod Java Port girls: a scene that can get her pregnant does when it finishes, others do not, her looks never count as a pregnancy, and her stage shows her belly', () => {
@@ -1136,9 +1229,33 @@ test('the merged Jenny Mod Java Port: patched entities, bellies under every body
   assert.deepEqual(names.slice(0, 3), ['body', 'upperBody', 'hip'], 'the belly hangs under her own bone chain');
   assert.equal(belly.bones.find((/** @type {any} */ b) => b.name === 'belly').parent, 'hip');
   assert.ok(names.includes('front_kick') && names.includes('top_kick'));
-  const bellyCube = belly.bones.find((/** @type {any} */ b) => b.name === 'belly').cubes[0];
-  assert.ok(bellyCube.size[0] < 8 && bellyCube.size[0] > 4, `the belly is fitted to her torso (${bellyCube.size[0]} wide)`);
-  assert.ok(bellyCube.uv.north, 'box UVs became per-face UVs so the texels scale with the cube');
+  // The belly is a round shell: many small straight cubes stepping out a half-ellipsoid fitted to her waist, no turned slabs.
+  const bellyBone = belly.bones.find((/** @type {any} */ b) => b.name === 'belly');
+  assert.ok(bellyBone.cubes.length >= 40 && !bellyBone.rotation, `${bellyBone.cubes.length} shell cubes, none turned`);
+  const lo = [Infinity, Infinity, Infinity];
+  const hi = [-Infinity, -Infinity, -Infinity];
+  for (const cube of bellyBone.cubes) {
+    assert.ok(!cube.rotation && cube.uv.north && cube.uv.east, 'straight cubes with per-face UVs');
+    for (let axis = 0; axis < 3; axis++) {
+      lo[axis] = Math.min(lo[axis], cube.origin[axis]);
+      hi[axis] = Math.max(hi[axis], cube.origin[axis] + cube.size[axis]);
+    }
+  }
+  assert.ok(hi[0] - lo[0] > 7 && hi[0] - lo[0] < 14, `fitted to her torso (${(hi[0] - lo[0]).toFixed(2)} wide)`);
+  assert.ok(hi[1] - lo[1] > 8 && hi[1] - lo[1] < 16, `as tall as her waist (${(hi[1] - lo[1]).toFixed(2)})`);
+  assert.ok(hi[2] <= 0 && lo[2] < -8, `bulging forward (${lo[2].toFixed(2)} .. ${hi[2].toFixed(2)})`);
+  const widths = bellyBone.cubes.map((/** @type {any} */ c) => c.size[0]);
+  assert.ok(Math.max(...widths) > 2 * Math.min(...widths), 'rows of different widths: a curve, not a box');
+  // In her own skin: a gradient texture in her tone, bound as her belly texture on every belly render controller.
+  assert.equal(belly.description.texture_width, 64);
+  assert.equal(client.textures.minepreggo_belly, 'textures/jenny_port/minepreggo/jenny_belly');
+  assert.ok(existsSync(join(RP, 'textures/jenny_port/minepreggo/jenny_belly.png')));
+  const rcs = json(join(RP, 'render_controllers/jenny_port/minepreggo_bellies.render_controllers.json')).render_controllers;
+  for (const rc of bellyRcs) assert.deepEqual(rcs[Object.keys(rc)[0]].textures, ['Texture.minepreggo_belly'], Object.keys(rc)[0]);
+  // Her kicks are the expression-driven pulses too, wired like every other female's.
+  for (const kick of ['kick_i', 'kick_ii', 'kick_iii']) assert.equal(client.animations[kick], `animation.minepreggo.${kick}`);
+  const frontKick = belly.bones.find((/** @type {any} */ b) => b.name === 'front_kick').cubes[0];
+  assert.deepEqual(frontKick.uv.north, { uv: [30, 30], uv_size: [4, 4] }, 'kick cubes wear the middle of the skin gradient');
   // Their scripts: patched for Script API 2.x and still valid JavaScript.
   for (const f of readdirSync(join(BP, 'scripts/jenny_port'))) {
     const source = readFileSync(join(BP, 'scripts/jenny_port', f), 'utf8');

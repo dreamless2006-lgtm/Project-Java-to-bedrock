@@ -90,3 +90,4 @@ minepreggo.bed.finished=The scene with %s is over.
 minepreggo.port.pregnant=%s is pregnant (P0) after the scene. Her belly shows from P2-P3; Debug tools > Nearest mob jumps ahead.
 minepreggo.selfcheck.port=Jenny mod girls %s
 minepreggo.ok=OK
+minepreggo.bed.coming=%s is on her way to the bed; the scene starts when she gets there.

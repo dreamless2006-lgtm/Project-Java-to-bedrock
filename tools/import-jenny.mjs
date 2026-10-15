@@ -20,10 +20,12 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { strFromU8, unzipSync } from 'fflate';
-import { fitBelly, measureBody } from './lib/belly-fit.mjs';
+import { fitBelly, measureBody, roundBelly } from './lib/belly-fit.mjs';
 import { BELLY_ANIMATIONS, BELLY_PROPERTY, FAMILY_TAG, MINEPREGGO_PROPERTIES, MOD, PHASES, bellyIndex, bellyPreAnimation, initializers, kickRoomLines, phaseEvents } from './lib/belly-render.mjs';
+import { bellyTexture, skinTone } from './lib/belly-skin.mjs';
 import { stringifyEntity } from './lib/entity-json.mjs';
 import { dropStructureEntities, parseNbt, renameStrings, writeNbt } from './lib/nbt.mjs';
+import { decodePng, encodePng } from './lib/png.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const RP = join(ROOT, 'packs/resource');
@@ -34,6 +36,8 @@ const PORT = 'jenny_port';
 /** The port's girls (they join the Minepreggo mob system) and the scene stages that stand in for two of them. */
 export const PORT_GIRLS = ['fapcraft:jenny', 'kum:bia', 'kum:slime_girl', 'kum:luna', 'kum:galath', 'jhallie4:allie', 'kum:manglelie', 'jhbee24:bee', 'jhkobold:kobold', 'jhelliedev:ellie'];
 export const PORT_STAGES = ['jhjenjava:jenny_stage', 'jhelliedev:ellie_stage'];
+/** Which girl a stage stands in for (her skin tone is the stage belly's). */
+const STAGE_OF = /** @type {Record<string, string>} */ ({ 'jhjenjava:jenny_stage': 'fapcraft:jenny', 'jhelliedev:ellie_stage': 'jhelliedev:ellie' });
 /** The older pack's ids and ours. */
 const OLD = { bed: 'cumin:jenny_bed', bedState: 'bridge:block_rotation', jenny: 'cumin:jenny' };
 
@@ -204,8 +208,22 @@ if (portBP && portRP) {
     counts.files++;
   }
 
-  // Bellies: for every render controller of a girl or stage whose geometry has a hip, a belly per
-  // size fitted to that body, shown under the same visibility as that body.
+  // Each girl's skin tone, from her own texture, for her belly and her stage's.
+  /** @type {Map<string, number[]>} girl id -> [r, g, b] */
+  const tones = new Map();
+  for (const { doc } of clientDocs) {
+    const d = doc['minecraft:client_entity'].description;
+    if (!PORT_GIRLS.includes(d.identifier)) continue;
+    const textureKey = ['default', 'normal', 'dressed'].find((k) => d.textures?.[k]);
+    const geometryKey = ['default', 'normal', 'dressed'].find((k) => d.geometry?.[k]);
+    const geometry = geometryKey ? geometries.get(d.geometry[geometryKey]) : undefined;
+    const texture = textureKey ? join(RP, `${d.textures[textureKey]}.png`) : undefined;
+    if (geometry && texture && existsSync(texture)) tones.set(d.identifier, skinTone(decodePng(new Uint8Array(readFileSync(texture))), geometry));
+  }
+  const toneOf = (/** @type {string} */ id) => tones.get(id) ?? tones.get(STAGE_OF[id] ?? '') ?? [224, 188, 160];
+
+  // Bellies: for every render controller of a girl or stage whose geometry has a hip, a round belly
+  // per size fitted to that body in her skin tone, shown under the same visibility as that body.
   /** @type {Record<string, unknown>} */
   const bellyControllers = {};
   for (const { file, doc } of clientDocs) {
@@ -240,19 +258,21 @@ if (portBP && portRP) {
       }
       if (sets.length) {
         d.materials = { ...(d.materials ?? {}), minepreggo_belly: 'entity_alphatest' };
-        for (const p of PHASES) d.textures[`minepreggo_belly_p${p}`] = `textures/${MOD}/entity/player/predefined/alex/alex_p${p}_extra`;
+        const skin = `textures/${PORT}/${MOD}/${slug(id)}_belly`;
+        writeFile(join(RP, `${skin}.png`), encodePng(bellyTexture(toneOf(id))));
+        d.textures.minepreggo_belly = skin;
         /** @type {any[]} the first set's geometries, whose kick room the clamped kicks use */
         const firstSet = [];
         sets.forEach((set, n) => {
           const visibility = set.visibilities.includes('true') ? undefined : set.visibilities.join(' || ');
           for (const p of PHASES) {
             const geometryId = `geometry.${MOD}.jp_${slug(id)}_${n}_belly_p${p}`;
-            const belly = fitBelly(playerBodies[p], geometryId, set.body);
+            const belly = roundBelly(fitBelly(playerBodies[p], geometryId, set.body));
             writeFile(join(RP, 'models/entity', PORT, MOD, `${slug(id)}_${n}_belly_p${p}.geo.json`), JSON.stringify(belly, null, 2) + '\n');
             if (n === 0) firstSet.push(belly['minecraft:geometry'][0]);
             d.geometry[`minepreggo_belly_${n}_p${p}`] = geometryId;
             const rc = `controller.render.${MOD}.jp_${slug(id)}_${n}_p${p}`;
-            bellyControllers[rc] = { geometry: `Geometry.minepreggo_belly_${n}_p${p}`, materials: [{ '*': 'Material.minepreggo_belly' }], textures: [`Texture.minepreggo_belly_p${p}`] };
+            bellyControllers[rc] = { geometry: `Geometry.minepreggo_belly_${n}_p${p}`, materials: [{ '*': 'Material.minepreggo_belly' }], textures: ['Texture.minepreggo_belly'] };
             entries.push({ [rc]: `v.bp == ${p}${visibility ? ` && (${visibility})` : ''}` });
             counts.bellies++;
           }

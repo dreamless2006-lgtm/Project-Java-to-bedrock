@@ -40,8 +40,8 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
   the mod's player animations.
 - Fetal movements start on their own from P3 (the mod's per-phase chances: on average one every
   minute or two in P3-P4, more often later). The action bar says "You feel the baby move". While one lasts, the
-  belly plays the mod's kick animation for the phase and intensity (I, II or III); late in the
-  pregnancy the kicks bulge out of the belly. A **Potion of Fetal Movement Inducement** (I–III, a
+  belly plays the mod's kick animation for the phase and intensity (I, II or III) and every kick
+  bulges visibly out of the belly. A **Potion of Fetal Movement Inducement** (I–III, a
   Bedrock addition) brings one on at that intensity, for you or, used on her, for a pregnant mob:
   a tamed one from P3 (her owner only), a wild pregnant one at any time (she doubles over with the
   kick for her pain cooldown). From P5 a strong kick can make a tamed mob sit down for a moment, as
@@ -52,7 +52,7 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
 A world keeps the pack versions it was created with, and Bedrock keeps older imports next to the
 new one. After importing a newer `.mcaddon`, open the world's settings and, under **Behavior
 Packs** *and* **Resource Packs**, remove Minepreggo from the active packs and add it again. The
-join message shows both versions (`[Minepreggo 0.4.0, resources 0.4.0]`); while the resources
+join message shows both versions (`[Minepreggo 0.4.1, resources 0.4.1]`); while the resources
 version lags behind, the models, bellies and animations are the old ones, whatever the scripts do.
 Old versions can be deleted in Settings → Storage.
 
@@ -287,5 +287,8 @@ girls keep their own scripts, menus and scenes and join the Minepreggo mob syste
 can get a girl pregnant does, her belly grows with the phases on every body she renders (dressed,
 undressed, scene stage), the babies kick, and she gives birth; every potion works on her too. The
 older pack's Jenny Bed lets a tamed Minepreggo female of yours be taken to bed for a 50-second scene
-that leaves her pregnant. The guide book's "Jenny mod" chapter has the details. Like the jar's
-assets, nothing of theirs is committed; the import folders are git-ignored.
+that leaves her pregnant: pick her on the bed and she walks over (or is placed on it after 20 s),
+the scene is shown from a camera beside the bed, and with the port installed her sounds play along.
+The Jenny girls' bellies are round shells in each girl's own skin tone. The guide book's "Jenny mod"
+chapter has the details. Like the jar's assets, nothing of theirs is committed; the import folders
+are git-ignored.

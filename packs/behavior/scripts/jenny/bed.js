@@ -4,7 +4,7 @@
 import { system, world } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import { FAMILY_TAG, familyOf, getRecord, nameOf } from '../mobs/system.js';
-import { canStartScene, startScene } from './scenes.js';
+import { canStartScene, requestScene } from './scenes.js';
 
 /** @typedef {import('@minecraft/server').Block} Block */
 /** @typedef {import('@minecraft/server').Player} Player */
@@ -49,7 +49,7 @@ async function openBedMenu(/** @type {Player} */ player, /** @type {Block} */ bl
     player.onScreenDisplay.setActionBar({ translate: reason, with: { rawtext: [nameOf(female)] } });
     return;
   }
-  startScene(record, player, bedOf(block));
+  requestScene(record, player, bedOf(block));
 }
 
 system.beforeEvents.startup.subscribe(({ blockComponentRegistry }) => {

@@ -33,6 +33,12 @@ export const BELLY_ANIMATIONS = {
   belly_hidden: `animation.${MOD}.belly_hidden`,
   fetal_push: `animation.${MOD}.fetal_push`,
   birth_push: `animation.${MOD}.birth_push`,
+  // The port's own kicks: expression-driven pulses of the kick cubes to just beyond the skin (the
+  // mod's keyframed kicks are seconds apart inside long loops whose timing a controller cannot
+  // restart, so on their own they are rarely seen).
+  kick_i: `animation.${MOD}.kick_i`,
+  kick_ii: `animation.${MOD}.kick_ii`,
+  kick_iii: `animation.${MOD}.kick_iii`,
 };
 
 /** Molang: the belly size as a number from the enum property, -1 when none. */
@@ -119,6 +125,7 @@ export function bellyController(/** @type {boolean} */ navel) {
       'belly_growth',
       { [p <= 2 ? 'belly_low' : p <= 6 ? 'belly_medium' : 'belly_high']: p <= 2 ? 'true' : 'q.is_tamed || !v.kicking' },
       ...(p >= 3 ? [{ [`fetal_p${p}_i`]: 'v.kicking && v.kick == 0' }, { [`fetal_p${p}_ii`]: 'v.kicking && v.kick == 1' }, { [`fetal_p${p}_iii`]: 'v.kicking && v.kick == 2' }] : []),
+      ...(p >= 3 ? [{ kick_i: 'v.kicking && v.kick == 0' }, { kick_ii: 'v.kicking && v.kick == 1' }, { kick_iii: 'v.kicking && v.kick == 2' }] : []),
       { fetal_push: 'v.kicking' },
       { birth_push: "v.pose == 'birth'" },
       ...(navel ? [{ navel_prebirth: "v.pose == 'prebirth'" }, { navel_birth: "v.pose == 'birth'" }] : []),

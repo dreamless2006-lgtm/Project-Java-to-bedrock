@@ -95,6 +95,94 @@ function faceUvs(uv, size) {
   };
 }
 
+/** The axis-aligned bounds of cubes after their bone's rest rotation about its pivot. */
+function bounds(/** @type {{ cube: any, bone: any }[]} */ items) {
+  const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+  for (const { cube, bone } of items) {
+    const inflate = cube.inflate ?? 0;
+    const min = cube.origin.map((/** @type {number} */ o) => o - inflate);
+    const max = cube.origin.map((/** @type {number} */ o, /** @type {number} */ k) => o + cube.size[k] + inflate);
+    for (let c = 0; c < 8; c++) {
+      let corner = [c & 1 ? max[0] : min[0], c & 2 ? max[1] : min[1], c & 4 ? max[2] : min[2]];
+      if (bone?.rotation && bone.pivot) corner = rotate(corner.map((v, k) => v - bone.pivot[k]), bone.rotation).map((v, k) => v + bone.pivot[k]);
+      for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], corner[k]); hi[k] = Math.max(hi[k], corner[k]); }
+    }
+  }
+  return { lo, hi };
+}
+
+/** Texel coordinates on the skin texture for a horizontal span (-1..1 of the belly's half width) and a height (-1..1 of its half height). */
+const SKIN = { size: 64, radius: 26 };
+const texel = (/** @type {number} */ f) => Math.round((SKIN.size / 2 + Math.max(-1, Math.min(1, f)) * SKIN.radius) * 100) / 100;
+
+/**
+ * Turns a fitted belly (fitBelly) into a round one: the mod's boxes make way for a stepped
+ * half-ellipsoid shell of axis-aligned cubes (rows of height, steps of depth), each mapped onto the
+ * skin texture (tools/lib/belly-skin.mjs) by its position so the gradient shades it round. The kick
+ * bones stay inside, on the same texture. Axis-aligned cubes only, so nothing depends on the game's
+ * rotation conventions.
+ * @param {any} fitted a geometry file from fitBelly
+ * @param {{ rows?: number, steps?: number }} [options]
+ */
+export function roundBelly(fitted, { rows = 8, steps = 7 } = {}) {
+  const doc = JSON.parse(JSON.stringify(fitted));
+  const g = doc['minecraft:geometry'][0];
+  const byName = new Map(g.bones.map((/** @type {any} */ b) => [b.name, b]));
+  const belly = byName.get('belly');
+  if (!belly) throw new Error(`${g.description.identifier}: no belly bone`);
+  const children = (/** @type {string} */ n) => g.bones.filter((/** @type {any} */ b) => b.parent === n).map((/** @type {any} */ b) => b.name);
+  const subtree = (/** @type {string} */ n) => [n, ...children(n).flatMap(subtree)];
+  const names = subtree('belly');
+  const isKick = (/** @type {string} */ n) => /kick/.test(n);
+  const boxes = names.filter((n) => !isKick(n)).flatMap((n) => (byName.get(n)?.cubes ?? []).map((/** @type {any} */ cube) => ({ cube, bone: byName.get(n) })));
+  if (!boxes.length) throw new Error(`${g.description.identifier}: the belly has no cubes`);
+  const { lo, hi } = bounds(boxes);
+  const rx = (hi[0] - lo[0]) / 2, ry = (hi[1] - lo[1]) / 2, cy = (lo[1] + hi[1]) / 2;
+  const back = hi[2], rz = Math.max(0.5, back - lo[2]);
+  /** @type {any[]} */
+  const cubes = [];
+  for (let i = 0; i < rows; i++) {
+    const y0 = lo[1] + (i / rows) * 2 * ry, y1 = y0 + (2 * ry) / rows;
+    const fy = ((y0 + y1) / 2 - cy) / ry;
+    const row = Math.sqrt(Math.max(0, 1 - fy * fy));
+    if (row < 0.12) continue;
+    for (let k = 0; k < steps; k++) {
+      // angle from the forward axis: thin slabs at the front cap, wider ones toward the sides
+      const a0 = (k / steps) * (Math.PI / 2), a1 = ((k + 1) / steps) * (Math.PI / 2);
+      const front = back - rz * row * Math.cos(a0);
+      const rear = k === steps - 1 ? back + 0.5 : back - rz * row * Math.cos(a1) + 0.3;
+      const half = rx * row * Math.sin(a1);
+      if (half < 0.25) continue;
+      const u0 = texel(-half / rx), u1 = texel(half / rx), v0 = texel(-(y1 - cy) / ry), v1 = texel(-(y0 - cy) / ry);
+      const strip = { uv: [u0, v0], uv_size: [round(u1 - u0), round(Math.max(0.5, v1 - v0))] };
+      cubes.push({
+        origin: [round(-half), round(y0), round(front)],
+        size: [round(2 * half), round(y1 - y0), round(rear - front)],
+        inflate: 0.05,
+        uv: {
+          north: strip,
+          south: strip,
+          up: { uv: [u0, v0], uv_size: [round(u1 - u0), 1] },
+          down: { uv: [u0, round(v1 - 1)], uv_size: [round(u1 - u0), 1] },
+          east: { uv: [round(u1 - 1), v0], uv_size: [1, round(Math.max(0.5, v1 - v0))] },
+          west: { uv: [u0, v0], uv_size: [1, round(Math.max(0.5, v1 - v0))] },
+        },
+      });
+    }
+  }
+  belly.cubes = cubes;
+  delete belly.rotation;
+  // The mod's rotated side and bottom boxes go; the kick cubes stay inside and take the skin texture.
+  g.bones = g.bones.filter((/** @type {any} */ b) => !names.includes(b.name) || b.name === 'belly' || isKick(b.name));
+  const centre = { uv: [SKIN.size / 2 - 2, SKIN.size / 2 - 2], uv_size: [4, 4] };
+  for (const name of names.filter(isKick)) {
+    for (const cube of byName.get(name)?.cubes ?? []) cube.uv = { north: centre, south: centre, east: centre, west: centre, up: centre, down: centre };
+  }
+  g.description.texture_width = SKIN.size;
+  g.description.texture_height = SKIN.size;
+  return doc;
+}
+
 /**
  * The belly of one per-phase predefined player body fitted onto `body`, as a geometry file.
  * @param {any} playerBody a converted player_body_predefined_pN geometry file

@@ -329,7 +329,10 @@
         "birth_push": "animation.minepreggo.birth_push_monster",
         "navel_prebirth": "animation.minepreggo.navel_prebirth",
         "navel_birth": "animation.minepreggo.navel_birth",
-        "belly_controller": "controller.animation.minepreggo.belly_navel"
+        "belly_controller": "controller.animation.minepreggo.belly_navel",
+        "kick_i": "animation.minepreggo.kick_i",
+        "kick_ii": "animation.minepreggo.kick_ii",
+        "kick_iii": "animation.minepreggo.kick_iii"
       },
       "render_controllers": [
         {
