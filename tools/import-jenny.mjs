@@ -21,7 +21,11 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { strFromU8, unzipSync } from 'fflate';
 import { BABY_LOOKS, babyIcon } from './lib/baby-icon.mjs';
-import { addNewborn, fitBelly, measureBody, smoothBelly } from './lib/belly-fit.mjs';
+import { addNewborn, babyScale, fitBelly, measureBody, smoothBelly } from './lib/belly-fit.mjs';
+import { EGG_DEPTH, FETUS_SCALE, crowningLines } from './lib/crowning.mjs';
+import { eulerFromMat } from './lib/bedrock-math.mjs';
+import { poseAt, poseBones } from './lib/geo-render.mjs';
+import { rotationFromTo } from './lib/pose-solve.mjs';
 import { BELLY_ANIMATIONS, FAMILY_TAG, MINEPREGGO_PROPERTIES, MOD, PHASES, bellyPreAnimation, initializers, kickRoomLines, phaseEvents } from './lib/belly-render.mjs';
 import { bellyTexture, hairTone, skinTone } from './lib/belly-skin.mjs';
 import { girlPoseAnimations } from './lib/scene-poses.mjs';
@@ -45,19 +49,28 @@ const BABY_HEADER = '## Minepreggo babies (tools/import-jenny.mjs)';
 /** When a girl is in her own everyday state (not in one of her scenes): only then do our poses play on her. */
 const NORMAL = /** @type {Record<string, string>} */ ({ 'jhelliedev:ellie': "!q.property('jhelliedev:stage_hidden')" });
 const normalOf = (/** @type {string} */ id) => NORMAL[id] ?? 'q.skin_id == 0';
-/** The newborn: hidden but while she pushes during the birth, then it slides out with each push. */
-const NEWBORN = {
-  [`animation.${MOD}.jp_newborn`]: {
-    loop: true,
-    bones: {
-      newborn: {
-        scale: "v.pose == 'birth' ? math.clamp(v.push * 1.8 - 0.25, 0.0, 1.0) : 0.0",
-        position: [0, '-3.4 * math.clamp(v.push, 0.0, 1.0)', '-0.6 * math.clamp(v.push, 0.0, 1.0)'],
-        rotation: ["v.pose == 'birth' ? 6.0 * math.sin(q.life_time * 240.0) : 0.0", 0, "v.pose == 'birth' ? 4.0 * math.sin(q.life_time * 170.0) : 0.0"],
-      },
-    },
-  },
-};
+/**
+ * The crowning mount's rotation that brings the way out (the mount's -y) level in her birth pose,
+ * when her hip points it more than about 20 degrees up or down; undefined when it is level already.
+ * @param {any} geometry her body @param {any} birth her birth animation @param {number[]} opening
+ */
+function levelExit(geometry, birth, opening) {
+  const hip = poseBones(geometry, poseAt(birth, 0.5)).get('hip');
+  if (!hip) return undefined;
+  const origin = hip(opening);
+  const turn = (/** @type {number[]} */ v) => hip(opening.map((x, k) => x + v[k])).map((x, k) => x - origin[k]);
+  const out = turn([0, -1, 0]);
+  const flat = Math.hypot(out[0], out[2]);
+  if (flat < 0.2 || Math.abs(out[1]) < 0.35) return undefined;
+  const want = [out[0] / flat, 0, out[2] / flat];
+  // the level direction in the hip's own frame (its columns are where its axes point)
+  const axes = [turn([1, 0, 0]), turn([0, 1, 0]), turn([0, 0, 1])];
+  const local = axes.map((axis) => axis[0] * want[0] + axis[1] * want[1] + axis[2] * want[2]);
+  return eulerFromMat(rotationFromTo([0, -1, 0], local)).map((v) => Math.round(v * 1000) / 1000);
+}
+
+/** The girls who lay eggs instead of giving birth: the egg's shell and speckles. */
+const OVIPAROUS = /** @type {Record<string, { shell: number[], spots: number[] }>} */ ({ 'jhkobold:kobold': { shell: [255, 236, 177], spots: [96, 170, 152] } });
 
 /** The older pack's ids and ours. */
 const OLD = { bed: 'cumin:jenny_bed', bedState: 'bridge:block_rotation', jenny: 'cumin:jenny' };
@@ -325,15 +338,23 @@ if (portBP && portRP) {
       if (sets.length) {
         d.materials = { ...(d.materials ?? {}), minepreggo_belly: 'entity_alphatest' };
         const skin = `textures/${PORT}/${MOD}/${slug(id)}_belly`;
-        writeFile(join(RP, `${skin}.png`), encodePng(bellyTexture(toneOf(id))));
+        const egg = OVIPAROUS[id];
+        writeFile(join(RP, `${skin}.png`), encodePng(bellyTexture(toneOf(id), undefined, egg)));
         d.textures.minepreggo_belly = skin;
+        // Her pregnancy and scene poses, solved onto her rig from her own idle stance (tools/lib/scene-poses.mjs).
+        const geometryKey = ['default', 'normal', 'dressed'].find((k) => d.geometry?.[k]);
+        const mainGeometry = geometryKey ? geometries.get(d.geometry[geometryKey]) : undefined;
+        const idle = d.animations?.idle ? portAnimations[d.animations.idle] : undefined;
+        const poses = girl && mainGeometry ? girlPoseAnimations({ geometry: mainGeometry, idle, sourceGeometry: creeper.geometry, sourceAnimations: creeper.animations, prefix: `animation.${MOD}.jp_${slug(id)}` }) : undefined;
+        // The baby comes out level between her knees in her birth pose (a tilted hip turns the way out).
+        const mount = poses?.birth && mainGeometry ? levelExit(mainGeometry, poses.birth.animation, sets[0].body.opening) : undefined;
         /** @type {any[]} the first set's geometries, whose kick room the clamped kicks use */
         const firstSet = [];
         sets.forEach((set, n) => {
           const visibility = set.visibilities.includes('true') ? undefined : set.visibilities.join(' || ');
           for (const p of PHASES) {
             const geometryId = `geometry.${MOD}.jp_${slug(id)}_${n}_belly_p${p}`;
-            const belly = addNewborn(smoothBelly(fitBelly(playerBodies[p], geometryId, set.body), set.body), set.body);
+            const belly = addNewborn(smoothBelly(fitBelly(playerBodies[p], geometryId, set.body), set.body), set.body, { egg: !!egg, mount });
             writeFile(join(RP, 'models/entity', PORT, MOD, `${slug(id)}_${n}_belly_p${p}.geo.json`), JSON.stringify(belly, null, 2) + '\n');
             if (n === 0) firstSet.push(belly['minecraft:geometry'][0]);
             d.geometry[`minepreggo_belly_${n}_p${p}`] = geometryId;
@@ -348,14 +369,11 @@ if (portBP && portRP) {
         const pre = (d.scripts.pre_animation ?? []).filter((/** @type {string} */ l) => !/^v\.(bp|phase|pose|pregnant_pose|push|kick|kicking|kl|belly_growth|k_[a-z_]+|kr_f)\s*=/.test(l));
         // Girls and the stages that play their scenes: the belly, the kicks, the contractions, the newborn.
         pre.push(...bellyPreAnimation(), ...kickRoomLines('v.bp', (p) => firstSet[p]));
-        d.animations = { ...(d.animations ?? {}), ...BELLY_ANIMATIONS, newborn: `animation.${MOD}.jp_newborn`, belly_controller: `controller.animation.${MOD}.belly` };
+        // Her baby (or egg) crowns between her legs with each push of the birth (tools/lib/crowning.mjs).
+        pre.push(...crowningLines({ when: "v.pose == 'birth'", scale: FETUS_SCALE * babyScale(sets[0].body), ...(egg ? EGG_DEPTH : {}) }));
+        d.animations = { ...(d.animations ?? {}), ...BELLY_ANIMATIONS, newborn: `animation.${MOD}.crowning_free`, belly_controller: `controller.animation.${MOD}.belly` };
         const animate = (d.scripts.animate ?? []).filter((/** @type {unknown} */ a) => a !== 'belly_controller' && a !== 'newborn' && a !== 'mp_pose_controller');
         if (girl) {
-          // Her pregnancy and scene poses, solved onto her rig from her own idle stance (tools/lib/scene-poses.mjs).
-          const geometryKey = ['default', 'normal', 'dressed'].find((k) => d.geometry?.[k]);
-          const geometry = geometryKey ? geometries.get(d.geometry[geometryKey]) : undefined;
-          const idle = d.animations.idle ? portAnimations[d.animations.idle] : undefined;
-          const poses = geometry && girlPoseAnimations({ geometry, idle, sourceGeometry: creeper.geometry, sourceAnimations: creeper.animations, prefix: `animation.${MOD}.jp_${slug(id)}` });
           if (poses) {
             const file = { format_version: '1.8.0', animations: Object.fromEntries(Object.values(poses).map(({ id: animationId, animation }) => [animationId, animation])) };
             writeFile(join(RP, 'animations', PORT, MOD, `${slug(id)}_poses.animation.json`), JSON.stringify(file) + '\n');
@@ -377,7 +395,6 @@ if (portBP && portRP) {
   }
   writeFile(join(RP, 'render_controllers', PORT, 'minepreggo_bellies.render_controllers.json'), JSON.stringify({ format_version: '1.10.0', render_controllers: bellyControllers }, null, 2) + '\n');
   writeFile(join(RP, 'animation_controllers', PORT, 'minepreggo_poses.animation_controllers.json'), JSON.stringify({ format_version: '1.10.0', animation_controllers: poseControllers }, null, 2) + '\n');
-  writeFile(join(RP, 'animations', PORT, MOD, 'newborn.animation.json'), JSON.stringify({ format_version: '1.8.0', animations: NEWBORN }, null, 2) + '\n');
 
   // Each girl's baby: an item with an icon in her colours (her skin, her hair, her kind's trait).
   const itemTextures = parse(readFileSync(join(RP, 'textures', PORT, 'item_texture.json'), 'utf8'));

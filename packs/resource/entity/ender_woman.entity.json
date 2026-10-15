@@ -5,7 +5,8 @@
       "identifier": "minepreggo:ender_woman",
       "materials": {
         "default": "entity_alphatest",
-        "eyes": "charged_creeper"
+        "eyes": "charged_creeper",
+        "crowning": "entity_alphatest"
       },
       "textures": {
         "default": "textures/minepreggo/mobs/ender/ender_woman",
@@ -25,7 +26,8 @@
         "eyes_sad1": "textures/minepreggo/mobs/ender/expressions/monster_ender_woman_eye_sad1",
         "eyes_angry1": "textures/minepreggo/mobs/ender/expressions/monster_ender_woman_eye_angry1",
         "eyes_sad2": "textures/minepreggo/mobs/ender/expressions/monster_ender_woman_eye_sad2",
-        "eyes_empty": "textures/minepreggo/mobs/ender/expressions/monster_ender_woman_eye_empty"
+        "eyes_empty": "textures/minepreggo/mobs/ender/expressions/monster_ender_woman_eye_empty",
+        "fetus": "textures/minepreggo/entity/fetus/ender_fetus"
       },
       "geometry": {
         "default": "geometry.minepreggo.ender_woman",
@@ -38,7 +40,13 @@
         "p6": "geometry.minepreggo.ender_woman_p6",
         "p7": "geometry.minepreggo.ender_woman_p7",
         "p8": "geometry.minepreggo.ender_woman_p8",
-        "p9": "geometry.minepreggo.ender_woman_p9"
+        "p9": "geometry.minepreggo.ender_woman_p9",
+        "crowning_p4": "geometry.minepreggo.ender_woman_crowning_p4",
+        "crowning_p5": "geometry.minepreggo.ender_woman_crowning_p5",
+        "crowning_p6": "geometry.minepreggo.ender_woman_crowning_p6",
+        "crowning_p7": "geometry.minepreggo.ender_woman_crowning_p7",
+        "crowning_p8": "geometry.minepreggo.ender_woman_crowning_p8",
+        "crowning_p9": "geometry.minepreggo.ender_woman_crowning_p9"
       },
       "scripts": {
         "pre_animation": [
@@ -65,6 +73,12 @@
           "v.k_bottom_kick_z = (v.bp == 3 ? 0.00 : (v.bp == 4 ? 0.00 : (v.bp == 5 ? 0.00 : (v.bp == 6 ? 5.22 : (v.bp == 7 ? 3.31 : (v.bp == 8 ? 5.66 : (v.bp == 9 ? 7.45 : 0.0)))))));",
           "v.kr_f = v.k_front_kick_z;",
           "v.push = v.pose == 'birth' ? q.property('minepreggo:growth') : 0.0;",
+          "v.crown_scale = 0.875;",
+          "v.strain = -1.0;",
+          "v.crowning = (v.pose == 'birth') && v.push > 0.0;",
+          "v.crown_x = math.clamp((v.push - 0.15) / 0.65, 0.0, 1.0);",
+          "v.crown_t = v.push < 0.8 ? 3.0 * v.crown_x * v.crown_x * (3.0 - 2.0 * v.crown_x) : 3.0 + 8.0 * math.pow((v.push - 0.8) / 0.2, 2.0);",
+          "v.crown = (!v.crowning || v.crown_t < v.crown - 2.5) ? v.crown_t : v.crown + (v.crown_t - v.crown) * math.min(1.0, 6.0 * q.delta_time);",
           "v.kick = q.property('minepreggo:kick');",
           "v.scene = q.property('minepreggo:scene');",
           "v.kicking = v.pose == 'fetal_movement' || v.pose == 'kicking_sit' || (v.pose == 'incapacitated' && v.scene == 'none') || v.pose == 'prebirth' || v.pose == 'birth' || v.scene == 'kicking';",
@@ -73,6 +87,9 @@
           "v.contracting = v.pose == 'contraction' || v.pose == 'prebirth' || (v.pose == 'incapacitated' && v.scene == 'none') || v.scene == 'contraction';",
           "v.kick_w = math.clamp(v.kick_w + (v.kicking ? 1.6 : -1.1) * math.clamp(q.delta_time, 0.0, 0.1), 0.0, 1.0);",
           "v.cw = math.clamp(v.cw + (v.contracting ? 0.6 : -0.45) * math.clamp(q.delta_time, 0.0, 0.1), 0.0, 1.0);",
+          "v.kick_shown = v.kicking ? v.kick : v.kick_shown;",
+          "v.kick_shown = v.kicking ? v.kick : v.kick_shown;",
+          "v.kick_shown = v.kicking ? v.kick : v.kick_shown;",
           "v.kick_shown = v.kicking ? v.kick : v.kick_shown;",
           "v.kick_shown = v.kicking ? v.kick : v.kick_shown;",
           "v.savage = q.property('minepreggo:savage');",
@@ -186,6 +203,11 @@
           "variable.bp = 0.0;",
           "variable.carrying = 0.0;",
           "variable.contracting = 0.0;",
+          "variable.crown = 0.0;",
+          "variable.crown_scale = 0.0;",
+          "variable.crown_t = 0.0;",
+          "variable.crown_x = 0.0;",
+          "variable.crowning = 0.0;",
           "variable.cw = 0.0;",
           "variable.eyes = 0.0;",
           "variable.jair = 0.0;",
@@ -281,7 +303,8 @@
           "variable.savage = 0.0;",
           "variable.scene = 0.0;",
           "variable.shake_x = 0.0;",
-          "variable.shake_z = 0.0;"
+          "variable.shake_z = 0.0;",
+          "variable.strain = 0.0;"
         ]
       },
       "animations": {
@@ -367,7 +390,8 @@
         "scene_sit_pose_p6": "animation.minepreggo.ender_woman.scene_sit_p6",
         "scene_sit_pose_p7": "animation.minepreggo.ender_woman.scene_sit_p7",
         "scene_sit_pose_p8": "animation.minepreggo.ender_woman.scene_sit_p8",
-        "scene_sit_pose_p9": "animation.minepreggo.ender_woman.scene_sit_p9"
+        "scene_sit_pose_p9": "animation.minepreggo.ender_woman.scene_sit_p9",
+        "crowning": "animation.minepreggo.crowning_free"
       },
       "render_controllers": [
         {
@@ -403,7 +427,25 @@
         {
           "controller.render.minepreggo.ender_woman_p9": "v.bp == 9"
         },
-        "controller.render.minepreggo.ender_woman_eyes"
+        "controller.render.minepreggo.ender_woman_eyes",
+        {
+          "controller.render.minepreggo.ender_woman_crowning_p4": "v.crowning && v.bp == 4"
+        },
+        {
+          "controller.render.minepreggo.ender_woman_crowning_p5": "v.crowning && v.bp == 5"
+        },
+        {
+          "controller.render.minepreggo.ender_woman_crowning_p6": "v.crowning && v.bp == 6"
+        },
+        {
+          "controller.render.minepreggo.ender_woman_crowning_p7": "v.crowning && v.bp == 7"
+        },
+        {
+          "controller.render.minepreggo.ender_woman_crowning_p8": "v.crowning && v.bp == 8"
+        },
+        {
+          "controller.render.minepreggo.ender_woman_crowning_p9": "v.crowning && v.bp == 9"
+        }
       ],
       "spawn_egg": {
         "texture": "minepreggo_monster_ender_woman_spawn_egg"

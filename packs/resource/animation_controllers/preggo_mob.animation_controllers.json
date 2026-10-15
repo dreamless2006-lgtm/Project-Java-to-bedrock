@@ -179,7 +179,8 @@
         },
         "birth": {
           "animations": [
-            "birth"
+            "birth",
+            "crowning"
           ],
           "transitions": [
             {

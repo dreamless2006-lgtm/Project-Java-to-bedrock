@@ -69,7 +69,7 @@ export function skinTone(png, geometry) {
  * highlight above the middle and a navel below it.
  * @param {number[]} tone [r, g, b]
  */
-export function bellyTexture(tone, size = SKIN_TEXTURE_SIZE) {
+export function bellyTexture(tone, size = SKIN_TEXTURE_SIZE, /** @type {{ shell: number[], spots: number[] } | undefined} */ egg = undefined) {
   const image = blank(size, size);
   const c = size / 2;
   for (let y = 0; y < size; y++) {
@@ -86,6 +86,21 @@ export function bellyTexture(tone, size = SKIN_TEXTURE_SIZE) {
       const i = (y * size + x) * 4;
       for (let k = 0; k < 3; k++) image.data[i + k] = Math.max(0, Math.min(255, Math.round(tone[k] * shade)));
       image.data[i + 3] = 255;
+    }
+  }
+  if (egg) {
+    // An egg-laying girl's egg (EGG_PATCH of tools/lib/belly-fit.mjs, the corner the belly never
+    // uses): a shaded shell with a few speckles.
+    const at = Math.round(size / 128), from = 1 * at, to = 11 * at;
+    for (let y = from; y < to; y++) {
+      for (let x = from; x < to; x++) {
+        const u = (x - from + 0.5) / (to - from), w = (y - from + 0.5) / (to - from);
+        const shade = 1.06 - 0.28 * ((u - 0.38) ** 2 + (w - 0.35) ** 2) * 2.2;
+        const speckle = ((x * 7 + y * 13) % 11 === 0 || (x * 5 + y * 3) % 17 === 0) && u > 0.1 && u < 0.9;
+        const colour = speckle ? egg.spots : egg.shell;
+        const i = (y * size + x) * 4;
+        for (let k = 0; k < 3; k++) image.data[i + k] = Math.max(0, Math.min(255, Math.round(colour[k] * shade)));
+      }
     }
   }
   return image;

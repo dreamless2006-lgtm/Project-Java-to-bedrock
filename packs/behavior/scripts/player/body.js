@@ -33,7 +33,7 @@ let warned = false;
 export function playerVisuals(/** @type {PlayerRecord} */ record) {
   const p = record.pregnancy;
   const gender = record.gender ?? 'unset';
-  if (!p || gender !== 'female') return { phase: -1, belly: 'none', pose: 'none', kick: 0, growth: 0, gender, skin: record.skin, navel: false };
+  if (!p || gender !== 'female') return { phase: -1, belly: 'none', pose: 'none', kick: 0, growth: 0, gender, skin: record.skin, navel: false, baby: 'none' };
   const pain = p.pain;
   // Rubbing (crouch + look down) plays Java's BELLY_RUBBING_Px arm animation; the belly-rub need
   // shows the belly animation; pains map to the labor/pain body animations.
@@ -47,7 +47,9 @@ export function playerVisuals(/** @type {PlayerRecord} */ record) {
   if (pain?.type === 'BIRTH' && p.birth) growth = pushProgress(record) / 100;
   // Ender babies are born through the navel (a Bedrock addition): the client plays the navel animations.
   const navel = p.womb.includes('ENDER') || p.father === 'ENDER';
-  return { phase: p.phase, belly: `p${p.phase}`, pose, kick, growth: Math.round(growth * 100) / 100, gender, skin: record.skin, navel };
+  // The baby being born: its head crowns during the birth, in the model and texture of its species.
+  const baby = pain?.type === 'BIRTH' && p.birth ? p.birth.baby.toLowerCase() : 'none';
+  return { phase: p.phase, belly: `p${p.phase}`, pose, kick, growth: Math.round(growth * 100) / 100, gender, skin: record.skin, navel, baby };
 }
 
 /** Writes the visuals to the player's entity properties, only the ones that changed. */

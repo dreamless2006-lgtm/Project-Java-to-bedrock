@@ -7,6 +7,7 @@
 // Measured from the Jenny-mod style of rig (body > upperBody > hip > torso ...), which every girl of
 // the Jenny Mod Java Port uses.
 import { anglesForFront, rotateBedrock } from './bedrock-math.mjs';
+import { crowningGeometry, simpleBaby, simpleEgg } from './crowning.mjs';
 
 /** The player torso box the mod's bellies are built around. */
 const PLAYER_BOX = [[-4, 4], [12, 24], [-2, 2]];
@@ -21,6 +22,7 @@ const rotate = rotateBedrock;
  * @typedef {object} Body what a belly is fitted to
  * @property {{ name: string, parent?: string, pivot: number[], rotation?: number[] }[]} chain her bones from the root to the hip
  * @property {number[][]} box the waist box [[x0, x1], [y0, y1], [z0, z1]] the player torso maps onto
+ * @property {number[]} opening where a baby is born (her 'vagina' bone between her legs, else the bottom of her waist)
  */
 
 /**
@@ -67,7 +69,14 @@ export function measureBody(geometry) {
   // A belly as tall as the player's (12 units), within a quarter either way, standing on the waist bottom.
   const height = Math.min(15, Math.max(9, top - bottom));
   const depth = Math.min(4.4, Math.max(2.4, trunk.hi[2] - trunk.lo[2]));
-  return { chain, box: [[-halfWidth, halfWidth], [bottom, bottom + height], [trunk.lo[2], trunk.lo[2] + depth]] };
+  // Where a baby is born: the rig's own 'vagina' bone when it sits between her legs (some rigs keep
+  // spare ones elsewhere), else just above where her legs hang from, else the bottom of her waist.
+  const legs = ['legR', 'legL'].map((n) => byName.get(n)).filter(Boolean);
+  const legY = legs.length ? legs.reduce((sum, l) => sum + l.pivot[1], 0) / legs.length : undefined;
+  const vagina = geometry.bones.find((b) => b.name === 'vagina' && Math.abs(b.pivot[0]) <= 0.5 && (legY === undefined ? b.pivot[1] <= bottom + 3 : Math.abs(b.pivot[1] - (legY - 0.5)) <= 2));
+  const middleZ = trunk.lo[2] + depth * 0.4;
+  const opening = vagina ? [0, vagina.pivot[1], vagina.pivot[2]] : [0, legY === undefined ? bottom + 0.4 : Math.max(bottom + 0.4, legY - 1.5), middleZ];
+  return { chain, box: [[-halfWidth, halfWidth], [bottom, bottom + height], [trunk.lo[2], trunk.lo[2] + depth]], opening: opening.map((v) => Math.round(v * 1000) / 1000) };
 }
 
 /**
@@ -106,6 +115,8 @@ function bounds(/** @type {{ cube: any, bone: any }[]} */ items) {
 
 /** Texel coordinates on the skin texture for a horizontal span (-1..1 of the belly's half width) and a height (-1..1 of its half height). */
 const SKIN = { size: 128, radius: 52 };
+/** The corner of the belly texture the shell never uses: the egg-laying girls' egg shell. */
+export const EGG_PATCH = { uv: [1, 1], size: [10, 10] };
 const texel = (/** @type {number} */ f) => Math.round((SKIN.size / 2 + Math.max(-1, Math.min(1, f)) * SKIN.radius) * 100) / 100;
 
 /**
@@ -411,37 +422,24 @@ export function smoothBelly(fitted, body, { rows = 16, steps = 12 } = {}) {
   return doc;
 }
 
+/** How big her baby is next to her (her waist width; the mod's fetus is for a player-sized body). */
+export const babyScale = (/** @type {Body} */ body) => Math.max(0.6, Math.min(1.1, (body.box[0][1] - body.box[0][0]) / 6.5));
+
 /**
- * Adds the newborn to a belly geometry: a tiny baby (head, body, arms and legs) under her hip at
- * the bottom of her waist, head first, drawn from the middle of the skin texture. It is hidden
- * (scale 0) by the newborn animation except while she pushes during the birth, when it slides out
- * with her push (tools/lib/belly-render.mjs).
+ * Adds the crowning to a belly geometry (tools/lib/crowning.mjs): a small baby in her skin tone (the
+ * middle of the belly texture), or an egg for an egg-laying girl (the corner of the texture), under
+ * her hip at her birth opening, head first. The crowning animation shows it only during the birth
+ * and slides it out with her pushes.
  * @param {any} doc a belly geometry file from smoothBelly
- * @param {Body} body the waist box the belly was fitted to
+ * @param {Body} body the waist box the belly was fitted to (and her opening)
+ * @param {{ egg?: boolean, mount?: number[] }} [options] an egg instead of a baby; the mount's rotation (the way out)
  */
-export function addNewborn(doc, body) {
+export function addNewborn(doc, body, { egg = false, mount = /** @type {number[] | undefined} */ (undefined) } = {}) {
   const g = doc['minecraft:geometry'][0];
-  if (g.bones.some((/** @type {any} */ b) => b.name === 'newborn')) return doc;
-  const [bx, by, bz] = body.box;
-  const s = Math.max(0.6, Math.min(1.1, (bx[1] - bx[0]) / 6.5));
-  const pivot = [0, round(by[0] + 0.4), round((bz[0] + bz[1]) / 2)];
+  if (g.bones.some((/** @type {any} */ b) => b.name === 'crowning')) return doc;
   const c = SKIN.size / 2;
-  const skin = { uv: [c - 4, c - 4], uv_size: [8, 8] };
-  const uv = { north: skin, south: skin, east: skin, west: skin, up: skin, down: skin };
-  const box = (/** @type {number[]} */ origin, /** @type {number[]} */ size) => ({ origin: origin.map((v, k) => round(pivot[k] + v * s)), size: size.map((v) => round(v * s)), uv });
-  // head down: the head hangs below the pivot, the body above it
-  g.bones.push({
-    name: 'newborn',
-    parent: 'hip',
-    pivot,
-    cubes: [
-      box([-1.3, -2.8, -1.3], [2.6, 2.6, 2.6]),
-      box([-1.1, -0.2, -0.9], [2.2, 2.8, 1.8]),
-      box([-1.9, -0.6, -0.5], [0.8, 2.0, 0.8]),
-      box([1.1, -0.6, -0.5], [0.8, 2.0, 0.8]),
-      box([-1.0, 2.6, -0.5], [0.9, 1.8, 0.9]),
-      box([0.1, 2.6, -0.5], [0.9, 1.8, 0.9]),
-    ],
-  });
+  const baby = egg ? simpleEgg({ uv: EGG_PATCH.uv, uv_size: EGG_PATCH.size }) : simpleBaby({ uv: [c - 4, c - 4], uv_size: [8, 8] });
+  const built = crowningGeometry({ id: g.description.identifier, chain: [{ name: 'hip', pivot: [0, 0, 0] }], opening: body.opening, mount, baby })['minecraft:geometry'][0];
+  g.bones.push(...built.bones.filter((/** @type {any} */ b) => b.name !== 'hip'));
   return doc;
 }

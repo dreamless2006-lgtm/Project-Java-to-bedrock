@@ -16,6 +16,7 @@ import { unzipSync, strFromU8 } from 'fflate';
 import { createModelRunner, toBedrockAnimation, toBedrockGeometry } from './lib/java-models.mjs';
 import { mergeBellies } from './lib/belly-merge.mjs';
 import { clampKicks } from './lib/kick-clamp.mjs';
+import { FAMILY_CROWNING, FETUS_MODELS, PLAYER_BABIES, chainOf, crowningGeometry, fetusBones, openingOf } from './lib/crowning.mjs';
 import { decodePng, encodePng } from './lib/png.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -188,6 +189,35 @@ for (const [id, javaClass, method] of MODELS) {
   writeFile(join(modelOut, `${id}.geo.json`), JSON.stringify(geometry, null, 2) + '\n');
 }
 
+// The crowning (tools/lib/crowning.mjs): the mod's fetus models, head first at each mother's birth
+// opening, under a copy of her bones. A crotch birth hangs from her body; a navel birth from the
+// belly of each size (from P4, where births happen).
+const crowningOut = join(modelOut, 'crowning');
+const readModel = (/** @type {string} */ id) => JSON.parse(readFileSync(join(modelOut, `${id}.geo.json`), 'utf8'))['minecraft:geometry'][0];
+/** @type {Record<string, { bones: any[], size: number[] }>} */
+const fetuses = {};
+for (const [kind, [javaClass, method]] of Object.entries(FETUS_MODELS)) {
+  const g = toBedrockGeometry(models.layer(`dev/dixmk/minepreggo/client/model/fetus/${javaClass}`, method), `geometry.${MOD_ID}.fetus_${kind}`, {})['minecraft:geometry'][0];
+  fetuses[kind] = { bones: fetusBones(g), size: [g.description.texture_width, g.description.texture_height] };
+}
+let crowningCount = 0;
+const writeCrowning = (/** @type {string} */ name, /** @type {any} */ geometry, /** @type {string[]} */ chain, /** @type {'crotch' | 'jelly' | 'navel'} */ opening, /** @type {string} */ fetus) => {
+  const { bones, size } = fetuses[fetus];
+  const doc = crowningGeometry({ id: `geometry.${MOD_ID}.${name}`, chain: chainOf(geometry, chain), ...openingOf(geometry, opening), baby: bones, textureSize: size });
+  writeFile(join(crowningOut, `${name}.geo.json`), JSON.stringify(doc, null, 2) + '\n');
+  crowningCount++;
+};
+for (const [family, spec] of Object.entries(FAMILY_CROWNING)) {
+  if (spec.opening === 'navel') {
+    for (let p = 4; p <= 9; p++) writeCrowning(`${family}_crowning_p${p}`, readModel(`${family}_p${p}`), spec.chain, 'navel', spec.fetus);
+  } else writeCrowning(`${family}_crowning`, readModel(family), spec.chain, /** @type {'crotch' | 'jelly'} */ (spec.opening), spec.fetus);
+}
+{
+  const labor = JSON.parse(readFileSync(join(RP, 'models/entity/player_labor.geo.json'), 'utf8'))['minecraft:geometry'][0];
+  for (const kind of new Set(PLAYER_BABIES.map(([, model]) => model))) writeCrowning(`player_crowning_${kind}`, labor, ['body'], 'crotch', kind);
+  for (let p = 4; p <= 9; p++) writeCrowning(`player_crowning_navel_p${p}`, readModel(`player_body_custom_p${p}`), ['body', 'belly'], 'navel', 'humanoid');
+}
+
 // One model per family with every phase's belly (tools/lib/belly-merge.mjs): the belly no longer
 // depends on switching geometry or texture at render time. The composite texture sits below the
 // family's base texture; the per-phase models and textures stay available for tooling.
@@ -336,6 +366,6 @@ if (logo) {
 }
 
 console.log(
-  `Imported ${MOD_ID} ${modVersion} from ${jarPath}: ${textureCount} textures, ${soundCount} sounds, ${MODELS.length + PLAYER_MODELS.length} models (+${mergedCount} merged), ${animationCount} animations, ` +
+  `Imported ${MOD_ID} ${modVersion} from ${jarPath}: ${textureCount} textures, ${soundCount} sounds, ${MODELS.length + PLAYER_MODELS.length} models (+${mergedCount} merged, ${crowningCount} crowning), ${animationCount} animations, ` +
     `${locales.length} languages (${locales.sort().join(', ')})${logo ? ', pack icons' : ''}`
 );

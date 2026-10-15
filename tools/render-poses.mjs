@@ -65,9 +65,9 @@ function sheetOf(who, compact) {
     const len = Number(anim.animation_length ?? 0);
     for (const t of compact ? [len * 0.45] : [0, len * 0.45]) {
       const pose = poseAt(anim, t);
-      // the newborn shows half-way through a push
-      if (port && key.endsWith('birth') && !key.endsWith('postbirth')) pose.newborn = { scale: [1, 1, 1], position: [0, -1.8, -0.4] };
-      else if (port) pose.newborn = { scale: [0, 0, 0] };
+      // the baby's head is out half-way through a push
+      if (port && key.endsWith('birth') && !key.endsWith('postbirth')) Object.assign(pose, { crowning: { scale: [0.875, 0.875, 0.875] }, crowning_slide: { position: [0, -2.4, 0] } });
+      else if (port) pose.crowning = { scale: [0, 0, 0] };
       for (const yaw of compact ? [40] : [35, 90]) images.push(renderParts(parts, pose, { yaw, pitch: 12, scale }, size));
     }
     console.log(`${key}: ${id} (${len}s)`);

@@ -97,6 +97,20 @@
           ],
           "default": "none",
           "client_sync": true
+        },
+        "minepreggo:baby": {
+          "type": "enum",
+          "values": [
+            "none",
+            "human",
+            "zombie",
+            "creeper",
+            "ender",
+            "slime",
+            "villager"
+          ],
+          "default": "none",
+          "client_sync": true
         }
       }
     },

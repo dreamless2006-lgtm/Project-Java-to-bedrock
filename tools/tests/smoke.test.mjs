@@ -291,7 +291,7 @@ test('every entity, item and block the scripts name exists in the pack', () => {
   const named = new Set(scripts.match(/minepreggo:[a-z0-9_]+/g));
   const known = new Set([...ItemTypes.getAll(), ...BlockTypes.getAll(), ...EntityTypes.getAll()].map((t) => t.id));
   // Properties, dynamic properties, events, components, sounds and command ids are not game objects.
-  const notObjects = /^minepreggo:(phase|pose|kick|growth|gender|skin|savage|age|mob|crop|food_effects|impregnation_potion|pregnancy_acceleration|gradual_pregnancy_acceleration|breast_milk|pregnancy|female|pending|set_|on_tame|become_savage|calm_down|spawn_natural|hostile|tamed|tameable|fetal_movement_inducer|guide_given|guide$|belly$|forced|zero_gravity_belly$|metabolism_control$|eternal_pregnancy$|potion_effects$|debug|attack_impregnation|mob_courted|belly_touch|stomach_growls|pregnant_preggo_mob_death|player_|preggo_mob|loaded|selfcheck|hud|gender_|facing|scene$|scene_locked|go_to_bed|leave_bed|bed_reached|jenny_scene|bed\.|port\.)/;
+  const notObjects = /^minepreggo:(phase|pose|kick|growth|gender|skin|savage|age|mob|crop|food_effects|impregnation_potion|pregnancy_acceleration|gradual_pregnancy_acceleration|breast_milk|pregnancy|female|pending|set_|on_tame|become_savage|calm_down|spawn_natural|hostile|tamed|tameable|fetal_movement_inducer|guide_given|guide$|belly$|forced|zero_gravity_belly$|metabolism_control$|eternal_pregnancy$|potion_effects$|debug|attack_impregnation|mob_courted|belly_touch|stomach_growls|pregnant_preggo_mob_death|player_|preggo_mob|loaded|selfcheck|hud|gender_|facing|scene$|scene_locked|go_to_bed|leave_bed|bed_reached|jenny_scene|bed\.|port\.|baby$)/;
   const missing = [...named].filter((id) => !notObjects.test(id) && !known.has(id) && !id.startsWith('minepreggo:baby_'));
   assert.deepEqual(missing, [], 'ids used by the scripts that no JSON defines');
 });
@@ -1303,11 +1303,19 @@ test('the merged Jenny Mod Java Port: patched entities, bellies under every body
   assert.equal(frontKick.parent, 'front_kick_mount');
   assert.equal(belly.bones.find((/** @type {any} */ b) => b.name === 'front_kick_mount').parent, 'belly');
   assert.equal(frontKick.cubes.length, 3, 'a dome of three layers');
-  // The newborn: under her hip, hidden but while she pushes during the birth.
-  assert.equal(belly.bones.find((/** @type {any} */ b) => b.name === 'newborn')?.parent, 'hip');
-  assert.equal(client.animations.newborn, 'animation.minepreggo.jp_newborn');
-  const newborn = json(join(RP, 'animations/jenny_port/minepreggo/newborn.animation.json')).animations['animation.minepreggo.jp_newborn'].bones.newborn;
-  assert.match(newborn.scale, /^v\.pose == 'birth' \? .*v\.push.* : 0\.0$/);
+  // The crowning: her baby under her hip at her opening, head first, shown only while she pushes during the birth.
+  const bone = (/** @type {string} */ name) => belly.bones.find((/** @type {any} */ b) => b.name === name);
+  assert.equal(bone('crowning')?.parent, 'hip');
+  assert.equal(bone('crowning_slide')?.parent, 'crowning');
+  assert.deepEqual(bone('crowning_baby')?.rotation, [180, 0, 0], 'head first');
+  assert.ok(bone('fetus_head') && !bone('newborn'));
+  assert.equal(client.animations.newborn, 'animation.minepreggo.crowning_free');
+  assert.ok(client.scripts.pre_animation.some((/** @type {string} */ l) => l.startsWith("v.crowning = (v.pose == 'birth')")));
+  const crowning = json(join(RP, 'animations/preggo_mob.animation.json')).animations['animation.minepreggo.crowning_free'].bones;
+  assert.equal(crowning.crowning.scale, 'v.crowning ? v.crown_scale : 0.0');
+  // The kobold lays eggs: an egg crowns instead of a baby.
+  const kobold = json(join(RP, 'models/entity/jenny_port/minepreggo/kobold_0_belly_p4.geo.json'))['minecraft:geometry'][0];
+  assert.ok(kobold.bones.some((/** @type {any} */ b) => b.name === 'fetus_egg') && !kobold.bones.some((/** @type {any} */ b) => b.name === 'fetus_head'));
   // Her poses: the mod's labor and the scene poses, solved onto her rig, in a controller that only plays in her everyday state.
   const poses = json(join(RP, 'animations/jenny_port/minepreggo/jenny_poses.animation.json')).animations;
   for (const pose of ['contraction', 'incapacitated', 'kicking_sit', 'morning_sickness', 'prebirth', 'birth', 'postbirth', 'miscarriage', 'back_pain', 'water_breaking', 'scene', 'scene_sit']) {

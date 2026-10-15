@@ -121,6 +121,17 @@
       "textures": [
         "Texture.p9"
       ]
+    },
+    "controller.render.minepreggo.zombie_girl_crowning": {
+      "geometry": "Geometry.crowning",
+      "materials": [
+        {
+          "*": "Material.crowning"
+        }
+      ],
+      "textures": [
+        "Texture.fetus"
+      ]
     }
   }
 }

@@ -506,6 +506,17 @@
       },
       "light_color_multiplier": 0.5,
       "ignore_lighting": true
+    },
+    "controller.render.minepreggo.humanoid_creeper_girl_crowning": {
+      "geometry": "Geometry.crowning",
+      "materials": [
+        {
+          "*": "Material.crowning"
+        }
+      ],
+      "textures": [
+        "Texture.fetus"
+      ]
     }
   }
 }

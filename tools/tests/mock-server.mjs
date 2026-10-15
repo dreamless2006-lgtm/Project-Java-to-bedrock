@@ -142,7 +142,7 @@ export class Player {
     this.typeId = 'minecraft:player';
     this.isValid = true;
     /** entity properties of packs/behavior/entities/player.json */
-    this.entityProperties = new Map([['minepreggo:phase', -1], ['minepreggo:belly', 'none'], ['minepreggo:pose', 'none'], ['minepreggo:kick', 0], ['minepreggo:growth', 0], ['minepreggo:gender', 'unset'], ['minepreggo:skin', 'custom'], ['minepreggo:navel', false]]);
+    this.entityProperties = new Map([['minepreggo:phase', -1], ['minepreggo:belly', 'none'], ['minepreggo:pose', 'none'], ['minepreggo:kick', 0], ['minepreggo:growth', 0], ['minepreggo:gender', 'unset'], ['minepreggo:skin', 'custom'], ['minepreggo:navel', false], ['minepreggo:baby', 'none']]);
     /** what the player picks on the next form (undefined = closes it) */
     this.formSelection = undefined;
     /** choices for a run of forms, used up one per form before formSelection */

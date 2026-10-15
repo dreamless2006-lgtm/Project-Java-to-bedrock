@@ -8,6 +8,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { writeEntityJson } from './lib/entity-json.mjs';
 import { BELLY_ANIMATIONS, BELLY_PROPERTY, MINEPREGGO_PROPERTIES, MOD, PHASES, POSES, bellyController, bellyIndex, contractionWaveAnimation, NO_POSE, initializers, kickPulseAnimations, kickRoomLines, kickStateLines, playerKickStateLines } from './lib/belly-render.mjs';
+import { BABY_PROPERTY, FAMILY_CROWNING, PLAYER_BABIES, crowningAnimations, crowningLines } from './lib/crowning.mjs';
 
 const ROOT = new URL('../', import.meta.url).pathname;
 const RP = join(ROOT, 'packs/resource');
@@ -22,6 +23,8 @@ const FAMILIES = {
   humanoid_slime_girl: 'mobs/slime/humanoid/humanoid_slime_girl',
   monster_slime_girl: 'mobs/slime/monster/monster_slime_girl',
 };
+/** The crowning's pre_animation lines (replaced on every run). */
+const CROWNING_LINE = /^(v|variable)\.(crown_scale|strain|crowning|crown_x|crown_t|crown|mp_baby) =/;
 /** Entity animate entries the belly controller takes over. */
 const BELLY_ANIMATE = /^(belly_low|belly_medium|belly_high|belly_growth|fetal_p\d_i+|belly_hidden|fetal_push|birth_push|navel_prebirth|navel_birth)$/;
 
@@ -49,7 +52,7 @@ write(join(RP, 'animation_controllers/belly.animation_controllers.json'), {
 {
   const file = join(RP, 'animations/preggo_mob.animation.json');
   const doc = read(file);
-  Object.assign(doc.animations, kickPulseAnimations(), contractionWaveAnimation(), NO_POSE);
+  Object.assign(doc.animations, kickPulseAnimations(), contractionWaveAnimation(), NO_POSE, crowningAnimations());
   write(file, doc);
 }
 
@@ -65,6 +68,8 @@ write(join(RP, 'animation_controllers/belly.animation_controllers.json'), {
     const into = pain.states.default.transitions;
     if (!into.some((/** @type {Record<string, string>} */ t) => pose in t)) into.push({ [pose]: `v.pose == '${pose}'` });
   }
+  // the baby crowns during the birth, in step with her birth pose (both start with the state)
+  pain.states.birth.animations = ['birth', 'crowning'];
   write(file, doc);
 }
 
@@ -103,12 +108,26 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
     for (const p of PHASES) controllers[`${main}_charged_p${p}`] = variant(charged, `p${p}`, undefined);
   }
   if (eyes) controllers[`${main}_eyes`] = eyes;
+  // The crowning (tools/lib/crowning.mjs): the baby's head at her opening during the birth, its own
+  // geometry under a copy of her bones; a navel birth has one per belly size.
+  const crown = FAMILY_CROWNING[/** @type {keyof typeof FAMILY_CROWNING} */ (family)];
+  const crownNavel = crown.opening === 'navel';
+  const crownPhases = crownNavel ? PHASES.filter((p) => p >= 4) : [];
+  for (const key of Object.keys(d.geometry)) if (/^crowning/.test(key)) delete d.geometry[key];
+  if (crownNavel) for (const p of crownPhases) d.geometry[`crowning_p${p}`] = `geometry.${MOD}.${family}_crowning_p${p}`;
+  else d.geometry.crowning = `geometry.${MOD}.${family}_crowning`;
+  d.textures.fetus = `textures/${MOD}/entity/fetus/${crown.texture}`;
+  d.materials = { ...d.materials, crowning: crown.blend ? 'entity_alphablend' : 'entity_alphatest' };
+  const crowning = (/** @type {string} */ geometry) => ({ geometry: `Geometry.${geometry}`, materials: [{ '*': 'Material.crowning' }], textures: ['Texture.fetus'] });
+  if (crownNavel) for (const p of crownPhases) controllers[`${main}_crowning_p${p}`] = crowning(`crowning_p${p}`);
+  else controllers[`${main}_crowning`] = crowning('crowning');
   write(rcFile, { format_version: '1.10.0', render_controllers: controllers });
   d.render_controllers = [
     { [main]: 'v.bp < 0' },
     ...PHASES.map((p) => ({ [`${main}_p${p}`]: `v.bp == ${p}` })),
     ...(charged ? [{ [`${main}_charged`]: 'q.is_powered && v.bp < 0' }, ...PHASES.map((p) => ({ [`${main}_charged_p${p}`]: `q.is_powered && v.bp == ${p}` }))] : []),
     ...(eyes ? [`${main}_eyes`] : []),
+    ...(crownNavel ? crownPhases.map((p) => ({ [`${main}_crowning_p${p}`]: `v.crowning && v.bp == ${p}` })) : [{ [`${main}_crowning`]: 'v.crowning' }]),
   ];
 
   // pre_animation: the belly size from the enum property, else the phase, the variant, or a pregnancy pose.
@@ -119,7 +138,11 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
   pre.splice(kickAt + 1, 0, ...kickStateLines());
   const at = pre.findIndex((/** @type {string} */ line) => line.startsWith('v.pregnant_pose ='));
   if (at < 0) throw new Error(`${family}: no v.pregnant_pose line`);
-  pre.splice(at + 1, 0,
+  for (let i = pre.length - 1; i >= 0; i--) if (CROWNING_LINE.test(pre[i])) pre.splice(i, 1);
+  const pushAt = pre.findIndex((/** @type {string} */ line) => line.startsWith('v.push ='));
+  if (pushAt < 0) throw new Error(`${family}: no v.push line`);
+  pre.splice(pushAt + 1, 0, ...crowningLines({ when: "v.pose == 'birth'" }));
+  pre.splice(pre.findIndex((/** @type {string} */ line) => line.startsWith('v.pregnant_pose =')) + 1, 0,
     `v.bp = ${bellyIndex("q.property('minepreggo:belly')")};`,
     'v.bp = v.bp >= 0 ? v.bp : (v.phase >= 0 ? v.phase : (q.variant > 0 ? q.variant - 1 : (v.pregnant_pose ? 5 : -1)));',
     'v.phase = v.bp;',
@@ -135,6 +158,8 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
     d.animations.navel_birth = `animation.${MOD}.navel_birth${birth?.bones?.front_kick ? '_light' : ''}`;
   }
   d.animations.belly_controller = `controller.animation.${MOD}.${navel ? 'belly_navel' : 'belly'}`;
+  // the mod's birth on her back closes her legs for a moment, and the baby draws back in then
+  d.animations.crowning = `animation.${MOD}.${crown.opening === 'crotch' ? 'crowning' : 'crowning_free'}`;
   for (const [name, id] of Object.entries(BELLY_ANIMATIONS)) d.animations[name] ??= id;
   // Her scene poses (tools/gen-scene-poses.mjs solves them onto her rig); a monster body (four
   // legs, a jelly) keeps her own stance in a scene.
@@ -226,11 +251,42 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
     `variable.mp_bp = ${bellyIndex("query.property('minepreggo:belly')")};`,
     "variable.mp_bp = variable.mp_bp >= 0 ? variable.mp_bp : (variable.mp_phase >= 0 ? variable.mp_phase : ((variable.mp_pose == 'none' || variable.mp_pose == 'postbirth' || variable.mp_pose == 'miscarriage') ? -1 : 5));",
     'variable.mp_phase = variable.mp_bp;');
+  // The crowning: her baby's head at the opening during the birth (navel births at the belly of her
+  // size), in the model and texture of the baby's species.
+  for (let i = pre.length - 1; i >= 0; i--) if (CROWNING_LINE.test(pre[i])) pre.splice(i, 1);
+  const laborAt = pre.findIndex((/** @type {string} */ line) => line.startsWith('variable.mp_labor ='));
+  if (laborAt < 0 || !pre.some((/** @type {string} */ line) => line.startsWith('v.push ='))) throw new Error('player: no mp_labor or v.push line');
+  const babyIndex = PLAYER_BABIES.reduceRight((rest, [species], i) => `q.property('${MOD}:baby') == '${species}' ? ${i + 1} : (${rest})`, '0');
+  pre.splice(laborAt + 1, 0, `variable.mp_baby = ${babyIndex};`, ...crowningLines({ when: "variable.mp_labor && variable.mp_pose == 'birth' && variable.mp_baby > 0", strain: true }));
   const bodyOf = (/** @type {string} */ kind) => (/** @type {number} */ p) => read(join(RP, 'models/entity', MOD, `player_body_${kind}_p${p}.geo.json`))['minecraft:geometry'][0];
   const predefinedAt = pre.findIndex((/** @type {string} */ line) => line.startsWith('variable.mp_predefined ='));
   if (predefinedAt < 0) throw new Error('player: no mp_predefined line');
   pre.splice(predefinedAt + 1, 0, ...kickRoomLines('variable.mp_bp', bodyOf('custom'), bodyOf('predefined'), 'variable.mp_predefined'));
   d.scripts.pre_animation = pre;
+  for (const key of Object.keys(d.geometry)) if (/^minepreggo_crowning/.test(key)) delete d.geometry[key];
+  for (const key of Object.keys(d.textures)) if (/^minepreggo_fetus_/.test(key)) delete d.textures[key];
+  const crownKinds = [...new Set(PLAYER_BABIES.map(([, model]) => model))];
+  for (const kind of crownKinds) d.geometry[`minepreggo_crowning_${kind}`] = `geometry.${MOD}.player_crowning_${kind}`;
+  for (const p of PHASES.filter((n) => n >= 4)) d.geometry[`minepreggo_crowning_navel_p${p}`] = `geometry.${MOD}.player_crowning_navel_p${p}`;
+  for (const [species, , texture] of PLAYER_BABIES) d.textures[`minepreggo_fetus_${species}`] = `textures/${MOD}/entity/fetus/${texture}`;
+  d.materials = { ...d.materials, minepreggo_crowning: 'entity_alphatest', minepreggo_crowning_blend: 'entity_alphablend' };
+  d.animations.minepreggo_crowning = `animation.${MOD}.crowning`;
+  d.animations.minepreggo_crowning_navel = `animation.${MOD}.crowning_free`;
+  d.scripts.animate = d.scripts.animate.filter((/** @type {string | Record<string, string>} */ a) => !(typeof a === 'object' && /^minepreggo_crowning/.test(Object.keys(a)[0])));
+  // started with her birth pose (the same condition), so the baby draws back in when her legs close
+  const birthAt = d.scripts.animate.findIndex((/** @type {string | Record<string, string>} */ a) => typeof a === 'object' && 'minepreggo_labor_birth' in a);
+  if (birthAt < 0) throw new Error('player: no minepreggo_labor_birth entry');
+  const birthWhen = /** @type {Record<string, string>} */ (d.scripts.animate[birthAt]).minepreggo_labor_birth;
+  d.scripts.animate.splice(birthAt + 1, 0, { minepreggo_crowning: `${birthWhen} && !variable.mp_navel` }, { minepreggo_crowning_navel: `${birthWhen} && variable.mp_navel` });
+  const seen = '!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.crowning';
+  const humanoid = PLAYER_BABIES.map(([, model], i) => (model === 'humanoid' ? i + 1 : 0)).filter(Boolean);
+  const isHumanoid = `variable.mp_baby >= ${Math.min(...humanoid)} && variable.mp_baby <= ${Math.max(...humanoid)}`;
+  d.render_controllers = d.render_controllers.filter((/** @type {string | Record<string, string>} */ rc) => typeof rc === 'string' || !/player_crowning/.test(Object.keys(rc)[0]));
+  for (const kind of crownKinds) {
+    const which = kind === 'humanoid' ? isHumanoid : PLAYER_BABIES.map(([, model], i) => (model === kind ? `variable.mp_baby == ${i + 1}` : '')).filter(Boolean).join(' || ');
+    d.render_controllers.push({ [`controller.render.${MOD}.player_crowning_${kind}`]: `${seen} && !variable.mp_navel && (${which})` });
+  }
+  for (const p of PHASES.filter((n) => n >= 4)) d.render_controllers.push({ [`controller.render.${MOD}.player_crowning_navel_p${p}`]: `${seen} && variable.mp_navel && variable.mp_bp == ${p} && ${isHumanoid}` });
   // (each run used to add one more copy of the spear line; one is enough)
   d.scripts.initialize = [...new Set(initializers(pre, [...(d.scripts.initialize ?? []), 'variable.melee_spear_equipped = 0.0;']))];
   write(file, doc);
@@ -242,11 +298,25 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
     rcDoc.render_controllers[`controller.render.${MOD}.player_belly_custom_p${p}`] = { geometry: `Geometry.minepreggo_body_custom_p${p}`, materials: [{ '*': 'Material.default' }], textures: ['Texture.default'] };
     rcDoc.render_controllers[`controller.render.${MOD}.player_belly_predefined_p${p}`] = { geometry: `Geometry.minepreggo_body_predefined_p${p}`, materials: [{ '*': 'Material.default' }], textures: [`Texture.minepreggo_alex_p${p}_extra`] };
   }
+  for (const key of Object.keys(rcDoc.render_controllers)) if (/player_crowning/.test(key)) delete rcDoc.render_controllers[key];
+  /** The fetus texture of the baby's species (humanoid models: human, zombie, creeper and ender babies). */
+  const humanoidTextures = PLAYER_BABIES.filter(([, model]) => model === 'humanoid').map(([species]) => `Texture.minepreggo_fetus_${species}`);
+  const firstHumanoid = PLAYER_BABIES.findIndex(([, model]) => model === 'humanoid') + 1;
+  for (const kind of [...new Set(PLAYER_BABIES.map(([, model]) => model))]) {
+    const own = PLAYER_BABIES.find(([, model]) => model === kind);
+    rcDoc.render_controllers[`controller.render.${MOD}.player_crowning_${kind}`] = kind === 'humanoid'
+      ? { arrays: { textures: { 'Array.fetus': humanoidTextures } }, geometry: `Geometry.minepreggo_crowning_${kind}`, materials: [{ '*': 'Material.minepreggo_crowning' }], textures: [`Array.fetus[variable.mp_baby - ${firstHumanoid}]`] }
+      : { geometry: `Geometry.minepreggo_crowning_${kind}`, materials: [{ '*': kind.includes('slime') ? 'Material.minepreggo_crowning_blend' : 'Material.minepreggo_crowning' }], textures: [`Texture.minepreggo_fetus_${own?.[0]}`] };
+  }
+  for (const p of PHASES.filter((n) => n >= 4)) {
+    rcDoc.render_controllers[`controller.render.${MOD}.player_crowning_navel_p${p}`] = { arrays: { textures: { 'Array.fetus': humanoidTextures } }, geometry: `Geometry.minepreggo_crowning_navel_p${p}`, materials: [{ '*': 'Material.minepreggo_crowning' }], textures: [`Array.fetus[variable.mp_baby - ${firstHumanoid}]`] };
+  }
   write(rcFile, rcDoc);
 
   const bpFile = join(BP, 'entities/player.json');
   const bpDoc = read(bpFile);
   bpDoc['minecraft:entity'].description.properties['minepreggo:belly'] = BELLY_PROPERTY;
+  bpDoc['minecraft:entity'].description.properties['minepreggo:baby'] = BABY_PROPERTY;
   writeEntityJson(bpFile, bpDoc);
   console.log('player: 20 belly render controllers');
 }

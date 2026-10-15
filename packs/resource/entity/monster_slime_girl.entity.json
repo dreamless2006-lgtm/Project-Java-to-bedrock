@@ -4,7 +4,8 @@
     "description": {
       "identifier": "minepreggo:monster_slime_girl",
       "materials": {
-        "default": "entity_alphablend"
+        "default": "entity_alphablend",
+        "crowning": "entity_alphablend"
       },
       "textures": {
         "default": "textures/minepreggo/mobs/slime/monster/monster_slime_girl",
@@ -17,7 +18,8 @@
         "p6": "textures/minepreggo/mobs/slime/monster/monster_slime_girl_p6",
         "p7": "textures/minepreggo/mobs/slime/monster/monster_slime_girl_p7",
         "p8": "textures/minepreggo/mobs/slime/monster/monster_slime_girl_p8",
-        "p9": "textures/minepreggo/mobs/slime/monster/monster_slime_girl_p9"
+        "p9": "textures/minepreggo/mobs/slime/monster/monster_slime_girl_p9",
+        "fetus": "textures/minepreggo/entity/fetus/slime_fetus"
       },
       "geometry": {
         "default": "geometry.minepreggo.monster_slime_girl",
@@ -30,7 +32,8 @@
         "p6": "geometry.minepreggo.monster_slime_girl_p6",
         "p7": "geometry.minepreggo.monster_slime_girl_p7",
         "p8": "geometry.minepreggo.monster_slime_girl_p8",
-        "p9": "geometry.minepreggo.monster_slime_girl_p9"
+        "p9": "geometry.minepreggo.monster_slime_girl_p9",
+        "crowning": "geometry.minepreggo.monster_slime_girl_crowning"
       },
       "scripts": {
         "pre_animation": [
@@ -57,6 +60,12 @@
           "v.k_bottom_kick_z = (v.bp == 3 ? 0.00 : (v.bp == 4 ? 0.00 : (v.bp == 5 ? 0.00 : (v.bp == 6 ? 3.54 : (v.bp == 7 ? 6.38 : (v.bp == 8 ? 8.10 : (v.bp == 9 ? 8.10 : 0.0)))))));",
           "v.kr_f = v.k_front_kick_z;",
           "v.push = v.pose == 'birth' ? q.property('minepreggo:growth') : 0.0;",
+          "v.crown_scale = 0.875;",
+          "v.strain = -1.0;",
+          "v.crowning = (v.pose == 'birth') && v.push > 0.0;",
+          "v.crown_x = math.clamp((v.push - 0.15) / 0.65, 0.0, 1.0);",
+          "v.crown_t = v.push < 0.8 ? 3.0 * v.crown_x * v.crown_x * (3.0 - 2.0 * v.crown_x) : 3.0 + 8.0 * math.pow((v.push - 0.8) / 0.2, 2.0);",
+          "v.crown = (!v.crowning || v.crown_t < v.crown - 2.5) ? v.crown_t : v.crown + (v.crown_t - v.crown) * math.min(1.0, 6.0 * q.delta_time);",
           "v.kick = q.property('minepreggo:kick');",
           "v.scene = q.property('minepreggo:scene');",
           "v.kicking = v.pose == 'fetal_movement' || v.pose == 'kicking_sit' || (v.pose == 'incapacitated' && v.scene == 'none') || v.pose == 'prebirth' || v.pose == 'birth' || v.scene == 'kicking';",
@@ -65,6 +74,9 @@
           "v.contracting = v.pose == 'contraction' || v.pose == 'prebirth' || (v.pose == 'incapacitated' && v.scene == 'none') || v.scene == 'contraction';",
           "v.kick_w = math.clamp(v.kick_w + (v.kicking ? 1.6 : -1.1) * math.clamp(q.delta_time, 0.0, 0.1), 0.0, 1.0);",
           "v.cw = math.clamp(v.cw + (v.contracting ? 0.6 : -0.45) * math.clamp(q.delta_time, 0.0, 0.1), 0.0, 1.0);",
+          "v.kick_shown = v.kicking ? v.kick : v.kick_shown;",
+          "v.kick_shown = v.kicking ? v.kick : v.kick_shown;",
+          "v.kick_shown = v.kicking ? v.kick : v.kick_shown;",
           "v.kick_shown = v.kicking ? v.kick : v.kick_shown;",
           "v.kick_shown = v.kicking ? v.kick : v.kick_shown;",
           "v.savage = q.property('minepreggo:savage');",
@@ -170,6 +182,11 @@
           "variable.belly_growth = 0.0;",
           "variable.bp = 0.0;",
           "variable.contracting = 0.0;",
+          "variable.crown = 0.0;",
+          "variable.crown_scale = 0.0;",
+          "variable.crown_t = 0.0;",
+          "variable.crown_x = 0.0;",
+          "variable.crowning = 0.0;",
           "variable.cw = 0.0;",
           "variable.hostile_p3 = 0.0;",
           "variable.jair = 0.0;",
@@ -267,7 +284,8 @@
           "variable.squish = 0.0;",
           "variable.squish_age = 0.0;",
           "variable.squish_lateral = 0.0;",
-          "variable.squish_x = 0.0;"
+          "variable.squish_x = 0.0;",
+          "variable.strain = 0.0;"
         ]
       },
       "animations": {
@@ -351,7 +369,8 @@
         "scene_sit_pose_p6": "animation.minepreggo.no_pose",
         "scene_sit_pose_p7": "animation.minepreggo.no_pose",
         "scene_sit_pose_p8": "animation.minepreggo.no_pose",
-        "scene_sit_pose_p9": "animation.minepreggo.no_pose"
+        "scene_sit_pose_p9": "animation.minepreggo.no_pose",
+        "crowning": "animation.minepreggo.crowning_free"
       },
       "sound_effects": {
         "jump": "mob.slime.jump",
@@ -390,6 +409,9 @@
         },
         {
           "controller.render.minepreggo.monster_slime_girl_p9": "v.bp == 9"
+        },
+        {
+          "controller.render.minepreggo.monster_slime_girl_crowning": "v.crowning"
         }
       ],
       "spawn_egg": {

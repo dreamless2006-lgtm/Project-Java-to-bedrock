@@ -176,6 +176,72 @@
           "head": true
         }
       ]
+    },
+    "controller.render.minepreggo.ender_woman_crowning_p4": {
+      "geometry": "Geometry.crowning_p4",
+      "materials": [
+        {
+          "*": "Material.crowning"
+        }
+      ],
+      "textures": [
+        "Texture.fetus"
+      ]
+    },
+    "controller.render.minepreggo.ender_woman_crowning_p5": {
+      "geometry": "Geometry.crowning_p5",
+      "materials": [
+        {
+          "*": "Material.crowning"
+        }
+      ],
+      "textures": [
+        "Texture.fetus"
+      ]
+    },
+    "controller.render.minepreggo.ender_woman_crowning_p6": {
+      "geometry": "Geometry.crowning_p6",
+      "materials": [
+        {
+          "*": "Material.crowning"
+        }
+      ],
+      "textures": [
+        "Texture.fetus"
+      ]
+    },
+    "controller.render.minepreggo.ender_woman_crowning_p7": {
+      "geometry": "Geometry.crowning_p7",
+      "materials": [
+        {
+          "*": "Material.crowning"
+        }
+      ],
+      "textures": [
+        "Texture.fetus"
+      ]
+    },
+    "controller.render.minepreggo.ender_woman_crowning_p8": {
+      "geometry": "Geometry.crowning_p8",
+      "materials": [
+        {
+          "*": "Material.crowning"
+        }
+      ],
+      "textures": [
+        "Texture.fetus"
+      ]
+    },
+    "controller.render.minepreggo.ender_woman_crowning_p9": {
+      "geometry": "Geometry.crowning_p9",
+      "materials": [
+        {
+          "*": "Material.crowning"
+        }
+      ],
+      "textures": [
+        "Texture.fetus"
+      ]
     }
   }
 }

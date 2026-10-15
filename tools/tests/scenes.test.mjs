@@ -588,3 +588,54 @@ test('labor and after: the waters can be pushed through, one baby is spoken of a
     emit(world.afterEvents.entityRemove, { removedEntityId: mob.id });
   }
 });
+
+test('crowning: the baby being born reaches the player model, and every mother has her crowning wired to her birth', async () => {
+  const { playerVisuals } = await import('../../packs/behavior/scripts/player/body.js');
+  const { existsSync, readFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const { BABY_PROPERTY, FAMILY_CROWNING, PLAYER_BABIES, crowningGeometry, simpleBaby } = await import('../lib/crowning.mjs');
+  // the species of the baby being born, only during the birth itself
+  const p = { phase: 7, pain: { type: 'BIRTH', severity: 0 }, birth: { baby: 'ZOMBIE', pushLevel: 1, pushesPerLevel: 28 }, symptoms: {}, daysByPhase: [1, 1, 1, 1, 1, 1, 1, 1], daysPassed: 0, timer: 0, womb: ['ZOMBIE'], father: 'ZOMBIE' };
+  const record = /** @type {any} */ ({ pregnancy: p, gender: 'female', skin: 'custom', bellyRubTicks: 0, pushes: { count: 14 } });
+  assert.equal(playerVisuals(record).baby, 'zombie');
+  assert.equal(playerVisuals(record).pose, 'birth');
+  p.pain = { type: 'PREBIRTH', severity: 0 };
+  assert.equal(playerVisuals(record).baby, 'none');
+  assert.ok(BABY_PROPERTY.values.length <= 16 && BABY_PROPERTY.values[0] === 'none');
+  assert.deepEqual(BABY_PROPERTY.values.slice(1), PLAYER_BABIES.map(([species]) => species));
+  // the geometry: her chain without cubes, the mount at the opening, the baby head first with its crown on the opening
+  const doc = crowningGeometry({ id: 'geometry.test', chain: [{ name: 'body', pivot: [0, 24, 0] }], opening: [0, 12, -0.5], baby: simpleBaby({ uv: [0, 0], uv_size: [4, 4] }) })['minecraft:geometry'][0];
+  const bone = (/** @type {string} */ name) => doc.bones.find((/** @type {any} */ b) => b.name === name);
+  assert.ok(!bone('body').cubes);
+  assert.deepEqual([bone('crowning').parent, bone('crowning_slide').parent, bone('crowning_baby').parent], ['body', 'crowning', 'crowning_slide']);
+  assert.deepEqual(bone('crowning_baby').rotation, [180, 0, 0]);
+  const head = bone('fetus_head').cubes[0];
+  assert.equal(head.origin[1] + head.size[1], 12, 'the crown sits on the opening (before the turn about it)');
+  // the generated wiring (when the mod is imported)
+  const RP = new URL('../../packs/resource/', import.meta.url).pathname;
+  const json = (/** @type {string} */ f) => JSON.parse(readFileSync(join(RP, f), 'utf8'));
+  const pain = json('animation_controllers/preggo_mob.animation_controllers.json').animation_controllers['controller.animation.minepreggo.preggo_mob.pain'];
+  assert.deepEqual(pain.states.birth.animations, ['birth', 'crowning'], 'the crowning starts with her birth pose');
+  const animations = json('animations/preggo_mob.animation.json').animations;
+  assert.ok(animations['animation.minepreggo.crowning'].bones.crowning_slide.position['1.65'], 'drawn back while her legs close');
+  for (const [family, spec] of Object.entries(FAMILY_CROWNING)) {
+    const d = json(`entity/${family}.entity.json`)['minecraft:client_entity'].description;
+    assert.equal(d.animations.crowning, `animation.minepreggo.${spec.opening === 'crotch' ? 'crowning' : 'crowning_free'}`, family);
+    assert.ok(d.scripts.pre_animation.includes("v.crowning = (v.pose == 'birth') && v.push > 0.0;"), family);
+    const rcs = d.render_controllers.filter((/** @type {any} */ rc) => typeof rc === 'object' && Object.keys(rc)[0].includes('_crowning'));
+    assert.equal(rcs.length, spec.opening === 'navel' ? 6 : 1, family);
+    if (existsSync(join(RP, 'models/entity/minepreggo/crowning'))) {
+      for (const rc of rcs) {
+        const key = Object.keys(rc)[0].replace(`controller.render.minepreggo.${family}_`, '');
+        assert.ok(existsSync(join(RP, `models/entity/minepreggo/crowning/${family}_${key}.geo.json`)), `${family} ${key}`);
+      }
+    }
+  }
+  const player = json('entity/player.entity.json')['minecraft:client_entity'].description;
+  const animate = player.scripts.animate.map((/** @type {any} */ a) => (typeof a === 'string' ? a : Object.keys(a)[0]));
+  assert.equal(animate.indexOf('minepreggo_crowning'), animate.indexOf('minepreggo_labor_birth') + 1, 'next to her birth pose, on the same condition');
+  assert.ok(player.render_controllers.some((/** @type {any} */ rc) => typeof rc === 'object' && 'controller.render.minepreggo.player_crowning_humanoid' in rc));
+  const bp = JSON.parse(readFileSync(new URL('../../packs/behavior/entities/player.json', import.meta.url), 'utf8'))['minecraft:entity'].description.properties;
+  assert.deepEqual(bp['minepreggo:baby'], BABY_PROPERTY);
+  assert.ok(Object.keys(bp).length <= 32);
+});

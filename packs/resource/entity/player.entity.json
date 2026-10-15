@@ -7,7 +7,9 @@
         "default": "entity_alphatest",
         "cape": "entity_alphatest",
         "animated": "player_animated",
-        "spectator": "player_spectator"
+        "spectator": "player_spectator",
+        "minepreggo_crowning": "entity_alphatest",
+        "minepreggo_crowning_blend": "entity_alphablend"
       },
       "textures": {
         "default": "textures/entity/steve",
@@ -55,7 +57,13 @@
         "minepreggo_steve_p8": "textures/minepreggo/entity/player/predefined/alex/alex_p8",
         "minepreggo_steve_p8_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p8_extra",
         "minepreggo_steve_p9": "textures/minepreggo/entity/player/predefined/alex/alex_p9",
-        "minepreggo_steve_p9_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p9_extra"
+        "minepreggo_steve_p9_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p9_extra",
+        "minepreggo_fetus_human": "textures/minepreggo/entity/fetus/human_fetus",
+        "minepreggo_fetus_zombie": "textures/minepreggo/entity/fetus/zombie_fetus",
+        "minepreggo_fetus_creeper": "textures/minepreggo/entity/fetus/humanoid_creeper_fetus",
+        "minepreggo_fetus_ender": "textures/minepreggo/entity/fetus/humanoid_ender_fetus",
+        "minepreggo_fetus_slime": "textures/minepreggo/entity/fetus/humanoid_slime_fetus",
+        "minepreggo_fetus_villager": "textures/minepreggo/entity/fetus/villager_fetus"
       },
       "geometry": {
         "default": "geometry.humanoid.custom",
@@ -82,7 +90,16 @@
         "minepreggo_body_custom_p8": "geometry.minepreggo.player_body_custom_p8",
         "minepreggo_body_predefined_p8": "geometry.minepreggo.player_body_predefined_p8",
         "minepreggo_body_custom_p9": "geometry.minepreggo.player_body_custom_p9",
-        "minepreggo_body_predefined_p9": "geometry.minepreggo.player_body_predefined_p9"
+        "minepreggo_body_predefined_p9": "geometry.minepreggo.player_body_predefined_p9",
+        "minepreggo_crowning_humanoid": "geometry.minepreggo.player_crowning_humanoid",
+        "minepreggo_crowning_humanoid_slime": "geometry.minepreggo.player_crowning_humanoid_slime",
+        "minepreggo_crowning_villager": "geometry.minepreggo.player_crowning_villager",
+        "minepreggo_crowning_navel_p4": "geometry.minepreggo.player_crowning_navel_p4",
+        "minepreggo_crowning_navel_p5": "geometry.minepreggo.player_crowning_navel_p5",
+        "minepreggo_crowning_navel_p6": "geometry.minepreggo.player_crowning_navel_p6",
+        "minepreggo_crowning_navel_p7": "geometry.minepreggo.player_crowning_navel_p7",
+        "minepreggo_crowning_navel_p8": "geometry.minepreggo.player_crowning_navel_p8",
+        "minepreggo_crowning_navel_p9": "geometry.minepreggo.player_crowning_navel_p9"
       },
       "scripts": {
         "scale": "0.9375",
@@ -96,6 +113,11 @@
           "variable.boot_layer_visible = 0.0;",
           "variable.chest_layer_visible = 0.0;",
           "variable.contracting = 0.0;",
+          "variable.crown = 0.0;",
+          "variable.crown_scale = 0.0;",
+          "variable.crown_t = 0.0;",
+          "variable.crown_x = 0.0;",
+          "variable.crowning = 0.0;",
           "variable.cw = 0.0;",
           "variable.first_person_rotation_factor = 0.0;",
           "variable.hand_bob = 0.0;",
@@ -188,6 +210,7 @@
           "variable.kr_f = 0.0;",
           "variable.leg_layer_visible = 0.0;",
           "variable.map_angle = 0.0;",
+          "variable.mp_baby = 0.0;",
           "variable.mp_bp = 0.0;",
           "variable.mp_female = 0.0;",
           "variable.mp_kick = 0.0;",
@@ -200,6 +223,7 @@
           "variable.mp_skin = 0.0;",
           "variable.push = 0.0;",
           "variable.riding_y_offset = 0.0;",
+          "variable.strain = 0.0;",
           "variable.tcos0 = 0.0;"
         ],
         "pre_animation": [
@@ -243,11 +267,21 @@
           "v.kr_f = v.k_front_kick_z;",
           "variable.mp_pregnant = variable.mp_female && variable.mp_phase >= 0;",
           "variable.mp_labor = variable.mp_female && (variable.mp_pose == 'water_breaking' || variable.mp_pose == 'prebirth' || variable.mp_pose == 'birth' || variable.mp_pose == 'postbirth' || variable.mp_pose == 'miscarriage');",
+          "variable.mp_baby = q.property('minepreggo:baby') == 'human' ? 1 : (q.property('minepreggo:baby') == 'zombie' ? 2 : (q.property('minepreggo:baby') == 'creeper' ? 3 : (q.property('minepreggo:baby') == 'ender' ? 4 : (q.property('minepreggo:baby') == 'slime' ? 5 : (q.property('minepreggo:baby') == 'villager' ? 6 : (0))))));",
+          "v.crown_scale = 0.875;",
+          "v.strain = math.clamp(v.strain + (q.is_sneaking ? 6.0 : -1.5) * q.delta_time, 0.0, 1.0);",
+          "v.crowning = (variable.mp_labor && variable.mp_pose == 'birth' && variable.mp_baby > 0) && v.push > 0.0;",
+          "v.crown_x = math.clamp((v.push - 0.15) / 0.65, 0.0, 1.0);",
+          "v.crown_t = v.push < 0.8 ? 3.0 * v.crown_x * v.crown_x * (3.0 - 2.0 * v.crown_x) : 3.0 + 8.0 * math.pow((v.push - 0.8) / 0.2, 2.0);",
+          "v.crown = (!v.crowning || v.crown_t < v.crown - 2.5) ? v.crown_t : v.crown + (v.crown_t - v.crown) * math.min(1.0, 6.0 * q.delta_time);",
           "variable.kicking = variable.mp_pose == 'fetal_movement' || variable.mp_pose == 'kicking_sit' || variable.mp_pose == 'prebirth' || variable.mp_pose == 'birth';",
           "variable.kick_shown = variable.kicking ? variable.mp_kick : variable.kick_shown;",
           "variable.contracting = variable.mp_pose == 'contraction' || variable.mp_pose == 'prebirth';",
           "variable.kick_w = math.clamp(variable.kick_w + (variable.kicking ? 1.6 : -1.1) * math.clamp(q.delta_time, 0.0, 0.1), 0.0, 1.0);",
           "variable.cw = math.clamp(variable.cw + (variable.contracting ? 0.6 : -0.45) * math.clamp(q.delta_time, 0.0, 0.1), 0.0, 1.0);",
+          "variable.kick_shown = variable.kicking ? variable.mp_kick : variable.kick_shown;",
+          "variable.kick_shown = variable.kicking ? variable.mp_kick : variable.kick_shown;",
+          "variable.kick_shown = variable.kicking ? variable.mp_kick : variable.kick_shown;",
           "variable.kick_shown = variable.kicking ? variable.mp_kick : variable.kick_shown;",
           "variable.kick_shown = variable.kicking ? variable.mp_kick : variable.kick_shown;",
           "v.kl = 1.0 + variable.mp_kick;",
@@ -473,6 +507,12 @@
             "minepreggo_labor_birth": "variable.mp_labor && variable.mp_pose == 'birth'"
           },
           {
+            "minepreggo_crowning": "variable.mp_labor && variable.mp_pose == 'birth' && !variable.mp_navel"
+          },
+          {
+            "minepreggo_crowning_navel": "variable.mp_labor && variable.mp_pose == 'birth' && variable.mp_navel"
+          },
+          {
             "minepreggo_labor_postbirth": "variable.mp_labor && variable.mp_pose == 'postbirth'"
           },
           {
@@ -645,7 +685,9 @@
         "minepreggo_kick_i": "animation.minepreggo.kick_i",
         "minepreggo_kick_ii": "animation.minepreggo.kick_ii",
         "minepreggo_kick_iii": "animation.minepreggo.kick_iii",
-        "minepreggo_contraction_wave": "animation.minepreggo.contraction_wave"
+        "minepreggo_contraction_wave": "animation.minepreggo.contraction_wave",
+        "minepreggo_crowning": "animation.minepreggo.crowning",
+        "minepreggo_crowning_navel": "animation.minepreggo.crowning_free"
       },
       "render_controllers": [
         {
@@ -734,6 +776,33 @@
         },
         {
           "controller.render.minepreggo.player_belly_predefined_p9": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 9"
+        },
+        {
+          "controller.render.minepreggo.player_crowning_humanoid": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.crowning && !variable.mp_navel && (variable.mp_baby >= 1 && variable.mp_baby <= 4)"
+        },
+        {
+          "controller.render.minepreggo.player_crowning_humanoid_slime": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.crowning && !variable.mp_navel && (variable.mp_baby == 5)"
+        },
+        {
+          "controller.render.minepreggo.player_crowning_villager": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.crowning && !variable.mp_navel && (variable.mp_baby == 6)"
+        },
+        {
+          "controller.render.minepreggo.player_crowning_navel_p4": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.crowning && variable.mp_navel && variable.mp_bp == 4 && variable.mp_baby >= 1 && variable.mp_baby <= 4"
+        },
+        {
+          "controller.render.minepreggo.player_crowning_navel_p5": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.crowning && variable.mp_navel && variable.mp_bp == 5 && variable.mp_baby >= 1 && variable.mp_baby <= 4"
+        },
+        {
+          "controller.render.minepreggo.player_crowning_navel_p6": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.crowning && variable.mp_navel && variable.mp_bp == 6 && variable.mp_baby >= 1 && variable.mp_baby <= 4"
+        },
+        {
+          "controller.render.minepreggo.player_crowning_navel_p7": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.crowning && variable.mp_navel && variable.mp_bp == 7 && variable.mp_baby >= 1 && variable.mp_baby <= 4"
+        },
+        {
+          "controller.render.minepreggo.player_crowning_navel_p8": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.crowning && variable.mp_navel && variable.mp_bp == 8 && variable.mp_baby >= 1 && variable.mp_baby <= 4"
+        },
+        {
+          "controller.render.minepreggo.player_crowning_navel_p9": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.crowning && variable.mp_navel && variable.mp_bp == 9 && variable.mp_baby >= 1 && variable.mp_baby <= 4"
         }
       ],
       "enable_attachables": true
