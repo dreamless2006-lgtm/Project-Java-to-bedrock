@@ -249,7 +249,7 @@ test("a pack that walks but predates the controls is reported too; the newest is
     assert.match(said[0], /newest controls and senses/);
     const cur = fakeBridge(); spawn(cur.b, cur.queued);
     const none = []; cur.b.sayInGame = (t) => { none.push(t); return true; };
-    await cur.b.handle({ t: "hello", v: 2, version: "2.10.0", walks: true, tick: 1 });
+    await cur.b.handle({ t: "hello", v: 2, version: "2.11.0", walks: true, tick: 1 });
     assert.equal(none.length, 0);
 });
 

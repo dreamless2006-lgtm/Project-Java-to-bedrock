@@ -26,7 +26,7 @@ const HELP = [
     "§b!ai pause|resume [Name]§r - pause thinking (all bots or one)",
     "§b!ai where [Name]§r - where the server keeps a bot's body and what its walker is doing",
     "§b!ai body§r - how the bridge's client sees the AI's body (keys held, pull-backs by the server)",
-    "§b!ai see [Name]§r - the picture of the world the AI's model is given each turn (letters for materials, digits for distance)",
+    "§b!ai see [Name]§r - the picture of the world the AI's model is given each turn (letters for materials, digits for distance); §b!ai picture on|off§r turns the picture in the AI's turns on or off",
     "§7Independent (default): nobody can steer the AI in game (no pause, walk, forget, rules, mission, summon); talk is the only way in. §b!ai independent on|off§r (pinned by the bridge's config.json when it sets it).",
     "§b!ai walk <Name> <dx> <dz>§r - make a bot walk that far from where it stands (a movement test)",
     "§7operator: §b!ai provider <id>§r, §b!ai model <name>§r, §b!ai transport auto|direct|bridge§r, §b!ai volume 0-3§r, §b!ai budget soft|hard <tokens>|reset§r, §b!ai rules <text>§r, §b!ai callbyname on|off§r, §b!ai freebuild on|off§r, §b!ai debug on|off§r, §b!ai fakechat on|off§r, §b!ai players 0-16§r, §b!ai thoughts on|off§r, §b!ai mix on|off§r, §b!ai bridgeplays on|off§r, §b!ai mission beat|free§r, §b!ai wildspawns on|off§r, §b!ai companiondeath respawn|permadeath§r, §b!ai jointeleport on|off§r, §b!ai content§r",
@@ -162,6 +162,7 @@ export function handleCommand(player, message) {
             }, 60);
             return;
         }
+        case "picture": updateWorldConfig({ sight: rest[0] !== "off" }); return reply(player, rest[0] !== "off" ? "§aeach turn now carries a picture of what the AI sees" : "§athe AI is no longer given a picture of its view (it still has the Around you report)");
         case "see": {
             const b = rest[0] ? botByName(player, rest[0]) : [...allBrains().values()].find(x => { try { return x.settings.mode === "bridge"; } catch (e) { return false; } }) || [...allBrains().values()][0];
             if (!b) return reply(player, "§cno such bot");

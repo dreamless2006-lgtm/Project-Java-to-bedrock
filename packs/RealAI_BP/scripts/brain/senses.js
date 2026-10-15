@@ -142,12 +142,14 @@ export function describeRow(r) {
  */
 export function castRay(idAt, origin, yaw, pitch, maxDist = 40) {
     const yr = yaw * RAD, pr = pitch * RAD;
-    return castDir(idAt, origin, { x: -Math.sin(yr) * Math.cos(pr), y: -Math.sin(pr), z: Math.cos(yr) * Math.cos(pr) }, maxDist);
+    return walkRay(idAt, origin, -Math.sin(yr) * Math.cos(pr), -Math.sin(pr), Math.cos(yr) * Math.cos(pr), maxDist);
 }
 /** The same line of sight along a direction vector (any length but zero): what the picture of the world is drawn with. */
 export function castDir(idAt, origin, dir, maxDist = 40) {
     const len = Math.hypot(dir.x, dir.y, dir.z) || 1;
-    const dx = dir.x / len, dy = dir.y / len, dz = dir.z / len;
+    return walkRay(idAt, origin, dir.x / len, dir.y / len, dir.z / len, maxDist);
+}
+function walkRay(idAt, origin, dx, dy, dz, maxDist) {
     let x = Math.floor(origin.x), y = Math.floor(origin.y), z = Math.floor(origin.z);
     const sx = dx > 0 ? 1 : -1, sy = dy > 0 ? 1 : -1, sz = dz > 0 ? 1 : -1;
     const tD = (d) => (Math.abs(d) < 1e-9 ? Infinity : 1 / Math.abs(d));

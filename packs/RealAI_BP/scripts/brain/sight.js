@@ -21,7 +21,7 @@ export const SIGHT_LEGEND = [
     [".", "open air or sky (nothing within range)"], ["?", "not loaded yet"],
     ["#", "rock (stone, deepslate, netherrack...)"], ["\"", "grass"], ["=", "dirt, mud, farmland, path"], [":", "sand, gravel"], ["^", "snow, ice"],
     ["T", "tree trunk or log"], ["%", "leaves"], ["*", "ore"], ["~", "water"], ["!", "lava"], ["X", "harmful (cactus, fire, magma, cobweb)"],
-    ["B", "built: planks, bricks, fences, walls, stairs, slabs"], ["D", "door, trapdoor, gate"], ["G", "glass"], ["C", "chest, furnace, crafting table, bed, workstation"], ["o", "any other solid block"],
+    ["P", "portal"], ["B", "built: planks, bricks, fences, walls, stairs, slabs"], ["D", "door, trapdoor, gate"], ["G", "glass"], ["C", "chest, furnace, crafting table, bed, workstation"], ["o", "any other solid block"],
     ["@", "a player"], ["H", "a hostile creature"], ["a", "an animal"], ["&", "another bot"], ["$", "a dropped item"],
 ];
 
@@ -33,13 +33,14 @@ export function legendText() {
 }
 
 const RE_CHEST = /chest|barrel|furnace|smoker|crafting_table|_bed$|^minecraft:bed$|anvil|enchanting_table|brewing_stand|loom|grindstone|stonecutter|smithing_table|cartography_table|lectern|bookshelf|shulker_box|composter|cauldron/;
-const RE_DOOR = /_door$|_trapdoor$|fence_gate$/;
+const RE_DOOR = /_door$|trapdoor$|fence_gate$/;
 
 /** The character for a block of this type: see SIGHT_LEGEND. */
 export function glyphOf(id, kind) {
     if (kind === undefined) kind = kindOf(id);
     if (kind === "water") return "~";
     if (kind === "lava") return "!";
+    if (/portal|end_gateway/.test(id)) return "P";
     if (kind === "hazard") return "X";
     const cls = sightClass(id, kind);
     if (cls === "tree") return /_leaves$/.test(id) ? "%" : "T";
@@ -47,6 +48,7 @@ export function glyphOf(id, kind) {
     if (RE_DOOR.test(id)) return "D";
     if (/glass/.test(id)) return "G";
     if (RE_CHEST.test(id)) return "C";
+    if (/_stairs$|_slab$|_wall$|brick|^minecraft:(cut|smooth|chiseled|polished)_/.test(id)) return "B";      // built from sand or mud is still built
     if (/grass_block|podzol|mycelium|moss_block/.test(id)) return "\"";
     if (/dirt|farmland|path|mud|clay/.test(id)) return "=";
     if (/sand|gravel/.test(id)) return ":";
@@ -62,10 +64,19 @@ function depthDigit(dist) {
     return "9";
 }
 
+const SKY = 320;     // from here up there is no world: a line of sight that gets there sees sky, not an unloaded chunk
 function cachedAt(idAt) {
     const m = new Map();
-    return (x, y, z) => { const k = x + "," + y + "," + z; let v = m.get(k); if (v === undefined) { v = idAt(x, y, z); if (v === undefined) v = null; m.set(k, v); } return v; };
+    return (x, y, z) => {
+        if (y >= SKY) return "minecraft:air";
+        const k = x + "," + y + "," + z; let v = m.get(k);
+        if (v === undefined) { v = idAt(x, y, z); if (v === undefined) v = null; m.set(k, v); }
+        return v;
+    };
 }
+/** What does not hide a creature behind it: a pane of glass, a fence, a pond. */
+const SEE_THROUGH = /glass|_fence$|^minecraft:fence$|iron_bars|chain$|^minecraft:(water|flowing_water)$/;
+function seeThrough(at) { return (x, y, z) => { const id = at(x, y, z); return id && SEE_THROUGH.test(id) ? "minecraft:air" : id; }; }
 
 /** The camera: forward, right and up unit vectors for a yaw and pitch (Bedrock's: yaw 0 faces south, pitch negative looks up). */
 export function cameraBasis(yaw, pitch) {
@@ -88,7 +99,8 @@ export function renderSight(idAt, eye, yaw, pitch, { cols = 33, rows = 13, hfov 
     cols = Math.max(5, Math.min(101, cols | 0)); rows = Math.max(3, Math.min(61, rows | 0));
     const at = cachedAt(idAt);
     const { f, r, u } = cameraBasis(yaw, pitch);
-    const tanH = Math.tan(Math.min(150, Math.max(20, hfov)) * RAD / 2);
+    hfov = Math.min(150, Math.max(20, Number(hfov) || 90));
+    const tanH = Math.tan(hfov * RAD / 2);
     const tanV = tanH * rows * 2 / cols;                  // a character is about twice as tall as it is wide: square "pixels"
     const g = [], d = [];
     for (let j = 0; j < rows; j++) {
@@ -106,7 +118,8 @@ export function renderSight(idAt, eye, yaw, pitch, { cols = 33, rows = 13, hfov 
     }
     // creatures and people, drawn where they stand if the line to them is clear
     const seen = [];
-    const placed = (things || []).map(t => {
+    const clear = seeThrough(at);
+    const placed = (things || []).filter(t => t && Number.isFinite(t.x) && Number.isFinite(t.y) && Number.isFinite(t.z)).map(t => {
         const v = { x: t.x - eye.x, y: t.y - eye.y, z: t.z - eye.z };
         const z = dot(v, f);
         if (z < 0.3) return null;
@@ -117,7 +130,7 @@ export function renderSight(idAt, eye, yaw, pitch, { cols = 33, rows = 13, hfov 
         return { t, dist, nx, ny, bearing: Math.atan2(dot(v, r), z) / RAD, elevation: Math.atan2(dot(v, u), z) / RAD };
     }).filter(Boolean).sort((a, b) => b.dist - a.dist);       // far ones first, so near ones are drawn over them
     for (const p of placed) {
-        const hit = castDir(at, eye, { x: p.t.x - eye.x, y: p.t.y - eye.y, z: p.t.z - eye.z }, p.dist);
+        const hit = castDir(clear, eye, { x: p.t.x - eye.x, y: p.t.y - eye.y, z: p.t.z - eye.z }, p.dist);
         if (hit.hit && hit.hit.dist < p.dist - 0.8) continue;            // behind a wall or a hill
         const i = Math.min(cols - 1, Math.max(0, Math.floor((p.nx + 1) / 2 * cols)));
         const j = Math.min(rows - 1, Math.max(0, Math.floor((1 - p.ny) / 2 * rows)));
@@ -144,4 +157,17 @@ export function formatSight(s, { legend = false } = {}) {
     if (s.seen.length) L.push("In view: " + s.seen.slice(0, 8).map(x => `${x.glyph} ${x.name || "?"} ${x.dist}m ${side(x.bearing)}${height(x.elevation)}`).join("; ") + ".");
     if (legend) L.push("Legend: " + legendText());
     return L.join("\n");
+}
+
+/** The text without its picture: what is kept in the conversation history, where a stale picture only gets in the way. */
+export function stripSight(text) {
+    const lines = String(text).split("\n");
+    const out = [];
+    for (let i = 0; i < lines.length; i++) {
+        if (!lines[i].startsWith("Sight: facing")) { out.push(lines[i]); continue; }
+        i++;
+        while (i < lines.length && (lines[i].startsWith("  ") || lines[i].startsWith("> ") || lines[i].startsWith("In view:") || lines[i].startsWith("Legend:"))) i++;
+        i--;
+    }
+    return out.join("\n");
 }

@@ -155,3 +155,33 @@ test("rendering is cheap enough to do on every turn", () => {
 test("the depth bands read in order", () => {
     for (let i = 1; i < DEPTH_BANDS.length; i++) assert.ok(DEPTH_BANDS[i] > DEPTH_BANDS[i - 1]);
 });
+
+test("stripSight removes the picture from a stored turn and nothing else", async () => {
+    const { stripSight } = await import("../packs/RealAI_BP/scripts/brain/sight.js");
+    const s = renderSight(world(), eye, 0, 0, { things: [{ glyph: "a", name: "cow", x: 0.5, y: 64.6, z: 5.5 }] });
+    const obs = "Time: day.\nAround you: N: 24 clear.\n" + formatSight(s) + "\nHotbar: 1 axe.\nInventory: empty.";
+    assert.equal(stripSight(obs), "Time: day.\nAround you: N: 24 clear.\nHotbar: 1 axe.\nInventory: empty.");
+    assert.equal(stripSight("no picture here"), "no picture here");
+    assert.equal(stripSight(formatSight(s, { legend: true })), "");
+});
+
+test("fixes from review: portals, built-from-sand, trapdoors, sky above the world, glass does not hide creatures", () => {
+    assert.equal(glyphOf("minecraft:portal"), "P"); assert.equal(glyphOf("minecraft:end_portal"), "P"); assert.equal(glyphOf("minecraft:end_gateway"), "P");
+    assert.equal(glyphOf("minecraft:sandstone_stairs"), "B"); assert.equal(glyphOf("minecraft:cut_sandstone"), "B"); assert.equal(glyphOf("minecraft:mud_brick_stairs"), "B"); assert.equal(glyphOf("minecraft:smooth_sandstone_slab"), "B");
+    assert.equal(glyphOf("minecraft:sand"), ":"); assert.equal(glyphOf("minecraft:mud"), "="); assert.equal(glyphOf("minecraft:farmland"), "=");
+    assert.equal(glyphOf("minecraft:trapdoor"), "D"); assert.equal(glyphOf("minecraft:oak_trapdoor"), "D");
+    // at the top of the world the sky is sky, not an unloaded chunk
+    const high = renderSight((x, y, z) => (y >= 320 ? null : y <= 63 ? "minecraft:stone" : "minecraft:air"), { x: 0.5, y: 316.62, z: 0.5 }, 0, -40);
+    assert.ok(!high.rows.some(r => r.includes("?")), "no unloaded cells in the sky\n" + high.rows.join("\n"));
+    // a zombie behind a glass wall is still seen
+    const cells = {};
+    for (let x = -3; x <= 3; x++) for (let y = 64; y <= 66; y++) cells[`${x},${y},4`] = "minecraft:glass";
+    const s = renderSight(world(cells), eye, 0, 0, { things: [{ glyph: "H", name: "zombie", x: 0.5, y: 64.9, z: 8.5 }] });
+    assert.equal(s.seen.length, 1, "seen through the glass");
+    // but not through stone
+    for (let x = -3; x <= 3; x++) for (let y = 64; y <= 66; y++) cells[`${x},${y},4`] = "minecraft:stone";
+    assert.equal(renderSight(world(cells), eye, 0, 0, { things: [{ glyph: "H", name: "zombie", x: 0.5, y: 64.9, z: 8.5 }] }).seen.length, 0);
+    // bad input does not break the picture
+    const odd = renderSight(world(), eye, 0, 0, { hfov: NaN, things: [{ glyph: "H", name: "x", x: NaN, y: 64, z: 5 }, null] });
+    assert.equal(odd.hfov, 90); assert.equal(odd.seen.length, 0);
+});

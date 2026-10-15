@@ -85,7 +85,7 @@ function applyServerOverrides(cfg) {
         "realai.maxTokens": "maxTokens", "realai.maxBrains": "maxBrains", "realai.autonomy": "autonomy", "realai.independent": "independent", "realai.chatVolume": "chatVolume",
         "realai.callByName": "callByName", "realai.freeBuild": "freeBuild", "realai.keepAlive": "keepAlive", "realai.serverRules": "serverRules",
         "realai.thinkIdleSec": "thinkIdleSec", "realai.thinkActiveSec": "thinkActiveSec", "realai.thinkCombatSec": "thinkCombatSec", "realai.enabled": "enabled", "realai.bridgeName": "bridgeName",
-        "realai.worldPlayers": "worldPlayers", "realai.wildSpawns": "wildSpawns", "realai.mixProviders": "mixProviders", "realai.showThoughts": "showThoughts", "realai.innerLife": "innerLife", "realai.reflectEvery": "reflectEvery", "realai.bridgePlays": "bridgePlays", "realai.mission": "mission",
+        "realai.worldPlayers": "worldPlayers", "realai.wildSpawns": "wildSpawns", "realai.mixProviders": "mixProviders", "realai.showThoughts": "showThoughts", "realai.innerLife": "innerLife", "realai.reflectEvery": "reflectEvery", "realai.bridgePlays": "bridgePlays", "realai.sight": "sight", "realai.mission": "mission",
     };
     for (const [varName, key] of Object.entries(map)) {
         const v = readVariable(varName);

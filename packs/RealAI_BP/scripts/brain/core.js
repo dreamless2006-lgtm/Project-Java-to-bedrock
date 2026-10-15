@@ -10,6 +10,7 @@ import { loadMemory, saveMemory, addFact, forgetFact, addEpisode, addChat, noteP
 import { createDrives, updateDrives, renderDrives, cadenceFactor } from "./drives.js";
 import { createMission, renderMission, assessMission } from "./progress.js";
 import { inventoryMap, isSpectator } from "./perception.js";
+import { stripSight } from "./sight.js";
 import { timeLabel } from "./perception.js";
 import { buildSystemStable, buildTurn, promptHash } from "./prompt.js";
 import { createSchedulerState, noteEvent, shouldThink, beginThink, endThink, CADENCE } from "./scheduler.js";
@@ -337,7 +338,7 @@ export class BotBrain {
         if (reply.problems.length) this.problems.push(...reply.problems);
         this.apply(reply);
         const userText = turn.messages[turn.messages.length - 1].content;
-        this.history.push({ role: "user", content: clip(userText.replace(/^# Memory[\s\S]*?\n\n# Observation/, "# Observation"), 900) });
+        this.history.push({ role: "user", content: clip(stripSight(userText.replace(/^# Memory[\s\S]*?\n\n# Observation/, "# Observation")), 900) });
         this.history.push({ role: "assistant", content: clip(JSON.stringify(res.raw), 700) });
         while (this.history.length > HISTORY_TURNS * 2) this.history.shift();
         const active = reply.actions.length > 0 || !!this.actuator.current;
