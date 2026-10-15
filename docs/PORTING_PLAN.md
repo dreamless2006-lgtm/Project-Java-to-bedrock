@@ -191,7 +191,16 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   drawn from her skin and hair colours and her kind's trait; using any baby cuddles it.
   *After review.* A female and a player are in at most one scene at a time (`jenny/occupancy.js`:
   the bed scene, the walk to it and the belly scenes claim both, and a player who leaves in the
-  middle of one gets their input and camera back when they return). The solver lines limbs up by
+  middle of one gets their input and camera back when they return, as does everyone after a
+  /reload); a player who dies in one respawns free, a walk to the bed is called off when the player
+  goes through a portal, one bed holds one scene, and a female in labor is not taken to the bed. A
+  Jenny girl's own scene and a belly scene never share her (hers ends ours; ours keeps everyone else
+  off her). Her own scenes end on every event the port really fires (Ellie's end with her recovery
+  event, or when her stage is removed), and a fertile one only gets her pregnant once most of it
+  has played (the port's own scene lengths), not when it is stopped at once. After the last baby is
+  born the menu treats her as not pregnant while she rests; pushing works from the waters breaking;
+  the player kneels on whichever side of her has room, or is told there is none; messages count one
+  baby as one. The solver lines limbs up by
   the direction their cubes are modelled in (some girls model a forearm folded and straighten it
   with a cube rotation), so forearms and shins stay in line with the arm and thigh; our females'
   scene poses are solved onto each phase's body; the belly slabs' UVs stay on the gradient; the

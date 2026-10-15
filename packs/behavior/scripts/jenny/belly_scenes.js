@@ -17,6 +17,7 @@ import { ActionFormData } from '@minecraft/server-ui';
 import { assistPush, familyOf, getRecord, isTamed, nameOf, ownerOf, particles, playSound, rubBelly, setScenePose, setSceneState } from '../mobs/system.js';
 import { KICKS_FROM, Rhythm, announce, kickOf } from './rhythm.js';
 import { claim, femaleBusy, lockInput, playerBusy, release } from './occupancy.js';
+import { carrying, inPortScene } from './port.js';
 
 /** @typedef {import('@minecraft/server').Entity} Entity */
 /** @typedef {import('@minecraft/server').Player} Player */
@@ -55,6 +56,7 @@ const LABOR = new Set(['WATER_BREAKING', 'PREBIRTH', 'BIRTH']);
  * @property {boolean} felt a kick was announced
  * @property {number} nextHold the tick both are next put back in place
  * @property {number} nextRub the tick a rub next eases her need
+ * @property {number} babies how many babies she carried when it started
  */
 
 /** @type {Map<string, BellyScene>} by her entity id */
@@ -66,6 +68,8 @@ export const bellySceneOf = (/** @type {Entity} */ entity) => scenes.get(entity.
 export const inBellyScene = (/** @type {Player} */ player) => byPlayer.has(player.id);
 
 const inLabor = (/** @type {MobRecord} */ record) => LABOR.has(/** @type {any} */ (record.data.pregnancy?.pain)?.type ?? '');
+/** How many babies she still carries. */
+const babiesIn = (/** @type {any} */ p) => (p ? p.womb.length + (p.birth ? 1 : 0) : 0);
 
 /**
  * Why her pregnancy menu cannot open for this player (a translation key with her name as %s), or null.
@@ -75,12 +79,14 @@ export function pregnancyMenuBlock(record, player) {
   const { entity, data } = record;
   const family = familyOf(entity);
   if (!family) return 'minepreggo.bed.not_female';
-  if (!data.pregnancy) return 'minepreggo.belly.not_pregnant';
+  // (after the last baby is born she rests a while with her pregnancy still on record)
+  if (!data.pregnancy || !carrying(data.pregnancy)) return 'minepreggo.belly.not_pregnant';
   if (!family.external) {
     if (!isTamed(entity)) return 'minepreggo.bed.not_tamed';
     if (data.owner && data.owner !== player.id && ownerOf(record)?.id !== player.id) return 'minepreggo.bed.not_yours';
   }
-  if (scenes.has(entity.id) || byPlayer.has(player.id) || femaleBusy(entity.id) || playerBusy(player.id)) return 'minepreggo.bed.busy';
+  if (byPlayer.has(player.id) || playerBusy(player.id)) return 'minepreggo.bed.player_busy';
+  if (scenes.has(entity.id) || femaleBusy(entity.id) || inPortScene(entity)) return 'minepreggo.bed.busy';
   return null;
 }
 
@@ -96,7 +102,7 @@ export async function openPregnancyMenu(/** @type {Player} */ player, /** @type 
   // In labor there is only one thing to do; otherwise a rub, and from P3 a feel of the babies.
   /** @type {Kind[]} */
   const kinds = inLabor(record) ? ['birth'] : p.phase >= KICKS_FROM ? ['rub', 'feel'] : ['rub'];
-  const left = p.womb.length + (p.birth ? 1 : 0);
+  const left = babiesIn(p);
   const body = inLabor(record)
     ? { translate: left === 1 ? 'minepreggo.belly.menu.labor_one' : 'minepreggo.belly.menu.labor', with: { rawtext: [name, { text: String(left) }] } }
     : { translate: 'minepreggo.belly.menu.body', with: { rawtext: [name, { text: `P${p.phase}` }] } };
@@ -106,13 +112,15 @@ export async function openPregnancyMenu(/** @type {Player} */ player, /** @type 
   const response = await form.show(player);
   if (response.canceled || response.selection === undefined || response.selection >= kinds.length) return;
   if (!record.entity.isValid || !player.isValid) return;
-  // Someone else (or a bed scene) may have taken her or the player while the menu was open.
-  const late = pregnancyMenuBlock(record, player);
+  // Someone else (or a bed scene) may have taken her or the player while the menu was open, or
+  // her labor may have started (or stopped) meanwhile.
+  const kind = kinds[response.selection];
+  const late = pregnancyMenuBlock(record, player) ?? ((kind === 'birth') !== inLabor(record) ? 'minepreggo.bed.busy' : null);
   if (late) {
     player.onScreenDisplay.setActionBar({ translate: late, with: { rawtext: [name] } });
     return;
   }
-  startBellyScene(record, player, kinds[response.selection]);
+  startBellyScene(record, player, kind);
 }
 
 /** The player stays put with the camera on the scene; jump (to stop) stays free, and in a birth sneak (to push). */
@@ -138,22 +146,46 @@ function frame(/** @type {Player} */ player, /** @type {BellyScene} */ scene, /*
   }
 }
 
+/** Blocks a player can stand in (air, water, plants and the like). */
+const PASSABLE = /(^minecraft:(short_grass|tall_grass|grass|fern|large_fern|deadbush|dead_bush|snow_layer|vine|torch|redstone_wire|rail|carpet|.*_carpet|.*_flower|.*_sapling|.*_button|.*_pressure_plate|.*_mushroom|dandelion|poppy|.*_tulip|.*_orchid|allium|azure_bluet|oxeye_daisy|cornflower|lily_of_the_valley|sweet_berry_bush|seagrass|kelp))$/;
+function standable(/** @type {Entity} */ entity, /** @type {Vector3} */ at) {
+  try {
+    for (const dy of [0, 1]) {
+      const block = entity.dimension.getBlock({ x: Math.floor(at.x), y: Math.floor(at.y) + dy, z: Math.floor(at.z) });
+      if (block && !block.isAir && !block.isLiquid && !PASSABLE.test(block.typeId)) return false;
+    }
+    return true;
+  } catch {
+    return false; // unloaded
+  }
+}
+
 /**
  * Starts a belly scene where she stands: she turns to the player, who stands in front of her.
- * Returns false when she or the player is already in a scene.
+ * Returns false when she or the player is already in a scene, or there is no room in front of her.
  * @param {MobRecord} record @param {Player} player @param {Kind} kind
  */
 export function startBellyScene(record, player, kind) {
   const { entity } = record;
-  if (scenes.has(entity.id) || byPlayer.has(player.id) || !claim(kind, entity.id, player.id)) return false;
+  if (scenes.has(entity.id) || byPlayer.has(player.id) || inPortScene(entity)) return false;
   const her = { ...entity.location };
   let dx = player.location.x - her.x, dz = player.location.z - her.z;
   const length = Math.hypot(dx, dz);
   if (length < 0.01) [dx, dz] = [0, 1];
   else [dx, dz] = [dx / length, dz / length];
+  // The player kneels in front of her, on the side they came from or else the other one.
+  const reach = kind === 'birth' ? 1.35 : 1.1;
+  const spot = (/** @type {number} */ sign) => ({ x: her.x + sign * dx * reach, y: her.y, z: her.z + sign * dz * reach });
+  const sign = [1, -1].find((k) => standable(entity, spot(k)));
+  if (sign === undefined) {
+    player.onScreenDisplay.setActionBar({ translate: 'minepreggo.belly.no_room', with: { rawtext: [nameOf(entity)] } });
+    return false;
+  }
+  if (!claim(kind, entity.id, player.id)) return false;
+  [dx, dz] = [dx * sign, dz * sign];
   // Minecraft yaw: 0 faces +z, 90 faces -x
   const yaw = (Math.atan2(-dx, dz) * 180) / Math.PI;
-  const him = { x: her.x + dx * (kind === 'birth' ? 1.35 : 1.1), y: her.y, z: her.z + dz * (kind === 'birth' ? 1.35 : 1.1) };
+  const him = spot(sign);
   const side = { x: -dz, z: dx };
   const mid = { x: (her.x + him.x) / 2, y: her.y, z: (her.z + him.z) / 2 };
   /** @type {BellyScene} */
@@ -174,6 +206,7 @@ export function startBellyScene(record, player, kind) {
     felt: false,
     nextHold: system.currentTick + 20,
     nextRub: system.currentTick + 60,
+    babies: babiesIn(record.data.pregnancy),
   };
   scenes.set(entity.id, scene);
   byPlayer.set(player.id, entity.id);
@@ -227,12 +260,12 @@ export function endBellyScene(/** @type {BellyScene} */ scene, /** @type {boolea
     particles(entity, 'minecraft:heart_particle', 6, 1.0);
     tell('minepreggo.belly.rub_done');
   } else if (scene.kind === 'feel') {
-    const babies = p ? p.womb.length + (p.birth ? 1 : 0) : 0;
-    tell(babies === 1 ? 'minepreggo.belly.heartbeat' : 'minepreggo.belly.heartbeats', [{ text: String(babies) }]);
+    const babies = babiesIn(p);
+    if (babies > 0) tell(babies === 1 ? 'minepreggo.belly.heartbeat' : 'minepreggo.belly.heartbeats', [{ text: String(babies) }]);
   } else {
     // done once the last baby is out (she rests after the birth, or the pregnancy is over)
-    const done = !p || /** @type {any} */ (p.pain)?.type === 'POSTBIRTH';
-    tell(done ? 'minepreggo.belly.birth_done' : 'minepreggo.belly.birth_paused');
+    const done = !p || !carrying(p);
+    tell(done ? (scene.babies === 1 ? 'minepreggo.belly.birth_done_one' : 'minepreggo.belly.birth_done') : 'minepreggo.belly.birth_paused');
   }
 }
 
@@ -249,7 +282,8 @@ function stepBelly(/** @type {Entity} */ entity, /** @type {Player} */ player, /
     if (record.scene?.state !== state) {
       setSceneState(record, state, Math.max(1, kickOf(p.phase)));
       if (kicking) {
-        player.onScreenDisplay.setActionBar({ translate: scene.felt ? 'minepreggo.scene.kick_hard' : 'minepreggo.belly.feel_kick', with: { rawtext: [nameOf(entity)] } });
+        const again = announce({ state: 'kicking', until: 0, kick: kickOf(p.phase) }, babiesIn(p));
+        player.onScreenDisplay.setActionBar({ translate: scene.felt ? /** @type {any} */ (again).key : 'minepreggo.belly.feel_kick', with: { rawtext: [nameOf(entity)] } });
         playSound(entity, 'minepreggo.belly_touch', 0.6);
         scene.felt = true;
       }
@@ -261,7 +295,7 @@ function stepBelly(/** @type {Entity} */ entity, /** @type {Player} */ player, /
     // a rub calms her: no contractions while you rub
     const state = next.state === 'contraction' ? 'calm' : next.state;
     setSceneState(record, state, next.kick);
-    const said = state === 'kicking' ? announce(next) : undefined;
+    const said = state === 'kicking' ? announce(next, babiesIn(p)) : undefined;
     if (said) player.onScreenDisplay.setActionBar({ translate: said.key, with: { rawtext: [nameOf(entity)] } });
   }
   if (now >= scene.nextRub) {
@@ -275,7 +309,8 @@ system.runInterval(() => {
   for (const scene of [...scenes.values()]) {
     const entity = world.getEntity(scene.id);
     const player = world.getEntity(scene.playerId);
-    if (!entity?.isValid || !player?.isValid || entity.dimension.id !== player.dimension.id) {
+    // over when either is gone, the player died, or one of her own scenes took her
+    if (!entity?.isValid || !player?.isValid || entity.dimension.id !== player.dimension.id || inPortScene(entity)) {
       endBellyScene(scene, false);
       continue;
     }
@@ -335,4 +370,13 @@ world.afterEvents.playerLeave.subscribe(({ playerId }) => {
 world.afterEvents.entityRemove.subscribe(({ removedEntityId }) => {
   const scene = scenes.get(removedEntityId);
   if (scene) endBellyScene(scene, false);
+});
+// A player who dies in a scene respawns free (not pulled back into it); so does she if she dies.
+world.afterEvents.entityDie.subscribe(({ deadEntity }) => {
+  const scene = scenes.get(deadEntity.id) ?? scenes.get(byPlayer.get(deadEntity.id) ?? '');
+  if (scene) endBellyScene(scene, false);
+});
+// Nobody else starts something with her while she is in a belly scene (her own menu included).
+world.beforeEvents.playerInteractWithEntity.subscribe((event) => {
+  if (scenes.has(event.target.id)) event.cancel = true;
 });

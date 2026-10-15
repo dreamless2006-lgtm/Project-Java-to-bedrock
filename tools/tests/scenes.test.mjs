@@ -6,12 +6,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { InputButton, InputPermissionCategory, ItemStack, Mob, Player, emit, startup, system, world } from './mock-server.mjs';
 import '../../packs/behavior/scripts/main.js';
-import { STEP, getRecord, setPhase, startPregnancy } from '../../packs/behavior/scripts/mobs/system.js';
-import { BELLY_SCENE_TICKS, PUSH_TICKS, bellySceneOf, onSceneButton, openPregnancyMenu, startBellyScene } from '../../packs/behavior/scripts/jenny/belly_scenes.js';
+import { STEP, endPregnancy, getRecord, setPhase, startPregnancy } from '../../packs/behavior/scripts/mobs/system.js';
+import { BELLY_SCENE_TICKS, PUSH_TICKS, bellySceneOf, onSceneButton, openPregnancyMenu, pregnancyMenuBlock, startBellyScene } from '../../packs/behavior/scripts/jenny/belly_scenes.js';
 import { femaleBusy, playerBusy, releaseStale } from '../../packs/behavior/scripts/jenny/occupancy.js';
 import { heatOf, requestScene, sceneOf } from '../../packs/behavior/scripts/jenny/scenes.js';
-import { portRhythmOf } from '../../packs/behavior/scripts/jenny/port.js';
-import { CONTRACTIONS_FROM, KICKS_FROM, Rhythm, nextBeat } from '../../packs/behavior/scripts/jenny/rhythm.js';
+import { inPortScene, portRhythmOf, startPortRhythm } from '../../packs/behavior/scripts/jenny/port.js';
+import { CONTRACTIONS_FROM, KICKS_FROM, Rhythm, announce, nextBeat } from '../../packs/behavior/scripts/jenny/rhythm.js';
 import { BABY, cuddle } from '../../packs/behavior/scripts/items/babies.js';
 import { rotateBedrock, anglesForFront, eulerFromMat, matFromEuler } from '../lib/bedrock-math.mjs';
 import { rigOf, solveAt, worldOf, pivotOf } from '../lib/pose-solve.mjs';
@@ -401,7 +401,7 @@ test('scenes never overlap: a second player choosing late, a female walking to t
     owner.isSneaking = true;
     emit(world.beforeEvents.playerInteractWithEntity, { player: owner, target: mob, itemStack: undefined, cancel: false });
     await flush();
-    assert.ok(owner.messages.some((m) => text(m).includes('minepreggo.bed.busy')));
+    assert.ok(owner.messages.some((m) => text(m).includes('minepreggo.bed.player_busy')));
     world.players.splice(world.players.indexOf(owner), 1);
     emit(world.afterEvents.playerLeave, { playerId: owner.id });
     assert.ok(!femaleBusy(mob.id), 'the walk is given back when the player leaves');
@@ -459,5 +459,132 @@ test("a Jenny girl's belly joins only her intimate scenes, not a fight, a walk o
   } finally {
     jenny.isValid = false;
     emit(world.afterEvents.entityRemove, { removedEntityId: jenny.id });
+  }
+});
+
+test('her own scenes and the belly scenes never share her: none starts during the other, and hers ends ours', async () => {
+  const player = new Player('Sharer');
+  player.location = { x: 180, y: 64, z: 180 };
+  world.players.push(player);
+  const jenny = new Mob('fapcraft:jenny', { families: ['minepreggo_preggo_mob', 'jenny'] });
+  jenny.location = { x: 181, y: 64, z: 180 };
+  overworld.entities.push(jenny);
+  const record = getRecord(/** @type {any} */ (jenny));
+  startPregnancy(record, 1);
+  atPhase(record, 5);
+  const scene = (/** @type {string} */ eventId) => emit(world.afterEvents.dataDrivenEntityTrigger, { entity: jenny, eventId });
+  try {
+    scene('jhjenjava:start_doggy_action');
+    assert.ok(inPortScene(/** @type {any} */ (jenny)));
+    assert.equal(pregnancyMenuBlock(record, /** @type {any} */ (player)), 'minepreggo.bed.busy');
+    assert.equal(startBellyScene(record, /** @type {any} */ (player), 'rub'), false);
+    scene('jhjenjava:finish_stage');
+    assert.ok(startBellyScene(record, /** @type {any} */ (player), 'rub'));
+    // while we rub her, nobody opens anything else on her (her own menu included)
+    const use = { player, target: jenny, itemStack: undefined, cancel: false };
+    emit(world.beforeEvents.playerInteractWithEntity, use);
+    assert.equal(use.cancel, true);
+    // one of her scenes starts anyway (from her own script): ours gives way
+    scene('jhjenjava:start_blowjob');
+    system.tick(10);
+    assert.ok(!bellySceneOf(/** @type {any} */ (jenny)), 'her scene ends ours');
+    assert.equal(player.permissions.get(InputPermissionCategory.LateralMovement), true);
+    scene('jhjenjava:finish_stage');
+  } finally {
+    world.players.splice(world.players.indexOf(player), 1);
+    jenny.isValid = false;
+    emit(world.afterEvents.entityRemove, { removedEntityId: jenny.id });
+  }
+});
+
+test('a player who dies in a scene respawns free, a walk to the bed is called off through a portal, and one bed holds one scene', () => {
+  const owner = new Player('Mortal');
+  owner.location = { x: 200, y: 64, z: 200 };
+  const other = new Player('Neighbour');
+  other.location = { x: 200, y: 64, z: 205 };
+  world.players.push(owner, other);
+  const mine = new Mob('minepreggo:zombie_girl', { tamed: true });
+  mine.location = { x: 201, y: 64, z: 200 };
+  const theirs = new Mob('minepreggo:zombie_girl', { tamed: true });
+  theirs.location = { x: 201, y: 64, z: 205 };
+  overworld.entities.push(mine, theirs);
+  const record = getRecord(/** @type {any} */ (mine));
+  record.data.owner = owner.id;
+  getRecord(/** @type {any} */ (theirs)).data.owner = other.id;
+  const far = { location: { x: 215, y: 64, z: 200 }, facing: 2 };
+  try {
+    assert.equal(requestScene(record, /** @type {any} */ (owner), far), 'walking');
+    assert.equal(requestScene(getRecord(/** @type {any} */ (theirs)), /** @type {any} */ (other), far), 'bed_taken', 'the bed is spoken for');
+    // the player goes through a portal while she walks: the walk is off
+    owner.dimension.id = 'minecraft:nether';
+    system.tick(10);
+    assert.ok(!femaleBusy(mine.id) && !playerBusy(owner.id), 'both free');
+    assert.ok(mine.events.includes('minepreggo:leave_bed'));
+    owner.dimension.id = 'minecraft:overworld';
+    // a scene at the bed beside her; the player dies in it
+    assert.equal(requestScene(record, /** @type {any} */ (owner), { location: { x: 201, y: 64, z: 201 }, facing: 2 }), 'now');
+    assert.ok(sceneOf(/** @type {any} */ (mine)));
+    emit(world.afterEvents.entityDie, { deadEntity: owner, damageSource: {} });
+    assert.ok(!sceneOf(/** @type {any} */ (mine)), 'the scene is over');
+    assert.equal(owner.cameras.at(-1), 'clear');
+    assert.ok(!femaleBusy(mine.id) && !playerBusy(owner.id));
+    // and the same in a belly scene
+    startPregnancy(record, 1);
+    atPhase(record, 4);
+    assert.ok(startBellyScene(record, /** @type {any} */ (owner), 'rub'));
+    emit(world.afterEvents.entityDie, { deadEntity: owner, damageSource: {} });
+    assert.ok(!bellySceneOf(/** @type {any} */ (mine)));
+    assert.equal(owner.permissions.get(InputPermissionCategory.LateralMovement), true);
+  } finally {
+    for (const p of [owner, other]) world.players.splice(world.players.indexOf(p), 1);
+    for (const e of [mine, theirs]) {
+      e.isValid = false;
+      emit(world.afterEvents.entityRemove, { removedEntityId: e.id });
+    }
+  }
+});
+
+test('labor and after: the waters can be pushed through, one baby is spoken of as one, after the last baby she rests, and there must be room to kneel', () => {
+  const owner = new Player('Doula');
+  owner.location = { x: 220, y: 64, z: 220 };
+  world.players.push(owner);
+  const { mob, record } = pregnantFemale('minepreggo:zombie_girl', owner, 7, 1);
+  const getBlock = overworld.getBlock;
+  try {
+    const p = /** @type {any} */ (record.data.pregnancy);
+    p.pain = { type: 'WATER_BREAKING', duration: 1200, severity: 0, elapsed: 0 };
+    assert.ok(startBellyScene(record, /** @type {any} */ (owner), 'birth'));
+    system.tick(PUSH_TICKS);
+    assert.ok(onSceneButton(/** @type {any} */ (owner), InputButton.Sneak), 'a push counts while the waters break');
+    assert.ok(p.pain.elapsed >= PUSH_TICKS);
+    // the last baby is out: one baby, so "her baby is born"
+    endPregnancy(record, null);
+    system.tick(10);
+    assert.ok(!bellySceneOf(/** @type {any} */ (mob)));
+    assert.ok(owner.messages.some((m) => text(m).includes('minepreggo.belly.birth_done_one')));
+    assert.equal(announce({ state: 'kicking', until: 0, kick: 2 }, 1)?.key, 'minepreggo.scene.kick_hard_one');
+    assert.equal(announce({ state: 'kicking', until: 0, kick: 2 }, 3)?.key, 'minepreggo.scene.kick_hard');
+    // resting after the birth: nothing to rub or feel, and her scenes bring no kicks
+    assert.ok(startPregnancy(record, 1));
+    atPhase(record, 7);
+    const q = /** @type {any} */ (record.data.pregnancy);
+    q.womb = [];
+    q.birth = null;
+    q.pain = { type: 'POSTBIRTH', duration: 300, severity: 0, elapsed: 0 };
+    assert.equal(pregnancyMenuBlock(record, /** @type {any} */ (owner)), 'minepreggo.belly.not_pregnant');
+    assert.equal(startPortRhythm(/** @type {any} */ (mob)), false);
+    // walled in: no room to kneel on either side
+    endPregnancy(record, null);
+    assert.ok(startPregnancy(record, 2));
+    atPhase(record, 4);
+    overworld.getBlock = ({ x, y, z }) => ({ x, y, z, isAir: false, isLiquid: false, typeId: 'minecraft:stone' });
+    assert.equal(startBellyScene(record, /** @type {any} */ (owner), 'rub'), false);
+    assert.ok(owner.messages.some((m) => text(m).includes('minepreggo.belly.no_room')));
+    assert.ok(!femaleBusy(mob.id) && !playerBusy(owner.id), 'nothing taken');
+  } finally {
+    overworld.getBlock = getBlock;
+    world.players.splice(world.players.indexOf(owner), 1);
+    mob.isValid = false;
+    emit(world.afterEvents.entityRemove, { removedEntityId: mob.id });
   }
 });

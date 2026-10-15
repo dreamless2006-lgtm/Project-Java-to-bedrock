@@ -109,6 +109,7 @@ export function hasPort() {
  * @property {boolean} pregnantBefore
  * @property {Rhythm} rhythm what her belly does through the scene when she is pregnant
  * @property {number} nextHold the tick both are next put back in place
+ * @property {string} bed the bed it takes (bedKey)
  */
 
 /** @type {Map<string, Scene>} by her entity id */
@@ -119,6 +120,20 @@ const byPlayer = new Map();
 const walking = new Map();
 
 export const sceneOf = (/** @type {Entity} */ entity) => scenes.get(entity.id);
+/** One bed, one scene: a bed by dimension and block. */
+const bedKey = (/** @type {Entity} */ entity, /** @type {Bed} */ bed) => `${entity.dimension.id}:${bed.location.x},${bed.location.y},${bed.location.z}`;
+/** Whether a scene plays on this bed, or a female is on her way to it. */
+export function bedTaken(/** @type {Entity} */ entity, /** @type {Bed} */ bed) {
+  const key = bedKey(entity, bed);
+  for (const scene of scenes.values()) if (scene.bed === key) return true;
+  for (const [id, wait] of walking) {
+    const walker = world.getEntity(id);
+    if (walker?.isValid && bedKey(walker, wait.bed) === key) return true;
+  }
+  return false;
+}
+/** Labor and the rest after it: no bed scene then. */
+const LABOR_PAINS = new Set(['WATER_BREAKING', 'PREBIRTH', 'BIRTH', 'POSTBIRTH']);
 export const inScene = (/** @type {Player} */ player) => byPlayer.has(player.id);
 export const isWalking = (/** @type {Entity} */ entity) => walking.has(entity.id);
 
@@ -131,7 +146,8 @@ export function canStartScene(record, player) {
   const { entity, data } = record;
   const family = familyOf(entity);
   if (!family || family.external) return 'minepreggo.bed.not_female';
-  if (scenes.has(entity.id) || walking.has(entity.id) || byPlayer.has(player.id) || femaleBusy(entity.id) || playerBusy(player.id)) return 'minepreggo.bed.busy';
+  if (byPlayer.has(player.id) || playerBusy(player.id)) return 'minepreggo.bed.player_busy';
+  if (scenes.has(entity.id) || walking.has(entity.id) || femaleBusy(entity.id)) return 'minepreggo.bed.busy';
   if (data.wild) return 'minepreggo.bed.wild';
   if (!isTamed(entity)) return 'minepreggo.bed.not_tamed';
   const owner = ownerOf(record);
@@ -139,7 +155,7 @@ export function canStartScene(record, player) {
     data.owner = player.id; // the first owner interaction records the owner, as mobs/interact.js does
     record.dirty = true;
   } else if (owner?.id !== player.id && data.owner !== player.id) return 'minepreggo.bed.not_yours';
-  if (isIncapacitated(record) || data.savage) return 'minepreggo.bed.busy';
+  if (isIncapacitated(record) || data.savage || LABOR_PAINS.has(/** @type {any} */ (data.pregnancy?.pain)?.type ?? '')) return 'minepreggo.bed.busy';
   return null;
 }
 
@@ -175,10 +191,11 @@ const distance = (/** @type {Vector3} */ a, /** @type {Vector3} */ b) => Math.hy
  * Takes her to the bed: at once when she stands next to it, else she walks there on her own and
  * the scene starts when she arrives (or she is placed on it after WALK_TICKS).
  * @param {MobRecord} record @param {Player} player @param {Bed} bed
- * @returns {'now' | 'walking' | 'busy'}
+ * @returns {'now' | 'walking' | 'busy' | 'bed_taken'}
  */
 export function requestScene(record, player, bed) {
   const { entity } = record;
+  if (bedTaken(entity, bed)) return 'bed_taken';
   if (!claim('walk', entity.id, player.id)) return 'busy';
   const middle = { x: bed.location.x + 0.5, y: bed.location.y + 0.5, z: bed.location.z + 0.5 };
   if (distance(entity.location, middle) <= NEAR) {
@@ -199,7 +216,8 @@ export function startScene(record, player, bed) {
   const { entity, data } = record;
   walking.delete(entity.id);
   trigger(entity, 'minepreggo:leave_bed');
-  if (!claim('bed', entity.id, player.id, { from: 'walk' })) {
+  // (the player may have gone through a portal while she walked: the bed is in her dimension)
+  if (player.dimension.id !== entity.dimension.id || !claim('bed', entity.id, player.id, { from: 'walk' })) {
     release('walk', entity.id, player.id);
     return;
   }
@@ -226,6 +244,7 @@ export function startScene(record, player, bed) {
     pregnantBefore: !!(data.pregnancy || data.wild || data.pending),
     rhythm: new Rhythm(),
     nextHold: system.currentTick + 20,
+    bed: bedKey(entity, bed),
   };
   scenes.set(entity.id, scene);
   byPlayer.set(player.id, entity.id);
@@ -296,7 +315,7 @@ function beat(/** @type {Entity} */ entity, /** @type {Player} */ player, /** @t
   const next = scene.rhythm.step(p.phase, heatOf(system.currentTick - scene.start), system.currentTick);
   if (!next) return;
   setSceneState(record, next.state, next.kick);
-  const said = announce(next);
+  const said = announce(next, p.womb.length + (p.birth ? 1 : 0));
   if (!said) return;
   player.onScreenDisplay.setActionBar({ translate: said.key, with: { rawtext: [nameOf(entity)] } });
   playSound(entity, said.sound, said.volume);
@@ -345,10 +364,8 @@ system.runInterval(() => {
   for (const [id, wait] of [...walking]) {
     const entity = world.getEntity(id);
     const player = world.getEntity(wait.playerId);
-    if (!entity?.isValid || !player?.isValid || player.typeId !== 'minecraft:player') {
-      walking.delete(id);
-      release('walk', id, wait.playerId);
-      if (entity?.isValid) trigger(entity, 'minepreggo:leave_bed');
+    if (!entity?.isValid || !player?.isValid || player.typeId !== 'minecraft:player' || player.dimension.id !== entity.dimension.id) {
+      cancelWalk(id, wait.playerId);
       continue;
     }
     if (system.currentTick >= wait.until) startScene(getRecord(entity), /** @type {Player} */ (player), wait.bed);
@@ -362,9 +379,8 @@ world.afterEvents.dataDrivenEntityTrigger.subscribe(
     const wait = walking.get(entity.id);
     if (!wait) return;
     const player = world.getEntity(wait.playerId);
-    if (!player?.isValid || player.typeId !== 'minecraft:player') {
-      walking.delete(entity.id);
-      release('walk', entity.id, wait.playerId);
+    if (!player?.isValid || player.typeId !== 'minecraft:player' || player.dimension.id !== entity.dimension.id) {
+      cancelWalk(entity.id, wait.playerId);
       return;
     }
     startScene(getRecord(entity), /** @type {Player} */ (player), wait.bed);
@@ -372,16 +388,30 @@ world.afterEvents.dataDrivenEntityTrigger.subscribe(
   { entityTypes: ENTITY_IDS }
 );
 
-world.afterEvents.playerLeave.subscribe(({ playerId }) => {
+/** She stops walking to the bed: the player and she are free again. */
+function cancelWalk(/** @type {string} */ entityId, /** @type {string} */ playerId) {
+  walking.delete(entityId);
+  release('walk', entityId, playerId);
+  const entity = world.getEntity(entityId);
+  if (entity?.isValid) trigger(entity, 'minepreggo:leave_bed');
+}
+
+/** Everything a player is part of here ends (they left, or died). */
+function freePlayer(/** @type {string} */ playerId) {
   const id = byPlayer.get(playerId);
   const scene = id ? scenes.get(id) : undefined;
   if (scene) endScene(scene, false);
-  for (const [entityId, wait] of [...walking]) {
-    if (wait.playerId !== playerId) continue;
-    walking.delete(entityId);
-    release('walk', entityId, playerId);
-    const entity = world.getEntity(entityId);
-    if (entity?.isValid) trigger(entity, 'minepreggo:leave_bed');
+  for (const [entityId, wait] of [...walking]) if (wait.playerId === playerId) cancelWalk(entityId, playerId);
+}
+
+world.afterEvents.playerLeave.subscribe(({ playerId }) => freePlayer(playerId));
+// A player who dies in a scene respawns free (not pulled back to the bed); so does she if she dies.
+world.afterEvents.entityDie.subscribe(({ deadEntity }) => {
+  if (deadEntity.typeId === 'minecraft:player') freePlayer(deadEntity.id);
+  else {
+    const scene = scenes.get(deadEntity.id);
+    if (scene) endScene(scene, false);
+    if (walking.has(deadEntity.id)) cancelWalk(deadEntity.id, /** @type {any} */ (walking.get(deadEntity.id)).playerId);
   }
 });
 world.afterEvents.entityRemove.subscribe(({ removedEntityId }) => {

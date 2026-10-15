@@ -20,6 +20,7 @@ import { getRecord as getMobRecord, STEP } from '../../packs/behavior/scripts/mo
 import { VERSION } from '../../packs/behavior/scripts/version.js';
 import { finalPhaseForBabies } from '../../packs/behavior/scripts/pregnancy/math.js';
 import { PHASE_SLOWNESS } from '../../packs/behavior/scripts/pregnancy/data.js';
+import { FERTILE_SHARE, PORT_GIRLS, inPortScene } from '../../packs/behavior/scripts/jenny/port.js';
 
 const ROOT = new URL('../../', import.meta.url).pathname;
 const BP = join(ROOT, 'packs/behavior');
@@ -1176,7 +1177,7 @@ test('the Jenny Bed: a female further away walks to it on her own (the port Jenn
   }
 });
 
-test('the Jenny Mod Java Port girls: a scene that can get her pregnant does when it finishes, others do not, her looks never count as a pregnancy, and her stage shows her belly', () => {
+test('the Jenny Mod Java Port girls: a scene that can get her pregnant does when it plays out, others do not, her looks never count as a pregnancy, and her stage shows her belly', () => {
   const jenny = new Mob('fapcraft:jenny', { variant: 3 }); // her variant is her own skin, not a phase
   jenny.location = { x: 20, y: 64, z: 20 };
   overworld.entities.push(jenny);
@@ -1186,7 +1187,16 @@ test('the Jenny Mod Java Port girls: a scene that can get her pregnant does when
   scene(jenny, 'jhjenjava:start_blowjob');
   scene(jenny, 'jhjenjava:finish_stage');
   assert.equal(getMobRecord(jenny).data.pregnancy, null, 'an oral scene changes nothing');
+  /** Plays most of a fertile scene (FERTILE_SHARE of its length). */
+  const play = (/** @type {Mob} */ girl, /** @type {string} */ eventId) => system.tick(Math.ceil(PORT_GIRLS[girl.typeId].fertile[eventId] * FERTILE_SHARE));
   scene(jenny, 'jhjenjava:start_doggy_action');
+  assert.ok(inPortScene(/** @type {any} */ (jenny)));
+  system.tick(40);
+  scene(jenny, 'jhjenjava:finish_stage');
+  assert.equal(getMobRecord(jenny).data.pregnancy, null, 'a scene stopped at once gets her nothing');
+  assert.ok(!inPortScene(/** @type {any} */ (jenny)));
+  scene(jenny, 'jhjenjava:start_doggy_action');
+  play(jenny, 'jhjenjava:start_doggy_action');
   scene(jenny, 'jhjenjava:finish_stage');
   assert.ok(getMobRecord(jenny).data.pregnancy, 'pregnant after her doggy scene');
   assert.equal(jenny.getProperty('minepreggo:phase'), 0);
@@ -1197,9 +1207,25 @@ test('the Jenny Mod Java Port girls: a scene that can get her pregnant does when
   const stage = new Mob('jhelliedev:ellie_stage', { families: ['jhelliedev_stage'] });
   stage.location = { x: 31, y: 64, z: 30 };
   overworld.entities.push(ellie, stage);
+  // Her scenes end with her recovery event (what the port fires), not the stage's finish event.
   scene(stage, 'jhelliedev:start_scene_missionary');
-  scene(ellie, 'jhelliedev:finish_stage');
+  play(ellie, 'jhelliedev:start_scene_missionary');
+  scene(ellie, 'jhelliedev:finish_interaction');
   assert.ok(getMobRecord(ellie).data.pregnancy, 'Ellie is pregnant after her missionary scene');
+  // ... and when only her stage goes away, that ends the scene as well.
+  const ellie2 = new Mob('jhelliedev:ellie');
+  ellie2.location = { x: 60, y: 64, z: 60 };
+  const stage2 = new Mob('jhelliedev:ellie_stage', { families: ['jhelliedev_stage'] });
+  stage2.location = { x: 61, y: 64, z: 60 };
+  overworld.entities.push(ellie2, stage2);
+  scene(stage2, 'jhelliedev:start_scene_cowgirl');
+  play(ellie2, 'jhelliedev:start_scene_cowgirl');
+  stage2.isValid = false;
+  emit(world.afterEvents.entityRemove, { removedEntityId: stage2.id, typeId: stage2.typeId });
+  system.tick(1);
+  assert.ok(getMobRecord(ellie2).data.pregnancy, 'pregnant once her stage is removed at the end of the scene');
+  ellie2.isValid = false;
+  emit(world.afterEvents.entityRemove, { removedEntityId: ellie2.id });
   // Galath's threesome gets Manglelie pregnant too; her anal scene gets nobody pregnant.
   const galath = new Mob('kum:galath');
   galath.location = { x: 40, y: 64, z: 40 };
@@ -1210,6 +1236,7 @@ test('the Jenny Mod Java Port girls: a scene that can get her pregnant does when
   scene(galath, 'jh:finish');
   assert.equal(getMobRecord(galath).data.pregnancy, null);
   scene(galath, 'jh:start_threesome');
+  play(galath, 'jh:start_threesome');
   scene(galath, 'jh:finish');
   assert.ok(getMobRecord(galath).data.pregnancy && getMobRecord(manglelie).data.pregnancy);
   // A stage spawned next to a pregnant girl shows her belly size.

@@ -49,7 +49,8 @@ async function openBedMenu(/** @type {Player} */ player, /** @type {Block} */ bl
     player.onScreenDisplay.setActionBar({ translate: reason, with: { rawtext: [nameOf(female)] } });
     return;
   }
-  if (requestScene(record, player, bedOf(block)) === 'busy') player.onScreenDisplay.setActionBar({ translate: 'minepreggo.bed.busy', with: { rawtext: [nameOf(female)] } });
+  const result = requestScene(record, player, bedOf(block));
+  if (result === 'busy' || result === 'bed_taken') player.onScreenDisplay.setActionBar({ translate: result === 'busy' ? 'minepreggo.bed.busy' : 'minepreggo.bed.taken', with: { rawtext: [nameOf(female)] } });
 }
 
 system.beforeEvents.startup.subscribe(({ blockComponentRegistry }) => {

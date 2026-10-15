@@ -54,8 +54,8 @@ export class Rhythm {
 }
 
 /** The message and sound that come with a new beat (a translation key with her name as %s, and a sound id), if any. */
-export function announce(/** @type {Beat} */ beat) {
-  if (beat.state === 'kicking') return { key: beat.kick >= 2 ? 'minepreggo.scene.kick_hard' : 'minepreggo.scene.kick', sound: 'minepreggo.belly_touch', volume: 0.5 };
+export function announce(/** @type {Beat} */ beat, babies = 2) {
+  if (beat.state === 'kicking') return { key: beat.kick >= 2 ? (babies === 1 ? 'minepreggo.scene.kick_hard_one' : 'minepreggo.scene.kick_hard') : 'minepreggo.scene.kick', sound: 'minepreggo.belly_touch', volume: 0.5 };
   if (beat.state === 'contraction') return { key: 'minepreggo.scene.contraction', sound: 'minepreggo.pregnancy_pain', volume: 0.45 };
   return undefined;
 }

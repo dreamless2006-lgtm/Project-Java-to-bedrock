@@ -4,7 +4,7 @@
 // whose input a scene locked is marked with a dynamic property, so the lock is lifted if they come
 // back after leaving in the middle of one.
 
-import { InputPermissionCategory, world } from '@minecraft/server';
+import { InputPermissionCategory, system, world } from '@minecraft/server';
 
 /** @typedef {import('@minecraft/server').Player} Player */
 /** @typedef {'walk' | 'bed' | 'rub' | 'feel' | 'birth'} SceneKind */
@@ -64,6 +64,10 @@ export function releaseStale(/** @type {Player} */ player) {
 }
 
 world.afterEvents.playerSpawn.subscribe(({ player }) => void releaseStale(player));
+// After a /reload no scene is running any more: everyone still marked is let go.
+system.run(() => {
+  for (const player of world.getPlayers()) releaseStale(player);
+});
 world.afterEvents.playerLeave.subscribe(({ playerId }) => {
   // the scenes end their own scene on leave; this only forgets what is left over
   players.delete(playerId);

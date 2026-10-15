@@ -217,7 +217,8 @@ export function assistPush(record, ticks) {
   const p = record.data.pregnancy;
   const pain = /** @type {PainInstance | null | undefined} */ (p?.pain);
   if (!p || !pain) return false;
-  if (pain.type === 'PREBIRTH') {
+  // pushing brings the waters' end and the pre-birth on sooner, and shortens each birth
+  if (pain.type === 'WATER_BREAKING' || pain.type === 'PREBIRTH') {
     pain.elapsed = Math.min(pain.duration, pain.elapsed + ticks);
     return true;
   }
