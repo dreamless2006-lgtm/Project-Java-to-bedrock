@@ -89,8 +89,39 @@ the vanilla model (impulse 0.98 x speed, friction 0.91 x 0.6 on the ground,
 gravity 0.08 x 0.98, jump 0.42 with a 10-tick cooldown, step height
 0.5625), acknowledges teleports with `handled_teleport`, answers the
 respawn and dimension-change handshakes, and resyncs when the addon reports
-the server keeps the body elsewhere. Messages: `walk{x,y,z,mode,jump,fx,fy,fz}`,
-`stop`, `look`, `swing`, `body_status`, and `probe`/`probe_hurt` while `!ai debug` is on.
+the server keeps the body elsewhere. Messages: `walk{x,y,z,mode,jump,fx,fy,fz}`
+(walk to a footing point, the head turns to face it), `input{f,s,sprint,sneak,jump,ms,floor,fx,fy,fz}`
+(raw keys: f +1 forward / -1 back, s +1 left / -1 right, held for a lease of `ms`
+and released by themselves when the addon goes quiet; `floor` is the ground a
+step ahead, which is how a body without eyes hops a ledge or drops down one),
+`jump`, `stop`, `look{x,y,z}` or `look{yaw,pitch}`, `swing`, `body_status`, and
+`probe`/`probe_hurt` while `!ai debug` is on. Yaw 0 faces south (+z), 90 west,
+180 north, -90 east; pitch is negative looking up; strafe left is +x when facing
+south. `Body.press`/`release`/`setLook` are the key and head API.
+
+Seeing and moving, in the addon: `terrain.js` (pure) classifies blocks once for
+everyone (air, passable: snow layers, grass, carpets, signs, flowers; water;
+lava; hazard; solid; tall: fences and walls), so the walker's footing check and
+`path.js` never disagree about what is a wall. `path.js` plans far goals in
+segments, heads for the closest reachable point when there is no way all the way,
+flags climbs as jumps, and keeps 0.35 blocks off corners when it smooths a route.
+`senses.js` (pure) is the eyes: `survey` (how far the ground goes on in each of
+eight directions and why it ends), `castRay`/`sights` (what a line of sight hits:
+trees, ore, water, lava, built things, far rock), `lookingAt`, `probeStep` (the
+cell a held key is about to enter). `around.js` turns those into the "Around you"
+line of every observation and the `look_around` report, and remembers which 16x16
+columns have been walked (`unexplored`). The actions `look`, `look_around`, `move`
+and `jump` are in `actuator.js`; `move` and `look_around` are `fast` handlers,
+stepped every tick by `Actuator.pulse` from the per-tick layer (the rest of the
+actuator is supervised every ten ticks), so a key is never released late.
+
+Diagnosis: the bridge counts the ticks a move key was down and the real distance
+the addon reports the body moved (`Body.intentTicks`, `truthMoved`); every five
+seconds `monitorMotion` warns (log and, once, the world's chat) when keys were
+down without real movement, or when the server pulled the body back 15 times
+(corrections or teleports). `node index.mjs --selftest` walks the body with the
+AI's own presses and reads the true position with `/tp @s ~ ~ ~`. `!ai body`
+prints the bridge's `body_status`.
 
 A player body has no engine reflexes, so `reflex.js` (pure) decides the
 body-level reactions and `BotBrain.onHurtBy`/`reflexScan` apply them: hit by
@@ -152,6 +183,23 @@ turns into a real `text` packet from the account (whispers become `/tell`).
 While the bridge player has a brain the addon sends `anchor {off: true}`
 so the bridge stops teleporting itself around.
 
+## Testing against a real server
+
+`npm run e2e` starts a real Bedrock server (Dragonfly v0.11.5, `tests/e2e/dragonfly`, needs Go
+to build once; `DF_SERVER_BIN` can name a built binary) and joins it with the real bridge
+(`bridge/node_modules` must hold `bedrock-protocol`). Every assertion is about what the
+server sees: the body is on the ground, walks at 4.3 blocks/s and sprints at 5.6, turns its
+head, jumps with the vanilla arc, is hit and killed by another player, respawns by itself and
+walks again. `npm run e2e:loop` runs the real addon code (brain, actuator, pathfinder, senses)
+on the mock Script API against that bridge and server: the AI's `move_to` across open ground, a
+built wall, snow layers, a one-block ledge, a 60-block trip, and its own keys (look, move in all
+four directions, sprint, sneak, wall and pit stops, ledge hop, jump, look_around), judged by
+where the server says the body is. `npm run e2e:selftest` checks the bridge's self-test verdicts
+against a server that accepts movement and one that rejects it (`DF_FREEZE=1`). A small UDP relay
+(`tests/e2e/lib.mjs`) adapts the RakNet quirks of the library and the server. This cannot prove
+what a Realm (Bedrock Dedicated Server with server-authoritative movement) accepts; that is what
+`--selftest` and `!ai body` are for on the real thing.
+
 ## Residents: the people who live here
 
 `roster.js` + `BrainManager.populate()` keep a persistent list of named AI
@@ -186,6 +234,10 @@ bots, up to `maxBrains`). The original random spawner is behind the
 | `frame.js` | chunked framing shared with the bridge | yes |
 | `crafting.js` + `generated/` | scripted crafting/smelting (vanilla basics plus any recipes in the pack) | yes |
 | `json_util.js` | tolerant JSON extraction, stable stringify | yes |
+| `terrain.js` | what a block means to a walking body (passable, solid, tall, hazard, lava, water) | yes |
+| `path.js` | A* over block cells: eight-way, jumps, drops, partial paths, corner clearance | yes |
+| `senses.js` | the eyes: walk survey, line-of-sight rays, sights, what is under the crosshair | yes |
+| `around.js` | the "Around you" report and the explored-columns memory | in-game (reads the dimension) |
 | `perception.js` | observation from the live world | in-game |
 | `actuator.js` | every action on the real body | in-game |
 | `core.js` | BotBrain, manager, events, chat intake, keep-alive, residents, companions, respawns | in-game |

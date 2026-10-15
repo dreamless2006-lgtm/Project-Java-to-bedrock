@@ -24,7 +24,7 @@ lower than the copy it already has, and a Realm keeps its own copy of the
 pack. To update, remove the old Real AI packs from the device (Settings >
 Storage), import the new `.mcaddon`, activate it on the world, and have
 everyone leave and rejoin the Realm. The bridge's log says which build the
-world runs (`addon says hello (build 2.9.0, walks yes)`); a `walks no` line
+world runs (`addon says hello (build 2.10.0, walks yes)`); a `walks no` line
 means the Realm still serves an older pack that cannot move the body.
 
 ## 2. Prepare a second Microsoft account for the bridge
@@ -129,6 +129,26 @@ slash commands instead:
 
 The Friend List item (sneak + use) also opens the menu, and sneaking while
 interacting with a bot opens its card.
+
+### When the AI player does not move
+
+1. Phone, bridge stopped: `bash ~/real-ai/bridge/phone.sh selftest`. It walks, sprints, steps back
+   and turns the body with the AI's own key presses and reads the position the server really has
+   (the account must be an Operator with cheats on for that; stand on flat ground). PASS means the
+   server accepts the body's movement; FAIL says what the server did instead.
+2. In the game (operator): `!ai body` shows how the bridge's client sees the body (keys held, pull-backs
+   by the server, height convention) and `!ai where` how the game sees it and what its walker is doing.
+3. The bridge's log line `addon says hello (build X, walks yes)` must show the newest build and `walks yes`.
+   Otherwise the Realm still serves an old pack: delete every Real AI pack under Settings > Storage,
+   import the newest `.mcaddon`, activate it on the world, and everyone rejoins. The bridge says this in
+   the world's chat too. An old bridge is reported to the operators in chat; update it with
+   `bash ~/real-ai/bridge/phone.sh`.
+4. Walking over snow, grass, carpets and flowers is fine; if the AI claims to be blocked, ask it to
+   `look_around`: the report names what ends each direction.
+
+Config keys for odd servers (`connect` in `config.json`): `deviceOS` (a number, the device the account
+claims to be), `startConvention` (`"auto"`, `"eye"` or `"feet"`: how the server's start position is read),
+`gamemode` (`null` leaves the game mode alone).
 
 ## Keeping bots active when you leave
 

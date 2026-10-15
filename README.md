@@ -149,6 +149,19 @@ travel between dimensions (uses a known portal or builds a Nether portal),
 trade, duel, send friend requests, emote, and wait. It also knows every
 modded block, item and creature from any other addon in the world.
 
+It plays with the controls of a real player, too: **look** (a compass word,
+or a yaw and pitch, or turn/tilt from where it faces), **move** (hold
+forward, back, left or right for a few seconds, with sprint, sneak or jump;
+it stops by itself before a wall, a deep drop, lava or water, hops one-block
+ledges and reports how far it got), **jump**, and **look_around** (turn a full
+circle and report every direction). Every decision it makes starts from an
+"Around you" report: for each of eight directions how far it can walk, what
+ends the way (a wall of ..., a drop of ..., water, lava, the edge of the
+loaded world), what it can see far off (trees, ore, water, buildings), what
+is under its crosshair, and which ways it has not been yet. Walking over snow,
+grass, carpets, signs and flowers is walking, not a wall; fences and walls
+are walls; routes round obstacles are planned.
+
 ## What you need (plain language)
 
 Minecraft Bedrock on a phone, console or PC cannot talk to the internet from
@@ -253,6 +266,29 @@ account: [docs/SETUP-DEDICATED-SERVER.md](docs/SETUP-DEDICATED-SERVER.md). Desig
 Sneak + use the Friend List item also opens the hub; sneak + interact with a
 bot opens its card.
 
+## If the AI stands still
+
+Run the self-test on the phone, with the bridge stopped (Ctrl+C):
+
+```
+bash ~/real-ai/bridge/phone.sh selftest
+```
+
+It joins, walks, sprints, steps back and turns the head with the same key
+presses the AI uses, asks the server where the body really is, and prints
+PASS or FAIL for each step with the reason ("the server keeps resetting the
+body (rubber-banding)", "the server ignores this client's movement", "no
+answer: make the account an Operator and turn cheats on"). The account needs
+to stand on flat ground for it. In the game, an operator can type `!ai body`
+(how the bridge's client sees the body: keys held, how often the server pulled
+it back) and `!ai where` (where the game has it and what its walker is doing).
+The bridge also says in the world's chat when the Real AI pack in the world
+is older than the bridge, when the pack does not answer, and when the body
+is pressing forward without moving. The usual cause of a still body is an
+old copy of the pack: delete every Real AI pack under Settings > Storage,
+import the newest `.mcaddon`, activate it on the world, and have everyone
+rejoin. Update the bridge with `bash ~/real-ai/bridge/phone.sh`.
+
 ## Cost
 
 Each think is one model call with a cached system prompt (~3k tokens) plus a
@@ -268,7 +304,7 @@ packs/RealAI_BP          behaviour pack (scripts/brain = the LLM brain, everythi
 packs/RealAI_RP          resource pack (bot model, skins, menu icons)
 bridge/                  Node relay that joins the world as a player
 tools/                   checker, content generator, mcaddon builder
-tests/                   node --test suites, the mock engine (harness/) and the smoke run
+tests/                   node --test suites, the mock engine (harness/), the smoke run, and e2e/ (the real bridge against a real Bedrock server)
 docs/                    architecture and setup guides
 reference/player2npc     language file and class signatures of the Java mod, for the port
 ```
