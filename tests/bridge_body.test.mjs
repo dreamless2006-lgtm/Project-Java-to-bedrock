@@ -44,7 +44,7 @@ test("the spawn handshake closes the loading screen before the player is marked 
 test("hello carries the body and the expected pack build; nothing is sent before spawn", () => {
     const { b, queued } = fakeBridge();
     const hello = b.helloMessage("Bot");
-    assert.equal(hello.body, 1); assert.equal(hello.v, 2); assert.equal(hello.expectAddon, "2.5.0"); assert.ok(hello.providers.includes("openai"));
+    assert.equal(hello.body, 1); assert.equal(hello.v, 2); assert.equal(hello.expectAddon, "2.6.0"); assert.ok(hello.providers.includes("openai"));
     b.bodyTick();
     assert.equal(queued.length, 0);
 });

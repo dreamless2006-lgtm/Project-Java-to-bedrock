@@ -395,6 +395,59 @@ check(residents().length === 8, "still 8 residents after the respawn: " + reside
         await run(40);
     }
 }
+// Tenth cycle: reflexes and death. Hit by a zombie, the bridge body fights back within a tick; a
+// creeper closing in makes it run; on fire it heads for water; when it dies it keeps its brain,
+// remembers where its things fell, and knows where to go once it has respawned.
+{
+    const bb = gate.getBrain(relay.id);
+    if (bb) {
+        const bbResults2 = [];
+        const origDrain2 = bb.actuator.drainResults.bind(bb.actuator);
+        bb.actuator.drainResults = () => { const r = origDrain2(); bbResults2.push(...r); return r; };
+        relay.teleport({ x: 400.5, y: 64, z: 400.5 });
+        bb.actuator.stopAll(); await run(30);
+        const zombie = overworld.spawnEntity("minecraft:zombie", { x: 402, y: 64, z: 400.5 });
+        relay.applyDamage(3, { cause: "entityAttack", damagingEntity: zombie });
+        await run(15);
+        const cur = bb.actuator.current;
+        check(cur && cur.action.type === "attack" && /zombie/.test(cur.action.name), "hit by a zombie, it fights back at once: " + (cur ? cur.action.type + " " + cur.action.name : "nothing"));
+        check(bb.sched.pending.some(e => e.type === "hurt" && /fighting back/.test(e.text)), "and the model is told so on its next turn");
+        await run(600, 10, () => !zombie.isValid);
+        check(!zombie.isValid, "and kills it");
+        await run(60, 10, () => !bb.actuator.current);
+        const creeper = overworld.spawnEntity("minecraft:creeper", { x: 403, y: 64, z: 400.5 });
+        await run(40, 5, () => bb.actuator.current?.action.type === "flee");
+        check(bb.actuator.current?.action.type === "flee", "a creeper closing in makes it run: " + (bb.actuator.current ? bb.actuator.current.action.type : "nothing"));
+        creeper.remove();
+        await run(300, 10, () => !bb.actuator.current);
+        // on fire, with a pond ten blocks east: it heads for the water
+        relay.teleport({ x: 400.5, y: 64, z: 400.5 }); bb.actuator.stopAll(); await run(30);
+        for (let dx = 8; dx <= 10; dx++) for (let dz = -1; dz <= 1; dz++) overworld._set(400 + dx, 63, 400 + dz, "minecraft:water");
+        relay.components["minecraft:onfire"] = {};
+        await run(40, 5, () => bb.actuator.current?.action.type === "move_to");
+        const mv = bb.actuator.current;
+        check(mv && mv.action.type === "move_to" && mv.action.x >= 407 && mv.action.x <= 411, "on fire it runs for the water: " + (mv ? JSON.stringify(mv.action) : "nothing"));
+        delete relay.components["minecraft:onfire"];
+        await run(400, 10, () => !bb.actuator.current);
+        // death: the brain stays with the body, the loss is remembered, the respawn is announced to it
+        const killer = overworld.spawnEntity("minecraft:skeleton", { x: 404, y: 64, z: 404 });
+        const deathLoc = { ...relay.location };
+        relay.applyDamage(100, { cause: "entityAttack", damagingEntity: killer });
+        await run(10);
+        check(gate.getBrain(relay.id) === bb && bb.dead === true, "a dead player body keeps its brain and waits");
+        check(bb.memory.facts.some(f => new RegExp(`I died at ${Math.floor(deathLoc.x)} ${Math.floor(deathLoc.y)} ${Math.floor(deathLoc.z)}`).test(f.text)), "and remembers where its things fell: " + bb.memory.facts.slice(-1).map(f => f.text));
+        check(!bb.actuator.current && !bb.actuator.queue.length, "nothing runs while dead");
+        const seenEvents = [];
+        const origNote = bb.noteEvent.bind(bb);
+        bb.noteEvent = (type, text) => { seenEvents.push({ type, text }); return origNote(type, text); };
+        relay.respawn({ x: 0.5, y: 64, z: 0.5 });
+        await run(20);
+        bb.noteEvent = origNote;
+        check(bb.dead === false && seenEvents.some(e => e.type === "death" && /respawned/.test(e.text) && /items/.test(e.text)), "after respawning it knows where to go for its items: " + seenEvents.filter(e => e.type === "death").map(e => e.text).slice(-1));
+        check(gate.allBrains().size === [...gate.allBrains().values()].length && gate.getBrain(relay.id) === bb, "no second brain was made for the body");
+        killer.remove();
+    }
+}
 check(log.errors.length === 0, "no engine-level errors after lifecycle: " + log.errors.slice(0, 3).join(" | "));
 const lateWarnings = log.warnings.filter(w => /\[RealAI\]/.test(w) && !/started|connected|unavailable|quota exceeded/.test(w));
 check(lateWarnings.length === 0, "no late [RealAI] warnings: " + lateWarnings.slice(0, 3).join(" | "));

@@ -94,7 +94,7 @@ function familiesOf(e) {
     try { return e.getComponent(EntityComponentTypes.TypeFamily); } catch (e2) { return null; }
 }
 
-function isHostile(e) {
+export function isHostile(e) {
     const f = familiesOf(e);
     try { if (f && (f.hasTypeFamily("monster") || f.hasTypeFamily("hostile"))) return true; } catch (e2) { /* ignore */ }
     return false;

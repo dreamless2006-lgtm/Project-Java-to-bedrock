@@ -16,7 +16,7 @@ import { normalizeReply } from "./action_schema.js";
 import { getWorldConfig } from "./config.js";
 
 export const SCRIPT_EVENT_ID = "realai:in";
-export const ADDON_BUILD = "2.5.0";     // keep in step with packs/RealAI_BP/manifest.json
+export const ADDON_BUILD = "2.6.0";     // keep in step with packs/RealAI_BP/manifest.json
 export const BRIDGE_TAG = "realai_bridge";
 const OUT_CHUNK = 900;              // server->client chat lines can be longer than 512
 const HELLO_TIMEOUT_TICKS = 20 * 90;

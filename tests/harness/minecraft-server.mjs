@@ -194,6 +194,9 @@ export class Player extends Entity {
     constructor(name, dimension, location) { super("minecraft:player", dimension, location); this.name = name; this.nameTag = name; this.commandPermissionLevel = 1; this.playerPermissionLevel = 1; this.messages = []; this.families = new Set(["player", "mob"]); this.selectedSlotIndex = 0; this.components["minecraft:player.hunger"] = { currentValue: 20, effectiveMax: 20, setCurrentValue(v) { this.currentValue = Math.max(0, Math.min(20, v)); return true; } }; this.components["minecraft:player.saturation"] = { currentValue: 5, effectiveMax: 20, setCurrentValue(v) { this.currentValue = Math.max(0, Math.min(20, v)); return true; } }; }
     sendMessage(m) { const text = typeof m === "string" ? m : JSON.stringify(m); this.messages.push(text); log.messages.push(`[to ${this.name}] ${text}`); }
     getGameMode() { return "survival"; }
+    // a player's death does not remove the entity: it waits on the death screen and respawns
+    kill(opts) { if (!this.isValid || this.dead) return false; this.dead = true; world.afterEvents.entityDie.emit({ deadEntity: this, damageSource: { cause: opts?.cause || "none", damagingEntity: opts?.damagingEntity } }); return true; }
+    respawn(loc) { this.dead = false; this.components["minecraft:health"].resetToMaxValue(); if (loc) this.location = { x: loc.x, y: loc.y, z: loc.z }; world.afterEvents.playerSpawn.emit({ player: this, initialSpawn: false }); }
     playSound() {}
     get onScreenDisplay() { return { setActionBar() {}, setTitle() {}, updateSubtitle() {} }; }
 }

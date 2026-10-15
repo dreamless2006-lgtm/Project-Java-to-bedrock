@@ -223,7 +223,10 @@ function placeBlock(bot, pos, blockId) {
     }
 }
 
-function swing(bot) { try { bot.playAnimation(isPlayerBody(bot) ? "animation.player.attack.rotations" : "animation.humanoid.attack.rotations"); } catch (e) { /* ignore */ } }
+function swing(bot) {
+    if (bridgeWalks(bot)) bridgeSend({ t: "swing" });
+    try { bot.playAnimation(isPlayerBody(bot) ? "animation.player.attack.rotations" : "animation.humanoid.attack.rotations"); } catch (e) { /* ignore */ }
+}
 
 function heldId(bot) { try { return bot.getComponent(EntityComponentTypes.Equippable)?.getEquipment(EquipmentSlot.Mainhand)?.typeId || null; } catch (e) { return null; } }
 // {id: count} of the inventory plus whatever is in the hand (an entity bot's hand is outside its container).

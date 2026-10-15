@@ -24,7 +24,7 @@ lower than the copy it already has, and a Realm keeps its own copy of the
 pack. To update, remove the old Real AI packs from the device (Settings >
 Storage), import the new `.mcaddon`, activate it on the world, and have
 everyone leave and rejoin the Realm. The bridge's log says which build the
-world runs (`addon says hello (build 2.5.0, walks yes)`); a `walks no` line
+world runs (`addon says hello (build 2.6.0, walks yes)`); a `walks no` line
 means the Realm still serves an older pack that cannot move the body.
 
 ## 2. Prepare a second Microsoft account for the bridge
@@ -89,7 +89,13 @@ second comparing the server's position with its own, and reports every hit
 the body takes. The bridge puts its account into survival on join (set
 `connect.gamemode` to `null` in `config.json` to leave the game mode alone);
 if "Friendly Fire" is off in the Realm's settings nobody can hit any player,
-and the log says so. `!ai status` shows `bridge (<gamertag>)` as the
+and the log says so. The body has reflexes of its own: hit by a monster it
+fights back within a tick (or runs when low on health or from a creeper),
+on fire it heads for the nearest water, in lava it climbs out; the model
+hears about each reflex on its next turn and can override it. When the
+body dies the bridge answers the respawn screen at once, the brain stays
+with the body, and the AI is told where its items fell so it can go back
+for them. `!ai status` shows `bridge (<gamertag>)` as the
 transport and lists every thinking player with its provider and model. For
 more AI players, `!ai players <n>` spawns named residents that join next to
 you. Put several keys in `config.json` and the residents are spread

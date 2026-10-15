@@ -21,7 +21,7 @@ import { Body } from "./body.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const VERSION = "0.2.0";
-const EXPECT_ADDON = "2.5.0";          // the pack build whose addon walks this bridge's body
+const EXPECT_ADDON = "2.6.0";          // the pack build whose addon walks this bridge's body
 const SCRIPT_EVENT = "realai:in";
 const ENV_KEYS = {
     anthropic: "ANTHROPIC_API_KEY", openai: "OPENAI_API_KEY", xai: "XAI_API_KEY", gemini: "GEMINI_API_KEY",
@@ -164,7 +164,7 @@ export class Bridge {
         client.on("change_dimension", p => { try { for (const pk of this.body.onChangeDimension(p)) this.client.queue(pk.name, pk.params); log("info", `changing dimension (${p.dimension}) to`, JSON.stringify(this.body.status().pos)); } catch (e) { log("warn", "change_dimension:", e?.message || e); } });
         client.on("player_action", p => { try { for (const pk of this.body.onPlayerAction(p)) this.client.queue(pk.name, pk.params); } catch (e) { /* ignore */ } });
         client.on("set_player_game_type", p => { this.body.gameMode = p.gamemode; log("info", "game mode is now", p.gamemode); });
-        client.on("set_health", p => log("debug", "health", p.health));
+        client.on("set_health", p => { log("debug", "health", p.health); try { if (Number(p.health) <= 0 && this.body.alive) { this.body.alive = false; this.body.target = null; log("info", "this body died; waiting for the respawn handshake"); } } catch (e) { /* ignore */ } });
         client.on("entity_event", p => { try { if (p.event_id === "hurt_animation" && this.body.isMe(p.runtime_entity_id)) log("info", "ouch: this body was hit"); } catch (e) { /* ignore */ } });
         client.on("update_abilities", p => { try { const layers = (p.abilities || []).map(l => `${l.type}${l.enabled?.invulnerable ? "(invulnerable)" : ""}`); log("debug", "abilities:", layers.join(", ")); if ((p.abilities || []).some(l => l.type === "loading_screen")) log("debug", "a loading-screen ability layer is active on this body"); } catch (e) { /* ignore */ } });
         client.on("text", p => this.onText(p));
@@ -392,6 +392,10 @@ export class Bridge {
                 break;
             case "look":
                 this.body.lookAt({ x: Number(msg.x), y: Number(msg.y), z: Number(msg.z) });
+                break;
+            case "swing":
+                // the arm swing everyone sees when a real client hits or digs
+                try { if (this.client && this.spawned) this.client.queue("animate", { action_id: "swing_arm", runtime_entity_id: this.entityId, data: 0, has_swing_source: false }); } catch (e) { /* ignore */ }
                 break;
             case "body_status":
                 this.sendToAddon({ t: "body", ...this.body.status() });

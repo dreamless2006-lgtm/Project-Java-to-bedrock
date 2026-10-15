@@ -1,7 +1,7 @@
 // The brain system: attaches an LLM-driven BotBrain to rg:bot entities,
 // feeds them observations and chat, runs their actions, persists memory and
 // keeps bots ticking when the humans leave.
-import { world, system, EntityDamageCause } from "@minecraft/server";
+import { world, system, EntityDamageCause, EntityComponentTypes } from "@minecraft/server";
 import { ALL_AI_CACHE } from "../greeting.js";
 import { recordBotMessage } from "../ai_conversations.js";
 import { registerBrain, unregisterBrain, getBrain, allBrains, setBrainEnabled, isBrainEnabled } from "./gate.js";
@@ -13,7 +13,8 @@ import { inventoryMap } from "./perception.js";
 import { timeLabel } from "./perception.js";
 import { buildSystemStable, buildTurn, promptHash } from "./prompt.js";
 import { createSchedulerState, noteEvent, shouldThink, beginThink, endThink, CADENCE } from "./scheduler.js";
-import { observe, dist, fmtPos } from "./perception.js";
+import { observe, dist, fmtPos, isHostile, healthOf } from "./perception.js";
+import { hurtReflex, dangerReflex, reflexAllowed } from "./reflex.js";
 import { Actuator, findPlayer, findSafeSpot, isPlayerBody, bridgeWalks } from "./actuator.js";
 import { think as transportThink, bridge, transportInfo } from "./transport.js";
 import { hasDirectHttp, EDITION } from "./net_impl.js";
@@ -107,6 +108,8 @@ export class BotBrain {
         this.progressSince = 0;
         this.sleptSince = false;
         this.lastPlace = "";
+        this.dead = false;             // a player body on the death screen: nothing runs until it respawns
+        this.reflexState = {};
         if (!this.memory.drives) this.memory.drives = createDrives(Date.now());
         if (!this.memory.mission) this.memory.mission = createMission();
         this.locateWaiting = null;
@@ -258,6 +261,10 @@ export class BotBrain {
     // ---- loop ----
     tick(now) {
         if (!this.bot.isValid) return;
+        if (this.dead) return;
+        // brains tick every 10 ticks on staggered offsets, so count our own ticks for the once-a-second scan
+        this.ownTicks = (this.ownTicks || 0) + 1;
+        if (this.ownTicks % 2 === 0 && isPlayerBody(this.bot)) { try { this.reflexScan(now); } catch (e) { /* ignore */ } }
         try { this.actuator.tick(now); } catch (e) { console.warn(`[RealAI] ${this.name} actuator: ${e}`); }
         if (this.paused) return;
         if (!isBrainEnabled()) return;
@@ -335,6 +342,74 @@ export class BotBrain {
         this.saveMemory();
         if (manager.debug) console.warn(`[RealAI] ${this.name} (${res.provider}/${res.model}, ${Date.now() - started}ms): ${reply.thought} | say=${reply.say} | ${reply.actions.map(a => a.type).join(",")}`);
         if (getWorldConfig().showThoughts) this.showThought(reply, res);
+    }
+
+    // ---- reflexes (a real player body has no engine reflexes of its own) ----
+    // Hit by something: fight back or run, now; the model hears about it a second later and may override.
+    onHurtBy(src, damage) {
+        if (this.dead || !isPlayerBody(this.bot)) return null;
+        let attacker = null, isPlayer = false, hostile = false, target = null;
+        try {
+            const e = src?.damagingEntity;
+            if (e && e.isValid) { target = e; isPlayer = e.typeId === "minecraft:player"; attacker = isPlayer ? e.name : (e.nameTag || e.typeId.replace(/^.*:/, "")); hostile = isHostile(e); }
+        } catch (e) { /* ignore */ }
+        const h = healthOf(this.bot);
+        const r = hurtReflex({ attacker, isPlayer, isHostile: hostile, healthFrac: h && h.max ? h.hp / h.max : 1, damage });
+        if (!r || !reflexAllowed(this.reflexState, r.type, system.currentTick)) return null;
+        const cur = this.actuator.current;
+        if (r.type === "attack") {
+            if (cur && cur.action.type === "attack" && cur.state && target && cur.state.targetId === target.id) return null;
+            this.actuator.enqueueFront({ type: "attack", name: r.target });
+            if (cur && cur.action.type !== "attack") this.actuator.finish(`${cur.action.type}: interrupted (${r.why})`);
+        } else {
+            if (cur) this.actuator.finish(`${cur.action.type}: interrupted (${r.why})`);
+            this.actuator.queue.length = 0;
+            this.actuator.enqueueFront({ type: "flee", from: r.target });
+        }
+        this.noteEvent("hurt", `reflex: ${r.why}, ${r.type === "attack" ? "fighting back against" : "running from"} the ${r.target}`);
+        return r;
+    }
+
+    // Once a second: lava, fire, a creeper too close. Reacts before the next turn.
+    reflexScan(now) {
+        const bot = this.bot;
+        const loc = bot.location;
+        let inLava = false, onFire = false, inWater = false, creeperDist = null, waterDist = null;
+        try { const b = bot.dimension.getBlock(loc); inLava = !!b && /lava/.test(b.typeId); } catch (e) { /* ignore */ }
+        try { onFire = !!bot.getComponent(EntityComponentTypes.OnFire); } catch (e) { /* ignore */ }
+        try { inWater = !!bot.isInWater; } catch (e) { /* ignore */ }
+        try { const c = bot.dimension.getEntities({ location: loc, maxDistance: 5, type: "minecraft:creeper" })[0]; if (c) creeperDist = dist(loc, c.location); } catch (e) { /* ignore */ }
+        let water = null;
+        if ((onFire && !inWater) || inLava) {
+            try {
+                const dim = bot.dimension, cx = Math.floor(loc.x), cy = Math.floor(loc.y), cz = Math.floor(loc.z);
+                let best = Infinity;
+                for (let x = -10; x <= 10; x++) for (let z = -10; z <= 10; z++) for (let y = -2; y <= 2; y++) {
+                    const b = dim.getBlock({ x: cx + x, y: cy + y, z: cz + z });
+                    if (!b || !/water/.test(b.typeId)) continue;
+                    const d = Math.hypot(x, y, z);
+                    if (d < best) { best = d; water = { x: cx + x, y: cy + y, z: cz + z }; }
+                }
+                if (water) waterDist = best;
+            } catch (e) { /* ignore */ }
+        }
+        const r = dangerReflex({ inLava, onFire, inWater, creeperDist, waterDist });
+        if (!r || !reflexAllowed(this.reflexState, r.type, now)) return null;
+        const cur = this.actuator.current;
+        if (cur) this.actuator.finish(`${cur.action.type}: interrupted (${r.why})`);
+        if (r.type === "lava") {
+            let spot = null;
+            try { spot = findSafeSpot(bot.dimension, loc.x + 2, loc.z, loc.y) || findSafeSpot(bot.dimension, loc.x - 2, loc.z, loc.y) || findSafeSpot(bot.dimension, loc.x, loc.z + 2, loc.y) || findSafeSpot(bot.dimension, loc.x, loc.z - 2, loc.y); } catch (e) { /* ignore */ }
+            if (spot) this.actuator.enqueueFront({ type: "move_to", x: Math.floor(spot.x), y: Math.floor(spot.y), z: Math.floor(spot.z) });
+            if (water) this.actuator.enqueueFront({ type: "move_to", x: water.x, y: water.y + 1, z: water.z });
+        } else if (r.type === "water") {
+            this.actuator.enqueueFront({ type: "move_to", x: water.x, y: water.y + 1, z: water.z });
+        } else {
+            this.actuator.queue.length = 0;
+            this.actuator.enqueueFront({ type: "flee", from: "creeper" });
+        }
+        this.noteEvent("hurt", `reflex: ${r.why}, ${r.type === "flee" ? "running" : r.type === "water" ? "heading for the water" : "getting out"}`);
+        return r;
     }
 
     // A failed decision is visible in chat (rate limited), so a bot standing still is never a mystery.
@@ -532,6 +607,7 @@ class BrainManager {
                     let who = src?.cause || "something";
                     try { if (src?.damagingEntity?.isValid) who = src.damagingEntity.nameTag || src.damagingEntity.typeId.replace("minecraft:", ""); } catch (e) { /* ignore */ }
                     if (ev.damage >= 2) b.noteEvent("hurt", `took ${Math.round(ev.damage)} damage from ${who}`);
+                    try { b.onHurtBy(src, ev.damage); } catch (e) { /* ignore */ }
                     try { if (src?.damagingEntity?.typeId === "minecraft:player") notePerson(b.memory, src.damagingEntity.name, { note: "attacked me" }, Date.now()); } catch (e) { /* ignore */ }
                     try { if (this.debug && b.settings.mode === "bridge") bridge.send({ t: "probe_hurt", damage: ev.damage, cause: src?.cause || "?", by: who }); } catch (e) { /* ignore */ }
                 } catch (e) { /* ignore */ }
@@ -539,6 +615,22 @@ class BrainManager {
             world.afterEvents.entityDie.subscribe(ev => {
                 const dead = ev.deadEntity;
                 const b = getBrain(dead);
+                if (b && dead.typeId === "minecraft:player") {
+                    // a real player body is not removed by death: it respawns, and the brain stays with it
+                    let killerName = "";
+                    try { const k = ev.damageSource?.damagingEntity; if (k?.isValid) killerName = k.nameTag || k.name || k.typeId.replace("minecraft:", ""); } catch (e) { /* ignore */ }
+                    try {
+                        const at = fmtPos(dead.location), dimName = dead.dimension.id.replace("minecraft:", "");
+                        b.memory.deathPos = { x: Math.floor(dead.location.x), y: Math.floor(dead.location.y), z: Math.floor(dead.location.z), dim: dead.dimension.id, t: Date.now() };
+                        addEpisode(b.memory, `I died${killerName ? " to " + killerName : ""} at ${at}`, Date.now());
+                        addFact(b.memory, `I died at ${at} in ${dimName}${killerName ? " (killed by " + killerName + ")" : ""}; whatever I carried dropped there`, Date.now());
+                        b.dead = true;
+                        b.actuator.stopAll();
+                        b.noteEvent("death", `you died${killerName ? " to " + killerName : ""} at ${at}; you will respawn at your spawn point and your items lie where you fell`);
+                        b.saveMemory();
+                    } catch (e) { /* ignore */ }
+                    return;
+                }
                 if (b) {
                     let killerName = "";
                     try {
@@ -576,7 +668,21 @@ class BrainManager {
                 }
             });
             world.afterEvents.playerSpawn.subscribe(ev => {
-                if (!ev.initialSpawn) return;
+                if (!ev.initialSpawn) {
+                    // a respawn: a brained body comes back to life knowing where its things are
+                    try {
+                        const b = getBrain(ev.player);
+                        if (b) {
+                            b.dead = false;
+                            b.sleptSince = false;
+                            const dp = b.memory.deathPos;
+                            let items = "";
+                            if (dp) { try { const d = dp.dim === ev.player.dimension.id ? Math.round(dist(ev.player.location, dp)) : null; items = `; your dropped items lie at ${dp.x} ${dp.y} ${dp.z}${d === null ? " in " + dp.dim.replace("minecraft:", "") : " (" + d + "m away)"}, they vanish after about five minutes` ; } catch (e) { items = `; your dropped items lie at ${dp.x} ${dp.y} ${dp.z}`; } }
+                            b.noteEvent("death", `you respawned at ${fmtPos(ev.player.location)} with nothing${items}`);
+                        }
+                    } catch (e) { /* ignore */ }
+                    return;
+                }
                 for (const [, br] of allBrains()) { try { if (br.settings.owner === ev.player.id) br.noteEvent("player_near", `${ev.player.name} (my owner) joined the game`); } catch (e) { /* ignore */ } }
                 // Player2NPC behaviour: companions that wandered off (or are in another dimension) come to their owner
                 const player = ev.player;

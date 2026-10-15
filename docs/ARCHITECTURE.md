@@ -90,7 +90,18 @@ gravity 0.08 x 0.98, jump 0.42 with a 10-tick cooldown, step height
 0.5625), acknowledges teleports with `handled_teleport`, answers the
 respawn and dimension-change handshakes, and resyncs when the addon reports
 the server keeps the body elsewhere. Messages: `walk{x,y,z,mode,jump,fx,fy,fz}`,
-`stop`, `look`, `body_status`, and `probe`/`probe_hurt` while `!ai debug` is on.
+`stop`, `look`, `swing`, `body_status`, and `probe`/`probe_hurt` while `!ai debug` is on.
+
+A player body has no engine reflexes, so `reflex.js` (pure) decides the
+body-level reactions and `BotBrain.onHurtBy`/`reflexScan` apply them: hit by
+a monster it enqueues an attack at the front (or a flee when low on health or
+hit by a creeper), once a second it checks for lava, fire (nearest water
+within ten blocks) and a creeper within four blocks; each reflex has a
+cooldown and is reported to the model as a `hurt` event. Death keeps the
+brain on the player body (`brain.dead` until the `playerSpawn` respawn),
+records `memory.deathPos`, stops the actuator, and the respawn event tells the
+model where its items lie; the bridge answers the server's respawn packets
+(player_action respawn, respawn state 2) immediately.
 
 With `bridgePlays` (default on) the manager finds the bridge's player
 (`transportInfo().bridgePlayer`) and gives it a `BotBrain` with mode
