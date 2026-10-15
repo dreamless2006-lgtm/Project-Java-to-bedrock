@@ -132,38 +132,72 @@ test("death: the bridge presses Respawn by itself, again with 'ready' when the s
     assert.equal(queued.length, n, "no more presses once it is alive");
 });
 
-test("the monitor notices a body that is pressed forward but does not move, and one the server keeps pulling back", () => {
+test("the monitor: stuck keys flip the tick numbering first, then say so once; a body that walked is fine; rubber-banding needs three windows", () => {
+    const window = (b, { intent = 0, moved = 0, corr = 0 }) => { b.body.intentTicks += intent; b.body.truthMoved += moved; b.body.corrections += corr; b.monitorMotion(); };
+    const mk = () => { const { b, queued } = fakeBridge(); spawn(b, queued); b.addonHello = true; b.body.lastTruth = { x: 0, y: 64, z: 0 }; const said = []; b.sayInGame = (t) => { said.push(t); return true; }; b.monitorMotion(); return { b, said }; };
+    // keys down for most of 20 s, nothing moved, nothing objected
+    const stuck = mk();
+    for (let i = 0; i < 4; i++) window(stuck.b, { intent: 40, moved: 0.1 });
+    assert.equal(stuck.b.body.tickBase, "server", "the other tick numbering is tried first");
+    assert.equal(stuck.said.length, 0, "and nobody is bothered yet");
+    for (let i = 0; i < 4; i++) window(stuck.b, { intent: 40, moved: 0.1 });
+    assert.equal(stuck.said.length, 1);
+    assert.match(stuck.said[0], /not moving/);
+    for (let i = 0; i < 4; i++) window(stuck.b, { intent: 40, moved: 0.1 });
+    assert.equal(stuck.said.length, 1, "once per run");
+    // a body that really walked is fine
+    const ok = mk();
+    for (let i = 0; i < 6; i++) window(ok.b, { intent: 60, moved: 8 });
+    assert.equal(ok.said.length, 0);
+    assert.equal(ok.b.body.tickBase, "zero");
+    // one burst of corrections (a wall nobody saw) is not a verdict; three in a row is
+    const rb = mk();
+    window(rb.b, { intent: 40, corr: 20 }); window(rb.b, { intent: 40, corr: 20 });
+    assert.equal(rb.said.length, 0);
+    window(rb.b, { intent: 40, corr: 20 });
+    assert.equal(rb.said.length, 1);
+    assert.match(rb.said[0], /pulling my body back/);
+    assert.match(rb.said[0], /selftest/);
+});
+
+test("frames are accepted from the addon's raw text, never from a person's chat; absurd frames do not throw", () => {
     const { b, queued } = fakeBridge();
     spawn(b, queued);
-    b.addonHello = true;
-    const said = [];
-    b.sayInGame = (t) => { said.push(t); return true; };
-    b.monitorMotion();                                       // first window only records
-    // 5 s of keys down, the addon says the body is where it was
-    b.body.intentTicks += 90; b.body.anchorFrom({ x: 0, y: 64, z: 0 }); b.body.anchorFrom({ x: 0.2, y: 64, z: 0 });
-    b.monitorMotion();
-    assert.equal(said.length, 1);
-    assert.match(said[0], /not moving/);
-    // the same condition again does not nag
-    b.body.intentTicks += 90; b.body.anchorFrom({ x: 0.1, y: 64, z: 0 });
-    b.monitorMotion();
-    assert.equal(said.length, 1, "once per kind per connection");
-    // a body that really walked is fine
-    const ok = fakeBridge(); spawn(ok.b, ok.queued); ok.b.addonHello = true;
-    const okSaid = []; ok.b.sayInGame = (t) => { okSaid.push(t); return true; };
-    ok.b.monitorMotion();
-    ok.b.body.intentTicks += 90; ok.b.body.anchorFrom({ x: 0, y: 64, z: 0 }); ok.b.body.anchorFrom({ x: 3, y: 64, z: 0 }); ok.b.body.anchorFrom({ x: 6, y: 64, z: 0 });
-    ok.b.monitorMotion();
-    assert.equal(okSaid.length, 0);
-    // rubber-banding: many corrections or teleports in one window
-    const rb = fakeBridge(); spawn(rb.b, rb.queued); rb.b.addonHello = true;
-    const rbSaid = []; rb.b.sayInGame = (t) => { rbSaid.push(t); return true; };
-    rb.b.monitorMotion();
-    rb.b.body.corrections += 20;
-    rb.b.monitorMotion();
-    assert.equal(rbSaid.length, 1);
-    assert.match(rbSaid[0], /pulling my body back/);
-    assert.match(rbSaid[0], /selftest/);
+    const handled = [];
+    b.handle = async (m) => { handled.push(m); };
+    const frame = "AIB1|x1|1/1|" + JSON.stringify({ t: "walk", x: 5000, y: 64, z: 5000 });
+    b.onText({ type: "chat", source_name: "Griefer", message: frame });
+    b.onText({ type: "whisper", source_name: "Griefer", message: frame });
+    b.onText({ type: "announcement", source_name: "Griefer", message: frame });
+    assert.equal(handled.length, 0, "a player cannot drive the body or the bridge by typing a frame");
+    b.onText({ type: "raw", message: frame });
+    assert.equal(handled.length, 1, "the addon's own text goes through");
+    assert.doesNotThrow(() => b.onText({ type: "raw", message: "AIB1|x|1/99999999999|" }));
+    assert.doesNotThrow(() => b.onText({ type: "raw", message: "AIB1|x|1/513|a" }));
+    assert.doesNotThrow(() => b.onText({ type: "raw", message: null }));
+    assert.doesNotThrow(() => b.onText(null));
+    assert.equal(handled.length, 1);
+});
+
+test("addon messages with missing or absurd numbers cannot poison the body", async () => {
+    const { b, queued } = fakeBridge();
+    spawn(b, queued);
+    for (const msg of [{ t: "walk" }, { t: "walk", x: "a", z: "c" }, { t: "walk", x: NaN, z: 1 }, { t: "probe" }, { t: "probe", x: "q", y: 1, z: 2 }, { t: "look", x: 1, z: 1 }, { t: "look", yaw: "north" }, { t: "input", f: 1, fx: 1e308, fz: 1e308 }, { t: "input", f: "x", s: NaN, ms: Infinity }, null, 5, "walk"]) {
+        await b.handle(msg);
+    }
+    for (let i = 0; i < 20; i++) b.body.step();
+    const st = b.body.status();
+    assert.ok(Number.isFinite(st.pos.x) && Number.isFinite(st.pos.y) && Number.isFinite(st.pos.z), "position stays a number: " + JSON.stringify(st.pos));
+    assert.ok(Number.isFinite(b.body.yaw) && Number.isFinite(b.body.pitch));
+    assert.ok(Math.abs(st.pos.x) < 1000 && Math.abs(st.pos.z) < 1000);
+    // anchors that make no sense are not taken as the server's position
+    b.body.anchorFrom({ x: 1e308, y: 64, z: 1e308 }); b.body.anchorFrom({ x: 1e308, y: 64, z: 1e308 });
+    assert.ok(Math.abs(b.body.pos.x) < 1e7, "a report from outside the world is not believed: " + b.body.pos.x);
+    // the anchor's dimension is a word from a list
+    await b.handle({ t: "anchor", x: 1, y: 64, z: 2, dim: "overworld as @a" });
+    assert.equal(b.anchorTarget.dim, "minecraft:overworld");
+    await b.handle({ t: "anchor", x: 1, y: 64, z: 2, dim: "minecraft:the_end" });
+    assert.equal(b.anchorTarget.dim, "minecraft:the_end");
 });
 
 test("an addon that does not walk bodies is reported in the world's chat, once", () => {
@@ -176,4 +210,22 @@ test("an addon that does not walk bodies is reported in the world's chat, once",
     assert.equal(said.length, 1);
     assert.match(said[0], /older than my bridge/);
     assert.match(said[0], /Delete the old Real AI packs/);
+});
+
+test("a pack that walks but predates the controls is reported too; the newest is not; versions compare as numbers", async () => {
+    const { versionLess } = await import("../bridge/index.mjs");
+    assert.equal(versionLess("2.9.0", "2.10.0"), true);
+    assert.equal(versionLess("2.10.0", "2.9.0"), false);
+    assert.equal(versionLess("2.10.0", "2.10.0"), false);
+    assert.equal(versionLess(undefined, "2.10.0"), true);
+    assert.equal(versionLess("3.0.0", "2.10.0"), false);
+    const old = fakeBridge(); spawn(old.b, old.queued);
+    const said = []; old.b.sayInGame = (t) => { said.push(t); return true; };
+    await old.b.handle({ t: "hello", v: 2, version: "2.9.0", walks: true, tick: 1 });
+    assert.equal(said.length, 1);
+    assert.match(said[0], /newest controls and senses/);
+    const cur = fakeBridge(); spawn(cur.b, cur.queued);
+    const none = []; cur.b.sayInGame = (t) => { none.push(t); return true; };
+    await cur.b.handle({ t: "hello", v: 2, version: "2.10.0", walks: true, tick: 1 });
+    assert.equal(none.length, 0);
 });

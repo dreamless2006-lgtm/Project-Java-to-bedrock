@@ -131,11 +131,11 @@ export async function startAttacker({ port, name = "Attacker" }) {
 }
 
 /** Everything a body test needs, wired up: server, relay, the real bridge, and the helpers. */
-export async function startWorld({ serverPort = 19138, relayPort = 19139, username = "AIBot", connect = {}, serverEnv = {} } = {}) {
+export async function startWorld({ serverPort = 19138, relayPort = 19139, username = "AIBot", connect = {}, serverEnv = {}, bridgeCfg = {} } = {}) {
     const { Bridge } = await import("../../bridge/index.mjs");
     const server = await startServer({ port: serverPort, env: serverEnv });
     const relay = startRakRelay({ listenPort: relayPort, targetPort: serverPort });
-    const bridge = new Bridge({ _path: "e2e", defaults: { provider: "anthropic" }, providers: {}, connect: { mode: "server", host: "127.0.0.1", port: relayPort, offline: true, username, gamemode: "survival", ...connect } });
+    const bridge = new Bridge({ ...bridgeCfg, _path: "e2e", defaults: { provider: "anthropic" }, providers: {}, connect: { mode: "server", host: "127.0.0.1", port: relayPort, offline: true, username, gamemode: "survival", ...connect } });
     const toAddon = [];
     const realSend = bridge.sendToAddon.bind(bridge);
     bridge.sendToAddon = (obj) => { toAddon.push(obj); realSend(obj); };
@@ -165,7 +165,7 @@ export async function startWorld({ serverPort = 19138, relayPort = 19139, userna
         async stop() {
             bridge.stopped = true;
             try { bridge.client?.close(); } catch (e) { /* ignore */ }
-            for (const t of ["pumpTimer", "pingTimer", "anchorTimer", "bodyTimer"]) clearInterval(bridge[t]);
+            for (const t of ["pumpTimer", "pingTimer", "anchorTimer", "bodyTimer", "monitorTimer", "respawnTimer"]) clearInterval(bridge[t]);
             relay.stop(); server.stop();
         },
     };

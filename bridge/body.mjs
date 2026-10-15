@@ -22,6 +22,8 @@ export const SPEED = { walk: 0.2158, sprint: 0.2806, sneak: 0.0648 };
 export const ARRIVE = 0.3;                 // the key is released this close to the target; friction stops the body
 export const GROUND_DELTA_Y = -(PHYS.gravity * PHYS.gravityMul);   // what a standing client reports every tick
 const DEG = 180 / Math.PI;
+/** A usable world coordinate: a number inside the world (the game ends at 32 million blocks). */
+const coord = (v) => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 3.2e7;
 
 // InputData ordinals (protocol 1.26.51); flags are sent as a list in ascending order like a real client.
 export const INPUT_ORDINAL = { ascend: 0, descend: 1, north_jump: 2, jump_down: 3, sprint_down: 4, change_height: 5, jumping: 6, auto_jumping_in_water: 7, sneaking: 8, sneak_down: 9, up: 10, down: 11, left: 12, right: 13, up_left: 14, up_right: 15, want_up: 16, want_down: 17, want_down_slow: 18, want_up_slow: 19, sprinting: 20, ascend_block: 21, descend_block: 22, sneak_toggle_down: 23, persist_sneak: 24, start_sprinting: 25, stop_sprinting: 26, start_sneaking: 27, stop_sneaking: 28, start_swimming: 29, stop_swimming: 30, start_jumping: 31, start_gliding: 32, stop_gliding: 33, item_interact: 34, block_action: 35, item_stack_request: 36, handled_teleport: 37, emoting: 38, missed_swing: 39, start_crawling: 40, stop_crawling: 41, start_flying: 42, stop_flying: 43, received_server_data: 44, client_predicted_vehicle: 45, paddling_left: 46, paddling_right: 47, block_breaking_delay_enabled: 48, horizontal_collision: 49, vertical_collision: 50, down_left: 51, down_right: 52, start_using_item: 53, camera_relative_movement_enabled: 54, rot_controlled_by_move_direction: 55, start_spin_attack: 56, stop_spin_attack: 57, hotbar_only_touch: 58, jump_released_raw: 59, jump_pressed_raw: 60, jump_current_raw: 61, sneak_released_raw: 62, sneak_pressed_raw: 63, sneak_current_raw: 64, internal_update: 65 };
@@ -45,8 +47,19 @@ export class Body {
         this.pitch = 0;
         this.onGround = true;
         this.floor = 0;              // height of the ground under the body (from the addon's footing points)
-        this.tick = 0n;              // our own simulation frame counter: 0 at start_game, +1 per packet, never reset
+        // The input tick numbers: "zero" counts our own frames from 0 at start_game (what has worked on the servers we could
+        // test), "server" continues from start_game's current_tick. A server that buckets inputs by server tick would
+        // silently ignore small numbers, so the bridge can flip (flipTickBase) when the body is held but never moves.
+        this.tickBase = opts.tickBase === "server" ? "server" : "zero";
+        this.serverTick0 = 0n;
+        this.tick = 0n;              // +1 per packet, never reset
         this.rewindSize = 40;
+        this.hist = [];              // per-tick input records, so a correction can be replayed (see onCorrection)
+        this.posHist = [];           // where we were over the last few ticks, to judge the addon's (late) position reports
+        this.autoHop = false;        // the next tick should jump: a ledge is ahead
+        this.jumpReqLeft = 0;
+        this.targetLeft = Infinity;  // ticks the walk target stays valid without a fresh walk frame
+        this.movementInfo = null;
         this.target = null;          // {x, y, z} feet point to walk to, or null
         this.mode = "walk";
         this.sprinting = false;
@@ -81,7 +94,10 @@ export class Body {
         this.pos = { x: Number(v.x) || 0, y: (Number(v.y) || 0) - (this.startIsEye ? this.eye : 0), z: Number(v.z) || 0 };
         if (p.rotation) { this.pitch = Number(p.rotation.x) || 0; this.yaw = Number(p.rotation.z) || 0; }
         this.gameMode = p.player_gamemode ?? null;
-        this.tick = 0n;
+        try { this.serverTick0 = BigInt(p.current_tick ?? 0); } catch (e) { this.serverTick0 = 0n; }
+        this.tick = this.tickBase === "server" ? this.serverTick0 : 0n;
+        this.hist = []; this.posHist = [];
+        try { const info = {}; for (const [k, v] of Object.entries(p)) if (/movement|rewind|authority|prediction/i.test(k)) info[k] = typeof v === "bigint" ? String(v) : v; this.movementInfo = info; } catch (e) { this.movementInfo = null; }
         this.vel = { x: 0, y: 0, z: 0 };
         this.onGround = true;
         this.floor = this.pos.y;
@@ -112,7 +128,12 @@ export class Body {
         return true;
     }
 
-    /** The server disagreed with where we said we were: adopt its position and velocity. */
+    /**
+     * The server disagreed with where we said we were: adopt its state for tick t, then replay the inputs we
+     * have sent since (what a vanilla client does). Without the replay the client would re-adopt a position
+     * that is already `latency` ticks stale and every later packet would be off by that much too, a
+     * correction after correction on any link with real latency.
+     */
     onCorrection(p) {
         if (p.prediction_type && p.prediction_type !== "player") return false;
         let t = null; try { t = BigInt(p.tick); } catch (e) { t = null; }
@@ -121,9 +142,18 @@ export class Body {
         this.calibrate(fixed);
         this.pos = fixed;
         if (p.delta) this.vel = { x: Number(p.delta.x) || 0, y: Number(p.delta.y) || 0, z: Number(p.delta.z) || 0 };
-        if (typeof p.on_ground === "boolean") { this.onGround = p.on_ground; if (p.on_ground) this.floor = this.pos.y; }
+        if (typeof p.on_ground === "boolean") {
+            this.onGround = p.on_ground;
+            this.floor = p.on_ground ? this.pos.y : Math.min(this.floor, this.pos.y);   // airborne below the old ground: that ground is gone
+        }
         this.jumpDelay = 0;
         this.corrections++;
+        if (t !== null) {
+            const keepSprint = this.sprinting, keepSneak = this.sneaking;
+            for (const rec of this.hist) if (rec.tick > t) this.advance(rec, null);
+            this.sprinting = keepSprint; this.sneaking = keepSneak;
+            this.posHist.length = 0;
+        }
         return true;
     }
 
@@ -201,23 +231,33 @@ export class Body {
     /**
      * The addon's view of where the server keeps this body (feet). Corrections are the primary
      * sync; this catches a body that drifted away without any (a wrong start position, a server
-     * that never corrected). Two consecutive gaps over 1.5 blocks resync.
+     * that never corrected). The report is a few ticks old by the time it arrives, so it is judged against
+     * where the body was over the last few ticks, not where it is now; two consecutive gaps over 1.5
+     * blocks resync. `ground` says whether the server has the body standing: then the height it stands at
+     * is the floor (a slab, a snow layer, a path block are not whole blocks), learned from the server itself.
      */
-    anchorFrom(feet) {
-        if (feet && typeof feet.x === "number" && typeof feet.z === "number") {
-            if (this.lastTruth) { const d = Math.hypot(feet.x - this.lastTruth.x, feet.z - this.lastTruth.z); if (d < 5) this.truthMoved += d; }   // a jump of 5+ is a teleport, not walking
-            this.lastTruth = { x: feet.x, y: typeof feet.y === "number" ? feet.y : 0, z: feet.z };
+    anchorFrom(feet, ground) {
+        if (!feet || !coord(feet.x) || !coord(feet.z)) return false;
+        const fy = coord(feet.y) ? feet.y : null;
+        if (this.lastTruth) { const d = Math.hypot(feet.x - this.lastTruth.x, feet.z - this.lastTruth.z); if (d < 5) this.truthMoved += d; }   // a jump of 5+ is a teleport, not walking
+        this.lastTruth = { x: feet.x, y: fy ?? 0, z: feet.z };
+        if (!this.pos || this.pendingTeleport || this.dimensionChange) return false;
+        this.calibrate({ x: feet.x, y: fy ?? this.pos.y, z: feet.z });
+        const ty = fy ?? this.pos.y;
+        let gap = Math.hypot(feet.x - this.pos.x, ty - this.pos.y, feet.z - this.pos.z);
+        for (const h of this.posHist) gap = Math.min(gap, Math.hypot(feet.x - h.x, ty - h.y, feet.z - h.z));
+        if (gap <= 1.5) {
+            this.anchorGaps = 0;
+            if (ground === true && fy !== null && this.onGround && !this.jumping && Math.abs(fy - this.pos.y) <= 0.6 && Math.abs(fy - this.pos.y) > 0.02) { this.floor = fy; this.pos.y = fy; }   // stand where the server stands
+            return false;
         }
-        if (!this.pos || !feet || typeof feet.x !== "number" || this.pendingTeleport || this.dimensionChange) return false;
-        this.calibrate(feet);
-        const gap = Math.hypot(feet.x - this.pos.x, (typeof feet.y === "number" ? feet.y : this.pos.y) - this.pos.y, feet.z - this.pos.z);
-        if (gap <= 1.5) { this.anchorGaps = 0; return false; }
         if (++this.anchorGaps < 2) return false;
         this.anchorGaps = 0;
-        this.pos = { x: feet.x, y: typeof feet.y === "number" ? feet.y : this.pos.y, z: feet.z };
+        this.pos = { x: feet.x, y: ty, z: feet.z };
         this.vel = { x: 0, y: 0, z: 0 };
         this.floor = this.pos.y;
-        this.onGround = true;
+        this.onGround = ground !== false;
+        this.posHist.length = 0; this.hist.length = 0;
         this.resyncs++;
         return true;
     }
@@ -240,33 +280,50 @@ export class Body {
     }
 
     // ---- what the addon asks for ----
-    walkTo(target, mode = "walk") {
-        if (!target || typeof target.x !== "number" || typeof target.z !== "number") return false;
-        this.target = { x: target.x, y: typeof target.y === "number" && Number.isFinite(target.y) ? target.y : (this.pos ? this.floor : 0), z: target.z };
+    /** Walk to a footing point. `lease` (ticks) lets the walk lapse by itself when the addon stops refreshing it. */
+    walkTo(target, mode = "walk", lease) {
+        if (!target || !coord(target.x) || !coord(target.z)) return false;
+        this.keys = null;
+        this.target = { x: target.x, y: coord(target.y) ? target.y : (this.pos ? this.floor : 0), z: target.z };
         this.mode = mode === "sprint" || mode === "panic" ? "sprint" : "walk";
+        this.targetLeft = Number.isFinite(lease) && lease > 0 ? lease : Infinity;
         return true;
     }
 
-    stop() { this.target = null; this.keys = null; }
+    stop() { this.target = null; this.keys = null; this.jumpRequested = false; this.autoHop = false; }
 
     /**
      * Hold keys, as a player's fingers do: f = +1 forward / -1 back, s = +1 strafe left / -1 right, plus
      * sprint (forward only), sneak and jump. The keys stay down for `ms` and then let go by themselves,
      * so a body whose addon went quiet stops instead of running on; refresh them to keep walking.
-     * `floor` is the height of the ground a step ahead (the addon reads it from the world), which is how a
-     * body without eyes knows to hop up a ledge or drop down one.
+     * `floor` is the height of the ground the body reaches next and `ed` how far ahead (blocks along the
+     * heading, from the position `at` where the addon measured it) that change of level begins: that is how a
+     * body without eyes knows when to hop a ledge or step off one. Without `ed` the new level counts at once.
      */
-    press({ f = 0, s = 0, sprint = false, sneak = false, jump = false, ms = 300, floor } = {}) {
+    press({ f = 0, s = 0, sprint = false, sneak = false, jump = false, ms = 300, floor, ed, at } = {}) {
         if (!this.ready || !this.alive) return false;
         const axis = (v) => (v > 0.1 ? 1 : v < -0.1 ? -1 : 0);
         f = axis(Number(f)); s = axis(Number(s));
-        if (!f && !s && !jump && !sneak) { this.keys = null; return true; }
+        if (!f && !s && !jump && !sneak) { this.keys = null; this.jumpRequested = false; return true; }
         this.target = null;
-        this.keys = { f, s, sprint: !!sprint && f > 0 && !sneak, sneak: !!sneak, jump: !!jump, left: Math.max(1, Math.min(200, Math.ceil((Number(ms) || 300) / 50))), floor: typeof floor === "number" && Number.isFinite(floor) ? floor : null };
+        const lease = Math.max(1, Math.min(200, Math.ceil((Number(ms) || 300) / 50)));
+        const k = { f, s, sprint: !!sprint && f > 0 && !sneak, sneak: !!sneak, jump: !!jump, left: lease, floor: coord(floor) ? Number(floor) : null, edgeS: undefined, hx: 0, hz: 0 };
+        if (k.floor !== null && typeof ed === 'number' && Math.abs(ed) < 64 && (f || s)) {
+            const yr = this.yaw / DEG;
+            const x = -Math.sin(yr) * f + Math.cos(yr) * s, z = Math.cos(yr) * f + Math.sin(yr) * s;
+            const n = Math.hypot(x, z);
+            if (n > 1e-6) {
+                const o = at && coord(at.x) && coord(at.z) ? at : this.pos;
+                k.hx = x / n; k.hz = z / n;
+                k.edgeS = o.x * k.hx + o.z * k.hz + Number(ed);
+            }
+        }
+        if (!k.jump) this.jumpRequested = false;
+        this.keys = k;
         return true;
     }
 
-    release() { this.keys = null; }
+    release() { this.keys = null; this.jumpRequested = false; this.autoHop = false; }
 
     /** Turn the head to an absolute yaw and pitch (degrees, Bedrock convention: yaw 0 south, negative pitch up). */
     setLook(yaw, pitch) {
@@ -274,17 +331,26 @@ export class Body {
         if (typeof pitch === "number" && Number.isFinite(pitch)) this.pitch = Math.max(-90, Math.min(90, pitch));
     }
 
-    /** Hop over the next block edge: the server simulates the jump from the flags. */
-    jump() { if (this.alive) this.jumpRequested = true; }
+    /** Hop once: the request waits a few ticks for the ground, then lapses. */
+    jump() { if (this.alive) { this.jumpRequested = true; this.jumpReqLeft = 6; } }
 
     /** Face a point (yaw/pitch from the eyes), without moving. */
     lookAt(point) {
-        if (!this.pos || !point) return;
+        if (!this.pos || !point || !coord(point.x) || !coord(point.z)) return;
         const dx = point.x - this.pos.x, dz = point.z - this.pos.z;
-        const dy = (typeof point.y === "number" ? point.y : this.pos.y + this.eye) - (this.pos.y + this.eye);
+        const py = coord(point.y) ? point.y : this.pos.y + this.eye;
+        const dy = py - (this.pos.y + this.eye);
         const flat = Math.hypot(dx, dz);
         if (flat > 1e-6) { this.yaw = Math.atan2(-dx, dz) * DEG; this.pitch = -Math.atan2(dy, flat) * DEG; }
         else if (Math.abs(dy) > 1e-6) this.pitch = dy > 0 ? -90 : 90;
+    }
+
+    /** Count the input ticks the other way (see tickBase). Returns the new base. */
+    flipTickBase() {
+        if (this.tickBase === "zero") { this.tickBase = "server"; this.tick += this.serverTick0; }
+        else { this.tickBase = "zero"; this.tick = this.tick > this.serverTick0 ? this.tick - this.serverTick0 : 0n; }
+        this.hist = []; this.teleportTick = -1n;
+        return this.tickBase;
     }
 
     /**
@@ -305,25 +371,27 @@ export class Body {
             this.jumpDelay = 0;
             this.pendingTeleport = false;
             this.teleportTick = this.tick;
+            this.hist.length = 0; this.posHist.length = 0;
             flags.add("handled_teleport");
             if (this.onGround) flags.add("vertical_collision");
             return this.packet(flags, move, { x: 0, y: GROUND_DELTA_Y, z: 0 });
         }
         // 2. what the fingers do: raw keys the AI is holding, or the walk to a target (face it, hold forward)
-        let keyUp = false, mf = 0, ms = 0, wantSprint = false, wantSneak = false;
+        let mf = 0, ms = 0, wantSprint = false, wantSneak = false, jumpKey = false, spec = null;
+        if (this.keys && this.keys.left-- <= 0) this.keys = null;
         if (this.keys) {
-            if (this.keys.left-- <= 0) this.keys = null;
-        }
-        if (this.keys) {
-            mf = this.keys.f; ms = this.keys.s; wantSprint = this.keys.sprint; wantSneak = this.keys.sneak;
-            if (this.keys.jump) this.jumpRequested = true;
-            keyUp = mf !== 0 || ms !== 0;
+            const k = this.keys;
+            mf = k.f; ms = k.s; wantSprint = k.sprint; wantSneak = k.sneak; jumpKey = k.jump;
+            if (k.floor !== null) spec = { floor: k.floor, edgeS: k.edgeS, hx: k.hx, hz: k.hz };
         } else if (this.target) {
             const dx = this.target.x - this.pos.x, dz = this.target.z - this.pos.z;
             const flat = Math.hypot(dx, dz);
-            if (flat <= ARRIVE) { this.floor = this.target.y; this.target = null; }
-            else { this.yaw = Math.atan2(-dx, dz) * DEG; keyUp = true; mf = 1; wantSprint = this.mode === "sprint"; }
+            if (this.targetLeft-- <= 0) this.target = null;                       // the addon stopped refreshing it
+            else if (flat <= ARRIVE) { this.floor = this.target.y; this.target = null; }
+            else { this.yaw = Math.atan2(-dx, dz) * DEG; mf = 1; wantSprint = this.mode === "sprint"; spec = { tgt: { ...this.target } }; }
         }
+        if (this.jumpRequested) jumpKey = true;
+        const keyUp = mf !== 0 || ms !== 0;
         if (keyUp) this.intentTicks++;
         // 3. sprint and sneak edges and state
         if (keyUp && wantSprint && mf > 0) {
@@ -334,41 +402,67 @@ export class Body {
             if (!this.sneaking) { flags.add("start_sneaking"); this.sneaking = true; }
             flags.add("sneaking"); flags.add("sneak_down"); flags.add("persist_sneak"); flags.add("sneak_current_raw");
         } else if (this.sneaking) { flags.add("stop_sneaking"); this.sneaking = false; flags.add("sneak_released_raw"); }
-        // 4. the impulse: forward and strafe keys together, never faster than one key (vanilla moveRelative)
-        const yawRad = this.yaw / DEG;
-        const fwd = { x: -Math.sin(yawRad), z: Math.cos(yawRad) };
-        const left = { x: Math.cos(yawRad), z: Math.sin(yawRad) };
         if (keyUp) {
-            let speed = this.onGround ? PHYS.groundSpeed * (this.sprinting ? PHYS.sprintMul : 1) : (this.sprinting ? PHYS.sprintAirSpeed : PHYS.airSpeed);
-            if (this.sneaking && this.onGround) speed *= 0.3;
-            const ix = ms * PHYS.impulse, iz = mf * PHYS.impulse;
-            const norm = Math.max(Math.hypot(ix, iz), 1);
-            const ax = ix / norm * speed, az = iz / norm * speed;
-            this.vel.x += fwd.x * az + left.x * ax;
-            this.vel.z += fwd.z * az + left.z * ax;
             if (mf > 0) flags.add("up"); else if (mf < 0) flags.add("down");
             if (ms > 0) flags.add("left"); else if (ms < 0) flags.add("right");
             if (mf > 0 && ms > 0) flags.add("up_left"); else if (mf > 0 && ms < 0) flags.add("up_right"); else if (mf < 0 && ms > 0) flags.add("down_left"); else if (mf < 0 && ms < 0) flags.add("down_right");
             move = { x: ms, z: mf };
         }
-        // 5. jump (only from the ground, with the vanilla cooldown)
+        // 4. simulate the tick, remember what went in so a correction can be replayed
+        const rec = { tick: this.tick, mf, ms, yaw: this.yaw, sprint: this.sprinting, sneak: this.sneaking, jumpKey, spec };
+        const jumped = this.advance(rec, flags);
+        if (jumped) this.jumpRequested = false;
+        else if (this.jumpRequested && --this.jumpReqLeft <= 0) this.jumpRequested = false;
+        this.hist.push(rec); if (this.hist.length > this.rewindSize + 12) this.hist.shift();
+        this.posHist.push({ x: this.pos.x, y: this.pos.y, z: this.pos.z }); if (this.posHist.length > 14) this.posHist.shift();
+        return this.packet(flags, move, { x: this.vel.x, y: this.vel.y, z: this.vel.z });
+    }
+
+    /**
+     * The movement physics of one tick for the inputs in `rec`: impulse, jump, integration against the ground
+     * and gravity with friction. `flags` (a Set) receives the jump and landing flags when a packet is being built;
+     * null when a correction is being replayed. Returns true when this tick started a jump.
+     */
+    advance(rec, flags) {
+        const keyUp = rec.mf !== 0 || rec.ms !== 0;
+        this.sprinting = rec.sprint; this.sneaking = rec.sneak;
+        // 4. the impulse: forward and strafe keys together, never faster than one key (vanilla moveRelative)
+        const yawRad = rec.yaw / DEG;
+        const fwd = { x: -Math.sin(yawRad), z: Math.cos(yawRad) };
+        const left = { x: Math.cos(yawRad), z: Math.sin(yawRad) };
+        if (keyUp) {
+            let speed = this.onGround ? PHYS.groundSpeed * (this.sprinting ? PHYS.sprintMul : 1) : (this.sprinting ? PHYS.sprintAirSpeed : PHYS.airSpeed);
+            if (this.sneaking && this.onGround) speed *= 0.3;
+            const ix = rec.ms * PHYS.impulse, iz = rec.mf * PHYS.impulse;
+            const norm = Math.max(Math.hypot(ix, iz), 1);
+            const ax = ix / norm * speed, az = iz / norm * speed;
+            this.vel.x += fwd.x * az + left.x * ax;
+            this.vel.z += fwd.z * az + left.z * ax;
+        }
+        // 5. jump (only from the ground, with the vanilla cooldown); a ledge ahead makes the body hop by itself
+        const spec = rec.spec;
+        if (spec && spec.edgeS !== undefined && spec.floor > this.floor + PHYS.stepHeight && this.onGround && this.jumpDelay === 0 && !this.jumping) {
+            if (this.pos.x * spec.hx + this.pos.z * spec.hz >= spec.edgeS - 0.9) this.autoHop = true;
+        }
         const prevGround = this.onGround;
-        if (this.jumpRequested && this.onGround && this.jumpDelay === 0) {
+        let jumped = false;
+        if ((rec.jumpKey || this.autoHop) && this.onGround && this.jumpDelay === 0) {
             this.vel.y = PHYS.jump;
             if (this.sprinting && keyUp) { this.vel.x += fwd.x * PHYS.sprintJumpBoost; this.vel.z += fwd.z * PHYS.sprintJumpBoost; }
             this.jumpDelay = PHYS.jumpDelay;
             this.onGround = false;
             this.jumping = true;
-            this.jumpRequested = false;
-            flags.add("start_jumping"); flags.add("jump_pressed_raw");
+            this.autoHop = false;
+            jumped = true;
+            if (flags) { flags.add("start_jumping"); flags.add("jump_pressed_raw"); }
         }
-        if (this.jumping) { flags.add("jump_down"); flags.add("jumping"); flags.add("want_up"); flags.add("jump_current_raw"); }
+        if (this.jumping && flags) { flags.add("jump_down"); flags.add("jumping"); flags.add("want_up"); flags.add("jump_current_raw"); }
         if (this.jumpDelay > 0) this.jumpDelay--;
         // 6. integrate against the ground the addon described
         const prevY = this.pos.y;
         this.pos.x += this.vel.x; this.pos.y += this.vel.y; this.pos.z += this.vel.z;
-        const near = this.target ? Math.hypot(this.target.x - this.pos.x, this.target.z - this.pos.z) < 1.2 : false;
-        const floorY = this.keys && this.keys.floor !== null ? this.keys.floor : (this.target && near) ? this.target.y : this.floor;
+        const floorY = this.supportY(spec);
+        if (spec && spec.edgeS !== undefined && floorY < this.floor - 0.6) this.floor = floorY;      // stepped off the old level: it is gone, whatever the keys do next
         if (this.pos.y <= floorY + 1e-9) {
             if (prevY >= floorY - 1e-9 || (prevGround && floorY - prevY <= PHYS.stepHeight)) {
                 // landed on it, or stepped up onto it (a slab, a stair)
@@ -377,19 +471,31 @@ export class Body {
                 // a full block up that we have not jumped over yet: stay on our own ground and jump
                 if (this.pos.y <= this.floor + 1e-9) { this.pos.y = this.floor; this.vel.y = 0; this.onGround = true; }
                 else this.onGround = false;
-                if (this.onGround && !this.jumping && this.jumpDelay === 0) this.jumpRequested = true;
+                if (this.onGround && !this.jumping && this.jumpDelay === 0) this.autoHop = true;
             }
         } else this.onGround = false;
-        if (this.onGround) flags.add("vertical_collision");
-        if (this.jumping && this.onGround && !prevGround) { /* landed this tick: key released next */ }
-        if (this.jumping && this.onGround && this.vel.y === 0 && this.jumpDelay < PHYS.jumpDelay) { this.jumping = false; flags.add("jump_released_raw"); flags.delete("jump_down"); flags.delete("jumping"); flags.delete("want_up"); flags.delete("jump_current_raw"); }
+        if (flags) {
+            if (this.onGround) flags.add("vertical_collision");
+            if (this.jumping && this.onGround && this.vel.y === 0 && this.jumpDelay < PHYS.jumpDelay) { this.jumping = false; flags.add("jump_released_raw"); flags.delete("jump_down"); flags.delete("jumping"); flags.delete("want_up"); flags.delete("jump_current_raw"); }
+        } else if (this.jumping && this.onGround && this.vel.y === 0 && this.jumpDelay < PHYS.jumpDelay) this.jumping = false;
         // 7. end of frame: gravity and friction, as the client reports its velocity
         this.vel.y = (this.vel.y - PHYS.gravity) * PHYS.gravityMul;
         const fr = PHYS.airFriction * (this.onGround ? PHYS.blockFriction : 1);
         this.vel.x *= fr; this.vel.z *= fr;
         if (Math.abs(this.vel.x) < 1e-5) this.vel.x = 0;
         if (Math.abs(this.vel.z) < 1e-5) this.vel.z = 0;
-        return this.packet(flags, move, { x: this.vel.x, y: this.vel.y, z: this.vel.z });
+        return jumped;
+    }
+
+    /** The height of the ground under the body for these inputs (see press: the level ahead counts once the body has reached it). */
+    supportY(spec) {
+        if (!spec) return this.floor;
+        if (spec.tgt) return Math.hypot(spec.tgt.x - this.pos.x, spec.tgt.z - this.pos.z) < 1.2 ? spec.tgt.y : this.floor;
+        if (spec.edgeS === undefined) return spec.floor;
+        const s = this.pos.x * spec.hx + this.pos.z * spec.hz;
+        if (spec.floor > this.floor + 0.3) return s >= spec.edgeS - 0.3 ? spec.floor : this.floor;     // a ledge: its top counts once the body overlaps it
+        if (spec.floor < this.floor - 0.3) return s >= spec.edgeS + 0.3 ? spec.floor : this.floor;     // a step down: the old ground holds until the body has passed its edge
+        return this.floor;
     }
 
     packet(flags, move, delta) {
@@ -416,7 +522,7 @@ export class Body {
     /** Where the body is, for logs and the addon. */
     status() {
         const r2 = (n) => +Number(n).toFixed(2);
-        return { ready: this.ready, alive: this.alive, startIsEye: this.startIsEye, calibrated: this.calibrated, pos: this.pos ? { x: r2(this.pos.x), y: r2(this.pos.y), z: r2(this.pos.z) } : null, vel: { x: r2(this.vel.x), y: r2(this.vel.y), z: r2(this.vel.z) }, floor: r2(this.floor), yaw: Math.round(this.yaw), onGround: this.onGround, walking: !!this.target, keys: this.keys ? { f: this.keys.f, s: this.keys.s, sprint: this.keys.sprint, sneak: this.keys.sneak, jump: this.keys.jump } : null, pitch: Math.round(this.pitch), target: this.target ? { x: r2(this.target.x), y: r2(this.target.y), z: r2(this.target.z) } : null, sprinting: this.sprinting, jumping: this.jumping, pendingTeleport: this.pendingTeleport, dimensionChange: !!this.dimensionChange, tick: Number(this.tick), corrections: this.corrections, teleports: this.teleports, resyncs: this.resyncs, gameMode: this.gameMode };
+        return { ready: this.ready, alive: this.alive, startIsEye: this.startIsEye, calibrated: this.calibrated, pos: this.pos ? { x: r2(this.pos.x), y: r2(this.pos.y), z: r2(this.pos.z) } : null, vel: { x: r2(this.vel.x), y: r2(this.vel.y), z: r2(this.vel.z) }, floor: r2(this.floor), yaw: Math.round(this.yaw), onGround: this.onGround, walking: !!this.target, tickBase: this.tickBase, authority: this.movementInfo, keys: this.keys ? { f: this.keys.f, s: this.keys.s, sprint: this.keys.sprint, sneak: this.keys.sneak, jump: this.keys.jump } : null, pitch: Math.round(this.pitch), target: this.target ? { x: r2(this.target.x), y: r2(this.target.y), z: r2(this.target.z) } : null, sprinting: this.sprinting, jumping: this.jumping, pendingTeleport: this.pendingTeleport, dimensionChange: !!this.dimensionChange, tick: Number(this.tick), corrections: this.corrections, teleports: this.teleports, resyncs: this.resyncs, gameMode: this.gameMode };
     }
 
     // ---- helpers ----

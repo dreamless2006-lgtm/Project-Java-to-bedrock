@@ -7,11 +7,11 @@ const fails = [];
 function check(cond, msg) { if (!cond) { fails.push(msg); console.log("FAIL -", msg); } else console.log("ok   -", msg); }
 
 // 1. a server that lets the body move
-let w = await startWorld({ connect: {} });
+let w = await startWorld({ connect: {}, bridgeCfg: { selfTest: true } });
 try {
     const res = await w.bridge.selfTest(l => console.log("   ", l));
     check(res.ok, "the self-test passes against a server that accepts movement");
-    check(res.checks.length >= 7, "and ran every check (" + res.checks.length + ")");
+    check(res.checks.length >= 9, "and ran every check (" + res.checks.length + ")");
     check(!!w.server.pos(w.name), "the server reported the body's position independently");
 } catch (e) {
     fails.push("test aborted: " + (e && e.stack || e));
@@ -21,7 +21,7 @@ try {
 await sleep(1500);
 
 // 2. a server that rejects every move
-w = await startWorld({ connect: {}, serverEnv: { DF_FREEZE: "1" } });
+w = await startWorld({ connect: {}, serverEnv: { DF_FREEZE: "1" }, bridgeCfg: { selfTest: true } });
 try {
     const res = await w.bridge.selfTest(l => console.log("   ", l));
     check(!res.ok, "the self-test FAILS against a server that pulls the body back");

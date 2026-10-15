@@ -61,7 +61,7 @@ export async function callProvider(cfg, botCfg, turn, timeoutSeconds = 40) {
     const provider = getProvider(id);
     if (!provider) return { ok: false, error: `unknown provider '${id}'`, type: "config" };
     const pc = cfg.providers[id] || {};
-    const merged = { ...pc, provider: id, model: botCfg.model || pc.model || provider.defaultModel, maxTokens: botCfg.maxTokens || 700, effort: botCfg.effort || pc.effort, temperature: botCfg.temperature ?? pc.temperature };
+    const merged = { ...pc, provider: id, model: botCfg.model || pc.model || provider.defaultModel, maxTokens: Math.max(64, Math.min(4096, Number(botCfg.maxTokens) || 700)), effort: botCfg.effort || pc.effort, temperature: botCfg.temperature ?? pc.temperature };
     if (provider.needsKey && !merged.apiKey) return { ok: false, error: `${id}: no API key (set providers.${id}.apiKey in ${cfg._path} or ${ENV_KEYS[id]})`, type: "config" };
     const req = provider.build(merged, { systemStable: turn.systemStable, systemDynamic: turn.systemDynamic, messages: turn.messages, schema: REPLY_SCHEMA, schemaName: "bot_turn", maxTokens: merged.maxTokens });
     const headers = {};
@@ -94,6 +94,13 @@ export async function callProvider(cfg, botCfg, turn, timeoutSeconds = 40) {
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+const versionParts = (v) => String(v || "0").split(".").map(n => parseInt(n, 10) || 0);
+/** "2.9.0" < "2.10.0" (numeric, part by part). */
+export function versionLess(a, b) {
+    const x = versionParts(a), y = versionParts(b);
+    for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; }
+    return false;
+}
 
 // ------------------------------------------------------------- the bridge ---
 export class Bridge {
@@ -111,6 +118,8 @@ export class Bridge {
         this.anchorTarget = null;
         this.body = this.newBody();      // our own player body: position, walking, the per-tick input packet
         this.inputFailures = 0;
+        this._notices = new Set();       // what the bridge has already told the world, once per run
+        this._monWindows = [];
     }
 
     async start() {
@@ -149,7 +158,8 @@ export class Bridge {
             try { this.body.onStartGame(p); } catch (e) { log("warn", "start_game body:", e?.message || e); }
             let pvp = null;
             try { const r = (p.gamerules || []).find(g => String(g.name).toLowerCase() === "pvp"); if (r) pvp = r.value; } catch (e) { /* ignore */ }
-            log("info", `start_game: game mode ${p.player_gamemode} (world ${p.world_gamemode}), pvp ${pvp === null ? "?" : pvp}, position ${JSON.stringify(this.body.status().pos)}, rewind ${p.rewind_history_size}`);
+            log("info", `start_game: game mode ${p.player_gamemode} (world ${p.world_gamemode}), pvp ${pvp === null ? "?" : pvp}, position ${JSON.stringify(this.body.status().pos)}, rewind ${p.rewind_history_size}, input ticks ${this.body.tickBase}`);
+            try { if (this.body.movementInfo && Object.keys(this.body.movementInfo).length) log("info", "movement settings from the server:", JSON.stringify(this.body.movementInfo)); } catch (e) { /* ignore */ }
             if (pvp === false) log("warn", "Friendly Fire is OFF in the Realm's settings (gamerule pvp): nobody can hit this body. Turn it on under World settings > Game.");
             // what the vanilla client sends right after start_game
             try { client.queue("request_chunk_radius", { chunk_radius: 8, max_radius: 28 }); client.queue("serverbound_loading_screen", { type: 1 }); } catch (e) { log("warn", "spawn handshake (start):", e?.message || e); }
@@ -193,7 +203,7 @@ export class Bridge {
         client.on("kick", p => log("warn", "kicked:", p?.message || JSON.stringify(p)));
         this.pumpTimer = setInterval(() => this.pump(), 60);
         this.pingTimer = setInterval(() => {
-            if (!this.spawned) return;
+            if (!this.spawned || this.cfg.selfTest) return;
             if (this.addonHello) { this.sendToAddon({ t: "ping" }); return; }
             // Not acknowledged yet: say hello again, and after a minute explain the usual causes.
             this.sendToAddon(this.helloMessage(opts.username));
@@ -254,7 +264,7 @@ export class Bridge {
 
     stopRespawnLoop() { if (this.respawnTimer) { clearTimeout(this.respawnTimer); this.respawnTimer = null; } this._respawnSent = false; }
 
-    newBody() { return new Body({ startConvention: this.cfg.connect?.startConvention }); }
+    newBody() { return new Body({ startConvention: this.cfg.connect?.startConvention, tickBase: this.cfg.connect?.tickBase }); }
 
     // A vanilla client puts its own account id (XUID) in every chat packet, and strict servers kick a client whose chat does not carry it.
     chatXuid() {
@@ -274,34 +284,44 @@ export class Bridge {
         } catch (e) { log("warn", "chat failed:", e?.message || e); return false; }
     }
 
-    /** A notice for the people in the world about the bridge itself, at most once per kind per connection, three per connection. */
+    /** A notice for the people in the world about the bridge itself: once per kind per run, four in all. */
     notice(kind, text) {
-        this._notices = this._notices || new Set();
-        if (this._notices.has(kind) || this._notices.size >= 3 || !this.spawned) return;
+        if (this._notices.has(kind) || this._notices.size >= 4 || !this.spawned) return;
         this._notices.add(kind);
         this.sayInGame("[Real AI bridge] " + text);
     }
 
     // Every few seconds: is the body doing what it is told? The addon reports where the body really is with each
     // walk or key frame, so "keys down but the real position did not change" and "the server keeps pulling the
-    // body back" are both visible here, in the log and, once, in chat, which is how a stuck body gets noticed.
+    // body back" are both visible here. Everything goes to the log; only a condition that holds for several
+    // windows in a row, which ordinary obstacles do not produce, is said once in the world's chat.
     monitorMotion() {
         const b = this.body;
         if (!this.spawned || !b.ready) return;
-        const cur = { intent: b.intentTicks, truth: b.truthMoved, corr: b.corrections, resync: b.resyncs, tp: b.teleports };
+        const cur = { intent: b.intentTicks, truth: b.truthMoved, corr: b.corrections + b.teleports, resync: b.resyncs };
         const prev = this._mon; this._mon = cur;
         this._monN = (this._monN || 0) + 1;
         if (!prev) return;
-        const dIntent = cur.intent - prev.intent, dTruth = cur.truth - prev.truth, dCorr = (cur.corr + cur.tp) - (prev.corr + prev.tp), dResync = cur.resync - prev.resync;   // a server that pushes the body back says so with corrections or with teleports
+        const w = { intent: cur.intent - prev.intent, truth: cur.truth - prev.truth, corr: cur.corr - prev.corr, resync: cur.resync - prev.resync };
+        this._monWindows.push(w); if (this._monWindows.length > 6) this._monWindows.shift();
+        const last = this._monWindows.slice(-3), recent = this._monWindows.slice(-4);
+        const sum = (arr, k) => arr.reduce((a, x) => a + x[k], 0);
         const st = b.status();
-        if (dCorr >= 15) {
-            log("warn", `rubber-banding: the server pulled this body back ${dCorr} times in 5 s (${dIntent} ticks of walking). It does not accept the movement this client reports. Run: bash ~/real-ai/bridge/phone.sh selftest`);
-            this.notice("rubber", `The server keeps pulling my body back (${dCorr} corrections in 5 seconds), so I cannot walk properly. Run the self-test on the phone (bash ~/real-ai/bridge/phone.sh selftest) and send the output to the person fixing this.`);
-        } else if (dIntent >= 40 && dTruth < 1 && b.lastTruth && this.addonHello) {
-            log("warn", `pressing forward for ${(dIntent / 20).toFixed(1)} s but the body moved ${dTruth.toFixed(1)} blocks (corrections ${dCorr}, resyncs ${dResync}). Either something blocks the way, or the server ignores this client's movement. Run: bash ~/real-ai/bridge/phone.sh selftest`);
-            this.notice("stuck", `I am walking but my body is not moving. If this keeps happening the server is ignoring my movement: run the self-test on the phone (bash ~/real-ai/bridge/phone.sh selftest).`);
+        if (w.corr >= 15) log("warn", `the server pulled this body back ${w.corr} times in 5 s (${w.intent} ticks of walking). It may not accept the movement this client reports. Run: bash ~/real-ai/bridge/phone.sh selftest`);
+        if (last.length === 3 && last.every(x => x.corr >= 15)) this.notice("rubber", `The server keeps pulling my body back (${sum(last, "corr")} corrections in 15 seconds), so I cannot walk properly. Run the self-test on the phone (bash ~/real-ai/bridge/phone.sh selftest) and send the output to the person fixing this.`);
+        // keys held for most of 20 s and the real position hardly changed
+        if (recent.length === 4 && sum(recent, "intent") >= 80 && sum(recent, "truth") < 1 && b.lastTruth && this.addonHello) {
+            log("warn", `keys were down for ${(sum(recent, "intent") / 20).toFixed(0)} s in the last 20 s but the body moved ${sum(recent, "truth").toFixed(1)} blocks (pull-backs ${sum(recent, "corr")}). Either something blocks the way, or the server ignores this client's movement. Run: bash ~/real-ai/bridge/phone.sh selftest`);
+            if (sum(recent, "corr") === 0 && !this._tickFlipped) {
+                // nothing objected and nothing moved: the classic look of input the server drops. The other way of
+                // numbering the input ticks is the one thing left to try on our side.
+                this._tickFlipped = true;
+                const base = b.flipTickBase();
+                this._monWindows = [];
+                log("warn", `trying the other input tick numbering (${base}) in case the server drops inputs with ticks it does not expect; set connect.tickBase in config.json to keep it`);
+            } else this.notice("stuck", `I am walking but my body is not moving. If this keeps happening the server is ignoring my movement: run the self-test on the phone (bash ~/real-ai/bridge/phone.sh selftest).`);
         }
-        if (this._monN % 12 === 0 || dIntent > 0) log(dIntent > 0 ? "debug" : "info", `body: feet ${st.pos ? [st.pos.x, st.pos.y, st.pos.z].join(" ") : "?"} yaw ${st.yaw}, key-down ticks ${dIntent}, real movement ${dTruth.toFixed(1)} blocks, corrections ${b.corrections}, teleports ${b.teleports}, resyncs ${b.resyncs}${b.alive ? "" : ", DEAD"}`);
+        if (this._monN % 12 === 0 || w.intent > 0) log(w.intent > 0 ? "debug" : "info", `body: feet ${st.pos ? [st.pos.x, st.pos.y, st.pos.z].join(" ") : "?"} yaw ${st.yaw}, key-down ticks ${w.intent}, real movement ${w.truth.toFixed(1)} blocks, pull-backs ${b.corrections + b.teleports}, resyncs ${b.resyncs}${b.alive ? "" : ", DEAD"}`);
     }
 
     helloMessage(username) {
@@ -320,8 +340,8 @@ export class Bridge {
             try { this.client.status = 4; } catch (e) { /* the library keeps its own status; harmless */ }
         } catch (e) { log("warn", "spawn handshake (end):", e?.message || e); }
         log("info", "spawned in the world; announcing to the addon");
-        this._notices = new Set();
         this._mon = null;
+        this._monWindows = [];
         this.spawned = true;
         this.addonHello = false;
         this.helloSentAt = Date.now();
@@ -331,13 +351,13 @@ export class Bridge {
         this.outQueue.push("/gamerule sendcommandfeedback false");
         const wantMode = this.cfg.connect?.gamemode === undefined ? "survival" : this.cfg.connect.gamemode;
         if (wantMode && String(this.body.gameMode) !== String(wantMode)) { log("info", `switching this account to ${wantMode} (set connect.gamemode to null in config.json to leave it alone)`); this.outQueue.push(`/gamemode ${wantMode} @s`); }
-        this.sendToAddon(this.helloMessage(username));
+        if (!this.cfg.selfTest) this.sendToAddon(this.helloMessage(username));    // the self-test is about the body alone: the addon is not told about it
     }
 
     bodyTick() {
         if (!this.client || !this.spawned) return;
         let params;
-        try { params = this.body.step(); } catch (e) { return; }
+        try { params = this.body.step(); } catch (e) { if (!this._stepErr) { this._stepErr = true; log("error", "the body could not simulate a tick:", e?.stack || e); } return; }
         if (!params) return;
         try { this.client.queue("player_auth_input", params); this.inputFailures = 0; }
         catch (e) { if (this.inputFailures++ === 0) log("warn", "could not send movement input:", e?.message || e); }
@@ -395,8 +415,19 @@ export class Bridge {
         setTimeout(() => { this._reconnecting = false; this.start().catch(e => { log("error", e); this.scheduleReconnect(); }); }, d);
     }
 
+    /** The server's own position of the body, as the addon reads it with each walk or key frame. */
+    anchorFromFrame(msg) {
+        const x = typeof msg.fx === "number" ? msg.fx : NaN, z = typeof msg.fz === "number" ? msg.fz : NaN;
+        if (!Number.isFinite(x) || !Number.isFinite(z)) return false;
+        return this.body.anchorFrom({ x, y: typeof msg.fy === "number" ? msg.fy : undefined, z }, typeof msg.fg === "number" ? msg.fg === 1 : typeof msg.fg === "boolean" ? msg.fg : undefined);
+    }
+
     // Text packets: chat from players (relay) or frames from the addon (handle).
     onText(p) {
+        try { this._onText(p); } catch (e) { log("warn", "ignored a malformed text packet:", e?.message || e); }
+    }
+
+    _onText(p) {
         let message = p.message ?? "";
         if (p.type === "json" || p.type === "object") {
             try {
@@ -406,6 +437,9 @@ export class Bridge {
         }
         if (typeof message !== "string") return;
         if (message.includes("AIB1|")) {
+            // Frames come from the addon through Player.sendMessage (raw/json text). A chat, whisper or
+            // announcement line is a person typing: it must never be able to drive this body or the bridge.
+            if (p.type === "chat" || p.type === "whisper" || p.type === "announcement") return;
             const got = this.reassembler.push(message);
             if (got) {
                 const msg = unpackMessage(got.text);
@@ -427,13 +461,14 @@ export class Bridge {
     }
 
     async handle(msg) {
+        if (!msg || typeof msg !== "object" || this.cfg.selfTest) return;
         switch (msg.t) {
             case "hello":
                 if (!this.addonHello) { this.addonHello = true; log("info", "the addon answered; residents will join the players now"); }
                 log("info", `addon says hello (build ${msg.version || "older than 2.5.0"}, walks ${msg.walks ? "yes" : "no"}, tick ${msg.tick})`);
-                if (!msg.walks) {
-                    log("warn", `the Real AI pack on this world is older than ${EXPECT_ADDON}: it tries to teleport this body itself, which a Realm ignores. Import dist/Real-AI-${EXPECT_ADDON}.mcaddon, activate it on the world, and rejoin.`);
-                    this.notice("oldpack", `The Real AI pack in this world is older than my bridge (build ${msg.version || "unknown"}, I need ${EXPECT_ADDON}), so I cannot walk. Delete the old Real AI packs (Settings > Storage), import Real-AI-${EXPECT_ADDON}.mcaddon again, activate it on this world, and everyone rejoin.`);
+                if (!msg.walks || versionLess(msg.version, EXPECT_ADDON)) {
+                    log("warn", `the Real AI pack on this world (${msg.version || "older than 2.5.0"}) is older than ${EXPECT_ADDON}: ${msg.walks ? "it lacks the newest controls and senses" : "it tries to teleport this body itself, which a Realm ignores"}. Delete the old Real AI packs (Settings > Storage), import dist/Real-AI-${EXPECT_ADDON}.mcaddon, activate it on the world, and rejoin.`);
+                    this.notice("oldpack", `The Real AI pack in this world is older than my bridge (build ${msg.version || "unknown"}, I need ${EXPECT_ADDON})${msg.walks ? ", so I am missing the newest controls and senses" : ", so I cannot walk"}. Delete the old Real AI packs (Settings > Storage), import Real-AI-${EXPECT_ADDON}.mcaddon again, activate it on this world, and everyone rejoin.`);
                 }
                 if (msg.pos && this.body.pos) { const gap = msg.pos.y - this.body.pos.y; log("info", `the addon sees this body at ${JSON.stringify(msg.pos)} (our feet ${JSON.stringify(this.body.status().pos)}, height gap ${gap.toFixed(2)})`); this.body.anchorFrom(msg.pos); this.body.anchorFrom(msg.pos); }
                 if (msg.gamemode) this.body.gameMode = msg.gamemode;
@@ -445,7 +480,7 @@ export class Bridge {
                 log("info", `probe: server ${[msg.x, msg.y, msg.z].map(n => Number(n).toFixed(1)).join(" ")} ground=${msg.ground} gm=${msg.gm} walks=${msg.walks} | ours ${st.pos ? [st.pos.x, st.pos.y, st.pos.z].join(" ") : "?"} gap=${gap.toFixed(2)} walking=${st.walking} corrections=${st.corrections}`);
                 if (gap > 1) { this._ghost = (this._ghost || 0) + 1; if (this._ghost === 5) log("warn", "ghost body: the server keeps this player somewhere else than our packets say; the addon will resync us"); }
                 else this._ghost = 0;
-                this.body.anchorFrom({ x: Number(msg.x), y: Number(msg.y), z: Number(msg.z) });
+                this.body.anchorFrom({ x: Number(msg.x), y: Number(msg.y), z: Number(msg.z) }, typeof msg.ground === "boolean" ? msg.ground : undefined);
                 break;
             }
             case "probe_hurt":
@@ -470,20 +505,21 @@ export class Bridge {
             }
             case "anchor":
                 if (msg.off) { this.anchorTarget = null; break; }
-                this.anchorTarget = msg;
+                this.anchorTarget = { x: Number(msg.x), y: Number(msg.y), z: Number(msg.z), dim: /^(minecraft:)?(overworld|nether|the_end)$/.test(String(msg.dim || "")) ? String(msg.dim) : "minecraft:overworld" };
+                if (![this.anchorTarget.x, this.anchorTarget.y, this.anchorTarget.z].every(Number.isFinite)) this.anchorTarget = null;
                 break;
             // The addon walks our body: it knows the terrain and sends the next footing point.
             case "walk":
-                if (typeof msg.fx === "number") this.body.anchorFrom({ x: msg.fx, y: msg.fy, z: msg.fz });
-                if (this.body.walkTo({ x: Number(msg.x), y: Number(msg.y), z: Number(msg.z) }, msg.mode)) { if (msg.jump) this.body.jump(); }
+                this.anchorFromFrame(msg);
+                if (this.body.walkTo({ x: Number(msg.x), y: Number(msg.y), z: Number(msg.z) }, msg.mode, 40)) { if (msg.jump) this.body.jump(); }
                 break;
             case "stop":
                 this.body.stop();
                 break;
             case "input":
                 // raw keys, as the AI pressed them: forward/back, strafe, sprint, sneak, jump (see Body.press)
-                if (typeof msg.fx === "number") this.body.anchorFrom({ x: msg.fx, y: msg.fy, z: msg.fz });
-                this.body.press({ f: msg.f, s: msg.s, sprint: !!msg.sprint, sneak: !!msg.sneak, jump: !!msg.jump, ms: msg.ms, floor: typeof msg.floor === "number" ? msg.floor : undefined });
+                this.anchorFromFrame(msg);
+                this.body.press({ f: msg.f, s: msg.s, sprint: !!msg.sprint, sneak: !!msg.sneak, jump: !!msg.jump, ms: Math.min(Number(msg.ms) || 300, 1000), floor: typeof msg.floor === "number" ? msg.floor : undefined, ed: typeof msg.ed === "number" ? msg.ed : undefined, at: typeof msg.fx === "number" && typeof msg.fz === "number" ? { x: msg.fx, z: msg.fz } : undefined });
                 break;
             case "jump":
                 this.body.jump();
@@ -563,7 +599,9 @@ export class Bridge {
     /**
      * Does the server accept this body's movement? Walks and turns it with the same key presses the AI uses and
      * asks the server where it really is (/tp @s ~ ~ ~ makes the server send the player its true position).
-     * No addon needed. Stand on flat ground; the account needs to be an Operator with cheats on for the position check.
+     * The addon is not told about the test (cfg.selfTest), so nothing else moves the body meanwhile. The body walks
+     * in the first of the four compass headings that has room; if none of them moves it, the other way of numbering
+     * input ticks is tried before giving up. The account needs to be an Operator with cheats on for the position check.
      * -> { ok, checks: [{ name, ok, detail }] }
      */
     async selfTest(say = (line) => console.log(line)) {
@@ -592,6 +630,7 @@ export class Bridge {
         };
         const flat = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
         const c0 = this.body.corrections, t0 = this.body.teleports;
+        const pulledBack = () => (this.body.corrections - c0) + Math.max(0, (this.body.teleports - t0) - asked);   // corrections, and teleports we did not ask for
         const p0 = await truth();
         check("the server tells us where we are (/tp @s ~ ~ ~)", !!p0, p0 ? `feet ${[p0.x, p0.y, p0.z].map(n => n.toFixed(2)).join(" ")}` : "no answer: this account must be an Operator and the world's cheats must be on, otherwise the position cannot be checked");
         if (!p0) {
@@ -599,31 +638,62 @@ export class Bridge {
             const before = this.body.corrections;
             this.body.setLook(0, 0);
             await hold({ f: 1 }, 2000);
-            check("walking 2 s drew no corrections from the server", this.body.corrections - before < 5, `${this.body.corrections - before} corrections (the position could not be read, so this is only half a test)`);
+            check("walking 2 s drew no corrections from the server", this.body.corrections - before < 5, `${this.body.corrections - before} corrections (the position could not be read, so this is only half a test: a server that silently ignores the input would also pass)`);
             return { ok: checks.every(c => c.ok), checks };
         }
-        this.body.setLook(0, 0);
-        await sleep(300);
-        await hold({ f: 1 }, 2000);
-        const p1 = await truth();
-        const walked = p1 ? flat(p0, p1) : 0;
-        const pulledBack = () => (this.body.corrections - c0) + Math.max(0, (this.body.teleports - t0) - asked);   // corrections, and teleports we did not ask for
-        const corr1 = pulledBack();
-        check("walking forward for 2 s moves the body (vanilla walk is about 7.5 blocks)", walked >= 4, `the server has it ${walked.toFixed(1)} blocks further on${corr1 ? `, and pulled it back ${corr1} times` : ""}${walked < 0.5 ? (corr1 ? ": the server keeps resetting the body (rubber-banding)" : ": the server ignores this client's movement") : ""}`);
-        const p1b = p1 || p0;
-        await hold({ f: 1, sprint: true }, 2000);
-        const p2 = await truth();
-        const sprinted = p2 ? flat(p1b, p2) : 0;
-        check("sprinting for 2 s goes further than walking", sprinted >= Math.max(5, walked * 1.1), `${sprinted.toFixed(1)} blocks (vanilla sprint is about 10)`);
-        await hold({ f: -1 }, 1000);
-        const p3 = await truth();
-        const back = p3 && p2 ? flat(p2, p3) : 0;
-        check("stepping back for 1 s moves the body the other way", back >= 1.5 && p3 && p2 && ((p3.z - p2.z) * (p2.z - p1b.z) < 0 || (p3.x - p2.x) * (p2.x - p1b.x) < 0), `${back.toFixed(1)} blocks`);
+        // 1. a heading with room to walk: the first of S, W, N, E (the account cannot be placed, so a tree or a wall may be in the way)
+        const headings = [{ name: "south", yaw: 0 }, { name: "west", yaw: 90 }, { name: "north", yaw: 180 }, { name: "east", yaw: -90 }];
+        let used = null, walked = 0, from = p0, after = null, triedFlip = false;
+        for (let round = 0; round < 2 && !used; round++) {
+            for (const h of headings) {
+                this.body.setLook(h.yaw, 0);
+                await sleep(300);
+                from = (await truth()) || from;
+                await hold({ f: 1 }, 2000);
+                after = await truth();
+                const d = after ? flat(from, after) : 0;
+                if (d >= 4) { used = h; walked = d; break; }
+                if (pulledBack() >= 8) break;     // the server is resetting the body: more directions will not change that
+            }
+            if (!used && !triedFlip && pulledBack() < 8) {
+                triedFlip = true;
+                const base = this.body.flipTickBase();
+                say(`      nothing moved in any direction; trying the other input tick numbering (${base}) ...`);
+                continue;
+            }
+            break;
+        }
+        const pulled1 = pulledBack();
+        const what = used ? "" : (pulled1 ? ": the server keeps resetting the body (rubber-banding)" : ": the server ignores this client's movement, or something blocks all four directions around here (stand on open flat ground and try again)");
+        check("walking forward for 2 s moves the body (vanilla walk is about 7.5 blocks)", !!used, used ? `${walked.toFixed(1)} blocks ${used.name}${triedFlip ? ` (only with input ticks counted the "${this.body.tickBase}" way: set "tickBase": "${this.body.tickBase}" under connect in config.json)` : ""}` : `the server has it ${(after ? flat(from, after) : 0).toFixed(1)} blocks further on${pulled1 ? `, and pulled it back ${pulled1} times` : ""}${what}`);
+        if (used) {
+            const hv = { x: -Math.sin(used.yaw / 57.29578), z: Math.cos(used.yaw / 57.29578) };       // unit vector the body faces
+            const along = (a, b) => (b.x - a.x) * hv.x + (b.z - a.z) * hv.z;
+            const across = (a, b) => (b.x - a.x) * hv.z - (b.z - a.z) * hv.x;   // + is the body's left
+            const p1 = after;
+            await hold({ f: 1, sprint: true }, 2000);
+            const p2 = await truth();
+            const sprinted = p2 ? flat(p1, p2) : 0;
+            check("sprinting for 2 s goes further than walking", sprinted >= Math.max(5, walked * 1.1), `${sprinted.toFixed(1)} blocks (vanilla sprint is about 10)`);
+            const pb = p2 || p1;
+            await hold({ f: -1 }, 1000);
+            const p3 = await truth();
+            check("stepping back for 1 s moves the body backwards", !!p3 && along(pb, p3) <= -1.5, p3 ? `${along(pb, p3).toFixed(1)} blocks along the way it faces` : "no answer");
+            const pc = p3 || pb;
+            await hold({ s: 1 }, 1000);
+            const p4 = await truth();
+            check("strafing left for 1 s moves the body to its left", !!p4 && across(pc, p4) >= 1.5, p4 ? `${across(pc, p4).toFixed(1)} blocks to the left` : "no answer");
+            const pd = p4 || pc;
+            await hold({ f: 1, sneak: true }, 2000);
+            const p5 = await truth();
+            const crept = p5 ? flat(pd, p5) : 0;
+            check("sneaking forward for 2 s is slow (vanilla is about 2.6 blocks)", crept > 0.5 && crept < walked * 0.6, `${crept.toFixed(1)} blocks`);
+        }
         this.body.setLook(90, -20);
         await sleep(700);
-        const p4 = await truth();
-        const dyaw = p4 ? Math.abs(((p4.yaw - 90 + 540) % 360) - 180) : 999;
-        check("turning the head is accepted", p4 && dyaw < 12 && Math.abs(p4.pitch + 20) < 8, p4 ? `the server has yaw ${p4.yaw.toFixed(0)}, pitch ${p4.pitch.toFixed(0)} (asked 90, -20)` : "no answer");
+        const p6 = await truth();
+        const dyaw = p6 ? Math.abs(((p6.yaw - 90 + 540) % 360) - 180) : 999;
+        check("turning the head is accepted", !!p6 && dyaw < 12 && Math.abs(p6.pitch + 20) < 8, p6 ? `the server has yaw ${p6.yaw.toFixed(0)}, pitch ${p6.pitch.toFixed(0)} (asked 90, -20)` : "no answer");
         const pulled = pulledBack();
         check("the server did not keep pulling the body back during the test", pulled < 10, `${pulled} times pulled back (${this.body.corrections - c0} corrections), ${this.body.resyncs} resyncs`);
         return { ok: checks.every(c => c.ok), checks };
@@ -664,9 +734,9 @@ async function main() {
         console.log(`Real AI bridge ${VERSION}\n  node index.mjs [--setup] [--config path] [--log debug|info|warn] [--test-provider <id>] [--selftest]\nProviders: ${Object.keys(PROVIDERS).join(", ")}`);
         process.exit(0);
     }
+    if (argv.includes("--selftest")) { cfg.chatRelay = false; cfg.selfTest = true; }
     const bridge = new Bridge(cfg);
     if (argv.includes("--selftest")) {
-        cfg.chatRelay = false;
         process.on("SIGINT", () => { bridge.stopped = true; try { bridge.client?.close(); } catch (e) { /* ignore */ } process.exit(130); });
         bridge.start().catch(e => log("error", e));
         const res = await bridge.selfTest();

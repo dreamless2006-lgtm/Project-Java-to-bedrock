@@ -262,3 +262,147 @@ test("setLook turns the head to an absolute yaw and pitch, wrapped and clamped",
     b.setLook(undefined, 10); assert.ok(near(b.yaw, 160)); assert.equal(b.pitch, 10);
     const p = b.step(); assert.ok(near(p.yaw, 160) && p.pitch === 10 && p.head_yaw === p.yaw);
 });
+
+// ---- corrections are replayed, floors come from the server, jumps and walks do not linger --------------------
+
+// A toy authoritative server with the same physics and one-way latency `d` ticks each way. It compares each claim with
+// its own position at that tick and answers with ITS state at that tick (what a rewind server sends) when more than 0.5 off.
+function latencyRun({ d, sprint }) {
+    const mk = () => { const b = new Body(); start(b, { x: 0, y: 64, z: 0 }); b.setLook(0, 0); return b; };
+    const client = mk(), server = mk();
+    const toServer = [], toClient = [];
+    let corrections = 0;
+    for (let now = 1; now <= 200; now++) {
+        if (now === 40) server.pos.z += 1.0;              // a disturbance the client could not know about (a ledge, a lag spike)
+        client.press({ f: 1, sprint, ms: 250 });
+        const pkt = client.step();
+        toServer.push([now + d, pkt]);
+        while (toServer.length && toServer[0][0] <= now) {
+            const [, p] = toServer.shift();
+            server.press({ f: 1, sprint, ms: 250 }); server.step();
+            const err = Math.hypot(p.position.x - server.pos.x, p.position.y - (server.pos.y + EYE_HEIGHT), p.position.z - server.pos.z);
+            if (err > 0.5) toClient.push([now + d, { tick: p.tick, pos: { ...server.pos }, vel: { ...server.vel } }]);
+        }
+        while (toClient.length && toClient[0][0] <= now) {
+            const [, c] = toClient.shift();
+            if (now > 100) corrections++;
+            client.onCorrection({ prediction_type: "player", tick: c.tick, position: { x: c.pos.x, y: c.pos.y + EYE_HEIGHT, z: c.pos.z }, delta: c.vel, on_ground: true });
+        }
+    }
+    return corrections;
+}
+
+test("a correction is followed by a replay of the inputs sent since, so a link with latency settles after one", () => {
+    for (const [d, sprint] of [[2, false], [3, false], [3, true], [4, true]]) {
+        const n = latencyRun({ d, sprint });
+        assert.ok(n <= 2, `one-way latency ${d * 50} ms, ${sprint ? "sprint" : "walk"}: ${n} corrections in the last 5 s (without the replay every tick draws one)`);
+    }
+});
+
+test("the ground height is learned from the server: a snow layer, a path block, a slab", () => {
+    const b = new Body(); start(b); b.step();
+    assert.equal(b.pos.y, 64);
+    b.anchorFrom({ x: 10, y: 64.375, z: 10 }, true);       // the server stands us 0.375 higher
+    assert.equal(b.floor, 64.375); assert.equal(b.pos.y, 64.375);
+    for (let i = 0; i < 5; i++) b.step();
+    assert.equal(b.pos.y, 64.375, "and the body stays there");
+    const lower = new Body(); start(lower); lower.step();
+    lower.anchorFrom({ x: 10, y: 63.9375, z: 10 }, true);  // a path block is 15/16 high
+    assert.ok(Math.abs(lower.pos.y - 63.9375) < 1e-9);
+    // a report from the air, or a whole block away (a ledge climbed meanwhile), is not taken as the ground
+    const air = new Body(); start(air); air.step();
+    air.anchorFrom({ x: 10, y: 64.3, z: 10 }, false); assert.equal(air.pos.y, 64);
+    air.anchorFrom({ x: 10, y: 63, z: 10 }, true); assert.equal(air.pos.y, 64);
+});
+
+test("a late position report does not look like drift: it is judged against where the body was over the last few ticks", () => {
+    const b = new Body(); start(b); b.setLook(0, 0);
+    const reports = [];
+    for (let i = 0; i < 80; i++) {
+        b.press({ f: 1, sprint: true, ms: 250 });
+        b.step();
+        reports.push({ x: b.pos.x, y: b.pos.y, z: b.pos.z });
+        if (reports.length > 7) b.anchorFrom(reports[reports.length - 7], true);     // 350 ms old
+    }
+    assert.equal(b.resyncs, 0, "no resyncs");
+    assert.ok(b.pos.z - 10 > 15, "and it kept running: " + (b.pos.z - 10));
+});
+
+test("a step down holds until the body has passed the edge; a ledge is hopped by itself; keys ending mid-fall do not lift the body", () => {
+    // a one-block drop 2.0 blocks ahead (south, +z)
+    const b = new Body(); start(b, { x: 0, y: 64, z: 0 }); b.setLook(0, 0);
+    let minY = 64, edgeZ = null, tick = 0;
+    for (; tick < 60; tick++) {
+        b.press({ f: 1, ms: 250, floor: 63, ed: 2.0 - b.pos.z, at: { x: 0, z: b.pos.z } });   // the addon re-measures each time
+        b.step();
+        if (b.pos.z < 2.25) assert.equal(b.pos.y, 64, `still on the upper ground at z ${b.pos.z.toFixed(2)}`);
+        if (b.pos.y < 64 && edgeZ === null) edgeZ = b.pos.z;
+        minY = Math.min(minY, b.pos.y);
+        if (b.onGround && b.pos.y === 63) break;
+    }
+    assert.equal(b.pos.y, 63, "and it lands on the lower ground");
+    assert.ok(edgeZ >= 2.2, "it began to fall only past the edge: z " + edgeZ);
+    // keys ending while falling must not put the body back on the old level
+    const c = new Body(); start(c, { x: 0, y: 64, z: 0 }); c.setLook(0, 0);
+    let fell = false;
+    for (let i = 0; i < 60; i++) {
+        if (!fell) c.press({ f: 1, ms: 250, floor: 60, ed: 1.0 - c.pos.z, at: { x: 0, z: c.pos.z } });
+        c.step();
+        if (c.pos.y < 63) { fell = true; c.release(); }
+    }
+    assert.equal(fell, true);
+    assert.ok(c.pos.y <= 60 + 1e-9, "it keeps falling to the lower ground instead of snapping back up: " + c.pos.y);
+    // a ledge one block up, 2.0 ahead
+    const d = new Body(); start(d, { x: 0, y: 64, z: 0 }); d.setLook(0, 0);
+    let top = 64, jumps = 0;
+    for (let i = 0; i < 60; i++) {
+        d.press({ f: 1, ms: 250, floor: 65, ed: 2.0 - d.pos.z, at: { x: 0, z: d.pos.z } });
+        const p = d.step(); if (p.input_data.includes("start_jumping")) jumps++;
+        top = Math.max(top, d.pos.y);
+        if (d.onGround && d.pos.y === 65) break;
+    }
+    assert.equal(d.pos.y, 65); assert.equal(jumps, 1, "one hop"); assert.ok(top > 65.0);
+});
+
+test("a single jump frame hops once; a jump request that finds no ground lapses; stopping clears it", () => {
+    const b = new Body(); start(b); b.setLook(0, 0);
+    let jumps = 0;
+    b.press({ f: 1, jump: true, ms: 250 });
+    for (let i = 0; i < 40; i++) { const p = b.step(); if (p.input_data.includes("start_jumping")) jumps++; }
+    assert.equal(jumps, 1, "one lease, one hop");
+    const c = new Body(); start(c);
+    c.jump(); c.step();                          // jumps now
+    c.jump();                                    // pressed in mid-air...
+    let again = 0;
+    for (let i = 0; i < 40; i++) { const p = c.step(); if (p.input_data.includes("start_jumping")) again++; }
+    assert.equal(again, 0, "...it does not fire minutes later on landing");
+    const d = new Body(); start(d);
+    d.jump(); d.stop();
+    assert.equal(d.step().input_data.includes("start_jumping"), false, "stop() cancels a pending hop");
+});
+
+test("a walk target lapses when the addon stops refreshing it", () => {
+    const b = new Body(); start(b);
+    b.walkTo({ x: 10, y: 64, z: 50 }, "walk", 10);
+    for (let i = 0; i < 9; i++) b.step();
+    assert.ok(b.target, "alive while fresh");
+    for (let i = 0; i < 4; i++) b.step();
+    assert.equal(b.target, null, "gone after the lease");
+    const c = new Body(); start(c);
+    assert.equal(c.walkTo({ x: NaN, z: 1 }), false); assert.equal(c.walkTo({ x: 1, z: Infinity }), false); assert.equal(c.walkTo({ x: "a", z: "b" }), false);
+    assert.equal(c.walkTo({ x: 1e9, z: 1 }), false, "outside the world");
+    assert.ok(c.walkTo({ x: 5, z: 5 }), "a plain target without a lease still works for direct callers");
+});
+
+test("input ticks can be counted the server's way, and flipped on the fly", () => {
+    const zero = new Body(); zero.onStartGame({ runtime_entity_id: 7n, player_position: { x: 0, y: 64, z: 0 }, rotation: { x: 0, z: 0 }, current_tick: 5000n, rewind_history_size: 40 });
+    assert.equal(zero.step().tick, 1n);
+    zero.flipTickBase();
+    assert.equal(zero.tickBase, "server");
+    assert.equal(zero.step().tick, 5002n, "continues from the server's tick");
+    assert.equal(zero.flipTickBase(), "zero");
+    assert.equal(zero.step().tick, 3n, "back to our own count");
+    const srv = new Body({ tickBase: "server" }); srv.onStartGame({ runtime_entity_id: 7n, player_position: { x: 0, y: 64, z: 0 }, rotation: { x: 0, z: 0 }, current_tick: 5000n, rewind_history_size: 40 });
+    assert.equal(srv.step().tick, 5001n);
+    assert.ok(srv.status().tickBase === "server");
+});

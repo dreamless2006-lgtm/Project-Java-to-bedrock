@@ -7,6 +7,8 @@
 export const FRAME_PREFIX = "AIB1|";
 export const DEFAULT_CHUNK = 380;   // fits "/scriptevent realai:in " + frame under 512
 export const REASSEMBLY_TTL_MS = 30_000;
+export const MAX_FRAMES = 512;          // a message of more frames than this is not ours (and must not size an array)
+export const MAX_PARTIAL = 64;           // messages being reassembled at once
 
 export function encodeFrames(id, text, chunk = DEFAULT_CHUNK) {
     const s = String(text);
@@ -29,9 +31,11 @@ export function decodeFrame(line) {
     if (p2 < 0) return null;
     const id = rest.slice(0, p1);
     const idx = rest.slice(p1 + 1, p2);
-    const m = /^(\d+)\/(\d+)$/.exec(idx);
+    const m = /^(\d{1,5})\/(\d{1,5})$/.exec(idx);
     if (!m) return null;
-    return { id, index: Number(m[1]), count: Number(m[2]), payload: rest.slice(p2 + 1) };
+    const index = Number(m[1]), count = Number(m[2]);
+    if (count < 1 || count > MAX_FRAMES || index < 1 || index > count || id.length > 40) return null;
+    return { id, index, count, payload: rest.slice(p2 + 1) };
 }
 
 /** Collects frames; returns the full text when a message completes. */
@@ -48,6 +52,11 @@ export class Reassembler {
         this.sweep();
         if (f.count === 1) return { id: f.id, text: f.payload };
         let e = this.partial.get(f.id);
+        if (!e && this.partial.size >= MAX_PARTIAL) {   // drop the oldest rather than grow without bound
+            const oldest = this.partial.keys().next().value;
+            this.partial.delete(oldest);
+        }
+        if (e && e.count !== f.count) return null;
         if (!e) {
             e = { count: f.count, parts: new Array(f.count), got: 0, t: this.now() };
             this.partial.set(f.id, e);
