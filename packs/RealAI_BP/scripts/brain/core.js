@@ -9,7 +9,7 @@ import { getWorldConfig, updateWorldConfig, callConfigFor, readBotSettings, writ
 import { loadMemory, saveMemory, addFact, forgetFact, addEpisode, addChat, notePerson, createMemory, setSelf, setPlans, findOwned, forgetChest } from "./memory.js";
 import { createDrives, updateDrives, renderDrives, cadenceFactor } from "./drives.js";
 import { createMission, renderMission, assessMission } from "./progress.js";
-import { inventoryMap } from "./perception.js";
+import { inventoryMap, isSpectator } from "./perception.js";
 import { timeLabel } from "./perception.js";
 import { buildSystemStable, buildTurn, promptHash } from "./prompt.js";
 import { createSchedulerState, noteEvent, shouldThink, beginThink, endThink, CADENCE } from "./scheduler.js";
@@ -343,6 +343,7 @@ export class BotBrain {
         const active = reply.actions.length > 0 || !!this.actuator.current;
         endThink(this.sched, nowTick, true, active);
         this.saveMemory();
+        this.lastThought = { text: reply.thought || "", say: reply.say || "", actions: reply.actions.map(a => a.type), at: nowTick };
         if (manager.debug) console.warn(`[RealAI] ${this.name} (${res.provider}/${res.model}, ${Date.now() - started}ms): ${reply.thought} | say=${reply.say} | ${reply.actions.map(a => a.type).join(",")}`);
         if (getWorldConfig().showThoughts) this.showThought(reply, res);
     }
@@ -1118,7 +1119,7 @@ class BrainManager {
         if (!bp || !brains.has(bp.id)) { this.bedChecks = 0; return; }
         const t = world.getTimeOfDay();
         const night = t >= 12000 || t < 500;
-        const others = world.getAllPlayers().filter(p => p.id !== bp.id);
+        const others = world.getAllPlayers().filter(p => p.id !== bp.id && !isSpectator(p));
         const inBed = others.length > 0 && others.every(p => { try { return !!p.isSleeping; } catch (e) { return false; } });
         if (!night || !inBed) { this.bedChecks = 0; return; }
         this.bedChecks = (this.bedChecks || 0) + 1;

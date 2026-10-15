@@ -4,12 +4,14 @@ import { system } from "@minecraft/server";
 import { startBrainSystem } from "./brain/core.js";
 import { startCommands, registerSlashCommands } from "./brain/commands.js";
 import { startHubUI } from "./brain/ui.js";
+import { startSightCam } from "./brain/sightcam.js";
 
 registerSlashCommands();   // must subscribe to system.beforeEvents.startup during module load
 
 // The legacy modules boot 100 ticks after load; the brain attaches to their caches a little later.
 system.runTimeout(() => {
     try { startCommands(); } catch (e) { console.warn("[RealAI] commands failed to start", e); }
+    try { startSightCam(); } catch (e) { console.warn("[RealAI] sight view failed to start", e); }
     try { startHubUI(); } catch (e) { console.warn("[RealAI] hub UI failed to start", e); }
     try { startBrainSystem(); } catch (e) { console.warn("[RealAI] brain failed to start", e); }
 }, 140);

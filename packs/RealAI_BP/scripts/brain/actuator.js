@@ -203,6 +203,8 @@ function setView(bot, yaw, pitch) {
     if (bridgeWalks(bot)) { bridgeSend({ t: "look", yaw: +yaw.toFixed(1), pitch: +pitch.toFixed(1) }); return; }
     try { bot.setRotation({ x: pitch, y: yaw }); } catch (e) { /* ignore */ }
 }
+/** Where the head points right now (a turn asked for a moment ago counts): { yaw, pitch }. */
+export function currentView(bot) { return viewOf(bot); }
 function eyeOf(bot) { const l = bot.location; return { x: l.x, y: l.y + 1.62, z: l.z }; }
 /** The block under the crosshair, in words. */
 function describeLooking(bot, view) {

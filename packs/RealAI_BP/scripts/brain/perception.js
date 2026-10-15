@@ -4,9 +4,11 @@ import { world, system, EntityComponentTypes, EquipmentSlot } from "@minecraft/s
 import { nameOf, isModdedId } from "./world_content.js";
 import { getFriendTask } from "../ai_task_worker.js";
 import { whoOwns } from "../ai_navigation.js";
-import { aroundReport, markVisited } from "./around.js";
-import { hotbarLine } from "./actuator.js";
+import { aroundReport, markVisited, idAtFor } from "./around.js";
+import { hotbarLine, currentView } from "./actuator.js";
 import { lookingAt } from "./senses.js";
+import { renderSight, formatSight } from "./sight.js";
+import { getWorldConfig } from "./config.js";
 
 const SCAN_R = 5;           // horizontal radius of the block scan
 const SCAN_DY = 3;          // vertical half-height
@@ -178,6 +180,43 @@ function playerLine(bot, p) {
  * Build the observation object (see prompt.renderObservation).
  * brain: the BotBrain (for job/action status and drained events).
  */
+/** A player in spectator mode is invisible and intangible: it is not part of the world the AI sees. */
+export function isSpectator(e) {
+    try { return String(e.getGameMode()).toLowerCase() === "spectator"; } catch (e2) { return false; }
+}
+
+/** What the picture draws over the world: { glyph, name, x, y, z } for each person and creature that is in view range. */
+function sightThings(bot, ents) {
+    const out = [];
+    for (const e of ents) {
+        try {
+            if (e.id === bot.id) continue;
+            const typeId = e.typeId;
+            let glyph = null, name = e.nameTag || nameOf(typeId), up = 0.9;
+            if (typeId === "minecraft:player") { if (isSpectator(e)) continue; glyph = "@"; name = e.name; }
+            else if (typeId === "rg:bot") { glyph = "&"; name = e.nameTag || "bot"; }
+            else if (typeId === "minecraft:item") {
+                if (dist(bot.location, e.location) > ITEM_R) continue;
+                glyph = "$"; up = 0.25;
+                try { const s = e.getComponent(EntityComponentTypes.Item)?.itemStack; if (s) name = nameOf(s.typeId); } catch (e2) { /* ignore */ }
+            } else if (typeId === "rg:build_target" || typeId === "rg:melee_attack_throw" || /ball$|arrow$|snowball$|xp_orb$/.test(typeId)) continue;
+            else if (isHostile(e)) glyph = "H";
+            else if (isAnimalish(e)) { glyph = "a"; up = 0.6; }
+            if (!glyph) continue;
+            out.push({ glyph, name, x: e.location.x, y: e.location.y + up, z: e.location.z });
+        } catch (e2) { /* ignore */ }
+    }
+    return out;
+}
+
+/** The picture of what the bot's eyes show right now (see sight.js). ents: the creatures near it, when the caller already has them. */
+export function sightPicture(bot, ents) {
+    const loc = bot.location;
+    if (!ents) { try { ents = bot.dimension.getEntities({ location: loc, maxDistance: ENTITY_R }); } catch (e) { ents = []; } }
+    const v = currentView(bot);
+    return renderSight(idAtFor(bot.dimension), { x: loc.x, y: loc.y + 1.62, z: loc.z }, v.yaw, v.pitch, { things: sightThings(bot, ents) });
+}
+
 export function observe(bot, brain, extras = {}) {
     const obs = {};
     const loc = bot.location;
@@ -242,14 +281,14 @@ export function observe(bot, brain, extras = {}) {
         if (e.id === bot.id) continue;
         let typeId;
         try { typeId = e.typeId; } catch (e2) { continue; }
-        if (typeId === "minecraft:player") players.push(playerLine(bot, e));
+        if (typeId === "minecraft:player") { if (isSpectator(e)) continue; players.push(playerLine(bot, e)); }
         else if (typeId === "rg:bot") {
             let extra = "";
             try { const m = e.getDynamicProperty("rg:mood"); const g = e.getDynamicProperty("rg:current_goal"); extra = [m && m !== "neutral" ? m : "", g && g !== "idle" ? "doing: " + g : ""].filter(Boolean).join(", "); } catch (e2) { /* ignore */ }
             bots.push(`${e.nameTag || "bot"} ${Math.round(dist(loc, e.location))}m ${dirName(loc, e.location)}${extra ? " (" + extra + ")" : ""}`);
         } else if (typeId === "minecraft:item") {
             if (dist(loc, e.location) <= ITEM_R) {
-                try { const s = e.getComponent(EntityComponentTypes.Item)?.itemStack; if (s) items.push(`${nameOf(s.typeId)} x${s.amount} ${Math.round(dist(loc, e.location))}m ${dirName(loc, e.location)}`); } catch (e2) { /* ignore */ }
+                try { const s = e.getComponent(EntityComponentTypes.Item)?.itemStack; if (s) { items.push(`${nameOf(s.typeId)} x${s.amount} ${Math.round(dist(loc, e.location))}m ${dirName(loc, e.location)}`); } } catch (e2) { /* ignore */ }
             }
         } else if (typeId === "rg:build_target" || typeId === "rg:melee_attack_throw" || /ball$|arrow$|snowball$|xp_orb$/.test(typeId)) {
             continue;
@@ -266,6 +305,15 @@ export function observe(bot, brain, extras = {}) {
     obs.items = items.slice(0, 8);
 
     try { obs.blocks = scanBlocks(bot); } catch (e) { obs.blocks = []; }
+
+    // sight: a picture of what the eyes show, the way the head is turned right now
+    try {
+        if (getWorldConfig().sight !== false) {
+            const picture = sightPicture(bot, ents);
+            obs.sight = formatSight(picture);
+            if (brain) brain.lastSight = { tick: system.currentTick, picture };
+        }
+    } catch (e) { /* the picture is optional */ }
 
     // world line
     const w = [];

@@ -4,6 +4,8 @@ export const TicksPerSecond = 20;
 export const EntityComponentTypes = { Health: "minecraft:health", Inventory: "minecraft:inventory", Equippable: "minecraft:equippable", OnFire: "minecraft:onfire", Breathable: "minecraft:breathable", Item: "minecraft:item", Tameable: "minecraft:tameable", TypeFamily: "minecraft:type_family", Movement: "minecraft:movement", Rideable: "minecraft:rideable", Projectile: "minecraft:projectile", Variant: "minecraft:variant" };
 export const EquipmentSlot = { Mainhand: "Mainhand", Offhand: "Offhand", Head: "Head", Chest: "Chest", Legs: "Legs", Feet: "Feet", Body: "Body", Saddle: "Saddle" };
 export const EntityDamageCause = { entityAttack: "entityAttack", fall: "fall", lava: "lava", fire: "fire", drowning: "drowning", projectile: "projectile", explosion: "entityExplosion", magic: "magic", none: "none", void: "void", starve: "starve" };
+export const GameMode = { Survival: "Survival", Creative: "Creative", Adventure: "Adventure", Spectator: "Spectator" };
+export const InputPermissionCategory = { Camera: 1, Movement: 2, LateralMovement: 4, Sneak: 5, Jump: 6 };
 export const WeatherType = { Clear: "Clear", Rain: "Rain", Thunder: "Thunder" };
 export const CommandPermissionLevel = { Any: 0, GameDirectors: 1, Admin: 2, Host: 3, Owner: 4 };
 export const CustomCommandParamType = { Boolean: "Boolean", Integer: "Integer", Float: "Float", String: "String", EntitySelector: "EntitySelector", PlayerSelector: "PlayerSelector", Location: "Location", BlockType: "BlockType", ItemType: "ItemType", Enum: "Enum", EntityType: "EntityType" };
@@ -172,7 +174,7 @@ export class Entity {
     addTag(t) { this.tags.add(t); return true; } removeTag(t) { return this.tags.delete(t); } hasTag(t) { return this.tags.has(t); } getTags() { return [...this.tags]; }
     triggerEvent(name) { this.events.push(name); }
     runCommand(cmd) { log.commands.push(`[${this.nameTag || this.typeId}] ${cmd}`); return { successCount: 1 }; }
-    teleport(loc, opts = {}) { this.location = { x: loc.x, y: loc.y, z: loc.z }; if (opts.dimension && opts.dimension !== this.dimension) { this.dimension.entities.delete(this.id); this.dimension = opts.dimension; this.dimension.entities.set(this.id, this); } }
+    teleport(loc, opts = {}) { this.location = { x: loc.x, y: loc.y, z: loc.z }; if (opts.rotation) this.rotation = { x: opts.rotation.x, y: opts.rotation.y }; this.teleports = (this.teleports || 0) + 1; if (opts.dimension && opts.dimension !== this.dimension) { this.dimension.entities.delete(this.id); this.dimension = opts.dimension; this.dimension.entities.set(this.id, this); } }
     tryTeleport(loc, opts) { this.teleport(loc, opts); return true; }
     applyImpulse(v) { this.velocity = { x: this.velocity.x + v.x, y: 0, z: this.velocity.z + v.z }; }
     applyKnockback() {} clearVelocity() { this.velocity = { x: 0, y: 0, z: 0 }; } getVelocity() { return this.velocity; }
@@ -193,12 +195,26 @@ export class Entity {
 export class Player extends Entity {
     constructor(name, dimension, location) { super("minecraft:player", dimension, location); this.name = name; this.nameTag = name; this.commandPermissionLevel = 1; this.playerPermissionLevel = 1; this.messages = []; this.families = new Set(["player", "mob"]); this.selectedSlotIndex = 0; this.components["minecraft:player.hunger"] = { currentValue: 20, effectiveMax: 20, setCurrentValue(v) { this.currentValue = Math.max(0, Math.min(20, v)); return true; } }; this.components["minecraft:player.saturation"] = { currentValue: 5, effectiveMax: 20, setCurrentValue(v) { this.currentValue = Math.max(0, Math.min(20, v)); return true; } }; }
     sendMessage(m) { const text = typeof m === "string" ? m : JSON.stringify(m); this.messages.push(text); log.messages.push(`[to ${this.name}] ${text}`); }
-    getGameMode() { return "survival"; }
+    getGameMode() { return this._gm || "Survival"; }
+    setGameMode(m) { this._gm = m; this.gameModeChanges = (this.gameModeChanges || 0) + 1; }
+    // the camera and input-permission API: calls are recorded so a test can read them back
+    get camera() {
+        if (!this._camera) {
+            const p = this;
+            this._camera = { calls: [], cleared: 0, broken: false, isValid: true, setCamera(preset, opts) { if (this.broken) throw new Error("camera not available"); this.calls.push({ preset, ...opts }); }, clear() { this.cleared++; this.calls.push({ cleared: true }); } };
+            void p;
+        }
+        return this._camera;
+    }
+    get inputPermissions() {
+        if (!this._perm) { const on = new Map(); this._perm = { set: on, isPermissionCategoryEnabled: c => on.get(c) !== false, setPermissionCategory: (c, v) => { on.set(c, v); } }; }
+        return this._perm;
+    }
     // a player's death does not remove the entity: it waits on the death screen and respawns
     kill(opts) { if (!this.isValid || this.dead) return false; this.dead = true; world.afterEvents.entityDie.emit({ deadEntity: this, damageSource: { cause: opts?.cause || "none", damagingEntity: opts?.damagingEntity } }); return true; }
     respawn(loc) { this.dead = false; this.components["minecraft:health"].resetToMaxValue(); if (loc) this.location = { x: loc.x, y: loc.y, z: loc.z }; world.afterEvents.playerSpawn.emit({ player: this, initialSpawn: false }); }
     playSound() {}
-    get onScreenDisplay() { return { setActionBar() {}, setTitle() {}, updateSubtitle() {} }; }
+    get onScreenDisplay() { const p = this; return { setActionBar(t) { p.actionBar = t; }, setTitle() {}, updateSubtitle() {} }; }
 }
 export class ScoreboardObjective { constructor(id) { this.id = id; this.displayName = id; this.scores = new Map(); } getScore(p) { return this.scores.get(typeof p === "string" ? p : p.id); } setScore(p, v) { this.scores.set(typeof p === "string" ? p : p.id, v); } addScore(p, v) { this.setScore(p, (this.getScore(p) || 0) + v); return this.getScore(p); } }
 const objectives = new Map();

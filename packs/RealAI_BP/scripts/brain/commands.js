@@ -10,6 +10,9 @@ import { bridge } from "./transport.js";
 import { renderMemory } from "./memory.js";
 import { worldContent } from "./world_content.js";
 import { showHub, playerAllowed } from "./ui.js";
+import { startWatching, stopWatching, isWatching, watchState, findTarget, MODE_TEXT } from "./sightcam.js";
+import { sightPicture } from "./perception.js";
+import { formatSight } from "./sight.js";
 
 // What counts as steering the AI (refused while it is independent); talking, reading and setup stay.
 const STEERING = new Set(["walk", "pause", "resume", "think", "forget", "rules", "mission", "summon", "despawn"]);
@@ -24,6 +27,8 @@ const HELP = [
     "§b!ai pause|resume [Name]§r - pause thinking (all bots or one)",
     "§b!ai where [Name]§r - where the server keeps a bot's body and what its walker is doing",
     "§b!ai body§r - how the bridge's client sees the AI's body (keys held, pull-backs by the server)",
+    "§b!ai sight [Name]§r - watch the game through the AI's eyes (an invisible spectator whose screen is the AI's view). §b!ai sight behind§r over its shoulder, §b!ai sight eyes§r back to its eyes, §b!ai sight body§r without the camera (if the picture looks wrong), §b!ai sight off§r to leave (§b!ai sight stay§r leaves you beside it). Operators.",
+    "§b!ai see [Name]§r - the picture of the world the AI's model is given each turn (letters for materials, digits for distance)",
     "§7Independent (default): nobody can steer the AI in game (no pause, walk, forget, rules, mission, summon); talk is the only way in. §b!ai independent on|off§r (pinned by the bridge's config.json when it sets it).",
     "§b!ai walk <Name> <dx> <dz>§r - make a bot walk that far from where it stands (a movement test)",
     "§7operator: §b!ai provider <id>§r, §b!ai model <name>§r, §b!ai transport auto|direct|bridge§r, §b!ai volume 0-3§r, §b!ai budget soft|hard <tokens>|reset§r, §b!ai rules <text>§r, §b!ai callbyname on|off§r, §b!ai freebuild on|off§r, §b!ai debug on|off§r, §b!ai fakechat on|off§r, §b!ai players 0-16§r, §b!ai thoughts on|off§r, §b!ai mix on|off§r, §b!ai bridgeplays on|off§r, §b!ai mission beat|free§r, §b!ai wildspawns on|off§r, §b!ai companiondeath respawn|permadeath§r, §b!ai jointeleport on|off§r, §b!ai content§r",
@@ -124,6 +129,7 @@ export function handleCommand(player, message) {
             return reply(player, [`§bmodded content:§r ${wc.counts.blocks} blocks, ${wc.counts.items} items, ${wc.counts.entities} creatures`, wc.text.slice(0, 900)]);
         }
     }
+    if (!op && cmd === "sight" && stopWatching(player, "§a[Real AI] You are back where you were.")) return;      // someone who lost operator status mid-view can still leave
     if (!op) return reply(player, "§coperator only. Try !ai help");
     switch (cmd) {
         case "provider": {
@@ -158,6 +164,27 @@ export function handleCommand(player, message) {
                 reply(player, lines);
             }, 60);
             return;
+        }
+        case "sight": {
+            const arg = (rest[0] || "").toLowerCase();
+            if (arg === "off" || arg === "stop" || arg === "leave" || arg === "stay") {
+                if (!stopWatching(player, `§a[Real AI] You are back${arg === "stay" ? " beside the AI" : " where you were"}.`, { stay: arg === "stay" })) reply(player, "§7You are not watching an AI.");
+                return;
+            }
+            const mode = arg === "eyes" || arg === "behind" || arg === "body" ? arg : undefined;
+            const query = mode || !arg ? "" : rest[0];
+            if (!arg && isWatching(player)) { stopWatching(player, "§a[Real AI] You are back where you were."); return; }
+            const res = startWatching(player, query || watchState(player)?.target || "", { mode });
+            if (!res.ok) return reply(player, `§c${res.error}`);
+            return reply(player, `§a[Real AI] You are watching ${res.name}: ${MODE_TEXT[res.mode]}. §b!ai sight behind|eyes|body§a to change the view (body = no camera, if the picture looks wrong), §b!ai sight off§a to leave. Your controls are locked while you watch.`);
+        }
+        case "see": {
+            const b = rest[0] ? botByName(player, rest[0]) : findTarget("");
+            if (!b) return reply(player, "§cno such bot");
+            let pic;
+            try { pic = formatSight(sightPicture(b.bot)); } catch (e) { return reply(player, "§cthe picture could not be drawn: " + e); }
+            const st = b.lastThought;
+            return reply(player, [`§b${b.name}§r sees (the chat font is not fixed-width, so columns drift a little; the model gets them exactly):`, ...pic.split("\n").map(l => "§7" + l), st && st.text ? `§7thinking: ${st.text}` : "§7(no decision yet)"]);
         }
         case "where": {
             const b = rest[0] ? botByName(player, rest[0]) : [...allBrains().values()].find(x => { try { return x.settings.mode === "bridge"; } catch (e) { return false; } }) || [...allBrains().values()][0];

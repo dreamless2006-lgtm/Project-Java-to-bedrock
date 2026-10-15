@@ -31,6 +31,7 @@ export const DEFAULTS = Object.freeze({
     mixProviders: true,         // spread residents across every provider that has a key (Claude, GPT, Grok, Gemini...)
     showThoughts: false,        // show each bot's reasoning and chosen actions to nearby players
     innerLife: true,            // drives, self-narrative, plans, reflection and dawn planning
+    sight: true,                // every turn carries a first-person picture of what the AI's eyes show (a few hundred tokens)
     bridgePlays: true,          // the bridge account's own player gets a brain and plays too (walks, builds, chats as itself)
     reflectEvery: 20,           // every N thinks a bot looks back and updates memory, self and plans
     autonomy: "full",           // full | companions_only | off

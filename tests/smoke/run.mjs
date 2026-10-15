@@ -712,6 +712,123 @@ check(residents().length === 8, "still 8 residents after the respawn: " + reside
         check(gwc().independent === true, "and back on");
     }
 }
+// Fourteenth cycle: sight and the spectator view. The AI's turn carries a picture of what its eyes show; an operator can
+// watch through those eyes (a free camera at the AI's head, controls locked, game mode and place given back afterwards).
+{
+    const bb = gate.getBrain(relay.id);
+    const { handleCommand } = await import("../../packs/RealAI_BP/scripts/brain/commands.js");
+    const { observe } = await import("../../packs/RealAI_BP/scripts/brain/perception.js");
+    const { renderObservation } = await import("../../packs/RealAI_BP/scripts/brain/prompt.js");
+    const cam = await import("../../packs/RealAI_BP/scripts/brain/sightcam.js");
+    if (bb) {
+        const sx = 900, sz = 900;
+        const overworld14 = world.getDimension("overworld");
+        for (let dx = -8; dx <= 8; dx++) for (let dz = -8; dz <= 12; dz++) for (let y = 64; y <= 70; y++) overworld14._set(sx + dx, y, sz + dz, "minecraft:air");
+        bb.actuator.stopAll();
+        relay.teleport({ x: sx + 0.5, y: 64, z: sz + 0.5 }); relay.setRotation({ x: 0, y: 0 });                // facing south
+        for (let y = 64; y <= 66; y++) overworld14._set(sx + 3, y, sz + 6, "minecraft:oak_log");                 // a tree ahead, to the left
+        const cow = overworld14.spawnEntity("minecraft:cow", { x: sx + 0.5, y: 64, z: sz + 5.5 });
+        const obs = observe(relay, bb, {});
+        check(typeof obs.sight === "string" && /^Sight: facing S/.test(obs.sight), "an observation carries the AI's sight: " + String(obs.sight).slice(0, 60));
+        const pictureRows = obs.sight.split("\n").slice(2).filter(l => !/^(In view|Legend)/.test(l));
+        check(pictureRows.length === 13, "thirteen rows of picture: " + pictureRows.length);
+        check(pictureRows.some(r => r.includes("T")) && /In view: a (cow|Cow)/.test(obs.sight), "the tree and the cow are in the picture:\n" + obs.sight);
+        check(/\nSight: facing S/.test(renderObservation(obs)), "the prompt text includes it");
+        // looking away moves the picture; the cow is no longer in it
+        relay.setRotation({ x: 0, y: 180 });
+        check(!/In view: .*cow/i.test(observe(relay, bb, {}).sight), "turned round, the cow is behind it");
+        relay.setRotation({ x: 0, y: 0 });
+
+        // !ai see prints the same picture
+        const m0 = steve.messages.length;
+        handleCommand(steve, `!ai see ${relay.name}`);
+        const seeText = steve.messages.slice(m0).join("\n");
+        check(/sees/.test(seeText) && /Sight: facing S/.test(seeText) && /> /.test(seeText), "!ai see prints the picture: " + seeText.slice(0, 120));
+
+        // the view: an operator becomes a spectator at the AI's eyes
+        steve.teleport({ x: 10, y: 64, z: 10 });
+        handleCommand(steve, "!ai sight");
+        check(steve.getGameMode() === "Spectator" && steve.gameModeChanges === 1, "the viewer is a spectator: " + steve.getGameMode());
+        check(steve.inputPermissions.isPermissionCategoryEnabled(1) === false && steve.inputPermissions.isPermissionCategoryEnabled(2) === false, "their camera and movement controls are locked");
+        check(typeof steve.getDynamicProperty("realai:watching") === "string", "and the way back is written down on them");
+        check(/You are watching .*: its eyes/.test(steve.messages.slice(-1)[0]), "they are told: " + steve.messages.slice(-1)[0]);
+        await run(10, 1);
+        const head = relay.getHeadLocation();
+        const lastCam = () => steve.camera.calls.filter(c => c.preset).slice(-1)[0];
+        check(lastCam() && lastCam().preset === "minecraft:free", "a free camera is used");
+        check(Math.abs(lastCam().location.x - head.x) < 0.01 && Math.abs(lastCam().location.y - head.y) < 0.01 && Math.abs(lastCam().location.z - head.z) < 0.01, "it sits at the AI's eyes: " + JSON.stringify(lastCam().location) + " vs " + JSON.stringify(head));
+        check(lastCam().rotation.x === 0 && lastCam().rotation.y === 0, "turned the way the AI faces");
+        check(Math.hypot(steve.location.x - head.x, steve.location.z - head.z) < 3.1, "the viewer's own body stays with the AI so the world is loaded around it: " + JSON.stringify(steve.location));
+        check(/Watching RealAIBridge/.test(steve.actionBar || "") && /!ai sight off/.test(steve.actionBar || ""), "the action bar says what they watch and how to leave: " + steve.actionBar);
+        // the camera follows the head
+        relay.setRotation({ x: -20, y: 90 }); relay.teleport({ x: sx + 4.5, y: 64, z: sz + 0.5 });
+        await run(3, 1);
+        check(lastCam().rotation.x === -20 && lastCam().rotation.y === 90 && Math.abs(lastCam().location.x - (sx + 4.5)) < 0.01, "and follows it as it turns and walks: " + JSON.stringify(lastCam()));
+        // the AI does not see an invisible spectator
+        const seen = observe(relay, bb, {});
+        check(!(seen.players || []).some(p => /Steve/.test(p)), "the AI does not see the viewer: " + JSON.stringify(seen.players));
+        // over the shoulder
+        relay.setRotation({ x: 0, y: 0 }); relay.teleport({ x: sx + 0.5, y: 64, z: sz + 0.5 });
+        handleCommand(steve, "!ai sight behind");
+        await run(3, 1);
+        const behindD = Math.hypot(lastCam().location.x - relay.getHeadLocation().x, lastCam().location.z - relay.getHeadLocation().z);
+        check(behindD > 3 && behindD < 3.6 && lastCam().location.z < relay.getHeadLocation().z, "over the shoulder, behind the head: " + behindD.toFixed(2) + " " + JSON.stringify(lastCam().location));
+        overworld14._set(sx, 65, sz - 2, "minecraft:stone"); overworld14._set(sx, 66, sz - 2, "minecraft:stone");
+        await run(3, 1);
+        check(lastCam().location.z > relay.getHeadLocation().z - 2, "a wall behind it pulls the camera in rather than through: " + lastCam().location.z.toFixed(2));
+        overworld14._set(sx, 65, sz - 2, "minecraft:air"); overworld14._set(sx, 66, sz - 2, "minecraft:air");
+        // no camera at all: the viewer's own body is turned
+        handleCommand(steve, "!ai sight body");
+        relay.setRotation({ x: 5, y: 45 });
+        await run(3, 1);
+        check(steve.rotation.x === 5 && steve.rotation.y === 45 && steve.camera.calls.slice(-1)[0].cleared, "body mode: no camera, the viewer's body takes the AI's view: " + JSON.stringify(steve.rotation));
+        const nCalls = steve.camera.calls.length;
+        await run(3, 1);
+        check(steve.camera.calls.length === nCalls, "and the camera is left alone");
+        handleCommand(steve, "!ai sight eyes");
+        await run(2, 1);
+        check(steve.camera.calls.slice(-1)[0].preset === "minecraft:free" && steve.camera.calls.slice(-1)[0].rotation.y === 45, "back to the AI's eyes: the camera is used again");
+        // leaving gives everything back
+        handleCommand(steve, "!ai sight off");
+        check(steve.getGameMode() === "Survival" && steve.inputPermissions.isPermissionCategoryEnabled(1) && steve.inputPermissions.isPermissionCategoryEnabled(2), "leaving gives back the game mode and the controls");
+        check(steve.camera.cleared >= 1 && steve.getDynamicProperty("realai:watching") === undefined, "and the camera and the note");
+        check(Math.abs(steve.location.x - 10) < 0.01 && Math.abs(steve.location.z - 10) < 0.01, "and the place they were: " + JSON.stringify(steve.location));
+        await run(15, 1);
+        const calls = steve.camera.calls.length;
+        await run(5, 1);
+        check(steve.camera.calls.length === calls, "the camera is left alone afterwards");
+        // a second use of off says so; a name that is not there is an error; non-operators are refused
+        handleCommand(steve, "!ai sight off");
+        check(/not watching/.test(steve.messages.slice(-1)[0]), "off when not watching: " + steve.messages.slice(-1)[0]);
+        handleCommand(steve, "!ai sight Nobody");
+        check(/no AI called Nobody/.test(steve.messages.slice(-1)[0]) && steve.getGameMode() === "Survival", "an unknown name: " + steve.messages.slice(-1)[0]);
+        const alex14 = spawnPlayer("Alex14", { x: 20, y: 64, z: 20 }); alex14.commandPermissionLevel = 0;
+        handleCommand(alex14, "!ai sight");
+        check(/operator only/.test(alex14.messages.slice(-1)[0]) && alex14.getGameMode() === "Survival" && !cam.isWatching(alex14), "a player who is not an operator cannot: " + alex14.messages.slice(-1)[0]);
+        // ... but one who lost operator status in the middle of a view can still leave it
+        steve.commandPermissionLevel = 1; handleCommand(steve, "!ai sight"); steve.commandPermissionLevel = 0;
+        handleCommand(steve, "!ai sight off");
+        check(!cam.isWatching(steve) && steve.getGameMode() === "Survival", "a viewer who is no longer an operator can still leave: " + steve.getGameMode());
+        steve.commandPermissionLevel = 1;
+        // without a free camera the viewer's own spectator body looks through the AI's eyes
+        steve.camera.broken = true;
+        relay.setRotation({ x: 15, y: -90 });
+        handleCommand(steve, "!ai sight");
+        await run(4, 1);
+        check(steve.messages.slice(-3).some(m => /no free camera/.test(m)), "the missing camera is explained: " + steve.messages.slice(-2).join(" | "));
+        check(steve.rotation.x === 15 && steve.rotation.y === -90, "and the viewer's body is turned instead: " + JSON.stringify(steve.rotation));
+        handleCommand(steve, "!ai sight stay");
+        check(steve.getGameMode() === "Survival" && Math.hypot(steve.location.x - relay.location.x, steve.location.z - relay.location.z) < 3.1, "leaving with 'stay' keeps them beside the AI: " + JSON.stringify(steve.location));
+        steve.camera.broken = false;
+        // a view left on by a restart is undone when they come back
+        steve.setGameMode("Spectator"); steve.inputPermissions.setPermissionCategory(1, false);
+        steve.setDynamicProperty("realai:watching", JSON.stringify({ gm: "Creative", home: { x: 1, y: 64, z: 1, dim: "minecraft:overworld" } }));
+        check(cam.undoStale(steve) && steve.getGameMode() === "Creative" && steve.inputPermissions.isPermissionCategoryEnabled(1), "a stale view is undone: " + steve.getGameMode());
+        steve.setGameMode("Survival");
+        cow.remove(); alex14.remove();
+        check(cam.viewerCount() === 0, "nobody is left watching");
+    }
+}
 check(log.errors.length === 0, "no engine-level errors after lifecycle: " + log.errors.slice(0, 3).join(" | "));
 const lateWarnings = log.warnings.filter(w => /\[RealAI\]/.test(w) && !/started|connected|unavailable|quota exceeded/.test(w));
 check(lateWarnings.length === 0, "no late [RealAI] warnings: " + lateWarnings.slice(0, 3).join(" | "));
