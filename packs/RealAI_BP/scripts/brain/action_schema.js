@@ -17,6 +17,10 @@ export const ACTIONS = {
     go_to_player: { doc: "Walk to a player or bot by name and stop near them.", params: { name: { type: "string", required: true } } },
     follow:       { doc: "Keep following a player/bot by name until 'stop'.", params: { name: { type: "string", required: true } } },
     stop:         { doc: "Cancel movement, jobs and follow.", params: {} },
+    look:         { doc: "Turn your head. facing: a compass word (north, south-east...), up, down or level; or yaw/pitch in degrees (yaw 0 = south, 90 = west, 180 = north, -90 = east; pitch -90 = straight up, 0 = level, 90 = straight down); or turn/tilt by that many degrees from where you face now. Instant; says what you are looking at.", params: { facing: { type: "string" }, yaw: { type: "number" }, pitch: { type: "number", min: -90, max: 90 }, turn: { type: "number", min: -360, max: 360 }, tilt: { type: "number", min: -180, max: 180 } } },
+    look_around:  { doc: "Turn all the way round (about a second) and report, in every direction, how far you can walk, what stops you, and what you can see far off: trees, ore, water, lava, buildings.", params: {} },
+    move:         { doc: "Hold the movement keys for a few seconds, relative to where you face: direction forward | back | left | right, seconds 0.2-15, optionally sprint, sneak or jump. You stop by yourself before a wall, a deep drop, lava or water, step up one-block ledges, and are told how far you got and what stopped you.", params: { direction: { type: "string", enum: ["forward", "back", "backward", "left", "right"] }, seconds: { type: "number", min: 0.2, max: 15 }, sprint: { type: "boolean" }, sneak: { type: "boolean" }, jump: { type: "boolean" } } },
+    jump:         { doc: "Jump once (to hop up a block, over a gap, or just because).", params: {} },
     look_at:      { doc: "Face a player/entity by name or a position.", params: { name: { type: "string" }, x: { type: "number" }, y: { type: "number" }, z: { type: "number" } } },
     attack:       { doc: "Fight a named entity/player (uses best weapon, strafes, blocks).", params: { name: { type: "string", required: true } } },
     defend:       { doc: "Fight back against anything hostile nearby, protect named player if given.", params: { protect: { type: "string" } } },
@@ -160,6 +164,7 @@ export function validateAction(a) {
         action[k] = v;
     }
     if (type === "look_at" && !action.name && action.x === undefined) return { ok: false, error: "look_at needs a name or x,y,z" };
+    if (type === "look" && ["facing", "yaw", "pitch", "turn", "tilt"].every(k => action[k] === undefined)) return { ok: false, error: "look needs facing, yaw/pitch or turn/tilt" };
     if (type === "interact" && !action.name && action.x === undefined) return { ok: false, error: "interact needs a name or x,y,z" };
     if (type === "build" && action.preset === "custom" && !action.blueprint) return { ok: false, error: "build custom needs a blueprint" };
     if (type === "build" && action.blueprint) {

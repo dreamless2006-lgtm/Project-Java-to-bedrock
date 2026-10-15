@@ -17,6 +17,8 @@ import { dropsOf, harvestCheck, breakTicks, materialMatcher, isOreId, bestTool }
 import { bridge } from "./transport.js";
 import { findPath } from "./path.js";
 import { kindOf, canStand } from "./terrain.js";
+import { COMPASS, compassOf, yawOf, yawFromWord, wrapYaw, lookingAt, probeStep } from "./senses.js";
+import { aroundReport, idAtFor, chunkKey } from "./around.js";
 export { presetBlueprint };
 
 const SOURCE = "llm";
@@ -59,7 +61,17 @@ function goTo(bot, target, mode = "sprint", prio = PRIO, enterWater = false) {
     }
     requestMove(bot, target, { priority: prio, source: SOURCE, mode, ttl: STEP * 3, enterWater });
 }
-function stopMoving(bot) { if (isPlayerBody(bot)) { const w = walkers.get(bot.id); walkers.delete(bot.id); if (w && w.sent) bridgeSend({ t: "stop" }); return; } releaseMove(bot, SOURCE); }
+// Raw key presses in progress (move): player id -> { sentAt } so that stopping lets the keys go.
+const pressing = new Map();
+function stopMoving(bot) {
+    if (isPlayerBody(bot)) {
+        const w = walkers.get(bot.id); walkers.delete(bot.id);
+        const keys = pressing.get(bot.id); pressing.delete(bot.id);
+        if ((w && w.sent) || keys) bridgeSend({ t: "stop" });
+        return;
+    }
+    releaseMove(bot, SOURCE);
+}
 export function stepPlayerBody(bot, now) {
     const w = walkers.get(bot.id);
     if (!w) return;
@@ -140,6 +152,28 @@ export function walkerInfo(bot) { const w = walkers.get(bot.id); return w ? { ta
 function lookAt(bot, target) {
     if (bridgeWalks(bot)) { bridgeSend({ t: "look", x: target.x + 0.5, y: (typeof target.y === "number" ? target.y : bot.location.y) + 0.5, z: target.z + 0.5 }); return; }
     try { faceBlock(bot, target); } catch (e) { /* ignore */ }
+}
+// ---- the head: where the body faces, and turning it ----------------------------------------------
+// A turn the bridge has been told about shows up in the game a tick or two later; until then the AI's own
+// last request is the truth about where the body faces.
+const views = new Map();   // bot id -> { yaw, pitch, at }
+function viewOf(bot) {
+    const v = views.get(bot.id);
+    if (v && system.currentTick - v.at < 10) return { yaw: v.yaw, pitch: v.pitch };
+    try { const r = bot.getRotation(); return { yaw: r.y, pitch: r.x }; } catch (e) { return { yaw: 0, pitch: 0 }; }
+}
+function setView(bot, yaw, pitch) {
+    yaw = wrapYaw(yaw); pitch = Math.max(-90, Math.min(90, pitch));
+    views.set(bot.id, { yaw, pitch, at: system.currentTick });
+    if (bridgeWalks(bot)) { bridgeSend({ t: "look", yaw: +yaw.toFixed(1), pitch: +pitch.toFixed(1) }); return; }
+    try { bot.setRotation({ x: pitch, y: yaw }); } catch (e) { /* ignore */ }
+}
+function eyeOf(bot) { const l = bot.location; return { x: l.x, y: l.y + 1.62, z: l.z }; }
+/** The block under the crosshair, in words. */
+function describeLooking(bot, view) {
+    const l = lookingAt(idAtFor(bot.dimension), eyeOf(bot), view.yaw, view.pitch);
+    if (l.id) return `looking at ${l.id} ${l.dist}m away at ${l.x} ${l.y} ${l.z}`;
+    return l.unloaded ? "looking at the edge of the loaded world" : "nothing in sight that way (open air)";
 }
 function cfg() { return getWorldConfig(); }
 
@@ -443,6 +477,104 @@ H.look_at = {
     },
 };
 
+H.look = {
+    start: (a, ctx) => {
+        const bot = ctx.bot;
+        let { yaw, pitch } = viewOf(bot);
+        if (a.facing) {
+            const w = String(a.facing).toLowerCase().trim();
+            const y = yawFromWord(w);
+            if (y !== null) { yaw = y; if (a.pitch === undefined && a.tilt === undefined) pitch = 0; }
+            else if (/^(up|sky|ceiling|overhead)$/.test(w)) pitch = -90;
+            else if (/^(down|ground|floor|feet)$/.test(w)) pitch = 90;
+            else if (/^(level|ahead|forward|straight)$/.test(w)) pitch = 0;
+            else return { done: true, result: `look: '${a.facing}' is not a direction (use a compass word such as north-east, up, down or level, or yaw and pitch in degrees)` };
+        }
+        if (a.yaw !== undefined) yaw = a.yaw;
+        if (a.turn !== undefined) yaw += a.turn;
+        if (a.pitch !== undefined) pitch = a.pitch;
+        if (a.tilt !== undefined) pitch += a.tilt;
+        setView(bot, yaw, pitch);
+        const v = viewOf(bot);
+        return { done: true, result: `facing ${compassOf(v.yaw).name} (yaw ${Math.round(v.yaw)}, pitch ${Math.round(v.pitch)}); ${describeLooking(bot, v)}` };
+    },
+};
+
+// Turn a full circle, a compass point every few ticks (other players see the head turn), then report.
+H.look_around = {
+    start: (a, ctx) => { const v = viewOf(ctx.bot); return { t0: ctx.now, view0: v, c0: COMPASS.indexOf(compassOf(v.yaw)), shown: -1 }; },
+    step: (s, ctx) => {
+        const bot = ctx.bot;
+        const k = Math.floor((ctx.now - s.t0) / 3);
+        if (k < 8) { if (k !== s.shown) { s.shown = k; setView(bot, yawOf(COMPASS[(s.c0 + k) % 8]), 0); } return undefined; }
+        setView(bot, s.view0.yaw, s.view0.pitch);
+        let rep;
+        try { ctx.brain.visited = ctx.brain.visited || new Set(); rep = aroundReport(bot, { yaw: s.view0.yaw, full: true, visited: ctx.brain.visited }); } catch (e) { return { done: true, result: "could not make out the surroundings" }; }
+        return { done: true, result: `looked all the way round. ${rep.text}` };
+    },
+};
+
+H.look_around.fast = true;
+
+H.jump = {
+    start: (a, ctx) => {
+        const bot = ctx.bot;
+        if (bridgeWalks(bot)) bridgeSend({ t: "jump" });
+        else { try { jump(bot); } catch (e) { /* players cannot be pushed */ } }
+        return { done: true, result: "jumped" };
+    },
+};
+
+// The keys themselves: hold forward, back, left or right (relative to the way the head faces) for a few
+// seconds. The body stops by itself before a wall, a deep drop, lava or water, steps up one-block ledges, and
+// says how far it got. For the bridge account this is a real key press: the bridge sends the client's input
+// every tick; other bodies are walked a step ahead of themselves.
+H.move = {
+    start: (a, ctx) => {
+        const bot = ctx.bot;
+        const dir = String(a.direction || "forward").toLowerCase();
+        const f = dir === "forward" ? 1 : dir === "back" || dir === "backward" ? -1 : 0;
+        const side = dir === "left" ? 1 : dir === "right" ? -1 : 0;
+        const seconds = Math.max(0.2, Math.min(15, Number(a.seconds) || 1.5));
+        stopMoving(bot);
+        return { dir: dir === "backward" ? "back" : dir, f, s: side, ticks: Math.round(seconds * 20), t0: ctx.now, from: { x: bot.location.x, y: bot.location.y, z: bot.location.z }, sprint: a.sprint === true && f > 0 && !a.sneak, sneak: a.sneak === true, jump: a.jump === true, sentAt: -100, last: { x: bot.location.x, z: bot.location.z }, lastAt: ctx.now };
+    },
+    step: (s, ctx) => {
+        const bot = ctx.bot, now = ctx.now, loc = bot.location;
+        const finish = (why) => { stopMoving(bot); return { done: true, result: `moved ${s.dir} ${Math.hypot(bot.location.x - s.from.x, bot.location.z - s.from.z).toFixed(1)} blocks to ${fmtPos(bot.location)}${why ? "; " + why : ""}` }; };
+        if (now - s.t0 >= s.ticks) return finish("");
+        const yr = viewOf(bot).yaw * Math.PI / 180;
+        let hx = -Math.sin(yr) * s.f + Math.cos(yr) * s.s, hz = Math.cos(yr) * s.f + Math.sin(yr) * s.s;
+        const hl = Math.hypot(hx, hz) || 1; hx /= hl; hz /= hl;
+        // the ground a step ahead: stop at a wall, a deep drop, lava, harmful blocks or water; note a ledge to hop
+        let floor = Math.floor(loc.y + 0.05), climb = false;
+        let swimming = false; try { swimming = !!bot.isInWater; } catch (e) { /* ignore */ }
+        if (!swimming) {
+            const reach = 0.9 + (s.sprint ? 0.4 : 0);
+            const p = probeStep(idAtFor(bot.dimension), loc, { x: loc.x + hx * reach, z: loc.z + hz * reach });
+            if (!p.ok) {
+                const why = p.stop === "wall" ? `a wall of ${p.block || "blocks"} is in the way` : p.stop === "drop" ? `a drop of ${p.fall >= 40 ? "40+" : p.fall} blocks lies ahead` : p.stop === "water" ? "water lies ahead (move_to swims across, or go round)" : p.stop === "lava" ? "lava lies ahead" : p.stop === "hazard" ? `${p.block || "something harmful"} lies ahead` : "the loaded world ends ahead";
+                return finish("stopped: " + why);
+            }
+            floor = p.y; climb = p.climb;
+        }
+        if (bridgeWalks(bot)) {
+            if (now - s.sentAt >= 2) {
+                bridgeSend({ t: "input", f: s.f, s: s.s, sprint: s.sprint, sneak: s.sneak, jump: s.jump || climb, ms: 250, floor, fx: +loc.x.toFixed(2), fy: +loc.y.toFixed(2), fz: +loc.z.toFixed(2) });
+                s.sentAt = now; pressing.set(bot.id, now);
+            }
+        } else {
+            goTo(bot, { x: loc.x + hx * 2, y: floor, z: loc.z + hz * 2 }, s.sprint ? "sprint" : "walk", PRIO, false);
+        }
+        // nothing happening although the keys are down: something the world map does not show is in the way
+        if (now - s.lastAt >= 15) {
+            if (now - s.t0 >= 20 && Math.hypot(loc.x - s.last.x, loc.z - s.last.z) < 0.12) return finish("stopped: no progress, something is in the way");
+            s.last = { x: loc.x, z: loc.z }; s.lastAt = now;
+        }
+        return undefined;
+    },
+};
+
 H.move_to = {
     start: (a, ctx) => ({ target: { x: a.x + 0.5, y: a.y, z: a.z + 0.5 }, mode: a.sprint === false ? "walk" : "sprint", started: ctx.now, lastPos: { ...ctx.bot.location }, stuck: 0 }),
     step: (s, ctx) => {
@@ -455,6 +587,8 @@ H.move_to = {
         return undefined;
     },
 };
+
+H.move.fast = true;
 
 H.go_to_player = {
     start: (a, ctx) => {
@@ -820,7 +954,23 @@ H.explore = {
     start: (a, ctx) => {
         const dirs = { north: [0, -1], south: [0, 1], east: [1, 0], west: [-1, 0] };
         let [dx, dz] = dirs[a.direction] || [0, 0];
-        if (!dx && !dz) { const ang = Math.random() * Math.PI * 2; dx = Math.cos(ang); dz = Math.sin(ang); }
+        if (!dx && !dz) {
+            // no direction given: take the way that goes furthest and has not been walked, rather than a random one
+            try {
+                ctx.brain.visited = ctx.brain.visited || new Set();
+                const rep = aroundReport(ctx.bot, { yaw: viewOf(ctx.bot).yaw, visited: ctx.brain.visited });
+                let best = null, bestScore = -Infinity;
+                for (const row of rep.rows) {
+                    if (row.stop === "lava") continue;
+                    const c = COMPASS.find(c => c.name === row.dir);
+                    const unexplored = !ctx.brain.visited.has(chunkKey(ctx.bot.dimension.id, row.end.x, row.end.z));
+                    const score = row.steps + (unexplored ? 12 : 0) + (row.stop === "clear" ? 4 : 0) - (row.stop === "water" ? 6 : 0) + Math.random() * 5;
+                    if (score > bestScore) { bestScore = score; best = c; }
+                }
+                if (best) { const n = Math.hypot(best.dx, best.dz); dx = best.dx / n; dz = best.dz / n; }
+            } catch (e) { /* fall through to a random heading */ }
+            if (!dx && !dz) { const ang = Math.random() * Math.PI * 2; dx = Math.cos(ang); dz = Math.sin(ang); }
+        }
         const b = ctx.bot.location;
         const range = 60 + Math.random() * 60;
         return { target: { x: b.x + dx * range, y: b.y, z: b.z + dz * range }, started: ctx.now, lookingFor: a.looking_for, lastPos: { ...b }, stuck: 0 };
@@ -1492,7 +1642,7 @@ export class Actuator {
         if (actions.length === 1 && actions[0].type === "wait" && (this.current || this.queue.length)) return;
         for (const a of actions) {
             if (a.type === "stop") { this.queue.length = 0; if (this.current) this.finish(`cancelled ${this.current.action.type}`); this.run(a, system.currentTick); continue; }
-            if (a.type === "follow" || a.type === "set_home" || a.type === "look_at" || a.type === "emote") { this.run(a, system.currentTick); continue; }   // instant
+            if (a.type === "follow" || a.type === "set_home" || a.type === "look_at" || a.type === "look" || a.type === "jump" || a.type === "emote") { this.run(a, system.currentTick); continue; }   // instant
             this.queue.push(a);
         }
     }
@@ -1514,13 +1664,25 @@ export class Actuator {
         if (!this.bot.isValid) return;
         if (this.follow) this.tickFollow(now);
         if (!this.current && this.queue.length) this.run(this.queue.shift(), now);
+        if (this.lastStepTick !== now) this.stepCurrent(now);
+    }
+
+    // Most actions are supervised every few ticks; the ones that press keys or turn the head (handler.fast)
+    // are stepped on every tick by the per-tick layer, so a key is never released late.
+    pulse(now) {
+        const c = this.current;
+        if (c && c.handler.fast && this.lastStepTick !== now) this.stepCurrent(now);
+    }
+
+    stepCurrent(now) {
         if (!this.current) return;
+        this.lastStepTick = now;
         const { action, state, handler } = this.current;
         if (!handler.step) { this.finish(`${action.type}: done`); return; }
         let r;
         try { r = handler.step(state, this.ctx(now)); } catch (e) { this.finish(`${action.type} failed: ${e?.message || e}`); return; }
         if (r && r.done) this.finish(`${action.type}: ${r.result}`);
-        else if (now - this.current.startedTick > 20 * 60 * 8) this.finish(`${action.type}: timed out`);
+        else if (this.current && now - this.current.startedTick > 20 * 60 * 8) this.finish(`${action.type}: timed out`);
     }
 
     finish(text) {

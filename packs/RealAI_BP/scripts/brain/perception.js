@@ -4,6 +4,8 @@ import { world, system, EntityComponentTypes, EquipmentSlot } from "@minecraft/s
 import { nameOf, isModdedId } from "./world_content.js";
 import { getFriendTask } from "../ai_task_worker.js";
 import { whoOwns } from "../ai_navigation.js";
+import { aroundReport, markVisited } from "./around.js";
+import { lookingAt } from "./senses.js";
 
 const SCAN_R = 5;           // horizontal radius of the block scan
 const SCAN_DY = 3;          // vertical half-height
@@ -184,6 +186,22 @@ export function observe(bot, brain, extras = {}) {
     try { const w = bot.dimension.getWeather?.(); if (w && w !== "Clear") obs.weather = String(w).toLowerCase(); } catch (e) { /* beta only */ }
     try { const b = bot.dimension.getBlock(loc)?.getBiome?.(); if (b?.id) obs.biome = nameOf(b.id); } catch (e) { /* optional */ }
     try { const r = bot.getRotation(); obs.facing = dirName({ x: 0, z: 0 }, { x: -Math.sin(r.y * Math.PI / 180) * 10, z: Math.cos(r.y * Math.PI / 180) * 10 }); } catch (e) { /* ignore */ }
+
+    // eyes: which way each direction goes on and what stands out; kept for a few seconds while standing still
+    try {
+        brain.visited = brain.visited || new Set();
+        const r = bot.getRotation();
+        markVisited(brain.visited, bot.dimension.id, loc.x, loc.z);
+        const c = brain._around;
+        const fresh = c && system.currentTick - c.tick < 60 && Math.hypot(c.x - loc.x, c.z - loc.z) < 2 && Math.abs(c.yaw - r.y) < 20 && c.dim === bot.dimension.id;
+        if (!fresh) {
+            const rep = aroundReport(bot, { yaw: r.y, visited: brain.visited });
+            const look = lookingAt((x, y, z) => { try { const b = bot.dimension.getBlock({ x, y, z }); return b ? b.typeId : null; } catch (e2) { return null; } }, { x: loc.x, y: loc.y + 1.62, z: loc.z }, r.y, r.x);
+            brain._around = { tick: system.currentTick, x: loc.x, z: loc.z, yaw: r.y, dim: bot.dimension.id, text: rep.text, looking: look.id ? `looking at ${look.id} ${look.dist}m away` : "looking at open air" };
+        }
+        obs.surroundings = brain._around.text;
+        obs.looking = brain._around.looking;
+    } catch (e) { /* the senses are optional */ }
 
     const h = healthOf(bot);
     obs.health = h ? h.hp : "?";

@@ -51,6 +51,8 @@ export class Body {
         this.mode = "walk";
         this.sprinting = false;
         this.jumping = false;
+        this.sneaking = false;
+        this.keys = null;            // raw keys held on the AI's say-so: {f, s, sprint, sneak, jump, left, floor}; expires on its own
         this.jumpRequested = false;
         this.jumpDelay = 0;
         this.pendingTeleport = false;
@@ -134,7 +136,7 @@ export class Body {
     /** Dead: the death screen is up. No input is sent until the server has respawned us. */
     markDead() {
         this.alive = false; this.target = null; this.vel = { x: 0, y: 0, z: 0 };
-        this.jumping = false; this.jumpRequested = false; this.sprinting = false; this.pendingTeleport = false;
+        this.jumping = false; this.jumpRequested = false; this.sprinting = false; this.sneaking = false; this.keys = null; this.pendingTeleport = false;
         this.deaths = (this.deaths || 0) + 1;
     }
 
@@ -238,7 +240,32 @@ export class Body {
         return true;
     }
 
-    stop() { this.target = null; }
+    stop() { this.target = null; this.keys = null; }
+
+    /**
+     * Hold keys, as a player's fingers do: f = +1 forward / -1 back, s = +1 strafe left / -1 right, plus
+     * sprint (forward only), sneak and jump. The keys stay down for `ms` and then let go by themselves,
+     * so a body whose addon went quiet stops instead of running on; refresh them to keep walking.
+     * `floor` is the height of the ground a step ahead (the addon reads it from the world), which is how a
+     * body without eyes knows to hop up a ledge or drop down one.
+     */
+    press({ f = 0, s = 0, sprint = false, sneak = false, jump = false, ms = 300, floor } = {}) {
+        if (!this.ready || !this.alive) return false;
+        const axis = (v) => (v > 0.1 ? 1 : v < -0.1 ? -1 : 0);
+        f = axis(Number(f)); s = axis(Number(s));
+        if (!f && !s && !jump && !sneak) { this.keys = null; return true; }
+        this.target = null;
+        this.keys = { f, s, sprint: !!sprint && f > 0 && !sneak, sneak: !!sneak, jump: !!jump, left: Math.max(1, Math.min(200, Math.ceil((Number(ms) || 300) / 50))), floor: typeof floor === "number" && Number.isFinite(floor) ? floor : null };
+        return true;
+    }
+
+    release() { this.keys = null; }
+
+    /** Turn the head to an absolute yaw and pitch (degrees, Bedrock convention: yaw 0 south, negative pitch up). */
+    setLook(yaw, pitch) {
+        if (typeof yaw === "number" && Number.isFinite(yaw)) this.yaw = ((yaw + 180) % 360 + 360) % 360 - 180;
+        if (typeof pitch === "number" && Number.isFinite(pitch)) this.pitch = Math.max(-90, Math.min(90, pitch));
+    }
 
     /** Hop over the next block edge: the server simulates the jump from the flags. */
     jump() { if (this.alive) this.jumpRequested = true; }
@@ -275,28 +302,46 @@ export class Body {
             if (this.onGround) flags.add("vertical_collision");
             return this.packet(flags, move, { x: 0, y: GROUND_DELTA_Y, z: 0 });
         }
-        // 2. face the target and decide whether the forward key is held
-        let keyUp = false;
-        if (this.target) {
+        // 2. what the fingers do: raw keys the AI is holding, or the walk to a target (face it, hold forward)
+        let keyUp = false, mf = 0, ms = 0, wantSprint = false, wantSneak = false;
+        if (this.keys) {
+            if (this.keys.left-- <= 0) this.keys = null;
+        }
+        if (this.keys) {
+            mf = this.keys.f; ms = this.keys.s; wantSprint = this.keys.sprint; wantSneak = this.keys.sneak;
+            if (this.keys.jump) this.jumpRequested = true;
+            keyUp = mf !== 0 || ms !== 0;
+        } else if (this.target) {
             const dx = this.target.x - this.pos.x, dz = this.target.z - this.pos.z;
             const flat = Math.hypot(dx, dz);
             if (flat <= ARRIVE) { this.floor = this.target.y; this.target = null; }
-            else { this.yaw = Math.atan2(-dx, dz) * DEG; keyUp = true; }
+            else { this.yaw = Math.atan2(-dx, dz) * DEG; keyUp = true; mf = 1; wantSprint = this.mode === "sprint"; }
         }
-        // 3. sprint edges and state
-        if (keyUp && this.mode === "sprint") {
+        // 3. sprint and sneak edges and state
+        if (keyUp && wantSprint && mf > 0) {
             if (!this.sprinting) { flags.add("start_sprinting"); this.sprinting = true; }
             flags.add("sprint_down"); flags.add("sprinting");
         } else if (this.sprinting) { flags.add("stop_sprinting"); this.sprinting = false; }
-        // 4. the forward impulse
+        if (wantSneak) {
+            if (!this.sneaking) { flags.add("start_sneaking"); this.sneaking = true; }
+            flags.add("sneaking"); flags.add("sneak_down"); flags.add("persist_sneak"); flags.add("sneak_current_raw");
+        } else if (this.sneaking) { flags.add("stop_sneaking"); this.sneaking = false; flags.add("sneak_released_raw"); }
+        // 4. the impulse: forward and strafe keys together, never faster than one key (vanilla moveRelative)
         const yawRad = this.yaw / DEG;
         const fwd = { x: -Math.sin(yawRad), z: Math.cos(yawRad) };
+        const left = { x: Math.cos(yawRad), z: Math.sin(yawRad) };
         if (keyUp) {
-            const speed = this.onGround ? PHYS.groundSpeed * (this.sprinting ? PHYS.sprintMul : 1) : (this.sprinting ? PHYS.sprintAirSpeed : PHYS.airSpeed);
-            this.vel.x += fwd.x * PHYS.impulse * speed;
-            this.vel.z += fwd.z * PHYS.impulse * speed;
-            flags.add("up");
-            move = { x: 0, z: 1 };
+            let speed = this.onGround ? PHYS.groundSpeed * (this.sprinting ? PHYS.sprintMul : 1) : (this.sprinting ? PHYS.sprintAirSpeed : PHYS.airSpeed);
+            if (this.sneaking && this.onGround) speed *= 0.3;
+            const ix = ms * PHYS.impulse, iz = mf * PHYS.impulse;
+            const norm = Math.max(Math.hypot(ix, iz), 1);
+            const ax = ix / norm * speed, az = iz / norm * speed;
+            this.vel.x += fwd.x * az + left.x * ax;
+            this.vel.z += fwd.z * az + left.z * ax;
+            if (mf > 0) flags.add("up"); else if (mf < 0) flags.add("down");
+            if (ms > 0) flags.add("left"); else if (ms < 0) flags.add("right");
+            if (mf > 0 && ms > 0) flags.add("up_left"); else if (mf > 0 && ms < 0) flags.add("up_right"); else if (mf < 0 && ms > 0) flags.add("down_left"); else if (mf < 0 && ms < 0) flags.add("down_right");
+            move = { x: ms, z: mf };
         }
         // 5. jump (only from the ground, with the vanilla cooldown)
         const prevGround = this.onGround;
@@ -315,7 +360,7 @@ export class Body {
         const prevY = this.pos.y;
         this.pos.x += this.vel.x; this.pos.y += this.vel.y; this.pos.z += this.vel.z;
         const near = this.target ? Math.hypot(this.target.x - this.pos.x, this.target.z - this.pos.z) < 1.2 : false;
-        const floorY = (this.target && near) ? this.target.y : this.floor;
+        const floorY = this.keys && this.keys.floor !== null ? this.keys.floor : (this.target && near) ? this.target.y : this.floor;
         if (this.pos.y <= floorY + 1e-9) {
             if (prevY >= floorY - 1e-9 || (prevGround && floorY - prevY <= PHYS.stepHeight)) {
                 // landed on it, or stepped up onto it (a slab, a stair)
@@ -363,7 +408,7 @@ export class Body {
     /** Where the body is, for logs and the addon. */
     status() {
         const r2 = (n) => +Number(n).toFixed(2);
-        return { ready: this.ready, alive: this.alive, startIsEye: this.startIsEye, calibrated: this.calibrated, pos: this.pos ? { x: r2(this.pos.x), y: r2(this.pos.y), z: r2(this.pos.z) } : null, vel: { x: r2(this.vel.x), y: r2(this.vel.y), z: r2(this.vel.z) }, floor: r2(this.floor), yaw: Math.round(this.yaw), onGround: this.onGround, walking: !!this.target, target: this.target ? { x: r2(this.target.x), y: r2(this.target.y), z: r2(this.target.z) } : null, sprinting: this.sprinting, jumping: this.jumping, pendingTeleport: this.pendingTeleport, dimensionChange: !!this.dimensionChange, tick: Number(this.tick), corrections: this.corrections, teleports: this.teleports, resyncs: this.resyncs, gameMode: this.gameMode };
+        return { ready: this.ready, alive: this.alive, startIsEye: this.startIsEye, calibrated: this.calibrated, pos: this.pos ? { x: r2(this.pos.x), y: r2(this.pos.y), z: r2(this.pos.z) } : null, vel: { x: r2(this.vel.x), y: r2(this.vel.y), z: r2(this.vel.z) }, floor: r2(this.floor), yaw: Math.round(this.yaw), onGround: this.onGround, walking: !!this.target, keys: this.keys ? { f: this.keys.f, s: this.keys.s, sprint: this.keys.sprint, sneak: this.keys.sneak, jump: this.keys.jump } : null, pitch: Math.round(this.pitch), target: this.target ? { x: r2(this.target.x), y: r2(this.target.y), z: r2(this.target.z) } : null, sprinting: this.sprinting, jumping: this.jumping, pendingTeleport: this.pendingTeleport, dimensionChange: !!this.dimensionChange, tick: Number(this.tick), corrections: this.corrections, teleports: this.teleports, resyncs: this.resyncs, gameMode: this.gameMode };
     }
 
     // ---- helpers ----

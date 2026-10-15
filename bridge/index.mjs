@@ -436,8 +436,17 @@ export class Bridge {
             case "stop":
                 this.body.stop();
                 break;
+            case "input":
+                // raw keys, as the AI pressed them: forward/back, strafe, sprint, sneak, jump (see Body.press)
+                if (typeof msg.fx === "number") this.body.anchorFrom({ x: msg.fx, y: msg.fy, z: msg.fz });
+                this.body.press({ f: msg.f, s: msg.s, sprint: !!msg.sprint, sneak: !!msg.sneak, jump: !!msg.jump, ms: msg.ms, floor: typeof msg.floor === "number" ? msg.floor : undefined });
+                break;
+            case "jump":
+                this.body.jump();
+                break;
             case "look":
-                this.body.lookAt({ x: Number(msg.x), y: Number(msg.y), z: Number(msg.z) });
+                if (typeof msg.yaw === "number" || typeof msg.pitch === "number") this.body.setLook(msg.yaw, msg.pitch);
+                else this.body.lookAt({ x: Number(msg.x), y: Number(msg.y), z: Number(msg.z) });
                 break;
             case "swing":
                 // the arm swing everyone sees when a real client hits or digs

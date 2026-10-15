@@ -353,6 +353,7 @@ export class BotBrain {
         if (!this.fast || this.dead) return;
         try { if (!this.bot.isValid) return; } catch (e) { return; }
         try { this.reflexScan(now); } catch (e) { /* ignore */ }
+        try { this.actuator.pulse(now); } catch (e) { console.warn(`[RealAI] ${this.name} pulse: ${e}`); }
         try { combatTick(this, now); } catch (e) { /* ignore */ }
         try { mlgWater(this, now); } catch (e) { /* ignore */ }
         if (now % 10 === 0) {

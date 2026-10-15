@@ -185,3 +185,80 @@ test("lookAt turns the head without moving", () => {
     assert.deepEqual(b.status().pos, { x: 10, y: 64, z: 10 });
     assert.equal(b.status().gameMode, "survival");
 });
+
+test("raw keys: forward goes the way the head faces, back goes the other way, strafe left is the body's left", () => {
+    const run = (keys, yaw = 0, ticks = 30) => {
+        const b = new Body(); start(b); b.setLook(yaw, 0);
+        b.press({ ms: 5000, ...keys });
+        let p; for (let i = 0; i < ticks; i++) p = b.step();
+        return { b, p, dx: b.pos.x - 10, dz: b.pos.z - 10 };
+    };
+    let r = run({ f: 1 });                       // facing south (+z)
+    assert.ok(r.dz > 3 && Math.abs(r.dx) < 1e-9, "forward is +z at yaw 0: " + r.dz);
+    assert.ok(r.p.input_data.includes("up") && !r.p.input_data.includes("down") && sorted(r.p.input_data));
+    assert.equal(r.b.yaw, 0, "holding a key does not turn the head");
+    r = run({ f: -1 });
+    assert.ok(r.dz < -3 && Math.abs(r.dx) < 1e-9, "back is -z: " + r.dz);
+    assert.ok(r.p.input_data.includes("down"));
+    assert.deepEqual(r.p.move_vector, { x: 0, z: -1 });
+    r = run({ s: 1 });                           // facing south, the left hand is east (+x)
+    assert.ok(r.dx > 3 && Math.abs(r.dz) < 1e-9, "left of a south-facing body is +x: " + r.dx);
+    assert.ok(r.p.input_data.includes("left"));
+    r = run({ s: -1 });
+    assert.ok(r.dx < -3, "right is -x");
+    r = run({ f: 1 }, 90);                       // facing west (-x)
+    assert.ok(r.dx < -3 && Math.abs(r.dz) < 1e-6, "forward at yaw 90 is -x: " + r.dx);
+    r = run({ f: 1 }, -90);
+    assert.ok(r.dx > 3, "forward at yaw -90 is +x");
+});
+
+test("raw keys: a diagonal is no faster than straight on, sneaking is slow, sprinting is fast, and the lease runs out", () => {
+    const speed = (keys, ticks = 40) => { const b = new Body(); start(b); b.setLook(0, 0); b.press({ ms: 5000, ...keys }); const a = { ...b.pos }; for (let i = 0; i < ticks; i++) b.step(); const z = { ...b.pos }; return Math.hypot(z.x - a.x, z.z - a.z) / ticks; };
+    const straight = speed({ f: 1 }), diag = speed({ f: 1, s: 1 }), sneak = speed({ f: 1, sneak: true }), sprint = speed({ f: 1, sprint: true });
+    assert.ok(Math.abs(diag - straight) / straight < 0.06, `diagonal ${diag.toFixed(3)} vs straight ${straight.toFixed(3)}`);
+    assert.ok(sneak < straight * 0.45, `sneaking ${sneak.toFixed(3)} vs ${straight.toFixed(3)}`);
+    assert.ok(sprint > straight * 1.2, `sprinting ${sprint.toFixed(3)} vs ${straight.toFixed(3)}`);
+    const b = new Body(); start(b); b.setLook(0, 0);
+    b.press({ f: 1, ms: 200 });                  // four ticks and the key lets go by itself
+    let last; for (let i = 0; i < 4; i++) last = b.step();
+    assert.ok(last.input_data.includes("up"));
+    for (let i = 0; i < 3; i++) last = b.step();
+    assert.ok(!last.input_data.includes("up") && b.keys === null, "released after the lease");
+    for (let i = 0; i < 60; i++) b.step();
+    assert.ok(Math.hypot(b.vel.x, b.vel.z) < 1e-3, "and friction stops the body");
+    assert.ok(b.pos.z - 10 > 0.2 && b.pos.z - 10 < 1.2, "having moved about a block: " + (b.pos.z - 10));
+});
+
+test("raw keys: sneak and sprint edges, jump held, the ground a step ahead, stop and press with nothing", () => {
+    const b = new Body(); start(b); b.setLook(0, 0);
+    b.press({ f: 1, sneak: true, ms: 5000 });
+    let p = b.step();
+    assert.ok(p.input_data.includes("start_sneaking") && p.input_data.includes("sneaking") && sorted(p.input_data));
+    p = b.step();
+    assert.ok(!p.input_data.includes("start_sneaking") && p.input_data.includes("sneaking"));
+    b.press({ f: 1, sprint: true, ms: 5000 });
+    p = b.step();
+    assert.ok(p.input_data.includes("stop_sneaking") && p.input_data.includes("start_sprinting"));
+    // a ledge one block up: the ground ahead says 65, the body hops by itself
+    const c = new Body(); start(c); c.setLook(0, 0);
+    let peak = 64; let landed = null;
+    for (let i = 0; i < 40; i++) { c.press({ f: 1, ms: 300, floor: 65 }); c.step(); peak = Math.max(peak, c.pos.y); if (c.onGround && c.pos.y >= 64.99) { landed = c.pos.y; break; } }
+    assert.ok(peak > 64.9 && landed === 65, `hopped onto the ledge: peak ${peak.toFixed(2)}, landed ${landed}`);
+    // held jump hops again and again
+    const d = new Body(); start(d);
+    let jumps = 0; for (let i = 0; i < 60; i++) { d.press({ jump: true, ms: 300 }); const q = d.step(); if (q.input_data.includes("start_jumping")) jumps++; }
+    assert.ok(jumps >= 3, "hops repeatedly: " + jumps);
+    // stop() and an empty press let go
+    const e = new Body(); start(e); e.press({ f: 1, ms: 5000 }); e.stop(); assert.equal(e.keys, null);
+    e.press({ f: 1, ms: 5000 }); e.press({}); assert.equal(e.keys, null);
+    // dead bodies press nothing
+    const f = new Body(); start(f); f.alive = false; assert.equal(f.press({ f: 1 }), false);
+});
+
+test("setLook turns the head to an absolute yaw and pitch, wrapped and clamped", () => {
+    const b = new Body(); start(b);
+    b.setLook(270, 100); assert.equal(b.yaw, -90); assert.equal(b.pitch, 90);
+    b.setLook(-200, -120); assert.ok(near(b.yaw, 160)); assert.equal(b.pitch, -90);
+    b.setLook(undefined, 10); assert.ok(near(b.yaw, 160)); assert.equal(b.pitch, 10);
+    const p = b.step(); assert.ok(near(p.yaw, 160) && p.pitch === 10 && p.head_yaw === p.yaw);
+});

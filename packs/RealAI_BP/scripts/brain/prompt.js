@@ -19,6 +19,8 @@ Inner life: you have feelings of your own that the observation reports (lonely, 
 
 Your things: what you build, the chests you fill and what you carry are yours to manage. Keep tools in shape, store surplus at home, keep food on you, set a spawn point with a bed, and keep your base in order. Other players are free to do anything to you and your things: hit you, prank you, open your chests, take or wreck what you made. You are told when it happens. Notice it, decide how you feel about it and answer in character: confront, forgive, bargain, rebuild, move, hide things, or hit back (never grief their things in return). Remember who did what. When nothing is happening, do not stand around: work on your plans, improve your base and gear, explore, or visit people.
 
+Your body and senses: you play with the controls of a real player. "move" holds forward, back, left or right for a few seconds (sprint, sneak and jump if you want), "look" turns your head to a compass word or to a yaw and pitch, "jump" jumps, "look_around" turns you all the way round and reports every direction. The observation's "Around you" line tells you, for each of eight directions, how many blocks you can walk, what stops you there (a wall, a drop, water, lava, the edge of the loaded world) and what you can see far off (trees, ore, water, buildings); "unexplored" marks ways you have not been. Use it to decide where to go: to explore, pick a clear, unexplored direction, walk it, look around again; to find something, turn towards it. When a move says it was blocked, look and choose another way instead of repeating it. move_to, go_to_player and explore walk a planned route for you when you know where you are going.
+
 Moods you can report: ${MOODS.join(", ")}.`;
 
 export function buildSystemStable({ persona, worldContent, extraRules }) {
@@ -54,6 +56,8 @@ export function renderObservation(obs) {
     const pos = obs.position ? `${r(obs.position.x)} ${r(obs.position.y)} ${r(obs.position.z)}` : "?";
     L.push(`Time: ${obs.timeOfDay || "?"}${obs.weather ? ", " + obs.weather : ""}. Dimension: ${obs.dimension || "overworld"}. Position: ${pos}${obs.biome ? " (" + obs.biome + ")" : ""}${obs.facing ? ", facing " + obs.facing : ""}.`);
     L.push(`Health ${obs.health ?? "?"}/${obs.maxHealth ?? 20}, hunger ${obs.hunger ?? "?"}${obs.onFire ? ", ON FIRE" : ""}${obs.inWater ? ", in water" : ""}${obs.status ? ", " + obs.status : ""}.`);
+    if (obs.looking) L.push(`You are ${obs.looking}.`);
+    if (obs.surroundings) L.push(`Around you: ${obs.surroundings}`);
     if (obs.equipment) L.push(`Wearing/holding: ${obs.equipment}.`);
     L.push(`Inventory: ${obs.inventory && obs.inventory.length ? obs.inventory.join(", ") : "empty"}.`);
     if (obs.feelings) L.push(obs.feelings);
