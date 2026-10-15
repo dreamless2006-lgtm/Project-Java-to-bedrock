@@ -12,9 +12,6 @@ import { renderMemory } from "./memory.js";
 import { worldContent, nameOf } from "./world_content.js";
 import { transportInfo } from "./transport.js";
 import { EDITION } from "./net_impl.js";
-import { startWatching, stopWatching, watchState, findTarget, MODE_TEXT } from "./sightcam.js";
-import { sightPicture } from "./perception.js";
-import { formatSight } from "./sight.js";
 
 export const HUB_ITEM = "rg:friend_list_opener";   // the existing "Friend List" item also opens the hub (sneak + use)
 const ACCESS_KEY = "realai:access";
@@ -34,41 +31,11 @@ export function showHub(player) {
     f.button("AI & Memory", "textures/items/paper");
     f.button("Profiles & Models", "textures/items/clock_item");
     f.button("Bots near me", "textures/items/assist");
-    f.button("Watch the AI", "textures/items/spyglass");
     f.show(player).then(r => {
         if (r.canceled) return;
-        const go = [showGettingStarted, showCompanions, showBehavior, showBudget, showAccessLists, showModIntelligence, showMemoryTab, showProfiles, showNearby, showWatch][r.selection];
+        const go = [showGettingStarted, showCompanions, showBehavior, showBudget, showAccessLists, showModIntelligence, showMemoryTab, showProfiles, showNearby][r.selection];
         later(() => go(player));
     }).catch(e => console.warn("[RealAI] hub", e));
-}
-
-// Watch the AI: an invisible spectator whose screen is the AI's view, or the text picture its model is given each turn.
-function showWatch(player) {
-    const w = watchState(player);
-    const t = findTarget("");
-    const f = new ActionFormData().title("Watch the AI");
-    f.body(w ? `Watching §b${w.target}§r (${MODE_TEXT[w.mode]}). Your controls are locked until you leave.` : t ? `Watch §b${t.name}§r play. You become an invisible spectator whose screen is the AI's view; your controls are locked, and you are put back where you were when you leave.` : "No AI is playing yet. Start the bridge and let it join first.");
-    f.button("Through its eyes", "textures/items/spyglass");
-    f.button("Over its shoulder", "textures/items/spyglass");
-    f.button("Without the camera (if the picture looks wrong)", "textures/items/spyglass");
-    f.button("What its model sees (text)", "textures/items/paper");
-    f.button(w ? "Leave: back where I was" : "Back", "textures/ui/icon_import");
-    if (w) f.button("Leave: stay beside the AI", "textures/ui/icon_import");
-    f.show(player).then(r => {
-        if (r.canceled) return;
-        const pick = r.selection;
-        if (pick <= 2) {
-            if (!isOperator(player)) return player.sendMessage("§conly operators can watch through the AI's eyes");
-            const res = startWatching(player, w?.target || "", { mode: ["eyes", "behind", "body"][pick] });
-            player.sendMessage(res.ok ? `§a[Real AI] Watching ${res.name} (${MODE_TEXT[res.mode]}). Open this menu again, or chat !ai sight off, to leave.` : `§c${res.error}`);
-        } else if (pick === 3) {
-            let text = "The AI's picture is not available yet.";
-            try { const b = t; if (b) text = formatSight(sightPicture(b.bot)); } catch (e) { text = "The picture could not be drawn: " + e; }
-            new MessageFormData().title("What the AI sees").body(text + "\n\n§7Letters are materials (T tree, # rock, ~ water, B built...), digits on the right are how far; the chat font is not fixed-width, so columns drift a little.").button1("Back").button2("Close").show(player).then(r2 => { if (!r2.canceled && r2.selection === 0) later(() => showWatch(player)); });
-        } else if (pick === 4) {
-            if (w) stopWatching(player, "§a[Real AI] You are back where you were."); else later(() => showHub(player));
-        } else if (pick === 5 && w) stopWatching(player, "§a[Real AI] You are beside the AI.", { stay: true });
-    }).catch(e => console.warn("[RealAI] watch", e));
 }
 
 function showGettingStarted(player) {
