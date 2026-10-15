@@ -103,6 +103,17 @@ records `memory.deathPos`, stops the actuator, and the respawn event tells the
 model where its items lie; the bridge answers the server's respawn packets
 (player_action respawn, respawn state 2) immediately.
 
+The per-tick layer (`BotBrain.fastTick`, run by the manager every tick for
+player bodies) is where the body is better than a human hand: `path.js`
+(pure A* over block cells: eight-way, one-block jumps, drops up to three,
+no lava, water when allowed, smoothed waypoints, a node budget and a
+"too far around" rule that hands long detours back to the tunnelling
+walker) plans the walker's route; `combatTick` tracks the target every
+tick and hits exactly every ten ticks (the damage-immunity window);
+`autoEat`, `autoEquip` and `mlgWater` handle food, gear and falls; the
+reflex scan runs every tick. A `dangerUntil` mark (hurt, or a monster
+within eight blocks) shortens the think cadence to `thinkCombatSec`.
+
 With `bridgePlays` (default on) the manager finds the bridge's player
 (`transportInfo().bridgePlayer`) and gives it a `BotBrain` with mode
 `bridge`. Scripts cannot push a real player, so `actuator.js` moves a player

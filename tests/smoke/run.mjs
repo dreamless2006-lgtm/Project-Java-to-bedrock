@@ -314,7 +314,7 @@ check(residents().length === 8, "still 8 residents after the respawn: " + reside
         await run(400, 10, idle);
         check(/no diamond ore/.test(last()), "asking for what is not there ends with a clear answer: " + last());
         // a hill across the way to a spot twelve blocks west: three high, far too wide to walk around
-        for (let dz = -10; dz <= 10; dz++) for (let y = 64; y <= 66; y++) overworld._set(bx - 4, y, bz + dz, "minecraft:dirt");
+        for (let dz = -40; dz <= 40; dz++) for (let y = 64; y <= 66; y++) overworld._set(bx - 4, y, bz + dz, "minecraft:dirt");
         act({ type: "move_to", x: bx - 12, y: 64, z: bz });
         await run(1500, 10, idle);
         check(Math.hypot(relay.location.x - (bx - 12 + 0.5), relay.location.z - (bz + 0.5)) < 2.5, "it dug through the hill and arrived: " + last() + " at " + JSON.stringify(relay.location));
@@ -331,10 +331,10 @@ check(residents().length === 8, "still 8 residents after the respawn: " + reside
         check(count("minecraft:cobblestone") >= 3, "the stone it dug became cobblestone in its inventory: " + count("minecraft:cobblestone"));
         // a real hunger bar: eating bread fills it, and the observation shows it
         const hungerComp = relay.getComponent("minecraft:player.hunger"); hungerComp.setCurrentValue(6);
-        inv.addItem(new ItemStack("minecraft:bread", 2));
-        act({ type: "eat" });
+        inv.addItem(new ItemStack("minecraft:bread", 1));
+        act({ type: "eat" });      // (the per-tick layer may beat the action to it: either way one bread is eaten)
         await run(40);
-        check(hungerComp.currentValue === 11 && count("minecraft:bread") === 1, "eating bread fills the real hunger bar: " + last());
+        check(hungerComp.currentValue === 11 && count("minecraft:bread") === 0, "eating bread fills the real hunger bar: " + last());
         captured = null; wanted = msg => msg.bot === bb.id; bb.request("how are you?"); await run(200, 5, () => !!captured);
         const obs8 = captured ? captured.messages[captured.messages.length - 1].content : "";
         if (captured) fromBridge({ t: "result", turnId: captured.turnId, ok: true, text: IDLE, usage: { input: 1, output: 1 }, model: "mock", provider: "anthropic", attempts: 1 });
@@ -446,6 +446,52 @@ check(residents().length === 8, "still 8 residents after the respawn: " + reside
         check(bb.dead === false && seenEvents.some(e => e.type === "death" && /respawned/.test(e.text) && /items/.test(e.text)), "after respawning it knows where to go for its items: " + seenEvents.filter(e => e.type === "death").map(e => e.text).slice(-1));
         check(gate.allBrains().size === [...gate.allBrains().values()].length && gate.getBrain(relay.id) === bb, "no second brain was made for the body");
         killer.remove();
+    }
+}
+// Eleventh cycle: faster than a decision. The body paths around a built wall instead of digging,
+// hits a zombie on every damage-immunity beat, eats by itself when hungry, puts on armour it
+// finds, pours water under itself when falling, and asks the model sooner while in danger.
+{
+    const bb = gate.getBrain(relay.id);
+    if (bb) {
+        const bbResults3 = [];
+        const origDrain3 = bb.actuator.drainResults.bind(bb.actuator);
+        bb.actuator.drainResults = () => { const r = origDrain3(); bbResults3.push(...r); return r; };
+        const act = (...a) => { if (bb.actuator.current?.action.type === "wait") bb.actuator.finish("wait cancelled"); bb.actuator.enqueue(a); };
+        const idle = () => !bb.actuator.current && !bb.actuator.queue.length;
+        const cx = 500, cz = 500;
+        relay.teleport({ x: cx + 0.5, y: 64, z: cz + 0.5 }); bb.actuator.stopAll(); await run(20);
+        // someone's stone-brick wall, two high and nine long, between the body and a spot ten blocks west
+        for (let dz = -4; dz <= 4; dz++) for (let y = 64; y <= 65; y++) overworld._set(cx - 4, y, cz + dz, "minecraft:stone_bricks");
+        act({ type: "move_to", x: cx - 10, y: 64, z: cz });
+        await run(900, 10, idle);
+        check(Math.hypot(relay.location.x - (cx - 10 + 0.5), relay.location.z - (cz + 0.5)) < 2.5, "it walks round a built wall: " + JSON.stringify(relay.location) + " " + bbResults3.slice(-1));
+        check([-4, 0, 4].every(dz => overworld.getBlock({ x: cx - 4, y: 64, z: cz + dz }).typeId === "minecraft:stone_bricks"), "and leaves the wall alone");
+        // combat on the beat: a zombie (20 hp) hit bare-handed (2) dies in ten hits, one every ten ticks
+        const zombie = overworld.spawnEntity("minecraft:zombie", { x: relay.location.x + 2, y: 64, z: relay.location.z });
+        const t0 = system.currentTick;
+        relay.applyDamage(2, { cause: "entityAttack", damagingEntity: zombie });
+        await run(200, 2, () => !zombie.isValid);
+        const took = system.currentTick - t0;
+        check(!zombie.isValid && took <= 130, `the zombie is dead in ${took} ticks (ten hits on the immunity beat)`);
+        check(bb.dangerUntil > t0, "danger is noted so the model is asked sooner");
+        await run(40, 10, idle);
+        // hungry with bread in the bag and nothing around: eats without being told
+        const hungerComp = relay.getComponent("minecraft:player.hunger"); hungerComp.setCurrentValue(10);
+        relay.getComponent("minecraft:inventory").container.addItem(new ItemStack("minecraft:bread", 1));
+        await run(120, 10, () => hungerComp.currentValue > 10);
+        check(hungerComp.currentValue === 15, "it eats by itself when hungry: hunger " + hungerComp.currentValue);
+        // iron armour in the bag: worn within two seconds
+        relay.getComponent("minecraft:inventory").container.addItem(new ItemStack("minecraft:iron_chestplate", 1));
+        await run(60, 10, () => log.commands.some(c => /replaceitem entity @s slot.armor.chest 0 minecraft:iron_chestplate/.test(c)));
+        check(log.commands.some(c => /slot.armor.chest 0 minecraft:iron_chestplate/.test(c)), "armour it finds goes on by itself");
+        // falling fast with a water bucket: water lands first
+        relay.getComponent("minecraft:inventory").container.addItem(new ItemStack("minecraft:water_bucket", 1));
+        relay.teleport({ x: cx + 0.5, y: 67, z: cz + 20.5 });
+        relay.velocity = { x: 0, y: -0.9, z: 0 };
+        await run(5, 1, () => overworld.getBlock({ x: cx, y: 64, z: cz + 20 }).typeId === "minecraft:water");
+        check(overworld.getBlock({ x: cx, y: 64, z: cz + 20 }).typeId === "minecraft:water", "a water bucket breaks the fall");
+        relay.velocity = { x: 0, y: 0, z: 0 };
     }
 }
 check(log.errors.length === 0, "no engine-level errors after lifecycle: " + log.errors.slice(0, 3).join(" | "));

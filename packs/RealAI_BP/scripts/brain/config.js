@@ -24,6 +24,7 @@ export const DEFAULTS = Object.freeze({
     hearingRange: 48,
     thinkIdleSec: 20,           // seconds between decisions while nothing is going on
     thinkActiveSec: 6,          // seconds between decisions while busy (events and chat interrupt sooner)
+    thinkCombatSec: 3,          // seconds between decisions while in danger (hurt, or a monster within 8 blocks)
     maxBrains: 12,              // bots with a live brain at once (companions, then residents, then the closest wild bots)
     worldPlayers: 0,            // extra named AI players (residents) that join when you do; 0 = only the bridge account plays
     wildSpawns: false,          // the original addon's random bot spawner (extra nameless bots far from players)
@@ -81,7 +82,7 @@ function applyServerOverrides(cfg) {
         "realai.provider": "provider", "realai.model": "model", "realai.transport": "transport", "realai.effort": "effort",
         "realai.maxTokens": "maxTokens", "realai.maxBrains": "maxBrains", "realai.autonomy": "autonomy", "realai.chatVolume": "chatVolume",
         "realai.callByName": "callByName", "realai.freeBuild": "freeBuild", "realai.keepAlive": "keepAlive", "realai.serverRules": "serverRules",
-        "realai.thinkIdleSec": "thinkIdleSec", "realai.thinkActiveSec": "thinkActiveSec", "realai.enabled": "enabled", "realai.bridgeName": "bridgeName",
+        "realai.thinkIdleSec": "thinkIdleSec", "realai.thinkActiveSec": "thinkActiveSec", "realai.thinkCombatSec": "thinkCombatSec", "realai.enabled": "enabled", "realai.bridgeName": "bridgeName",
         "realai.worldPlayers": "worldPlayers", "realai.wildSpawns": "wildSpawns", "realai.mixProviders": "mixProviders", "realai.showThoughts": "showThoughts", "realai.innerLife": "innerLife", "realai.reflectEvery": "reflectEvery", "realai.bridgePlays": "bridgePlays", "realai.mission": "mission",
     };
     for (const [varName, key] of Object.entries(map)) {

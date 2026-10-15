@@ -15,6 +15,7 @@ import { getWorldConfig } from "./config.js";
 import { presetBlueprint } from "./blueprints.js";
 import { dropsOf, harvestCheck, breakTicks, materialMatcher, isOreId, bestTool } from "./harvest.js";
 import { bridge } from "./transport.js";
+import { findPath } from "./path.js";
 export { presetBlueprint };
 
 const SOURCE = "llm";
@@ -48,8 +49,10 @@ function bridgeSend(obj) { try { return bridge.send(obj); } catch (e) { return f
 function goTo(bot, target, mode = "sprint", prio = PRIO, enterWater = false) {
     if (isPlayerBody(bot)) {
         const w = walkers.get(bot.id);
-        if (w) { w.target = { x: target.x, y: target.y, z: target.z }; w.mode = mode; w.enterWater = enterWater; w.until = system.currentTick + STEP * 3; }
-        else walkers.set(bot.id, { bot, target: { x: target.x, y: target.y, z: target.z }, mode, enterWater, until: system.currentTick + STEP * 3, blocked: 0, slide: 0 });
+        if (w) {
+            if (Math.hypot(target.x - w.goal.x, target.z - w.goal.z) > 1.5 || Math.abs(target.y - w.goal.y) > 1.5) { w.path = null; w.planAt = -1000; w.replans = 0; }
+            w.goal = { x: target.x, y: target.y, z: target.z }; w.mode = mode; w.enterWater = enterWater; w.until = system.currentTick + STEP * 3;
+        } else walkers.set(bot.id, { bot, goal: { x: target.x, y: target.y, z: target.z }, mode, enterWater, until: system.currentTick + STEP * 3, blocked: 0, slide: 0, path: null, planAt: -1000, replans: 0 });
         if (walkerTimer === null) walkerTimer = system.runInterval(() => { const now = system.currentTick; for (const w of [...walkers.values()]) { try { if (!w.bot.isValid) walkers.delete(w.bot.id); else stepPlayerBody(w.bot, now); } catch (e) { /* ignore */ } } }, 1);
         return;
     }
@@ -61,9 +64,25 @@ export function stepPlayerBody(bot, now) {
     if (!w) return;
     if (now > w.until) { walkers.delete(bot.id); if (w.sent) bridgeSend({ t: "stop" }); return; }
     const loc = bot.location;
-    const dx = w.target.x - loc.x, dz = w.target.z - loc.z;
+    const toGoal = Math.hypot(w.goal.x - loc.x, w.goal.z - loc.z);
+    if (toGoal < 0.3) { walkers.delete(bot.id); if (w.sent) bridgeSend({ t: "stop" }); return; }
+    // a path through the blocks around (replanned every few seconds, or when the way is blocked)
+    if (toGoal > 2.5 && (w.path === null && now - w.planAt > 60 || now - w.planAt > 100) && w.replans < 4) {
+        w.planAt = now; w.replans++;
+        const dim = bot.dimension;
+        const r = findPath((x, y, z) => { const b = blockAt(dim, x, y, z); return b ? b.typeId : null; }, loc, w.goal, { allowWater: w.enterWater, maxNodes: 900 });
+        if (r.ok && r.path.length) { w.path = r.path; w.pathIdx = 0; w.blocked = 0; w.slide = 0; }
+        else w.path = null;
+    }
+    let target = w.goal;
+    if (w.path) {
+        while (w.pathIdx < w.path.length && Math.hypot(w.path[w.pathIdx].x - loc.x, w.path[w.pathIdx].z - loc.z) < 0.45 && Math.abs(w.path[w.pathIdx].y - loc.y) < 1.1) w.pathIdx++;
+        if (w.pathIdx >= w.path.length) w.path = null; else target = w.path[w.pathIdx];
+    }
+    w.target = target;
+    const dx = target.x - loc.x, dz = target.z - loc.z;
     const flat = Math.hypot(dx, dz);
-    if (flat < 0.3) { walkers.delete(bot.id); if (w.sent) bridgeSend({ t: "stop" }); return; }
+    if (flat < 0.3) { if (!w.path) { walkers.delete(bot.id); if (w.sent) bridgeSend({ t: "stop" }); } return; }
     const step = Math.min(w.mode === "walk" ? 0.2 : 0.28, flat);
     const ux = dx / flat, uz = dz / flat;
     let move = null, slid = false;
@@ -78,13 +97,13 @@ export function stepPlayerBody(bot, now) {
         const ny = footing(bot.dimension, nx, loc.y, nz, w.enterWater);
         if (ny !== null) { move = { x: nx, y: ny, z: nz }; slid = a !== 0; break; }
     }
-    if (!move) { w.blocked = (w.blocked || 0) + 1; if (w.blocked === 1 && w.sent) { bridgeSend({ t: "stop" }); w.sent = false; } return; }
+    if (!move) { w.blocked = (w.blocked || 0) + 1; if (w.path && w.blocked >= 3) { w.path = null; w.planAt = -1000; } if (w.blocked === 1 && w.sent) { bridgeSend({ t: "stop" }); w.sent = false; } return; }
     w.blocked = 0;
     w.slide = slid ? (w.slide || 0) + 1 : 0;
     const yaw = Math.atan2(-dx, dz) * 180 / Math.PI;
     if (bridgeWalks(bot)) {
         // hand the next footing point to the bridge every few ticks; its client walks there itself
-        if (now - (w.sentAt || -100) >= 4 || Math.abs(move.y - (w.sentY ?? move.y)) > 0.01) {
+        if (now - (w.sentAt || -100) >= 2 || Math.abs(move.y - (w.sentY ?? move.y)) > 0.01) {
             const ahead = Math.min(1.5, flat);
             const px = loc.x + (move.x - loc.x) / step * ahead, pz = loc.z + (move.z - loc.z) / step * ahead;
             bridgeSend({ t: "walk", x: +px.toFixed(2), y: +move.y.toFixed(2), z: +pz.toFixed(2), mode: w.mode === "walk" ? "walk" : "sprint", jump: move.y > loc.y + 0.5 ? 1 : 0, fx: +loc.x.toFixed(2), fy: +loc.y.toFixed(2), fz: +loc.z.toFixed(2) });
@@ -111,7 +130,7 @@ function footing(dim, x, y, z, enterWater) {
 }
 export function walkerBlocked(bot) { const w = walkers.get(bot.id); return w ? (w.blocked || 0) : 0; }
 /** For !ai where: what the walker is doing with this body. */
-export function walkerInfo(bot) { const w = walkers.get(bot.id); return w ? { target: { x: +w.target.x.toFixed(1), y: +w.target.y.toFixed(1), z: +w.target.z.toFixed(1) }, mode: w.mode, blocked: w.blocked || 0, viaBridge: !!w.sent } : null; }
+export function walkerInfo(bot) { const w = walkers.get(bot.id); return w ? { target: { x: +w.goal.x.toFixed(1), y: +w.goal.y.toFixed(1), z: +w.goal.z.toFixed(1) }, mode: w.mode, blocked: w.blocked || 0, viaBridge: !!w.sent, path: w.path ? `${w.pathIdx}/${w.path.length}` : "straight" } : null; }
 function lookAt(bot, target) {
     if (bridgeWalks(bot)) { bridgeSend({ t: "look", x: target.x + 0.5, y: (typeof target.y === "number" ? target.y : bot.location.y) + 0.5, z: target.z + 0.5 }); return; }
     try { faceBlock(bot, target); } catch (e) { /* ignore */ }
@@ -491,12 +510,98 @@ H.attack = {
         if (!t || !t.isValid) { clearAITarget(bot); stopMoving(bot); try { bot.removeTag("allow_attack"); } catch (e) { /* ignore */ } return { done: true, result: `${s.name} is dead or gone` }; }
         if (ctx.now - s.started > 20 * 60) { clearAITarget(bot); stopMoving(bot); return { done: true, result: `stopped chasing ${s.name} after a minute (hp now ${healthOf(t)?.hp ?? "?"})` }; }
         try { bot.addTag("allow_attack"); } catch (e) { /* ignore */ }
+        if (isPlayerBody(bot)) return undefined;   // combatTick runs this body every tick
         const d = dist(bot.location, t.location);
         if (d > 2.4) goTo(bot, t.location, "sprint", NAV.COMBAT + 1, true);
         else { stopMoving(bot); lookAt(bot, t.location); if (ctx.now - (s.lastHit || 0) >= 20) { s.lastHit = ctx.now; try { t.applyDamage(meleeDamage(bot), { cause: EntityDamageCause.entityAttack, damagingEntity: bot }); swing(bot); } catch (e) { /* ignore */ } } }
         return undefined;
     },
 };
+
+export const HIT_COOLDOWN = 10;     // ticks of damage immunity after a hit: the body swings exactly when it ends
+export const REACH_MELEE = 3.0;
+/** Every tick while an attack runs on a player body: track the target, keep at reach, hit on the beat. */
+export function combatTick(brain, now) {
+    const bot = brain.bot;
+    const cur = brain.actuator.current;
+    if (!cur || cur.action.type !== "attack") return false;
+    const s = cur.state;
+    let t; try { t = world.getEntity(s.targetId); } catch (e) { t = null; }
+    if (!t || !t.isValid) return false;
+    const d = dist(bot.location, t.location);
+    if (now % 3 === 0) lookAt(bot, { x: t.location.x - 0.5, y: t.location.y + 0.5, z: t.location.z - 0.5 });
+    if (d > REACH_MELEE - 0.2) { goTo(bot, t.location, "sprint", NAV.COMBAT + 1, true); return true; }
+    stopMoving(bot);
+    if (now - (s.lastHit || -100) >= HIT_COOLDOWN) {
+        s.lastHit = now; s.hits = (s.hits || 0) + 1;
+        try { t.applyDamage(meleeDamage(bot), { cause: EntityDamageCause.entityAttack, damagingEntity: bot }); swing(bot); } catch (e) { /* ignore */ }
+    }
+    return true;
+}
+
+/** Eat without being asked when the hunger bar is low and nothing hostile is close. */
+export function autoEat(brain, now) {
+    const bot = brain.bot;
+    const h = hungerOf(bot);
+    if (!h || h.currentValue > 14) return false;
+    if (now - (brain.lastAutoEat || -1000) < 100) return false;
+    try { if (bot.dimension.getEntities({ location: bot.location, maxDistance: 10, families: ["monster"] }).length) return false; } catch (e) { /* ignore */ }
+    brain.lastAutoEat = now;
+    const before = brain.actuator.results.length;
+    brain.actuator.run({ type: "eat" }, now);
+    const r = brain.actuator.results[before];
+    return !!r && /ate /.test(r);
+}
+
+const ARMOR_SLOTS = [["slot.armor.head", EquipmentSlot.Head, /(helmet|_helm)$/], ["slot.armor.chest", EquipmentSlot.Chest, /chestplate$/], ["slot.armor.legs", EquipmentSlot.Legs, /leggings$/], ["slot.armor.feet", EquipmentSlot.Feet, /boots$/]];
+function armorTier(id) { if (!id) return -1; const i = ARMOR_RANK.findIndex(t => id.includes(t)); return i < 0 ? -1 : ARMOR_RANK.length - i; }
+function weaponTier(id) { if (!id) return -1; const i = WEAPON_RANK.findIndex(w => id.endsWith(":" + w)); return i < 0 ? -1 : WEAPON_RANK.length - i; }
+/** Put on better armour the moment it is in the bag; draw the best weapon when fighting. Returns what changed. */
+export function autoEquip(bot, fighting) {
+    const out = [];
+    const inv = inventoryMap(bot);
+    const c = containerOf(bot);
+    let eq = null; try { eq = bot.getComponent(EntityComponentTypes.Equippable); } catch (e) { eq = null; }
+    if (!c || !eq) return out;
+    for (const [cmdSlot, slot, re] of ARMOR_SLOTS) {
+        let worn = null; try { worn = eq.getEquipment(slot)?.typeId || null; } catch (e) { worn = null; }
+        const best = Object.keys(inv).filter(id => re.test(id) && armorTier(id) > armorTier(worn)).sort((a, b) => armorTier(b) - armorTier(a))[0];
+        if (!best) continue;
+        try { takeItems(c, best, 1); bot.runCommand(`replaceitem entity @s ${cmdSlot} 0 ${best}`); if (worn) giveItems(c, worn, 1); out.push(nameOf(best)); } catch (e) { /* ignore */ }
+    }
+    if (fighting) {
+        const held = heldId(bot);
+        const best = Object.keys(inv).filter(id => weaponTier(id) > weaponTier(held)).sort((a, b) => weaponTier(b) - weaponTier(a))[0];
+        if (best && holdItem(bot, best)) out.push(nameOf(best));
+    }
+    return out;
+}
+
+/** Falling with a water bucket: pour it where the body is about to land. */
+export function mlgWater(brain, now) {
+    const bot = brain.bot;
+    let v; try { v = bot.getVelocity(); } catch (e) { return false; }
+    if (!v || v.y > -0.5) { brain.mlgArmed = true; return false; }
+    if (!brain.mlgArmed) return false;
+    const inv = inventoryMap(bot);
+    if (!inv["minecraft:water_bucket"]) return false;
+    const dim = bot.dimension, fx = Math.floor(bot.location.x), fz = Math.floor(bot.location.z), fy = Math.floor(bot.location.y);
+    for (let y = fy - 1; y >= fy - 14; y--) {
+        const b = blockAt(dim, fx, y, fz);
+        if (!b) return false;
+        if (/water/.test(b.typeId)) return false;
+        if (!solid(b)) continue;
+        const drop = fy - 1 - y;
+        if (drop > 4) return false;    // too early: wait until the ground is close
+        brain.mlgArmed = false;
+        try { dim.runCommand(`setblock ${fx} ${y + 1} ${fz} minecraft:water`); } catch (e) { return false; }
+        const c = containerOf(bot);
+        takeItems(c, "minecraft:water_bucket", 1); giveItems(c, "minecraft:bucket", 1);
+        brain.noteEvent("action_done", "reflex: poured water under me to land safely");
+        return true;
+    }
+    return false;
+}
 
 function meleeDamage(bot) {
     const inv = inventoryMap(bot);

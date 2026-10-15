@@ -21,7 +21,7 @@ import { Body } from "./body.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const VERSION = "0.2.0";
-const EXPECT_ADDON = "2.6.0";          // the pack build whose addon walks this bridge's body
+const EXPECT_ADDON = "2.7.0";          // the pack build whose addon walks this bridge's body
 const SCRIPT_EVENT = "realai:in";
 const ENV_KEYS = {
     anthropic: "ANTHROPIC_API_KEY", openai: "OPENAI_API_KEY", xai: "XAI_API_KEY", gemini: "GEMINI_API_KEY",

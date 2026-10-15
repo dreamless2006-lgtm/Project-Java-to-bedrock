@@ -83,7 +83,10 @@ player, so it gets a brain of its own: it walks like a real client (the
 bridge sends the game's own per-tick movement input, so the Realm moves
 it, animates it, and lets others hit it), has reflexes (fights back when
 a monster hits it, runs from creepers, heads for water when on fire) and
-respawns on its own when it dies, remembering where its things fell,
+respawns on its own when it dies, remembering where its things fell, and
+below the model runs a per-tick layer that no hand can match: planned paths
+round every obstacle, hits on the exact damage beat, food, armour and a
+water-bucket landing handled by themselves,
 slips around trees and digs through hills that block its way, chops and
 mines by the survival rules (the right tool, the real break time, the real
 drops, wear on the tool), fills its real hunger bar when it eats, sleeps in

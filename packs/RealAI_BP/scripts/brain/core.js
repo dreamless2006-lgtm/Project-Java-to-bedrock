@@ -15,7 +15,7 @@ import { buildSystemStable, buildTurn, promptHash } from "./prompt.js";
 import { createSchedulerState, noteEvent, shouldThink, beginThink, endThink, CADENCE } from "./scheduler.js";
 import { observe, dist, fmtPos, isHostile, healthOf } from "./perception.js";
 import { hurtReflex, dangerReflex, reflexAllowed } from "./reflex.js";
-import { Actuator, findPlayer, findSafeSpot, isPlayerBody, bridgeWalks } from "./actuator.js";
+import { Actuator, findPlayer, findSafeSpot, isPlayerBody, bridgeWalks, combatTick, autoEat, autoEquip, mlgWater } from "./actuator.js";
 import { think as transportThink, bridge, transportInfo } from "./transport.js";
 import { hasDirectHttp, EDITION } from "./net_impl.js";
 import { BudgetLedger } from "./budget.js";
@@ -110,6 +110,8 @@ export class BotBrain {
         this.lastPlace = "";
         this.dead = false;             // a player body on the death screen: nothing runs until it respawns
         this.reflexState = {};
+        this.fast = isPlayerBody(this.bot);   // a player body gets the per-tick layer
+        this.dangerUntil = 0;
         if (!this.memory.drives) this.memory.drives = createDrives(Date.now());
         if (!this.memory.mission) this.memory.mission = createMission();
         this.locateWaiting = null;
@@ -262,9 +264,6 @@ export class BotBrain {
     tick(now) {
         if (!this.bot.isValid) return;
         if (this.dead) return;
-        // brains tick every 10 ticks on staggered offsets, so count our own ticks for the once-a-second scan
-        this.ownTicks = (this.ownTicks || 0) + 1;
-        if (this.ownTicks % 2 === 0 && isPlayerBody(this.bot)) { try { this.reflexScan(now); } catch (e) { /* ignore */ } }
         try { this.actuator.tick(now); } catch (e) { console.warn(`[RealAI] ${this.name} actuator: ${e}`); }
         if (this.paused) return;
         if (!isBrainEnabled()) return;
@@ -276,7 +275,10 @@ export class BotBrain {
         const wcfg = getWorldConfig();
         const level = budget.level();
         const inner = wcfg.innerLife !== false;
-        const gaps = { idle: Math.max(3, Number(wcfg.thinkIdleSec) || 20) * 20, active: Math.max(2, Number(wcfg.thinkActiveSec) || 6) * 20 };
+        const activeSec = Math.max(2, Number(wcfg.thinkActiveSec) || 6);
+        const combatSec = Math.max(1, Number(wcfg.thinkCombatSec) || 3);
+        const inDanger = now < (this.dangerUntil || 0);
+        const gaps = { idle: Math.max(3, Number(wcfg.thinkIdleSec) || 20) * 20, active: (inDanger ? Math.min(activeSec, combatSec) : activeSec) * 20 };
         const events = beginThink(this.sched, now, level, inner ? cadenceFactor(this.memory.drives) : 1, gaps);
         const lastActions = this.actuator.drainResults();
         const newChat = this.chatBuffer.splice(0);
@@ -342,6 +344,24 @@ export class BotBrain {
         this.saveMemory();
         if (manager.debug) console.warn(`[RealAI] ${this.name} (${res.provider}/${res.model}, ${Date.now() - started}ms): ${reply.thought} | say=${reply.say} | ${reply.actions.map(a => a.type).join(",")}`);
         if (getWorldConfig().showThoughts) this.showThought(reply, res);
+    }
+
+    // ---- the per-tick layer: a player body runs this every tick, between the model's turns ----
+    // Reflexes, combat on the beat, eating, gear and landings never wait for a decision.
+    fastTick(now) {
+        if (!this.fast || this.dead) return;
+        try { if (!this.bot.isValid) return; } catch (e) { return; }
+        try { this.reflexScan(now); } catch (e) { /* ignore */ }
+        try { combatTick(this, now); } catch (e) { /* ignore */ }
+        try { mlgWater(this, now); } catch (e) { /* ignore */ }
+        if (now % 10 === 0) {
+            try {
+                const hostiles = this.bot.dimension.getEntities({ location: this.bot.location, maxDistance: 8, families: ["monster"] });
+                if (hostiles.length) this.dangerUntil = Math.max(this.dangerUntil, now + 60);
+            } catch (e) { /* ignore */ }
+            try { autoEat(this, now); } catch (e) { /* ignore */ }
+        }
+        if (now % 40 === 0) { try { const got = autoEquip(this.bot, now < this.dangerUntil || this.actuator.current?.action.type === "attack"); if (got.length) this.noteEvent("action_done", `reflex: now wearing/holding ${got.join(", ")}`); } catch (e) { /* ignore */ } }
     }
 
     // ---- reflexes (a real player body has no engine reflexes of its own) ----
@@ -582,6 +602,7 @@ class BrainManager {
         const now = system.currentTick;
         let i = 0;
         for (const [, b] of allBrains()) {
+            if (b.fast) { try { b.fastTick(now); } catch (e) { /* ignore */ } }
             if ((now + i) % STEP === 0) { try { b.tick(now); } catch (e) { console.warn(`[RealAI] tick ${b.name}: ${e}`); } }
             i++;
         }
@@ -607,6 +628,7 @@ class BrainManager {
                     let who = src?.cause || "something";
                     try { if (src?.damagingEntity?.isValid) who = src.damagingEntity.nameTag || src.damagingEntity.typeId.replace("minecraft:", ""); } catch (e) { /* ignore */ }
                     if (ev.damage >= 2) b.noteEvent("hurt", `took ${Math.round(ev.damage)} damage from ${who}`);
+                    b.dangerUntil = Math.max(b.dangerUntil || 0, system.currentTick + 100);
                     try { b.onHurtBy(src, ev.damage); } catch (e) { /* ignore */ }
                     try { if (src?.damagingEntity?.typeId === "minecraft:player") notePerson(b.memory, src.damagingEntity.name, { note: "attacked me" }, Date.now()); } catch (e) { /* ignore */ }
                     try { if (this.debug && b.settings.mode === "bridge") bridge.send({ t: "probe_hurt", damage: ev.damage, cause: src?.cause || "?", by: who }); } catch (e) { /* ignore */ }
