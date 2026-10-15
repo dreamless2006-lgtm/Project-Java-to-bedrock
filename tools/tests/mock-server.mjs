@@ -77,6 +77,11 @@ function* jsonFiles(dir) {
 const idsOf = (folder, key) => new Set([...jsonFiles(join(PACK, folder))].map((j) => j[key]?.description?.identifier).filter(Boolean));
 const registry = (ids) => ({ get: (id) => (ids.has(id) ? { id } : undefined), getAll: () => [...ids].map((id) => ({ id })) });
 export const EntityTypes = registry(idsOf('entities', 'minecraft:entity'));
+/** Each behavior entity's minecraft:type_family (spawnEntity gives a mob its families). */
+const ENTITY_FAMILIES = new Map([...jsonFiles(join(PACK, 'entities'))].map((j) => {
+  const e = j['minecraft:entity'];
+  return [e?.description?.identifier, e?.components?.['minecraft:type_family']?.family];
+}).filter(([id, f]) => id && f));
 export const ItemTypes = registry(idsOf('items', 'minecraft:item'));
 export const BlockTypes = registry(idsOf('blocks', 'minecraft:block'));
 
@@ -90,8 +95,12 @@ export function startup() {
 }
 
 let absoluteTime = 0;
+/** World dynamic properties. */
+const worldDynamic = new Map();
 export const world = {
   players: [],
+  getDynamicProperty: (key) => worldDynamic.get(key),
+  setDynamicProperty: (key, value) => (value === undefined ? worldDynamic.delete(key) : worldDynamic.set(key, value)),
   getPlayers: () => world.players,
   getAbsoluteTime: () => absoluteTime,
   getTimeOfDay: () => absoluteTime % 24000,
@@ -171,7 +180,17 @@ export class Player {
       'minecraft:player.exhaustion': attribute(0, 20),
       'minecraft:player.hunger': attribute(20),
       'minecraft:player.saturation': attribute(5),
-      'minecraft:inventory': { container: { addItem: (stack) => void self.inventory.push(stack.typeId) } },
+      'minecraft:inventory': {
+        container: {
+          size: 36,
+          addItem: (stack) => void self.inventory.push(stack.typeId),
+          /** inventory slots hold one item each (their typeId) */
+          getItem: (slot) => (self.inventory[slot] ? new ItemStack(self.inventory[slot], 1) : undefined),
+          setItem: (slot, stack) => {
+            self.inventory[slot] = stack ? stack.typeId : undefined;
+          },
+        },
+      },
       'minecraft:equippable': {
         getEquipment: (slot) => (slot === EquipmentSlot.Mainhand ? self.held : slot === EquipmentSlot.Offhand ? self.offhand : undefined),
         setEquipment: (slot, stack) => (slot === EquipmentSlot.Mainhand ? ((self.held = stack), true) : slot === EquipmentSlot.Offhand ? ((self.offhand = stack), true) : true),
@@ -226,6 +245,19 @@ export class Player {
   sendMessage(m) {
     this.messages.push(m);
   }
+  addTag(tag) {
+    (this.tags ??= new Set()).add(tag);
+    return true;
+  }
+  removeTag(tag) {
+    return (this.tags ??= new Set()).delete(tag);
+  }
+  hasTag(tag) {
+    return (this.tags ??= new Set()).has(tag);
+  }
+  getTags() {
+    return [...(this.tags ??= new Set())];
+  }
   getGameMode() {
     return this.gameMode;
   }
@@ -273,6 +305,14 @@ world.getDimension = (id) => {
       playSound: () => {},
       spawnParticle: () => {},
       spawnItem: (stack) => dimension.spawned.push(stack.typeId),
+      /** Spawns a Mob of the type (its families from the behavior pack's JSON). */
+      spawnEntity(typeId, location) {
+        const mob = new Mob(typeId, { families: ENTITY_FAMILIES.get(typeId) ?? ['mob'] });
+        mob.location = { ...location };
+        mob.dimension = { ...mob.dimension, id };
+        dimension.entities.push(mob);
+        return mob;
+      },
       explosions: [],
       createExplosion: (location, radius, options) => dimension.explosions.push({ location, radius, options }),
       /** A flat world: solid ground at y < 64, air above, full skylight. */
@@ -354,6 +394,22 @@ export class Mob {
   getComponent(id) {
     if (id === 'minecraft:is_tamed') return this.tamed ? {} : undefined;
     if (id === 'minecraft:variant') return { value: this.variant };
+    if (id === 'minecraft:tameable') {
+      const self = this;
+      return {
+        get isTamed() {
+          return self.tamed;
+        },
+        get tamedToPlayerId() {
+          return self.ownerId;
+        },
+        tame(player) {
+          self.tamed = true;
+          self.ownerId = player.id;
+          return true;
+        },
+      };
+    }
     return this.components[id];
   }
   getProperty(id) {
@@ -389,5 +445,21 @@ export class Mob {
   }
   getViewDirection() {
     return { x: 0, y: 0, z: 1 };
+  }
+  addTag(tag) {
+    (this.tags ??= new Set()).add(tag);
+    return true;
+  }
+  removeTag(tag) {
+    return (this.tags ??= new Set()).delete(tag);
+  }
+  hasTag(tag) {
+    return (this.tags ??= new Set()).has(tag);
+  }
+  getTags() {
+    return [...(this.tags ??= new Set())];
+  }
+  remove() {
+    this.isValid = false;
   }
 }

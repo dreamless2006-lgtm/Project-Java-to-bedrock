@@ -78,11 +78,16 @@ for (const pack of PACKS) {
   }
 }
 const used = referencedAssets(join(ROOT, 'packs/resource'));
+// `--no-reign` leaves Reign of Nether out (its GPL-3.0 art and code; see README): what
+// tools/import-reign.mjs wrote and our scripts that only work with it.
+const noReign = process.argv.includes('--no-reign');
+const isReign = (/** @type {string} */ inner) => /(^|\/)reign_port(\/|$)/.test(inner) || inner.startsWith('scripts/reign/');
 const entries = {};
 for (const pack of PACKS) {
   const base = join(ROOT, pack.dir);
   for (const file of walk(base)) {
     const inner = relative(base, file).split(sep).join('/');
+    if (noReign && isReign(inner)) continue;
     if (isImported(inner) && !isUsed(inner, file, used)) continue;
     entries[`${pack.name}/${inner}`] = new Uint8Array(readFileSync(file));
   }
@@ -90,13 +95,23 @@ for (const pack of PACKS) {
 
 // The imported Jenny Mod Java Port's definitions merge into our files the game reads once per pack
 // (tools/import-jenny.mjs writes them as "jenny_port" overlays, which are not shipped themselves).
+const sounds = (/** @type {any} */ base, /** @type {any} */ add) => {
+  Object.assign(((base.entity_sounds ??= {}).entities ??= {}), add.entity_sounds?.entities ?? {});
+  if (add.individual_event_sounds?.events) Object.assign(((base.individual_event_sounds ??= {}).events ??= {}), add.individual_event_sounds.events);
+};
+const textures = (/** @type {any} */ base, /** @type {any} */ add) => Object.assign(base.texture_data, add.texture_data ?? {});
 const OVERLAYS = [
   ['Minepreggo_RP/sounds/sound_definitions.json', 'Minepreggo_RP/sounds/jenny_port/sound_definitions.json', (/** @type {any} */ base, /** @type {any} */ add) => Object.assign(base.sound_definitions, add.sound_definitions ?? {})],
   ['Minepreggo_RP/sounds.json', 'Minepreggo_RP/jenny_port/sounds.json', (/** @type {any} */ base, /** @type {any} */ add) => {
     Object.assign(((base.entity_sounds ??= {}).entities ??= {}), add.entity_sounds?.entities ?? {});
     if (add.individual_event_sounds?.events) Object.assign(((base.individual_event_sounds ??= {}).events ??= {}), add.individual_event_sounds.events);
   }],
-  ['Minepreggo_RP/textures/item_texture.json', 'Minepreggo_RP/textures/jenny_port/item_texture.json', (/** @type {any} */ base, /** @type {any} */ add) => Object.assign(base.texture_data, add.texture_data ?? {})],
+  ['Minepreggo_RP/textures/item_texture.json', 'Minepreggo_RP/textures/jenny_port/item_texture.json', textures],
+  // Reign of Nether (tools/import-reign.mjs) in the same way
+  ['Minepreggo_RP/sounds/sound_definitions.json', 'Minepreggo_RP/sounds/reign_port/sound_definitions.json', (/** @type {any} */ base, /** @type {any} */ add) => Object.assign(base.sound_definitions, add.sound_definitions ?? {})],
+  ['Minepreggo_RP/sounds.json', 'Minepreggo_RP/reign_port/sounds.json', sounds],
+  ['Minepreggo_RP/textures/item_texture.json', 'Minepreggo_RP/textures/reign_port/item_texture.json', textures],
+  ['Minepreggo_RP/textures/terrain_texture.json', 'Minepreggo_RP/textures/reign_port/terrain_texture.json', textures],
 ];
 for (const [target, overlay, merge] of OVERLAYS) {
   if (!entries[overlay]) continue;

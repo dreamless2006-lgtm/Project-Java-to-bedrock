@@ -20,6 +20,11 @@ const BP = join(ROOT, 'packs/behavior');
 const RP = join(ROOT, 'packs/resource');
 const SCHEMAS = join(ROOT, 'tools/bedrock-schemas');
 const NS = 'minepreggo';
+// Reign of Nether (tools/import-reign.mjs) writes its units, capitols and assets under reign_port/
+// folders in its own namespace; they are checked like ours, except for the vanilla ids they reuse.
+const REIGN = 'reignofnether';
+const REIGN_PORT = 'reign_port';
+const inReign = (/** @type {string} */ file) => file.split(sep).includes(REIGN_PORT);
 
 const errors = [];
 const fail = (file, msg) => errors.push(`${relative(ROOT, file).split(sep).join('/')}: ${msg}`);
@@ -88,8 +93,10 @@ function check(validate, data, file, what) {
 }
 
 // --- load everything --------------------------------------------------------------------
-const itemTextures = readJson(join(RP, 'textures/item_texture.json'))?.texture_data ?? {};
-const terrainTextures = readJson(join(RP, 'textures/terrain_texture.json'))?.texture_data ?? {};
+const overlay = (/** @type {string} */ file) => (existsSync(file) ? readJson(file)?.texture_data ?? {} : {});
+const itemTextures = { ...readJson(join(RP, 'textures/item_texture.json'))?.texture_data ?? {}, ...overlay(join(RP, 'textures', REIGN_PORT, 'item_texture.json')) };
+const terrainTextures = { ...readJson(join(RP, 'textures/terrain_texture.json'))?.texture_data ?? {}, ...overlay(join(RP, 'textures', REIGN_PORT, 'terrain_texture.json')) };
+const reignImported = existsSync(join(BP, 'entities', REIGN_PORT));
 const imported = existsSync(join(RP, 'textures', NS));
 const langFile = join(RP, 'texts/en_US.lang');
 const langKeys = existsSync(langFile)
@@ -122,6 +129,8 @@ function checkTexture(file, map, key, kind) {
 const VANILLA_LANG_KEYS = new Set(['key.sneak']);
 
 function checkLangKey(file, key) {
+  // Reign of Nether's own texts are only there once it has been imported.
+  if (!reignImported && key.includes(REIGN)) return;
   if (langKeys && !langKeys.has(key) && !VANILLA_LANG_KEYS.has(key)) fail(file, `lang key "${key}" is missing from en_US.lang`);
 }
 
@@ -141,7 +150,7 @@ const VANILLA_IDS = new Set([...Object.values(MinecraftItemTypes), ...Object.val
 // legacy aliases such as "minecraft:muttonraw" that the game accepts but vanilla-data omits.
 function checkItemRef(file, id, { vanilla = true } = {}) {
   const name = id.replace(/:\d+$/, '');
-  if (name.startsWith(`${NS}:`) && !defined.has(name)) fail(file, `references undefined ${name}`);
+  if ((name.startsWith(`${NS}:`) || name.startsWith(`${REIGN}:`)) && !defined.has(name)) fail(file, `references undefined ${name}`);
   if (vanilla && name.startsWith('minecraft:') && !VANILLA_IDS.has(name)) fail(file, `unknown vanilla id ${name}`);
 }
 
@@ -305,7 +314,7 @@ for (const file of walk(join(BP, 'entities'), '.json')) {
   }
   const id = entity.description?.identifier;
   // The player override (player visuals) is the one vanilla entity the pack redefines.
-  if (!id?.startsWith(`${NS}:`) && id !== 'minecraft:player') fail(file, 'entity identifier must use the minepreggo namespace');
+  if (!id?.startsWith(`${NS}:`) && id !== 'minecraft:player' && !(inReign(file) && id?.startsWith(`${REIGN}:`))) fail(file, 'entity identifier must use the minepreggo namespace');
   entities.set(id, { file, entity });
 
   const properties = entity.description?.properties ?? {};
@@ -345,7 +354,7 @@ for (const file of walk(join(BP, 'entities'), '.json')) {
       stack.push(...Object.values(node));
     }
   }
-  if (id.startsWith(`${NS}:`)) {
+  if (id.startsWith(`${NS}:`) || id.startsWith(`${REIGN}:`)) {
     checkLangKey(file, `entity.${id}.name`);
     if (entity.description?.is_spawnable) checkLangKey(file, `item.spawn_egg.entity.${id}.name`);
   }
@@ -391,8 +400,10 @@ for (const file of walk(join(RP, 'entity'), '.json')) {
   if (!description) { fail(file, 'missing "minecraft:client_entity"'); continue; }
   const server = entities.get(description.identifier);
   if (!server) { fail(file, `no behavior pack entity ${description.identifier}`); continue; }
-  // In the player override only our own additions are checked; vanilla ids come from the game.
-  const ours = (/** @type {string} */ ref) => description.identifier !== 'minecraft:player' || ref.includes(`.${NS}.`) || ref.includes(`/${NS}/`);
+  // In the player override and Reign of Nether's units only our own ids are checked (the units
+  // reuse vanilla models, animations and textures, which come from the game).
+  const vanillaToo = description.identifier === 'minecraft:player' || inReign(file);
+  const ours = (/** @type {string} */ ref) => !vanillaToo || [NS, REIGN, REIGN_PORT].some((ns) => ref.includes(`.${ns}.`) || ref.includes(`/${ns}/`));
   for (const path of Object.values(description.textures ?? {})) {
     if (imported && ours(path) && !existsSync(join(RP, `${path}.png`))) fail(file, `texture ${path}.png does not exist`);
   }
@@ -512,18 +523,21 @@ for (const file of walk(join(BP, 'trading'), '.json')) {
 }
 
 // --- sounds and script references ------------------------------------------------------------
-const soundFile = join(RP, 'sounds/sound_definitions.json');
-const soundDefs = existsSync(soundFile) ? readJson(soundFile)?.sound_definitions ?? {} : {};
-for (const [event, def] of Object.entries(soundDefs)) {
-  for (const sound of def.sounds ?? []) {
-    const path = typeof sound === 'string' ? sound : sound.name;
-    if (imported && !existsSync(join(RP, `${path}.ogg`))) fail(soundFile, `${event}: ${path}.ogg does not exist`);
+const soundDefs = {};
+for (const soundFile of [join(RP, 'sounds/sound_definitions.json'), join(RP, 'sounds', REIGN_PORT, 'sound_definitions.json')]) {
+  const defs = existsSync(soundFile) ? readJson(soundFile)?.sound_definitions ?? {} : {};
+  Object.assign(soundDefs, defs);
+  for (const [event, def] of Object.entries(defs)) {
+    for (const sound of def.sounds ?? []) {
+      const path = typeof sound === 'string' ? sound : sound.name;
+      if (imported && !existsSync(join(RP, `${path}.ogg`))) fail(soundFile, `${event}: ${path}.ogg does not exist`);
+    }
   }
 }
 for (const file of walk(join(BP, 'scripts'), '.js')) {
   const source = readFileSync(file, 'utf8');
-  for (const [, sound] of source.matchAll(/playSound\([^,]+,\s*'(minepreggo\.[^']+)'/g)) {
-    if (!soundDefs[sound]) fail(file, `sound "${sound}" is not in sound_definitions.json`);
+  for (const [, sound] of source.matchAll(/playSound\([^,]+,\s*'((?:minepreggo|reignofnether)\.[^']+)'/g)) {
+    if (!soundDefs[sound] && (reignImported || !sound.startsWith(REIGN))) fail(file, `sound "${sound}" is not in sound_definitions.json`);
   }
   for (const [, key] of source.matchAll(/(?:translate:\s*|(?:message|actionbar|tellOwner)\([^,]+,\s*)'([^'$]+)'/g)) {
     checkLangKey(file, key);
