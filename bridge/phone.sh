@@ -29,4 +29,5 @@ echo "Next time, just run:  bash ~/real-ai/bridge/phone.sh"
 echo
 if [ "$1" = "setup" ]; then exec node index.mjs --setup < /dev/tty; fi
 if [ "$1" = "debug" ]; then exec node index.mjs --log debug < /dev/tty; fi
+if [ "$1" = "selftest" ]; then exec node index.mjs --selftest < /dev/tty; fi
 exec node index.mjs < /dev/tty

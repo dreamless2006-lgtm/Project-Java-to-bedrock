@@ -198,6 +198,7 @@ export class Bridge {
             // Not acknowledged yet: say hello again, and after a minute explain the usual causes.
             this.sendToAddon(this.helloMessage(opts.username));
             if (Date.now() - (this.helloSentAt || 0) > 60_000) log("warn", "the addon has not answered yet. On the Realm: (1) make this account an Operator (Realm settings > Members), (2) turn on 'Activate Cheats' in the Realm's game settings, (3) make sure the Real AI behavior pack is active on this world. The hello is retried every 30 s.");
+            if (Date.now() - (this.helloSentAt || 0) > 60_000) this.notice("nohello", "I joined, but the Real AI pack is not answering. Make this account an Operator (Realm settings > Members), turn on Activate Cheats, and make sure the Real AI pack is active on this world.");
         }, 30_000);
         // The server tells us when a command was refused: that is how a missing operator permission shows up.
         client.on("command_output", p => {
@@ -225,6 +226,7 @@ export class Bridge {
         // One player_auth_input every tick (50 ms), like a real client: it carries where we are,
         // which way we walk, and the acknowledgement of teleports. Without it the body stands frozen.
         this.bodyTimer = setInterval(() => this.bodyTick(), 50);
+        this.monitorTimer = setInterval(() => this.monitorMotion(), 5000);
     }
 
     // ---- death and respawn: nobody presses the Respawn button for the AI, so the bridge does ----
@@ -263,6 +265,45 @@ export class Bridge {
         } catch (e) { return ""; }
     }
 
+    /** Say something in public chat as this account (what the AI says, and what the bridge itself has to tell the people in the world). */
+    sayInGame(text) {
+        if (!this.client) return false;
+        try {
+            this.client.queue("text", { type: "chat", needs_translation: false, category: "authored", source_name: this.client.username, message: String(text).slice(0, 400), xuid: this.chatXuid(), platform_chat_id: "", has_filtered_message: false, filtered_message: "" });
+            return true;
+        } catch (e) { log("warn", "chat failed:", e?.message || e); return false; }
+    }
+
+    /** A notice for the people in the world about the bridge itself, at most once per kind per connection, three per connection. */
+    notice(kind, text) {
+        this._notices = this._notices || new Set();
+        if (this._notices.has(kind) || this._notices.size >= 3 || !this.spawned) return;
+        this._notices.add(kind);
+        this.sayInGame("[Real AI bridge] " + text);
+    }
+
+    // Every few seconds: is the body doing what it is told? The addon reports where the body really is with each
+    // walk or key frame, so "keys down but the real position did not change" and "the server keeps pulling the
+    // body back" are both visible here, in the log and, once, in chat, which is how a stuck body gets noticed.
+    monitorMotion() {
+        const b = this.body;
+        if (!this.spawned || !b.ready) return;
+        const cur = { intent: b.intentTicks, truth: b.truthMoved, corr: b.corrections, resync: b.resyncs, tp: b.teleports };
+        const prev = this._mon; this._mon = cur;
+        this._monN = (this._monN || 0) + 1;
+        if (!prev) return;
+        const dIntent = cur.intent - prev.intent, dTruth = cur.truth - prev.truth, dCorr = (cur.corr + cur.tp) - (prev.corr + prev.tp), dResync = cur.resync - prev.resync;   // a server that pushes the body back says so with corrections or with teleports
+        const st = b.status();
+        if (dCorr >= 15) {
+            log("warn", `rubber-banding: the server pulled this body back ${dCorr} times in 5 s (${dIntent} ticks of walking). It does not accept the movement this client reports. Run: bash ~/real-ai/bridge/phone.sh selftest`);
+            this.notice("rubber", `The server keeps pulling my body back (${dCorr} corrections in 5 seconds), so I cannot walk properly. Run the self-test on the phone (bash ~/real-ai/bridge/phone.sh selftest) and send the output to the person fixing this.`);
+        } else if (dIntent >= 40 && dTruth < 1 && b.lastTruth && this.addonHello) {
+            log("warn", `pressing forward for ${(dIntent / 20).toFixed(1)} s but the body moved ${dTruth.toFixed(1)} blocks (corrections ${dCorr}, resyncs ${dResync}). Either something blocks the way, or the server ignores this client's movement. Run: bash ~/real-ai/bridge/phone.sh selftest`);
+            this.notice("stuck", `I am walking but my body is not moving. If this keeps happening the server is ignoring my movement: run the self-test on the phone (bash ~/real-ai/bridge/phone.sh selftest).`);
+        }
+        if (this._monN % 12 === 0 || dIntent > 0) log(dIntent > 0 ? "debug" : "info", `body: feet ${st.pos ? [st.pos.x, st.pos.y, st.pos.z].join(" ") : "?"} yaw ${st.yaw}, key-down ticks ${dIntent}, real movement ${dTruth.toFixed(1)} blocks, corrections ${b.corrections}, teleports ${b.teleports}, resyncs ${b.resyncs}${b.alive ? "" : ", DEAD"}`);
+    }
+
     helloMessage(username) {
         return { t: "hello", v: 2, name: username, version: VERSION, body: 1, expectAddon: EXPECT_ADDON, independent: this.cfg.independent !== false, providers: Object.keys(PROVIDERS).filter(id => !PROVIDERS[id].needsKey || this.cfg.providers[id]?.apiKey) };
     }
@@ -279,6 +320,8 @@ export class Bridge {
             try { this.client.status = 4; } catch (e) { /* the library keeps its own status; harmless */ }
         } catch (e) { log("warn", "spawn handshake (end):", e?.message || e); }
         log("info", "spawned in the world; announcing to the addon");
+        this._notices = new Set();
+        this._mon = null;
         this.spawned = true;
         this.addonHello = false;
         this.helloSentAt = Date.now();
@@ -343,7 +386,7 @@ export class Bridge {
     scheduleReconnect() {
         if (this.stopped || this._reconnecting) return;
         this._reconnecting = true;
-        clearInterval(this.pumpTimer); clearInterval(this.pingTimer); clearInterval(this.anchorTimer); clearInterval(this.bodyTimer);
+        clearInterval(this.pumpTimer); clearInterval(this.pingTimer); clearInterval(this.anchorTimer); clearInterval(this.bodyTimer); clearInterval(this.monitorTimer);
         this.stopRespawnLoop();
         this.body = this.newBody();
         const d = this.reconnectDelay;
@@ -388,7 +431,10 @@ export class Bridge {
             case "hello":
                 if (!this.addonHello) { this.addonHello = true; log("info", "the addon answered; residents will join the players now"); }
                 log("info", `addon says hello (build ${msg.version || "older than 2.5.0"}, walks ${msg.walks ? "yes" : "no"}, tick ${msg.tick})`);
-                if (!msg.walks) log("warn", `the Real AI pack on this world is older than ${EXPECT_ADDON}: it tries to teleport this body itself, which a Realm ignores. Import dist/Real-AI-${EXPECT_ADDON}.mcaddon, activate it on the world, and rejoin.`);
+                if (!msg.walks) {
+                    log("warn", `the Real AI pack on this world is older than ${EXPECT_ADDON}: it tries to teleport this body itself, which a Realm ignores. Import dist/Real-AI-${EXPECT_ADDON}.mcaddon, activate it on the world, and rejoin.`);
+                    this.notice("oldpack", `The Real AI pack in this world is older than my bridge (build ${msg.version || "unknown"}, I need ${EXPECT_ADDON}), so I cannot walk. Delete the old Real AI packs (Settings > Storage), import Real-AI-${EXPECT_ADDON}.mcaddon again, activate it on this world, and everyone rejoin.`);
+                }
                 if (msg.pos && this.body.pos) { const gap = msg.pos.y - this.body.pos.y; log("info", `the addon sees this body at ${JSON.stringify(msg.pos)} (our feet ${JSON.stringify(this.body.status().pos)}, height gap ${gap.toFixed(2)})`); this.body.anchorFrom(msg.pos); this.body.anchorFrom(msg.pos); }
                 if (msg.gamemode) this.body.gameMode = msg.gamemode;
                 break;
@@ -411,9 +457,7 @@ export class Bridge {
                 const text = String(msg.text || "").replace(/[\r\n]+/g, " ").slice(0, 400);
                 if (!text || !this.client) break;
                 if (msg.to) { this.outQueue.push(`/tell "${String(msg.to).replace(/"/g, "")}" ${text}`); break; }
-                try {
-                    this.client.queue("text", { type: "chat", needs_translation: false, category: "authored", source_name: this.client.username, message: text, xuid: this.chatXuid(), platform_chat_id: "", has_filtered_message: false, filtered_message: "" });
-                } catch (e) { log("warn", "chat failed:", e?.message || e); }
+                this.sayInGame(text);
                 break;
             }
             case "locate": {
@@ -516,6 +560,75 @@ export class Bridge {
         }
     }
 
+    /**
+     * Does the server accept this body's movement? Walks and turns it with the same key presses the AI uses and
+     * asks the server where it really is (/tp @s ~ ~ ~ makes the server send the player its true position).
+     * No addon needed. Stand on flat ground; the account needs to be an Operator with cheats on for the position check.
+     * -> { ok, checks: [{ name, ok, detail }] }
+     */
+    async selfTest(say = (line) => console.log(line)) {
+        const checks = [];
+        const check = (name, ok, detail = "") => { checks.push({ name, ok, detail }); say(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? " - " + detail : ""}`); return ok; };
+        const waitFor = async (fn, ms) => { const t = Date.now(); while (Date.now() - t < ms) { if (fn()) return true; await sleep(100); } return !!fn(); };
+        say("Self-test: joining and walking the body with the AI's own key presses ...");
+        const joined = await waitFor(() => this.spawned && this.body.ready && this.body.pos, 120_000);
+        if (!check("joined the world and spawned", joined, joined ? `feet ${JSON.stringify(this.body.status().pos)}` : "the account never got into the world (see the log above)")) return { ok: false, checks };
+        await sleep(2500);
+        let asked = 0;
+        const truth = async () => {
+            const n = this.body.teleports;
+            asked++;
+            this.runCommand("/tp @s ~ ~ ~");
+            const got = await waitFor(() => this.body.teleports > n, 5000);
+            if (!got) return null;
+            await sleep(150);
+            return { x: this.body.pos.x, y: this.body.pos.y, z: this.body.pos.z, yaw: this.body.yaw, pitch: this.body.pitch };
+        };
+        const hold = async (keys, ms) => {
+            const end = Date.now() + ms;
+            while (Date.now() < end) { this.body.press({ ...keys, ms: 250 }); await sleep(100); }
+            this.body.release();
+            await sleep(900);
+        };
+        const flat = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+        const c0 = this.body.corrections, t0 = this.body.teleports;
+        const p0 = await truth();
+        check("the server tells us where we are (/tp @s ~ ~ ~)", !!p0, p0 ? `feet ${[p0.x, p0.y, p0.z].map(n => n.toFixed(2)).join(" ")}` : "no answer: this account must be an Operator and the world's cheats must be on, otherwise the position cannot be checked");
+        if (!p0) {
+            // without the position, a walk can only be judged by the server not objecting
+            const before = this.body.corrections;
+            this.body.setLook(0, 0);
+            await hold({ f: 1 }, 2000);
+            check("walking 2 s drew no corrections from the server", this.body.corrections - before < 5, `${this.body.corrections - before} corrections (the position could not be read, so this is only half a test)`);
+            return { ok: checks.every(c => c.ok), checks };
+        }
+        this.body.setLook(0, 0);
+        await sleep(300);
+        await hold({ f: 1 }, 2000);
+        const p1 = await truth();
+        const walked = p1 ? flat(p0, p1) : 0;
+        const pulledBack = () => (this.body.corrections - c0) + Math.max(0, (this.body.teleports - t0) - asked);   // corrections, and teleports we did not ask for
+        const corr1 = pulledBack();
+        check("walking forward for 2 s moves the body (vanilla walk is about 7.5 blocks)", walked >= 4, `the server has it ${walked.toFixed(1)} blocks further on${corr1 ? `, and pulled it back ${corr1} times` : ""}${walked < 0.5 ? (corr1 ? ": the server keeps resetting the body (rubber-banding)" : ": the server ignores this client's movement") : ""}`);
+        const p1b = p1 || p0;
+        await hold({ f: 1, sprint: true }, 2000);
+        const p2 = await truth();
+        const sprinted = p2 ? flat(p1b, p2) : 0;
+        check("sprinting for 2 s goes further than walking", sprinted >= Math.max(5, walked * 1.1), `${sprinted.toFixed(1)} blocks (vanilla sprint is about 10)`);
+        await hold({ f: -1 }, 1000);
+        const p3 = await truth();
+        const back = p3 && p2 ? flat(p2, p3) : 0;
+        check("stepping back for 1 s moves the body the other way", back >= 1.5 && p3 && p2 && ((p3.z - p2.z) * (p2.z - p1b.z) < 0 || (p3.x - p2.x) * (p2.x - p1b.x) < 0), `${back.toFixed(1)} blocks`);
+        this.body.setLook(90, -20);
+        await sleep(700);
+        const p4 = await truth();
+        const dyaw = p4 ? Math.abs(((p4.yaw - 90 + 540) % 360) - 180) : 999;
+        check("turning the head is accepted", p4 && dyaw < 12 && Math.abs(p4.pitch + 20) < 8, p4 ? `the server has yaw ${p4.yaw.toFixed(0)}, pitch ${p4.pitch.toFixed(0)} (asked 90, -20)` : "no answer");
+        const pulled = pulledBack();
+        check("the server did not keep pulling the body back during the test", pulled < 10, `${pulled} times pulled back (${this.body.corrections - c0} corrections), ${this.body.resyncs} resyncs`);
+        return { ok: checks.every(c => c.ok), checks };
+    }
+
     anchor() {
         const a = this.cfg.anchor || {};
         if (!a.enabled || !this.anchorTarget || !this.client || !this.spawned) return;
@@ -548,10 +661,22 @@ async function main() {
         process.exit(res.ok ? 0 : 1);
     }
     if (argv.includes("--help")) {
-        console.log(`Real AI bridge ${VERSION}\n  node index.mjs [--setup] [--config path] [--log debug|info|warn] [--test-provider <id>]\nProviders: ${Object.keys(PROVIDERS).join(", ")}`);
+        console.log(`Real AI bridge ${VERSION}\n  node index.mjs [--setup] [--config path] [--log debug|info|warn] [--test-provider <id>] [--selftest]\nProviders: ${Object.keys(PROVIDERS).join(", ")}`);
         process.exit(0);
     }
     const bridge = new Bridge(cfg);
+    if (argv.includes("--selftest")) {
+        cfg.chatRelay = false;
+        process.on("SIGINT", () => { bridge.stopped = true; try { bridge.client?.close(); } catch (e) { /* ignore */ } process.exit(130); });
+        bridge.start().catch(e => log("error", e));
+        const res = await bridge.selfTest();
+        console.log(res.ok
+            ? "\nSELFTEST PASSED: the server accepts this body walking, sprinting, stepping back and turning. If the AI still stands still in the game, the problem is on the addon side (is the pack up to date and active? is this account an Operator?): in the game chat type  !ai body  and  !ai where."
+            : "\nSELFTEST FAILED: see the FAIL lines above. Send a screenshot of this whole output.");
+        bridge.stopped = true; try { bridge.client?.close(); } catch (e) { /* ignore */ }
+        setTimeout(() => process.exit(res.ok ? 0 : 1), 300);
+        return;
+    }
     process.on("SIGINT", () => { bridge.stopped = true; try { bridge.client?.close(); } catch (e) { /* ignore */ } process.exit(0); });
     await bridge.start();
 }

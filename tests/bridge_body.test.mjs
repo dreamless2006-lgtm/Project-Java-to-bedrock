@@ -131,3 +131,49 @@ test("death: the bridge presses Respawn by itself, again with 'ready' when the s
     await new Promise(r => setTimeout(r, 1700));
     assert.equal(queued.length, n, "no more presses once it is alive");
 });
+
+test("the monitor notices a body that is pressed forward but does not move, and one the server keeps pulling back", () => {
+    const { b, queued } = fakeBridge();
+    spawn(b, queued);
+    b.addonHello = true;
+    const said = [];
+    b.sayInGame = (t) => { said.push(t); return true; };
+    b.monitorMotion();                                       // first window only records
+    // 5 s of keys down, the addon says the body is where it was
+    b.body.intentTicks += 90; b.body.anchorFrom({ x: 0, y: 64, z: 0 }); b.body.anchorFrom({ x: 0.2, y: 64, z: 0 });
+    b.monitorMotion();
+    assert.equal(said.length, 1);
+    assert.match(said[0], /not moving/);
+    // the same condition again does not nag
+    b.body.intentTicks += 90; b.body.anchorFrom({ x: 0.1, y: 64, z: 0 });
+    b.monitorMotion();
+    assert.equal(said.length, 1, "once per kind per connection");
+    // a body that really walked is fine
+    const ok = fakeBridge(); spawn(ok.b, ok.queued); ok.b.addonHello = true;
+    const okSaid = []; ok.b.sayInGame = (t) => { okSaid.push(t); return true; };
+    ok.b.monitorMotion();
+    ok.b.body.intentTicks += 90; ok.b.body.anchorFrom({ x: 0, y: 64, z: 0 }); ok.b.body.anchorFrom({ x: 3, y: 64, z: 0 }); ok.b.body.anchorFrom({ x: 6, y: 64, z: 0 });
+    ok.b.monitorMotion();
+    assert.equal(okSaid.length, 0);
+    // rubber-banding: many corrections or teleports in one window
+    const rb = fakeBridge(); spawn(rb.b, rb.queued); rb.b.addonHello = true;
+    const rbSaid = []; rb.b.sayInGame = (t) => { rbSaid.push(t); return true; };
+    rb.b.monitorMotion();
+    rb.b.body.corrections += 20;
+    rb.b.monitorMotion();
+    assert.equal(rbSaid.length, 1);
+    assert.match(rbSaid[0], /pulling my body back/);
+    assert.match(rbSaid[0], /selftest/);
+});
+
+test("an addon that does not walk bodies is reported in the world's chat, once", () => {
+    const { b, queued } = fakeBridge();
+    spawn(b, queued);
+    const said = [];
+    b.sayInGame = (t) => { said.push(t); return true; };
+    b.handle({ t: "hello", v: 2, version: "2.4.0", walks: false, tick: 1 });
+    b.handle({ t: "hello", v: 2, version: "2.4.0", walks: false, tick: 2 });
+    assert.equal(said.length, 1);
+    assert.match(said[0], /older than my bridge/);
+    assert.match(said[0], /Delete the old Real AI packs/);
+});

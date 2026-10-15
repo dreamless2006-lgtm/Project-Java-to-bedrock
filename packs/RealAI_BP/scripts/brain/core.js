@@ -538,7 +538,7 @@ class BrainManager {
         try { bridge.subscribe(); } catch (e) { console.warn("[RealAI] bridge subscribe failed", e); }
         bridge.onChat((from, text, whisper) => this.intakeChat(from, text, { whisper, viaBridge: true }));
         bridge.onLocate(msg => { try { const b = allBrains().get(String(msg.bot)); if (b) b.locateResult = { structure: msg.structure, ok: !!msg.ok, x: Number(msg.x), y: msg.y != null ? Number(msg.y) : undefined, z: Number(msg.z), error: msg.error }; } catch (e) { /* ignore */ } });
-        bridge.onHello(info => { if (typeof info.independent === "boolean") { if (getWorldConfig().independent !== info.independent) { updateWorldConfig({ independent: info.independent }); for (const [, b] of allBrains()) b.systemCache = null; } this.independentPinned = true; } this.bridgeProviders = Array.isArray(info.providers) ? info.providers.filter(p => typeof p === "string") : []; this.adoptProvider(); console.warn(`[RealAI] bridge connected: ${info.name} v${info.version}, providers: ${(info.providers || []).join(", ")}`); this.refreshEnabled(); this.announce(`§a[Real AI] Bridge "${info.name}" connected. Bots are thinking through it.`); system.runTimeout(() => { try { this.populate("bridge"); } catch (e) { /* ignore */ } }, 20); });
+        bridge.onHello(info => { if (typeof info.independent === "boolean") { if (getWorldConfig().independent !== info.independent) { updateWorldConfig({ independent: info.independent }); for (const [, b] of allBrains()) b.systemCache = null; } this.independentPinned = true; } this.bridgeProviders = Array.isArray(info.providers) ? info.providers.filter(p => typeof p === "string") : []; this.adoptProvider(); console.warn(`[RealAI] bridge connected: ${info.name} v${info.version}, providers: ${(info.providers || []).join(", ")}`); this.refreshEnabled(); this.announce(`§a[Real AI] Bridge "${info.name}" connected. Bots are thinking through it.`); if (!info.body) this.tellOps(`§e[Real AI] The bridge "${info.name}" is an older version (${info.version || "unknown"}) that cannot walk its account's body, so the AI player will stand still. Update it on the phone: bash ~/real-ai/bridge/phone.sh`); system.runTimeout(() => { try { this.populate("bridge"); } catch (e) { /* ignore */ } }, 20); });
         this.subscribeEvents();
         system.runInterval(() => this.discover(), DISCOVER_GAP);
         system.runInterval(() => this.step(), 1);
@@ -561,6 +561,13 @@ class BrainManager {
     }
 
     announce(msg) { try { world.sendMessage(msg); } catch (e) { /* ignore */ } }
+
+    /** A line for the operators only (setup problems the rest of the players need not see). */
+    tellOps(msg) {
+        for (const p of world.getAllPlayers()) {
+            try { if (isOperator(p) && !this.isBridgeAccount(p)) p.sendMessage(msg); } catch (e) { /* ignore */ }
+        }
+    }
 
     reportConfigProblem(err) {
         this.configProblem = err;

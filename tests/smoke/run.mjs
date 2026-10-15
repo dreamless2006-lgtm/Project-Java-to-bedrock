@@ -578,10 +578,20 @@ check(residents().length === 8, "still 8 residents after the respawn: " + reside
         check(/at .* in overworld/.test(steve.messages.slice(-2).join(" ")), "looking is still allowed: " + steve.messages.slice(-2)[0]);
         handleCommand(steve, `!ai talk ${relay.name} hello there`);
         check(bb.chatBuffer.some(c => /hello there/.test(c.text)), "talking is still allowed");
+        // !ai body asks the bridge how it sees the body and prints the answer
+        const bodyAsks = otherMsgs.filter(m => m.t === "body_status").length;
+        handleCommand(steve, "!ai body");
+        await run(5);
+        check(otherMsgs.filter(m => m.t === "body_status").length === bodyAsks + 1, "!ai body asks the bridge for its body report");
+        fromBridge({ t: "body", ready: true, alive: true, pos: { x: 1, y: 64, z: 2 }, yaw: 90, pitch: 0, onGround: true, walking: false, keys: { f: 1, s: 0, sprint: true, sneak: false, jump: false }, corrections: 3, teleports: 0, resyncs: 1, tick: 500, startIsEye: true, calibrated: true, gameMode: "survival" });
+        await run(40);
+        const bodyText = steve.messages.slice(-6).join("\n");
+        check(/body \(as the bridge/.test(bodyText) && /3 corrections/.test(bodyText) && /holding keys f1/.test(bodyText), "and prints it: " + bodyText.split("\n").slice(0, 3).join(" | ").slice(0, 160));
         // the bridge's config pins the setting: with independent false the same commands work
         fromBridge({ t: "hello", v: 2, name: "RealAIBridge", version: "0.2.0", body: 0, independent: false, providers: ["anthropic", "openai", "xai", "gemini", "ollama", "lmstudio", "player2"] });
         await run(40);
         check(gwc().independent === false && brainMod.manager.independentPinned === true, "the bridge's config can switch it off and pins it");
+        check(steve.messages.slice(-12).some(m => /older version .* cannot walk its account's body/.test(m)), "a bridge without body control is reported to the operators");
         handleCommand(steve, "!ai independent on");
         check(/pinned by the bridge/.test(steve.messages.slice(-1)[0]) && gwc().independent === false, "in game it cannot be changed while pinned");
         bb.actuator.stopAll();

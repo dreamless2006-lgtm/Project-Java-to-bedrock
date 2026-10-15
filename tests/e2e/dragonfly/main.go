@@ -25,6 +25,7 @@ import (
 	"github.com/df-mc/dragonfly/server"
 	"github.com/df-mc/dragonfly/server/block"
 	"github.com/df-mc/dragonfly/server/block/cube"
+	"github.com/df-mc/dragonfly/server/cmd"
 	"github.com/df-mc/dragonfly/server/player"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/go-gl/mathgl/mgl64"
@@ -44,7 +45,15 @@ type handler struct {
 	name string
 }
 
+// With DF_FREEZE=1 the server rejects every move the client reports, like a server-authoritative world
+// that does not accept this client's movement: the player is pulled back to where it was.
+var freeze = os.Getenv("DF_FREEZE") != ""
+
 func (h *handler) HandleMove(ctx *player.Context, pos mgl64.Vec3, rot cube.Rotation) {
+	if freeze {
+		ctx.Cancel()
+		return
+	}
 	emit(map[string]any{"e": "move", "name": h.name, "x": pos[0], "y": pos[1], "z": pos[2], "yaw": rot.Yaw(), "pitch": rot.Pitch()})
 }
 func (h *handler) HandleTeleport(ctx *player.Context, pos mgl64.Vec3) {
@@ -69,7 +78,20 @@ func (h *handler) HandleChat(ctx *player.Context, message *string) {
 	emit(map[string]any{"e": "chat", "name": h.name, "message": *message})
 }
 
+// tpSelf answers "/tp @s ~ ~ ~" the way a Bedrock server does: the player is teleported to where the
+// server has it, which sends the player its true position (the bridge's self-test reads it that way).
+type tpSelf struct {
+	Args cmd.Varargs `cmd:"args"`
+}
+
+func (tpSelf) Run(src cmd.Source, o *cmd.Output, tx *world.Tx) {
+	if p, ok := src.(*player.Player); ok {
+		p.Teleport(p.Position())
+	}
+}
+
 func main() {
+	cmd.Register(cmd.New("tp", "teleport to where you are", nil, tpSelf{}))
 	if os.Getenv("DF_DEBUG") != "" {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 	} else {

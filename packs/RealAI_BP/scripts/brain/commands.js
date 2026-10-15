@@ -6,6 +6,7 @@ import { getWorldConfig, updateWorldConfig, patchBotSettings, configuredProvider
 import { PROVIDERS, PROVIDER_IDS } from "./providers/index.js";
 import { formatUsd } from "./budget.js";
 import { findPlayer, findEntityByName, walkerInfo, bridgeWalks } from "./actuator.js";
+import { bridge } from "./transport.js";
 import { renderMemory } from "./memory.js";
 import { worldContent } from "./world_content.js";
 import { showHub, playerAllowed } from "./ui.js";
@@ -22,6 +23,7 @@ const HELP = [
     "§b!ai memory <Name>§r | §b!ai forget <Name>§r - read or wipe a bot's memory",
     "§b!ai pause|resume [Name]§r - pause thinking (all bots or one)",
     "§b!ai where [Name]§r - where the server keeps a bot's body and what its walker is doing",
+    "§b!ai body§r - how the bridge's client sees the AI's body (keys held, pull-backs by the server)",
     "§7Independent (default): nobody can steer the AI in game (no pause, walk, forget, rules, mission, summon); talk is the only way in. §b!ai independent on|off§r (pinned by the bridge's config.json when it sets it).",
     "§b!ai walk <Name> <dx> <dz>§r - make a bot walk that far from where it stands (a movement test)",
     "§7operator: §b!ai provider <id>§r, §b!ai model <name>§r, §b!ai transport auto|direct|bridge§r, §b!ai volume 0-3§r, §b!ai budget soft|hard <tokens>|reset§r, §b!ai rules <text>§r, §b!ai callbyname on|off§r, §b!ai freebuild on|off§r, §b!ai debug on|off§r, §b!ai fakechat on|off§r, §b!ai players 0-16§r, §b!ai thoughts on|off§r, §b!ai mix on|off§r, §b!ai bridgeplays on|off§r, §b!ai mission beat|free§r, §b!ai wildspawns on|off§r, §b!ai companiondeath respawn|permadeath§r, §b!ai jointeleport on|off§r, §b!ai content§r",
@@ -138,6 +140,25 @@ export function handleCommand(player, message) {
         case "freebuild": updateWorldConfig({ freeBuild: rest[0] !== "off" }); return reply(player, `§afree building ${rest[0] !== "off" ? "on" : "off"}`);
         case "fakechat": updateWorldConfig({ legacyFakeChat: rest[0] === "on" }); return reply(player, `§afake player chat ${rest[0] === "on" ? "on" : "off"}`);
         case "debug": manager.debug = rest[0] === "on"; return reply(player, `§adebug ${manager.debug ? "on (see server log)" : "off"}`);
+        case "body": {
+            // what the bridge's client thinks of this body: the first thing to look at when the AI does not move
+            if (!bridge.isConnected()) return reply(player, "§cno bridge is connected");
+            bridge.bodyStatus = null;
+            bridge.send({ t: "body_status" });
+            system.runTimeout(() => {
+                const st = bridge.bodyStatus;
+                if (!st) return reply(player, ["§cthe bridge did not answer. Its build is too old to report on its body (update it: bash ~/real-ai/bridge/phone.sh), or the connection dropped."]);
+                const f = (n) => (typeof n === "number" ? n.toFixed(1) : "?");
+                const lines = [`§b[Real AI] body (as the bridge's client sees it)§r`,
+                    `§7at ${st.pos ? `${f(st.pos.x)} ${f(st.pos.y)} ${f(st.pos.z)}` : "?"}, facing yaw ${st.yaw} pitch ${st.pitch}, ${st.alive ? "alive" : "§cDEAD (respawning)§7"}, ${st.onGround ? "on the ground" : "in the air"}, ${st.gameMode ?? "?"}`,
+                    `§7now: ${st.keys ? `holding keys f${st.keys.f} s${st.keys.s}${st.keys.sprint ? " sprint" : ""}${st.keys.sneak ? " sneak" : ""}${st.keys.jump ? " jump" : ""}` : st.walking ? `walking to ${f(st.target.x)} ${f(st.target.y)} ${f(st.target.z)}` : "standing"}`,
+                    `§7server pulled it back: ${st.corrections} corrections, ${st.teleports} teleports; ${st.resyncs} resyncs; input tick ${st.tick}; height convention ${st.startIsEye ? "eye" : "feet"}${st.calibrated ? " (confirmed)" : ""}`];
+                try { const b = [...allBrains().values()].find(x => x.settings.mode === "bridge"); if (b) { const l = b.bot.location; lines.push(`§7the game has it at ${f(l.x)} ${f(l.y)} ${f(l.z)}; the bridge walks it: ${bridgeWalks(b.bot) ? "yes" : "§cno"}`); } } catch (e) { /* ignore */ }
+                if (st.corrections + st.teleports > 30) lines.push("§eMany pull-backs: the server may not accept this client's movement. On the phone: bash ~/real-ai/bridge/phone.sh selftest");
+                reply(player, lines);
+            }, 30);
+            return;
+        }
         case "where": {
             const b = rest[0] ? botByName(player, rest[0]) : [...allBrains().values()].find(x => { try { return x.settings.mode === "bridge"; } catch (e) { return false; } }) || [...allBrains().values()][0];
             if (!b) return reply(player, "§cno such bot");

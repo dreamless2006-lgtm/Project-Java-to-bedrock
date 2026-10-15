@@ -12,7 +12,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 export const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 /** Build (once) and start the Dragonfly server; resolves to an object with events, send(), stop(). */
-export async function startServer({ port = 19138 } = {}) {
+export async function startServer({ port = 19138, env = {} } = {}) {
     let bin = process.env.DF_SERVER_BIN;
     if (!bin || !existsSync(bin)) {
         const go = process.env.GO_BIN || "/usr/local/go/bin/go";
@@ -21,7 +21,7 @@ export async function startServer({ port = 19138 } = {}) {
         const r = spawnSync(go, ["build", "-o", bin, "."], { cwd: join(HERE, "dragonfly"), encoding: "utf8" });
         if (r.status !== 0) throw new Error("could not build the Dragonfly test server: " + (r.stderr || r.stdout));
     }
-    const child = spawn(bin, [], { env: { ...process.env, DF_ADDR: `127.0.0.1:${port}` }, stdio: ["pipe", "pipe", "inherit"] });
+    const child = spawn(bin, [], { env: { ...process.env, DF_ADDR: `127.0.0.1:${port}`, ...env }, stdio: ["pipe", "pipe", "inherit"] });
     const events = [];
     const waiters = [];
     const rl = createInterface({ input: child.stdout });
@@ -131,9 +131,9 @@ export async function startAttacker({ port, name = "Attacker" }) {
 }
 
 /** Everything a body test needs, wired up: server, relay, the real bridge, and the helpers. */
-export async function startWorld({ serverPort = 19138, relayPort = 19139, username = "AIBot", connect = {} } = {}) {
+export async function startWorld({ serverPort = 19138, relayPort = 19139, username = "AIBot", connect = {}, serverEnv = {} } = {}) {
     const { Bridge } = await import("../../bridge/index.mjs");
-    const server = await startServer({ port: serverPort });
+    const server = await startServer({ port: serverPort, env: serverEnv });
     const relay = startRakRelay({ listenPort: relayPort, targetPort: serverPort });
     const bridge = new Bridge({ _path: "e2e", defaults: { provider: "anthropic" }, providers: {}, connect: { mode: "server", host: "127.0.0.1", port: relayPort, offline: true, username, gamemode: "survival", ...connect } });
     const toAddon = [];

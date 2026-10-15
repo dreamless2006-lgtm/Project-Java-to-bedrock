@@ -52,6 +52,9 @@ export class Body {
         this.sprinting = false;
         this.jumping = false;
         this.sneaking = false;
+        this.intentTicks = 0;        // ticks in which a move key was down (for the bridge's "pressing but not moving" check)
+        this.truthMoved = 0;         // blocks the addon says the body really moved (sum over its position reports)
+        this.lastTruth = null;
         this.keys = null;            // raw keys held on the AI's say-so: {f, s, sprint, sneak, jump, left, floor}; expires on its own
         this.jumpRequested = false;
         this.jumpDelay = 0;
@@ -201,6 +204,10 @@ export class Body {
      * that never corrected). Two consecutive gaps over 1.5 blocks resync.
      */
     anchorFrom(feet) {
+        if (feet && typeof feet.x === "number" && typeof feet.z === "number") {
+            if (this.lastTruth) { const d = Math.hypot(feet.x - this.lastTruth.x, feet.z - this.lastTruth.z); if (d < 5) this.truthMoved += d; }   // a jump of 5+ is a teleport, not walking
+            this.lastTruth = { x: feet.x, y: typeof feet.y === "number" ? feet.y : 0, z: feet.z };
+        }
         if (!this.pos || !feet || typeof feet.x !== "number" || this.pendingTeleport || this.dimensionChange) return false;
         this.calibrate(feet);
         const gap = Math.hypot(feet.x - this.pos.x, (typeof feet.y === "number" ? feet.y : this.pos.y) - this.pos.y, feet.z - this.pos.z);
@@ -317,6 +324,7 @@ export class Body {
             if (flat <= ARRIVE) { this.floor = this.target.y; this.target = null; }
             else { this.yaw = Math.atan2(-dx, dz) * DEG; keyUp = true; mf = 1; wantSprint = this.mode === "sprint"; }
         }
+        if (keyUp) this.intentTicks++;
         // 3. sprint and sneak edges and state
         if (keyUp && wantSprint && mf > 0) {
             if (!this.sprinting) { flags.add("start_sprinting"); this.sprinting = true; }
