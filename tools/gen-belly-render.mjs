@@ -6,6 +6,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { writeEntityJson } from './lib/entity-json.mjs';
+import { KICK_BONES, kickRoom } from './lib/kick-clamp.mjs';
 
 const ROOT = new URL('../', import.meta.url).pathname;
 const RP = join(ROOT, 'packs/resource');
@@ -73,6 +74,32 @@ function kickReach(geometryOf) {
   }
   return reach;
 }
+/**
+ * Molang lines giving each kick cube's room inside the belly for the current size (v.k_<bone>_x/_y/_z),
+ * which the clamped kick animations read; v.kr_f (the navel crowning's reach) is the front kick's z room.
+ * @param {string} sizeVariable
+ * @param {(phase: number) => any} geometryOf
+ * @param {(phase: number) => any} [altGeometryOf] a second body chosen by `altCondition`
+ * @param {string} [altCondition]
+ */
+function kickRoomLines(sizeVariable, geometryOf, altGeometryOf, altCondition) {
+  const rooms = (/** @type {(phase: number) => any} */ of) => Array.from({ length: 10 }, (_, p) => kickRoom(of(p)));
+  const main = rooms(geometryOf);
+  const alt = altGeometryOf ? rooms(altGeometryOf) : undefined;
+  const pick = (/** @type {Record<string, any>[]} */ set, /** @type {string} */ bone, /** @type {'x'|'y'|'z'} */ axis) => {
+    let expr = '0.0';
+    for (let p = 9; p >= 3; p--) expr = `(${sizeVariable} == ${p} ? ${(set[p][bone]?.[axis] ?? 0).toFixed(2)} : ${expr})`;
+    return expr;
+  };
+  const lines = [];
+  for (const bone of KICK_BONES) for (const axis of /** @type {const} */ (['x', 'y', 'z'])) {
+    const value = alt && altCondition ? `${altCondition} ? ${pick(alt, bone, axis)} : ${pick(main, bone, axis)}` : pick(main, bone, axis);
+    lines.push(`v.k_${bone}_${axis} = ${value};`);
+  }
+  lines.push('v.kr_f = v.k_front_kick_z;');
+  return lines;
+}
+
 /** Molang picking the reach of the current belly size. */
 const reachExpression = (/** @type {string} */ sizeVariable, /** @type {number[]} */ reach) => {
   let expr = '0.0';
@@ -162,14 +189,14 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
   ];
 
   // pre_animation: the belly size from the enum property, else the phase, the variant, or a pregnancy pose.
-  const pre = d.scripts.pre_animation.filter((/** @type {string} */ line) => !line.startsWith('v.bp =') && !line.startsWith('v.phase = v.phase >= 0 ?') && !line.startsWith('v.phase = v.bp') && !line.startsWith('v.kr_f ='));
+  const pre = d.scripts.pre_animation.filter((/** @type {string} */ line) => !line.startsWith('v.bp =') && !line.startsWith('v.phase = v.phase >= 0 ?') && !line.startsWith('v.phase = v.bp') && !line.startsWith('v.kr_f =') && !line.startsWith('v.k_'));
   const at = pre.findIndex((/** @type {string} */ line) => line.startsWith('v.pregnant_pose ='));
   if (at < 0) throw new Error(`${family}: no v.pregnant_pose line`);
   pre.splice(at + 1, 0,
     `v.bp = ${bellyIndex("q.property('minepreggo:belly')")};`,
     'v.bp = v.bp >= 0 ? v.bp : (v.phase >= 0 ? v.phase : (q.variant > 0 ? q.variant - 1 : (v.pregnant_pose ? 5 : -1)));',
     'v.phase = v.bp;',
-    `v.kr_f = ${reachExpression('v.bp', kickReach((p) => read(join(RP, 'models/entity', MOD, `${family}_p${p}.geo.json`))['minecraft:geometry'][0]))};`);
+    ...kickRoomLines('v.bp', (p) => read(join(RP, 'models/entity', MOD, `${family}_p${p}.geo.json`))['minecraft:geometry'][0]));
   d.scripts.pre_animation = pre;
 
   // The belly animations move into the controller.
@@ -232,17 +259,17 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
     d.render_controllers.push({ [`controller.render.${MOD}.player_belly_custom_p${p}`]: `${belly} && !variable.mp_predefined && variable.mp_bp == ${p}` });
     d.render_controllers.push({ [`controller.render.${MOD}.player_belly_predefined_p${p}`]: `${belly} && variable.mp_predefined && variable.mp_bp == ${p}` });
   }
-  const pre = d.scripts.pre_animation.filter((/** @type {string} */ line) => !line.startsWith('variable.mp_bp =') && !line.startsWith('variable.mp_phase = variable.mp_phase >= 0 ?') && !line.startsWith('variable.mp_phase = variable.mp_bp') && !line.startsWith('variable.kr_f ='));
+  const pre = d.scripts.pre_animation.filter((/** @type {string} */ line) => !line.startsWith('variable.mp_bp =') && !line.startsWith('variable.mp_phase = variable.mp_phase >= 0 ?') && !line.startsWith('variable.mp_phase = variable.mp_bp') && !line.startsWith('variable.kr_f =') && !line.startsWith('v.k_') && !line.startsWith('v.kr_f'));
   const at = pre.findIndex((/** @type {string} */ line) => line.startsWith('variable.mp_pose ='));
   if (at < 0) throw new Error('player: no mp_pose line');
   pre.splice(at + 1, 0,
     `variable.mp_bp = ${bellyIndex("query.property('minepreggo:belly')")};`,
     "variable.mp_bp = variable.mp_bp >= 0 ? variable.mp_bp : (variable.mp_phase >= 0 ? variable.mp_phase : ((variable.mp_pose == 'none' || variable.mp_pose == 'postbirth' || variable.mp_pose == 'miscarriage') ? -1 : 5));",
     'variable.mp_phase = variable.mp_bp;');
-  const reachOf = (/** @type {string} */ kind) => reachExpression('variable.mp_bp', kickReach((p) => read(join(RP, 'models/entity', MOD, `player_body_${kind}_p${p}.geo.json`))['minecraft:geometry'][0]));
+  const bodyOf = (/** @type {string} */ kind) => (/** @type {number} */ p) => read(join(RP, 'models/entity', MOD, `player_body_${kind}_p${p}.geo.json`))['minecraft:geometry'][0];
   const predefinedAt = pre.findIndex((/** @type {string} */ line) => line.startsWith('variable.mp_predefined ='));
   if (predefinedAt < 0) throw new Error('player: no mp_predefined line');
-  pre.splice(predefinedAt + 1, 0, `variable.kr_f = variable.mp_predefined ? ${reachOf('predefined')} : ${reachOf('custom')};`);
+  pre.splice(predefinedAt + 1, 0, ...kickRoomLines('variable.mp_bp', bodyOf('custom'), bodyOf('predefined'), 'variable.mp_predefined'));
   d.scripts.pre_animation = pre;
   d.scripts.initialize = initializers(pre, [...(d.scripts.initialize ?? []), 'variable.melee_spear_equipped = 0.0;']);
   write(file, doc);

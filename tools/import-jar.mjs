@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { unzipSync, strFromU8 } from 'fflate';
 import { createModelRunner, toBedrockAnimation, toBedrockGeometry } from './lib/java-models.mjs';
 import { mergeBellies } from './lib/belly-merge.mjs';
+import { clampKicks } from './lib/kick-clamp.mjs';
 import { decodePng, encodePng } from './lib/png.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -305,7 +306,7 @@ for (const [javaClass, id] of Object.entries(ANIMATIONS)) {
     // Java copies the head's pose onto the hat after animating (hat.copyFrom(head)), overwriting
     // any hat keyframes; the converted hat is a child of the head, so it follows on its own.
     delete bedrock.bones.hat;
-    animations[`animation.${MOD_ID}.${id}.${field.toLowerCase()}`] = bedrock;
+    animations[`animation.${MOD_ID}.${id}.${field.toLowerCase()}`] = clampKicks(bedrock);
     animationCount++;
   }
   writeFile(join(animationOut, `${id}.animation.json`), JSON.stringify({ format_version: '1.8.0', animations }, null, 2) + '\n');

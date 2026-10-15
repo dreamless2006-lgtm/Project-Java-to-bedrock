@@ -948,11 +948,12 @@ test('kicks are bulges, not loose cubes: the push layers only move the belly, th
   // Every female and the player know how deep their kick cube rests for every belly size that has one.
   for (const file of readdirSync(join(RP, 'entity'))) {
     const pre = json(join(RP, 'entity', file))['minecraft:client_entity'].description.scripts.pre_animation;
-    const line = pre.find((/** @type {string} */ l) => /^(v|variable)\.kr_f =/.test(l));
+    const line = pre.find((/** @type {string} */ l) => l.startsWith('v.k_front_kick_z ='));
     assert.ok(line, `${file}: kick reach`);
+    assert.ok(pre.includes('v.kr_f = v.k_front_kick_z;'), `${file}: the navel reach is the front kick's room`);
     for (let phase = 3; phase <= 9; phase++) assert.match(line, new RegExp(`== ${phase} \\? \\d+\\.\\d+`), `${file}: reach for P${phase}`);
     const values = [...line.matchAll(/== \d \? (\d+\.\d+)/g)].map((m) => Number(m[1]));
-    assert.ok(values.every((v) => v >= 0.5 && v <= 12), `${file}: reaches within the belly depth (${values.join(', ')})`);
+    assert.ok(values.every((v) => v >= 0.5 && v <= 16), `${file}: reaches within the belly depth (${values.join(', ')})`);
   }
   // The monster creeper girl's own birth animation moves her kick cubes, so her crowning only grows in place; the ender woman's does not, so hers travels.
   const creeper = json(join(RP, 'entity/monster_creeper_girl.entity.json'))['minecraft:client_entity'].description.animations;
@@ -962,4 +963,50 @@ test('kicks are bulges, not loose cubes: the push layers only move the belly, th
   // The mod's own kicks are what move the kick cubes, per belly size and kick strength.
   const mod = Object.assign({}, ...readdirSync(join(RP, 'animations/minepreggo')).map((f) => json(join(RP, 'animations/minepreggo', f)).animations));
   for (let phase = 3; phase <= 9; phase++) for (const strength of ['ii', 'iii']) assert.ok(mod[`animation.minepreggo.belly.fetal_movement_p${phase}_${strength}`]?.bones?.front_kick, `the mod's P${phase} ${strength} kick moves the front kick`);
+});
+
+test('no kick cube can leave the belly: every kick keyframe is clamped to the measured room of the belly size, on every female and the player', async () => {
+  const { clampKicks, kickRoom, KICK_BONES } = await import('../lib/kick-clamp.mjs');
+  // The clamp wraps the mod's numbers in Molang that cannot exceed the room plus the bulge.
+  const clamped = clampKicks({ bones: { left_kick: { position: { '1.0': { post: [8, 0, -4] } }, scale: { '1.0': { post: [1.6, 1, 1] } } }, belly: { scale: [1, 1, 1] } } });
+  assert.deepEqual(clamped.bones.left_kick.position['1.0'].post, ['math.clamp(8, -(v.k_left_kick_x + 1.00), (v.k_left_kick_x + 1.00))', 0, 'math.max(-(v.k_left_kick_z + 1.25), -4)']);
+  assert.deepEqual(clamped.bones.left_kick.scale['1.0'].post, [1.25, 1, 1]);
+  assert.deepEqual(clamped.bones.belly, { scale: [1, 1, 1] }, 'the belly itself is untouched');
+  // The room is measured from the belly's box, cubes rotated as the game rotates them.
+  const room = kickRoom({ bones: [
+    { name: 'belly', pivot: [0, 0, 0] },
+    { name: 'skin', parent: 'belly', pivot: [0, 0, 0], cubes: [{ origin: [-4, 10, -10], size: [8, 6, 8] }] },
+    { name: 'turned', parent: 'belly', pivot: [0, 13, -6], rotation: [0, 90, 0], cubes: [{ origin: [-1, 12, -6], size: [2, 2, 6] }] },
+    { name: 'front_kick', parent: 'belly', pivot: [0, 0, 0], cubes: [{ origin: [-1.5, 12, -7], size: [3, 3, 3], inflate: -0.1 }] },
+  ] });
+  assert.deepEqual(room.front_kick, { x: 2.6, y: 1.1, z: 3.1 });
+  // Every converted animation that moves a kick cube is clamped.
+  const mod = Object.assign({}, ...readdirSync(join(RP, 'animations/minepreggo')).map((f) => json(join(RP, 'animations/minepreggo', f)).animations));
+  let clampedChannels = 0;
+  for (const [name, anim] of Object.entries(mod)) for (const bone of KICK_BONES) {
+    const position = anim.bones?.[bone]?.position;
+    if (!position) continue;
+    // Every non-zero component of every keyframe is a clamp expression, never a bare number.
+    const vectors = Array.isArray(position) ? [position] : Object.values(position).flatMap((frame) => (Array.isArray(frame) ? [frame] : [frame.pre, frame.post].filter(Boolean)));
+    for (const vector of vectors) vector.forEach((component, axis) => {
+      // z may stay a bare positive number: that is a move backwards, deeper into the belly.
+      if (typeof component === 'number') assert.ok(component === 0 || (axis === 2 && component > 0), `${name} ${bone}: a bare outward position value escaped the clamp (${component})`);
+      else assert.match(String(component), /^math\.(clamp|max)\(/, `${name} ${bone}: ${component}`);
+    });
+    if (vectors.some((vector) => vector.some((component) => typeof component === 'string'))) clampedChannels++;
+    const scale = anim.bones[bone].scale;
+    const scales = !scale ? [] : Array.isArray(scale) ? [scale] : Object.values(scale).flatMap((frame) => (Array.isArray(frame) ? [frame] : [frame.pre, frame.post].filter(Boolean)));
+    for (const vector of scales) for (const component of vector) if (typeof component === 'number') assert.ok(component <= 1.25, `${name} ${bone}: scale ${component}`);
+  }
+  assert.ok(clampedChannels >= 20, `${clampedChannels} clamped kick channels`);
+  // Every female and the player carry the room of every kick cube for every belly size that has it.
+  for (const file of readdirSync(join(RP, 'entity'))) {
+    const pre = json(join(RP, 'entity', file))['minecraft:client_entity'].description.scripts.pre_animation;
+    for (const bone of KICK_BONES) for (const axis of ['x', 'y', 'z']) {
+      const line = pre.find((/** @type {string} */ l) => l.startsWith(`v.k_${bone}_${axis} =`));
+      assert.ok(line, `${file}: room ${bone} ${axis}`);
+      for (let phase = 3; phase <= 9; phase++) assert.match(line, new RegExp(`== ${phase} \\? \\d+\\.\\d+`));
+    }
+    assert.ok(pre.some((/** @type {string} */ l) => l === 'v.kr_f = v.k_front_kick_z;'), `${file}: the navel reach is the front kick's room`);
+  }
 });

@@ -143,6 +143,14 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   when hers is small). The client falls back to `q.variant` and to the pose when the phase
   property is unknown, and the mob system rewrites the phase property every tick (records from
   versions that only set it through entity events, wild mobs that only kept the variant).
+- ✅ **Kick cubes cannot leave the belly (0.3.9).** The mod's keyframed kicks were authored for one
+  model; across the ten per-phase models some of them travel further sideways or forward than the
+  belly's box allows, which is what looked like particles floating in front of her. The importer
+  now wraps every kick-bone position keyframe (`tools/lib/kick-clamp.mjs`) in Molang that clamps
+  it to the room the current belly size leaves on that axis plus a small bulge (1.25 forward, 1.0
+  sideways and vertically) and caps kick scales at 1.25; the generator measures that room per kick
+  cube, axis and belly size from the rotated belly cubes and writes it into every female's and the
+  player's pre_animation (`v.k_<bone>_x/_y/_z`).
 - ✅ **Kicks as bulges (0.3.8).** The kick cubes rest 1 to 10 units inside the belly depending on
   the size, and the mod's own per-phase `fetal_movement_pN` animations move them by exactly the
   right distance; the port's procedural push layers used to add a fixed 2-5 units on top, which
