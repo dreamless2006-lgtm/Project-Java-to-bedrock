@@ -47,3 +47,41 @@ test("runThink: success, non-retryable error, retry then success, bad json", asy
     const r6 = await runThink({ provider: "openai", apiKey: "k" }, turn, async () => { throw new Error("boom"); }, sleep, { attempts: 2, baseDelayMs: 0, maxDelayMs: 0, timeoutSec: 1 });
     assert.equal(r6.type, "retries_exhausted"); assert.equal(r6.attempts, 2);
 });
+
+// ---- the frame reader is fed by anyone who can put a line in a chat: its limits are enforced here, not left to a catch-all ---------
+import { decodeFrame as decodeFrameCap, Reassembler as ReassemblerCap, MAX_FRAMES, MAX_PARTIAL } from "../packs/RealAI_BP/scripts/brain/frame.js";
+
+test("frames with absurd counts, indexes or ids are not frames", () => {
+    assert.equal(decodeFrameCap("AIB1|x|1/99999999999|a"), null);
+    assert.equal(decodeFrameCap(`AIB1|x|1/${MAX_FRAMES + 1}|a`), null);
+    assert.ok(decodeFrameCap(`AIB1|x|1/${MAX_FRAMES}|a`));
+    assert.equal(decodeFrameCap("AIB1|x|3/2|a"), null);
+    assert.equal(decodeFrameCap("AIB1|x|0/2|a"), null);
+    assert.equal(decodeFrameCap("AIB1|x|1/0|a"), null);
+    assert.equal(decodeFrameCap("AIB1|" + "i".repeat(41) + "|1/1|a"), null);
+    assert.ok(decodeFrameCap("AIB1|" + "i".repeat(40) + "|1/1|a"));
+    assert.equal(decodeFrameCap("AIB1|x|1/-2|a"), null);
+    assert.equal(decodeFrameCap("AIB1|x|1/1e3|a"), null);
+});
+
+test("the reassembler keeps a bounded number of half-finished messages and refuses a frame that disagrees about the count", () => {
+    const r = new ReassemblerCap(() => 1000);
+    for (let i = 0; i < MAX_PARTIAL + 30; i++) r.push(`AIB1|junk${i}|1/2|x`);
+    assert.ok(r.partial.size <= MAX_PARTIAL, "bounded: " + r.partial.size);
+    // a legitimate message still completes after a flood of junk
+    assert.equal(r.push("AIB1|real|1/2|ab"), null);
+    assert.deepEqual(r.push("AIB1|real|2/2|cd"), { id: "real", text: "abcd" });
+    const q = new ReassemblerCap(() => 1000);
+    q.push("AIB1|m|1/2|a");
+    assert.equal(q.push("AIB1|m|2/3|b"), null, "a second frame with another count is dropped");
+    assert.deepEqual(q.push("AIB1|m|2/2|b"), { id: "m", text: "ab" });
+});
+
+test("a message of tens of kilobytes still fits in the frame limits (the longest system prompt, in the addon's own chunks)", () => {
+    const text = "x".repeat(120_000);
+    const frames = encodeFrames("big", text, 900);
+    assert.ok(frames.length <= MAX_FRAMES, frames.length + " frames");
+    const r = new ReassemblerCap();
+    let out = null; for (const f of frames) out = r.push(f) || out;
+    assert.equal(out.text.length, 120_000);
+});

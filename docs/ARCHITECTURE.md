@@ -89,11 +89,14 @@ the vanilla model (impulse 0.98 x speed, friction 0.91 x 0.6 on the ground,
 gravity 0.08 x 0.98, jump 0.42 with a 10-tick cooldown, step height
 0.5625), acknowledges teleports with `handled_teleport`, answers the
 respawn and dimension-change handshakes, and resyncs when the addon reports
-the server keeps the body elsewhere. Messages: `walk{x,y,z,mode,jump,fx,fy,fz}`
-(walk to a footing point, the head turns to face it), `input{f,s,sprint,sneak,jump,ms,floor,fx,fy,fz}`
+the server keeps the body elsewhere. Messages: `walk{x,y,z,mode,jump,fx,fy,fz,fg}`
+(walk to a footing point, the head turns to face it; `fx,fy,fz` is where the game has the
+body and `fg` whether it is on the ground, from which the body learns the height it stands at),
+`input{f,s,sprint,sneak,jump,ms,floor,ed,fx,fy,fz,fg}`
 (raw keys: f +1 forward / -1 back, s +1 left / -1 right, held for a lease of `ms`
-and released by themselves when the addon goes quiet; `floor` is the ground a
-step ahead, which is how a body without eyes hops a ledge or drops down one),
+and released by themselves when the addon goes quiet; `floor` is the ground level the body
+reaches next and `ed` how many blocks ahead of `fx,fz` that change of level begins, which is
+how a body without eyes hops a ledge or drops down one; both are left out while the ground ahead is level),
 `jump`, `stop`, `look{x,y,z}` or `look{yaw,pitch}`, `swing`, `body_status`, and
 `probe`/`probe_hurt` while `!ai debug` is on. Yaw 0 faces south (+z), 90 west,
 180 north, -90 east; pitch is negative looking up; strafe left is +x when facing
@@ -106,8 +109,10 @@ lava; hazard; solid; tall: fences and walls), so the walker's footing check and
 reachable point when there is no way all the way, flags climbs as jumps, needs
 head room at the departure level for a step down, and keeps 0.35 blocks off
 corners when it smooths a route; the walker (`stepPlayerBody`) plans far goals
-in 24-block segments, plans again whenever it is more than a block from its goal
-(at most every ten ticks, and after a failed plan not for two seconds), probes
+in 24-block segments, plans whenever it is more than a block from its goal and has
+no path for a second (or every five seconds anyway), at most every half second, not
+at all for two seconds after a plan failed, and not for a held key (`move` walks
+straight on); it probes
 0.3 blocks beyond its next step because the body is 0.6 wide, and sends the
 height it really stands at, not the block index, so a snow layer or a path block
 is not a step.
@@ -136,15 +141,19 @@ edge, a ledge once it is reached, and the hop to a ledge keeps that ledge as the
 ground until the body has landed; a walk target lapses after two seconds without a
 fresh frame. Input ticks are numbered from zero by default; `connect.tickBase:
 "server"` continues from start_game's tick, and the bridge flips the numbering
-itself once (and says so) when keys are held for twenty seconds, nothing moves
-and nothing objects. Frames from the addon are accepted only from raw/json text,
-never from a player's chat, whisper or announcement.
+itself once (and says so in chat, and keeps it over a reconnect) when, within twenty
+seconds, keys were down for four seconds or more, the body moved less than a block, the
+server did not object, and the body has not moved at all on this connection.
+Frames from the addon are accepted only when the whole line is the frame (a colour
+code in front is tolerated), and never from a player's chat, whisper or announcement.
 
 Diagnosis: the bridge counts the ticks a move key was down and the real distance
 the addon reports the body moved (`Body.intentTicks`, `truthMoved`); every five
-seconds `monitorMotion` warns (log and, once, the world's chat) when keys were
-down without real movement, or when the server pulled the body back 15 times
-(corrections or teleports). `node index.mjs --selftest` walks the body with the
+seconds `monitorMotion` writes the figures to the log and warns there when the server
+pulled the body back 15 times in the window (corrections or teleports) or when keys
+were down for four of the last twenty seconds without real movement; the world's
+chat hears of it, once per kind and at most four times per run, only after three such
+windows of pull-backs in a row or the stuck condition above. `node index.mjs --selftest` walks the body with the
 AI's own presses and reads the true position with `/tp @s ~ ~ ~`. `!ai body`
 prints the bridge's `body_status`.
 
@@ -157,8 +166,10 @@ cooldown and is reported to the model as a `hurt` event. Death keeps the
 brain on the player body (`brain.dead` until the `playerSpawn` respawn),
 records `memory.deathPos`, stops the actuator, and the respawn event tells the
 model where its items lie; the bridge presses Respawn itself (player_action
-respawn) about 1.2 s after the death, again after 1.5 s and 4 s if the server
-has not answered, and sends respawn state 2 when the server says it is ready.
+respawn) about 1.2 s after the death, again at 2.7 s and 4.2 s and then every 4 s
+if the server has not answered (from the second press it also says "ready", for
+servers that never answer the click), and sends respawn state 2 when the server
+says it is ready.
 
 The per-tick layer (`BotBrain.fastTick`, run by the manager every tick for
 player bodies) is where the body is better than a human hand: `path.js`

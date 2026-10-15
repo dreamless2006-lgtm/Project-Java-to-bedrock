@@ -416,3 +416,64 @@ test("input ticks can be counted the server's way, and flipped on the fly", () =
     assert.equal(srv.step().tick, 5001n);
     assert.ok(srv.status().tickBase === "server");
 });
+
+// ---- the second review round: corrections are neutral when they agree, hop state survives a replay -------------------------
+
+test("a correction that agrees with the body changes nothing, even in the middle of a hop", () => {
+    for (let hopTick = 8; hopTick <= 16; hopTick++) {
+        const b = new Body(); start(b, { x: 0, y: 64, z: 0 }); b.setLook(0, 0);
+        const snaps = new Map();
+        for (let i = 0; i < 40; i++) {
+            b.press({ f: 1, ms: 250, floor: 65, ed: 3.0 - b.pos.z, at: { x: 0, z: b.pos.z } });
+            const p = b.step();
+            snaps.set(p.tick, { pos: { ...b.pos }, vel: { ...b.vel }, onGround: b.onGround });
+            if (i === hopTick + 2) {
+                const at = snaps.get(BigInt(hopTick + 1));           // the server agrees with what we said at tick hopTick+1
+                const want = { pos: { ...b.pos }, vel: { ...b.vel }, onGround: b.onGround, jumping: b.jumping };
+                b.onCorrection({ prediction_type: "player", tick: BigInt(hopTick + 1), position: { x: at.pos.x, y: at.pos.y + EYE_HEIGHT, z: at.pos.z }, delta: at.vel, on_ground: at.onGround });
+                assert.ok(Math.abs(b.pos.z - want.pos.z) < 1e-6 && Math.abs(b.pos.y - want.pos.y) < 1e-6, `hop tick ${hopTick}: replay lands where step() was: y ${b.pos.y} vs ${want.pos.y}, z ${b.pos.z} vs ${want.pos.z}`);
+                assert.equal(b.onGround, want.onGround, `hop tick ${hopTick}: on ground agrees`);
+                assert.equal(b.jumping, want.jumping, `hop tick ${hopTick}: jumping agrees`);
+            }
+        }
+    }
+});
+
+test("late reports right after a correction do not make the body resync backwards", () => {
+    const b = new Body(); start(b); b.setLook(0, 0);
+    const trail = [];
+    for (let i = 0; i < 120; i++) {
+        b.press({ f: 1, sprint: true, ms: 250 });
+        const p = b.step();
+        trail.push({ x: b.pos.x, y: b.pos.y, z: b.pos.z });
+        if (i === 50) b.onCorrection({ prediction_type: "player", tick: p.tick - 3n, position: { x: trail[i - 3].x, y: trail[i - 3].y + EYE_HEIGHT, z: trail[i - 3].z }, delta: { ...b.vel }, on_ground: true });
+        if (i > 8) b.anchorFrom(trail[i - 7], true);       // reports seven ticks old: 1.9 blocks behind at sprint speed
+    }
+    assert.equal(b.resyncs, 0, "no resync");
+});
+
+test("hop state does not outlive a respawn, a dimension change or a correction that ends the hop", () => {
+    const hopping = () => { const b = new Body(); start(b, { x: 0, y: 64, z: 0 }); b.setLook(0, 0); for (let i = 0; i < 40 && !b.hopTo; i++) { b.press({ f: 1, ms: 250, floor: 65, ed: 3.0 - b.pos.z, at: { x: 0, z: b.pos.z } }); b.step(); } return b; };
+    let b = hopping(); assert.ok(b.hopTo, "set up: mid-hop");
+    b.onChangeDimension({ position: { x: 0, y: 70, z: 0 }, loading_screen_id: 1 });
+    assert.equal(b.hopTo, null); assert.equal(b.autoHop, false); assert.equal(b.jumping, false);
+    b = hopping();
+    b.markDead(); b.onRespawn({ runtime_entity_id: 7n, state: 1, position: { x: 0, y: 70 + EYE_HEIGHT, z: 0 } });
+    assert.equal(b.hopTo, null);
+    b = hopping();
+    b.hist.length = 0;                                       // a correction for a tick we no longer have: nothing to replay, and nothing left of the hop
+    b.onCorrection({ prediction_type: "player", tick: b.tick, position: { x: 0, y: 64 + EYE_HEIGHT, z: 2.2 }, delta: { x: 0, y: -0.0784, z: 0 }, on_ground: true });
+    assert.equal(b.hopTo, null);
+});
+
+test("a sprinting hop is up before the front of the body reaches the ledge face", () => {
+    const b = new Body(); start(b, { x: 0, y: 64, z: 0 }); b.setLook(0, 0);
+    const edge = 6.0;                                        // the ledge face, 1 block high, south
+    let worst = 0;
+    for (let i = 0; i < 80; i++) {
+        b.press({ f: 1, sprint: true, ms: 250, floor: 65, ed: edge - b.pos.z, at: { x: 0, z: b.pos.z } });
+        b.step();
+        if (b.pos.y < 64.99) worst = Math.max(worst, b.pos.z + 0.3 - edge);         // how far the front of the body is inside the ledge while below its top
+    }
+    assert.ok(worst < 0.12, `the front of the body is at most ${worst.toFixed(2)} inside the ledge while below its top`);
+});

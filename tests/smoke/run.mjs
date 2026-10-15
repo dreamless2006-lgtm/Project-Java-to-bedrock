@@ -392,6 +392,54 @@ check(residents().length === 8, "still 8 residents after the respawn: " + reside
         bb.actuator.stopAll();
         await run(10);
         check(otherMsgs.some(m => m.t === "stop"), "stopping tells the bridge to stop walking");
+        // the frames say how high the body stands (a snow layer is not a whole block) and whether it is on the ground
+        overworld._set(310, 64, 330, "minecraft:snow_layer");
+        relay.teleport({ x: 310.5, y: 64.125, z: 330.5 });
+        const snowFrom = otherMsgs.length;
+        bb.actuator.enqueue([{ type: "move_to", x: 318, y: 64, z: 330 }]);
+        await run(40);
+        const snowFrames = otherMsgs.slice(snowFrom).filter(m => m.t === "walk");
+        check(snowFrames.length > 2 && snowFrames.every(m => Math.abs(m.y - 64.125) < 1e-6 && Math.abs(m.fy - 64.125) < 1e-6 && m.fg === 1), "walk frames carry the height the body stands at and that it is on the ground: " + JSON.stringify(snowFrames[0]));
+        bb.actuator.stopAll(); await run(5);
+        // a reply's actions keep their order: turn north, walk, turn east
+        relay.teleport({ x: 330.5, y: 64, z: 330.5 }); relay.setRotation({ x: 0, y: 0 });
+        const ordFrom = otherMsgs.length; bb.actuator.results.length = 0;
+        bb.actuator.enqueue([{ type: "look", facing: "north" }, { type: "move", direction: "forward", seconds: 0.5 }, { type: "look", facing: "east" }]);
+        await run(80, 2, () => bb.actuator.results.length >= 3);
+        const ord = otherMsgs.slice(ordFrom).filter(m => m.t === "look" || m.t === "input");
+        const iLookN = ord.findIndex(m => m.t === "look" && Math.abs(Math.abs(m.yaw) - 180) < 1), iInput = ord.findIndex(m => m.t === "input"), iLookE = ord.findIndex(m => m.t === "look" && Math.abs(m.yaw + 90) < 1);
+        check(iLookN === 0 && iInput > iLookN && iLookE > iInput, "look north, then the keys, then look east: " + ord.map(m => m.t === "look" ? "look " + m.yaw : "input").join(", ").slice(0, 120));
+        check(/^look: facing N/.test(bb.actuator.results[0] || "") && /^move:/.test(bb.actuator.results[1] || "") && /^look: facing E/.test(bb.actuator.results[2] || ""), "and the results come back in that order: " + JSON.stringify(bb.actuator.results.map(r => r.slice(0, 20))));
+        // key frames name the ledge ahead and where it begins
+        relay.teleport({ x: 340.5, y: 64, z: 340.5 }); relay.setRotation({ x: 0, y: 0 });
+        for (let dx = -3; dx <= 3; dx++) for (let dz = 2; dz <= 8; dz++) overworld._set(340 + dx, 64, 340 + dz, "minecraft:dirt");
+        const keyFrom = otherMsgs.length;
+        bb.actuator.enqueue([{ type: "move", direction: "forward", seconds: 0.4 }]);
+        await run(14);
+        const keyFrames = otherMsgs.slice(keyFrom).filter(m => m.t === "input");
+        check(keyFrames.length >= 2 && keyFrames.every(m => m.floor === 65 && m.ed > 0.9 && m.ed < 1.8 && m.f === 1 && m.fg === 1), "key frames carry the level of the ledge ahead and the distance to it: " + JSON.stringify(keyFrames[0]));
+        bb.actuator.stopAll(); await run(5);
+        for (let dx = -3; dx <= 3; dx++) for (let dz = 2; dz <= 8; dz++) overworld._set(340 + dx, 64, 340 + dz, "minecraft:air");
+        // too hungry to sprint: the game would refuse, so the body must not claim it
+        const hungerNow = relay.getComponent("minecraft:player.hunger");
+        const hungerWas = hungerNow.currentValue; hungerNow.setCurrentValue(5);
+        relay.teleport({ x: 350.5, y: 64, z: 350.5 });
+        const hungFrom = otherMsgs.length;
+        bb.actuator.enqueue([{ type: "move", direction: "forward", seconds: 0.3, sprint: true }]);
+        await run(10);
+        const hungFrames = otherMsgs.slice(hungFrom).filter(m => m.t === "input");
+        check(hungFrames.length >= 1 && hungFrames.every(m => m.sprint === false), "at five hunger points it does not sprint");
+        bb.actuator.stopAll(); await run(5);
+        hungerNow.setCurrentValue(hungerWas);
+        // interrupted half way round, look_around faces the way it faced before
+        relay.setRotation({ x: 0, y: 90 });
+        bb.actuator.stopAll(); await run(2);
+        const roundFrom = otherMsgs.length;
+        bb.actuator.enqueue([{ type: "look_around" }]);
+        await run(22);                       // started on the next supervision tick, a few compass points in
+        bb.actuator.stopAll(); await run(3);
+        const roundLooks = otherMsgs.slice(roundFrom).filter(m => m.t === "look");
+        check(roundLooks.length >= 2 && Math.abs(roundLooks[roundLooks.length - 1].yaw - 90) < 1, "and when it is interrupted it turns back: " + roundLooks.map(m => m.yaw).join(", "));
         fromBridge({ t: "hello", v: 1, name: "RealAIBridge", version: "0.1.0", providers: ["anthropic", "openai", "xai", "gemini", "ollama", "lmstudio", "player2"] });
         await run(40);
     }

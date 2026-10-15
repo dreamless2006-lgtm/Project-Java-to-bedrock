@@ -52,13 +52,13 @@ function bridgeSend(obj) { try { return bridge.send(obj); } catch (e) { return f
 // The game refuses to sprint at 6 hunger points or fewer; a body that sprints anyway disagrees with the server about its own speed.
 function canSprint(bot) { try { const h = bot.getComponent("minecraft:player.hunger"); if (h && typeof h.currentValue === "number") return h.currentValue > 6; } catch (e) { /* older API */ } return true; }
 function onGroundNow(bot) { try { return bot.isOnGround ? 1 : 0; } catch (e) { return 1; } }
-function goTo(bot, target, mode = "sprint", prio = PRIO, enterWater = false) {
+function goTo(bot, target, mode = "sprint", prio = PRIO, enterWater = false, straight = false) {
     if (isPlayerBody(bot)) {
         const w = walkers.get(bot.id);
         if (w) {
-            if (Math.hypot(target.x - w.goal.x, target.z - w.goal.z) > 1.5 || Math.abs(target.y - w.goal.y) > 1.5) { w.path = null; w.planAt = -1000; w.replans = 0; }
-            w.goal = { x: target.x, y: target.y, z: target.z }; w.mode = mode; w.enterWater = enterWater; w.until = system.currentTick + STEP * 3;
-        } else walkers.set(bot.id, { bot, goal: { x: target.x, y: target.y, z: target.z }, mode, enterWater, until: system.currentTick + STEP * 3, blocked: 0, slide: 0, path: null, planAt: -1000, replans: 0 });
+            if (Math.hypot(target.x - w.goal.x, target.z - w.goal.z) > 1.5 || Math.abs(target.y - w.goal.y) > 1.5) { w.path = null; w.planAt = -1000; w.replans = 0; w.failUntil = 0; w.lastPlan = -100; }
+            w.goal = { x: target.x, y: target.y, z: target.z }; w.mode = mode; w.enterWater = enterWater; w.straight = straight; w.until = system.currentTick + STEP * 3;
+        } else walkers.set(bot.id, { bot, goal: { x: target.x, y: target.y, z: target.z }, mode, enterWater, straight, until: system.currentTick + STEP * 3, blocked: 0, slide: 0, path: null, planAt: -1000, replans: 0 });
         if (walkerTimer === null) walkerTimer = system.runInterval(() => { const now = system.currentTick; for (const w of [...walkers.values()]) { try { if (!w.bot.isValid) walkers.delete(w.bot.id); else stepPlayerBody(w.bot, now); } catch (e) { /* ignore */ } } }, 1);
         return;
     }
@@ -87,7 +87,7 @@ export function stepPlayerBody(bot, now) {
     // Plan whenever the goal is more than a step away: close to an obstacle is exactly where a straight line fails. A plan is a
     // search over thousands of blocks, so there is a pause between them, and after a failure a longer one.
     const due = (w.path === null && now - w.planAt > 20) || now - w.planAt > 100;
-    if (toGoal > 1.0 && due && (w.replans < 6 || now - w.planAt > 100) && now - (w.lastPlan ?? -100) >= 10 && now >= (w.failUntil || 0)) {
+    if (!w.straight && toGoal > 1.0 && due && (w.replans < 6 || now - w.planAt > 100) && now - (w.lastPlan ?? -100) >= 10 && now >= (w.failUntil || 0)) {
         w.planAt = now; w.lastPlan = now; w.replans++;
         const dim = bot.dimension;
         const far = toGoal > 28, k = 24 / toGoal;
@@ -119,8 +119,12 @@ export function stepPlayerBody(bot, now) {
         const vx = ux * cs - uz * sn, vz = ux * sn + uz * cs;
         const nx = loc.x + vx * step, nz = loc.z + vz * step;
         // the body is 0.6 wide: what it would touch is up to 0.3 beyond the point it steps to
-        const ny = footing(bot.dimension, loc.x + vx * (step + 0.32), loc.y, loc.z + vz * (step + 0.32), w.enterWater, loc);
-        if (ny !== null) { move = { x: nx, y: ny, z: nz }; slid = a !== 0; break; }
+        const lead = footing(bot.dimension, loc.x + vx * (step + 0.32), loc.y, loc.z + vz * (step + 0.32), w.enterWater, loc);
+        if (lead !== null) {
+            // refuse what the leading edge of the body would touch, but take the level from where the body will be: a ledge counts from the lead point on (the hop must start before the face), a step down only once the step itself is past the edge
+            const here = footing(bot.dimension, nx, loc.y, nz, w.enterWater, loc);
+            move = { x: nx, y: here === null ? lead : Math.max(here, lead), z: nz }; slid = a !== 0; break;
+        }
     }
     if (!move) { w.blocked = (w.blocked || 0) + 1; if (w.path && w.blocked >= 3) { w.path = null; w.planAt = -1000; } if (w.blocked === 1 && w.sent) { bridgeSend({ t: "stop" }); w.sent = false; } return; }
     w.blocked = 0;
@@ -132,7 +136,7 @@ export function stepPlayerBody(bot, now) {
             const ahead = Math.min(1.5, flat);
             const px = loc.x + (move.x - loc.x) / step * ahead, pz = loc.z + (move.z - loc.z) / step * ahead;
             // on the level we stand on, the height we stand at (a snow layer or a path block is not a whole block high)
-            const ty = move.y === Math.floor(loc.y + 0.15) ? loc.y : move.y;
+            const ty = move.y === Math.floor(loc.y + 0.15) && onGroundNow(bot) ? loc.y : move.y;
             bridgeSend({ t: "walk", x: +px.toFixed(2), y: +ty.toFixed(3), z: +pz.toFixed(2), mode: w.mode === "walk" || !canSprint(bot) ? "walk" : "sprint", jump: (move.y > loc.y + 0.5 || hintJump) ? 1 : 0, fx: +loc.x.toFixed(2), fy: +loc.y.toFixed(3), fz: +loc.z.toFixed(2), fg: onGroundNow(bot) });
             w.sentAt = now; w.sentY = move.y; w.sent = true;
         }
@@ -594,7 +598,7 @@ H.move = {
                 s.sentAt = now; pressing.set(bot.id, now);
             }
         } else {
-            goTo(bot, { x: loc.x + hx * 2, y: ahead.floor ?? Math.floor(loc.y), z: loc.z + hz * 2 }, sprinting ? "sprint" : "walk", PRIO, false);
+            goTo(bot, { x: loc.x + hx * 2, y: ahead.floor ?? Math.floor(loc.y), z: loc.z + hz * 2 }, sprinting ? "sprint" : "walk", PRIO, false, true);       // straight on: no route planning for a held key
         }
         // nothing happening although the keys are down: something the world map does not show is in the way
         if (now - s.lastAt >= 15) {
@@ -934,6 +938,9 @@ function mineStep(s, ctx) {
     const under = blockAt(dim, nx, ny - 1, nz);
     const around = [blockAt(dim, nx, ny, nz), blockAt(dim, nx, ny + 1, nz), under, blockAt(dim, nx + dx, ny, nz + dz), blockAt(dim, nx + dx, ny + 1, nz + dz), blockAt(dim, nx, ny - 2, nz), blockAt(dim, nx + dz, ny, nz + dx), blockAt(dim, nx - dz, ny, nz - dx)];
     if (around.some(b => b && /lava/.test(b.typeId))) return finish("LAVA next to the stairs, stopped digging (pour water on it or dig elsewhere)");
+    // the third cell of each step opens the ceiling: what lies over it (and beside it) must not be a liquid that would pour in
+    const roof = [blockAt(dim, nx, ny + 3, nz), blockAt(dim, nx + dx, ny + 2, nz + dz), blockAt(dim, nx + dz, ny + 2, nz + dx), blockAt(dim, nx - dz, ny + 2, nz - dx)];
+    if (roof.some(b => b && /lava|water/.test(b.typeId))) return finish(`${roof.find(b => b && /lava/.test(b.typeId)) ? "LAVA" : "water"} above the stairs, stopped digging (dig elsewhere)`);
     if (under && (under.isAir || under.isLiquid)) {
         const fill = Object.keys(inv).find(id => /cobblestone|cobbled_deepslate|dirt$|netherrack|:stone$|planks$/.test(id));
         if (!fill) return finish(under.isLiquid ? "water below the next step, stopped" : "a cave opened up below; stopped (carry cobblestone to bridge gaps)");

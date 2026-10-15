@@ -96,3 +96,16 @@ test("stepping down needs head room at the departure level", () => {
     const r2 = findPath(world(open), { x: 4.5, y: 64, z: 0.5 }, { x: 9.5, y: 63, z: 0.5 }, { allowPartial: false });
     assert.ok(r2.ok && r2.path[r2.path.length - 1].y === 63, "drops into the hollow: " + JSON.stringify(r2).slice(0, 100));
 });
+
+test("plants that have collision are not walked through: azalea, big dripleaf, chorus flower", () => {
+    for (const id of ["minecraft:azalea", "minecraft:flowering_azalea", "minecraft:big_dripleaf", "minecraft:chorus_flower"]) assert.equal(kindOf(id), "solid", id);
+    assert.equal(kindOf("minecraft:dandelion"), "passable"); assert.equal(kindOf("minecraft:cornflower"), "passable"); assert.equal(kindOf("minecraft:wither_rose"), "hazard");
+});
+
+test("a body standing on a path block (feet 63.9375) starts from the right cell: a flat strip is flat", () => {
+    const rows = {}; for (let x = -2; x <= 30; x++) for (let z = -2; z <= 2; z++) rows[`${x},63,${z}`] = "minecraft:grass_path";
+    const r = findPath(world(rows), { x: 0.5, y: 63.9375, z: 0.5 }, { x: 20.5, y: 64, z: 0.5 });
+    assert.ok(r.ok, r.reason);
+    assert.ok(!r.path.some(p => p.jump), "no hop on flat ground: " + JSON.stringify(r.path));
+    assert.ok(r.path.length <= 4, "a straight line, smoothed: " + r.path.length);
+});

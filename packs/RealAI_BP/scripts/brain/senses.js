@@ -60,7 +60,9 @@ function probeColumn(at, px, py, pz, cx, cz, maxDrop) {
     // one block up: a jump, which needs room over the head where we stand
     const room = kindOf(at(px, py + 2, pz));
     if (canStand(at, cx, py + 1, cz) === true && (room === "air" || room === "passable")) return { y: py + 1, climb: true };
-    for (let d = 1; d <= maxDrop; d++) {
+    // a step off an edge is taken at head height: the cell over the departure level must be open too
+    const over = kindOf(at(cx, py + 1, cz));
+    for (let d = 1; d <= maxDrop && (over === "air" || over === "passable"); d++) {
         const k = kindOf(at(cx, py - d + 1, cz));
         if (k !== "air" && k !== "passable") break;
         if (canStand(at, cx, py - d, cz) === true) return { y: py - d };
@@ -166,7 +168,7 @@ export function castRay(idAt, origin, yaw, pitch, maxDist = 40) {
 const CLASSES = [
     ["tree", /_log$|_wood$|_leaves$|_hyphae$|_stem$|mangrove_roots|^minecraft:bamboo$/],
     ["ore", /_ore$|ancient_debris/],
-    ["built", /_planks$|_door$|_trapdoor$|_stairs$|_slab$|_fence|_gate$|glass|bookshelf|_bed$|^minecraft:bed$|crafting_table|furnace|smoker|chest|barrel|brick|torch|lantern|_sign$|ladder|_wool$|_carpet$|concrete|hay_block|cobblestone|_wall$|iron_bars|campfire|anvil|lectern|cauldron|bell|farmland|smooth_(stone|sandstone|quartz|red_sandstone)|polished_|cut_|chiseled_/],
+    ["built", /_planks$|_door$|_trapdoor$|_stairs$|_slab$|_fence|_gate$|glass|bookshelf|_bed$|^minecraft:bed$|crafting_table|furnace|smoker|chest|barrel|brick|(^|[:_])torch$|lantern|_sign$|ladder|_wool$|_carpet$|concrete|hay_block|cobblestone|_wall$|iron_bars|campfire|anvil|lectern|cauldron|bell|farmland|smooth_(stone|sandstone|quartz|red_sandstone)|polished_|cut_|chiseled_/],
     ["rock", /^minecraft:(stone|deepslate|cobbled_deepslate|granite|diorite|andesite|tuff|calcite|netherrack|basalt|smooth_basalt|blackstone|end_stone|obsidian|crying_obsidian|bedrock|dripstone_block|prismarine|sandstone|red_sandstone)$/],
     ["ice", /ice$|snow/],
     ["sand", /sand|gravel|clay|mud|dirt|grass_block|podzol|mycelium|moss|path/],
@@ -230,9 +232,10 @@ export function landmarks(idAt, feet, { radius = 24, stride = 3 } = {}) {
             if (id && /_leaves$|_log$|_wood$|_hyphae$/.test(id)) { note(dir, "tree", d); continue; }
             id = at(x, fy + 2, z);
             if (id && /_log$|_wood$|_hyphae$/.test(id)) { note(dir, "tree", d); continue; }
-            if (id && sightClass(id, kindOf(id)) === "built") { note(dir, "built", d); continue; }
+            // a wall of a building has collision: carpets of moss, torchflowers and the like are ground cover, not masonry
+            if (id && kindOf(id) !== "passable" && sightClass(id, kindOf(id)) === "built") { note(dir, "built", d); continue; }
             id = at(x, fy, z);
-            if (id && sightClass(id, kindOf(id)) === "built") { note(dir, "built", d); continue; }
+            if (id && kindOf(id) !== "passable" && sightClass(id, kindOf(id)) === "built") { note(dir, "built", d); continue; }
             const k = kindOf(at(x, fy - 1, z));
             if (k === "water") note(dir, "water", d);
             else if (k === "lava") note(dir, "lava", d);

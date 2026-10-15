@@ -30,7 +30,7 @@ export function findPath(blockAt, start, goal, opts = {}) {
     const passable = (x, y, z) => { const k = kindOf(at(x, y, z)); return k !== null && isOpen(k, o.allowWater); };
     // can a body stand with its feet in (x, y, z)?
     const standable = (x, y, z) => canStand(at, x, y, z, o.allowWater) === true && !nearDanger(at, x, y, z);
-    const sx = Math.floor(start.x), sy = Math.floor(start.y), sz = Math.floor(start.z);
+    const sx = Math.floor(start.x), sy = Math.floor(start.y + 0.15), sz = Math.floor(start.z);       // a hair of tolerance: on a path block or soul sand the feet are a little under the cell's top
     const gx = Math.floor(goal.x), gy = Math.floor(goal.y), gz = Math.floor(goal.z);
     const straight = Math.hypot(gx - sx, gz - sz);
     const h = (x, y, z) => Math.hypot(gx - x, gz - z) + Math.abs(gy - y) * 0.5;

@@ -275,7 +275,8 @@ bash ~/real-ai/bridge/phone.sh selftest      # on a computer: node index.mjs --s
 ```
 
 (If this phone installed the bridge before this version, run plain `bash ~/real-ai/bridge/phone.sh` once
-first so it updates itself, stop it with Ctrl+C, then run the selftest.)
+first so it updates itself, stop it with Ctrl+C, then run the selftest: the old script does not know the
+`selftest` argument.)
 
 It joins, walks, sprints, steps back and turns the head with the same key
 presses the AI uses, asks the server where the body really is, and prints

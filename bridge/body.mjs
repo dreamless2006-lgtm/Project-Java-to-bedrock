@@ -59,6 +59,7 @@ export class Body {
         this.autoHop = false;        // the next tick should jump: a ledge is ahead
         this.hopTo = null;           // the level a hop is on its way up to: it stays the ground until the body has landed there
         this.hopLeft = 0;
+        this.noResyncUntil = -1n;    // after a correction the addon's reports are about a past the server has just overruled: no resync for a few ticks
         this.jumpReqLeft = 0;
         this.targetLeft = Infinity;  // ticks the walk target stays valid without a fresh walk frame
         this.movementInfo = null;
@@ -149,14 +150,18 @@ export class Body {
             this.onGround = p.on_ground;
             this.floor = p.on_ground ? this.pos.y : Math.min(this.floor, this.pos.y);   // airborne below the old ground: that ground is gone
         }
-        this.jumpDelay = 0;
+        if (t === null) this.jumpDelay = 0;
         this.corrections++;
         if (t !== null) {
             const keepSprint = this.sprinting, keepSneak = this.sneaking;
+            // the hidden state (jump in progress, pending hop, cooldown) at the start of the first tick to replay is what we recorded then, not what it is now
+            const first = this.hist.find(r => r.tick > t);
+            if (first && first.pre) { const p0 = first.pre; this.jumping = p0.jumping; this.autoHop = p0.autoHop; this.jumpDelay = p0.jumpDelay; this.hopTo = p0.hopTo; this.hopLeft = p0.hopLeft; }
+            else { this.hopTo = null; this.autoHop = false; if (this.onGround) this.jumping = false; }
             for (const rec of this.hist) if (rec.tick > t) this.advance(rec, null);
             this.sprinting = keepSprint; this.sneaking = keepSneak;
-            this.posHist.length = 0;
         }
+        this.noResyncUntil = this.tick + 10n;
         return true;
     }
 
@@ -198,6 +203,7 @@ export class Body {
         this.vel = { x: 0, y: 0, z: 0 };
         this.floor = this.pos.y;
         this.onGround = true;
+        this.hopTo = null; this.autoHop = false; this.jumping = false; this.hist.length = 0; this.posHist.length = 0;
         this.alive = true;
         this.target = null;
         this.pendingTeleport = true;       // the server also teleports us to the spawn: acknowledge it
@@ -212,6 +218,7 @@ export class Body {
         this.vel = { x: 0, y: 0, z: 0 };
         this.floor = this.pos.y;
         this.target = null;
+        this.hopTo = null; this.autoHop = false; this.jumping = false; this.hist.length = 0; this.posHist.length = 0;
         this.dimensionChange = { id: p.loading_screen_id ?? null };
         const params = { type: 1 };
         if (p.loading_screen_id !== undefined && p.loading_screen_id !== null) params.loading_screen_id = p.loading_screen_id;
@@ -254,6 +261,7 @@ export class Body {
             if (ground === true && fy !== null && this.onGround && !this.jumping && Math.abs(fy - this.pos.y) <= 0.6 && Math.abs(fy - this.pos.y) > 0.02) { this.floor = fy; this.pos.y = fy; }   // stand where the server stands
             return false;
         }
+        if (this.tick < this.noResyncUntil) return false;
         if (++this.anchorGaps < 2) return false;
         this.anchorGaps = 0;
         this.pos = { x: feet.x, y: ty, z: feet.z };
@@ -412,7 +420,7 @@ export class Body {
             move = { x: ms, z: mf };
         }
         // 4. simulate the tick, remember what went in so a correction can be replayed
-        const rec = { tick: this.tick, mf, ms, yaw: this.yaw, sprint: this.sprinting, sneak: this.sneaking, jumpKey, spec };
+        const rec = { tick: this.tick, mf, ms, yaw: this.yaw, sprint: this.sprinting, sneak: this.sneaking, jumpKey, spec, pre: { jumping: this.jumping, autoHop: this.autoHop, jumpDelay: this.jumpDelay, hopTo: this.hopTo, hopLeft: this.hopLeft } };
         const jumped = this.advance(rec, flags);
         if (jumped) this.jumpRequested = false;
         else if (this.jumpRequested && --this.jumpReqLeft <= 0) this.jumpRequested = false;
@@ -445,7 +453,9 @@ export class Body {
         // 5. jump (only from the ground, with the vanilla cooldown); a ledge ahead makes the body hop by itself
         const spec = rec.spec;
         if (spec && spec.edgeS !== undefined && spec.floor > this.floor + PHYS.stepHeight && this.onGround && this.jumpDelay === 0 && !this.jumping) {
-            if (this.pos.x * spec.hx + this.pos.z * spec.hz >= spec.edgeS - 0.9) this.autoHop = true;
+            // the hop takes three ticks to lift the body a block, and the front of the body is 0.3 ahead of its centre: start early enough that it does not reach the ledge face before it is up
+            const v = Math.max(Math.hypot(this.vel.x, this.vel.z), 0.15) + (this.sprinting ? PHYS.sprintJumpBoost : 0);     // a sprinting jump also pushes the body forward
+            if (this.pos.x * spec.hx + this.pos.z * spec.hz >= spec.edgeS - (0.4 + 3.2 * v)) this.autoHop = true;
         }
         const prevGround = this.onGround;
         let jumped = false;

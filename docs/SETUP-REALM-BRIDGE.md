@@ -135,9 +135,9 @@ interacting with a bot opens its card.
 
 1. Phone, bridge stopped: `bash ~/real-ai/bridge/phone.sh selftest` (on a computer: `node index.mjs
    --selftest` in the bridge folder; the first run after an update of an older install must be a plain
-   `bash ~/real-ai/bridge/phone.sh` once, Ctrl+C, then the selftest, because bash was still reading the
-   old script when it replaced it). It does not tell the pack about itself, so the AI stays out of the
-   way. It walks, sprints, steps back
+   `bash ~/real-ai/bridge/phone.sh` once, Ctrl+C, then the selftest: a phone.sh from before this version
+   does not know the `selftest` argument and would just start the normal bridge, after updating itself).
+   It does not tell the pack about itself, so the AI stays out of the way. It walks, sprints, steps back
    and turns the body with the AI's own key presses and reads the position the server really has
    (the account must be an Operator with cheats on for that; stand on flat ground). PASS means the
    server accepts the body's movement; FAIL says what the server did instead.
@@ -153,7 +153,9 @@ interacting with a bot opens its card.
 
 Config keys for odd servers (`connect` in `config.json`): `deviceOS` (a number, the device the account
 claims to be), `startConvention` (`"auto"`, `"eye"` or `"feet"`: how the server's start position is read),
-`gamemode` (`null` leaves the game mode alone).
+`tickBase` (`"zero"` by default, or `"server"`: whether the numbers on the body's input packets count from
+zero or continue from the server's tick; the bridge tries the other one by itself when the body never moves
+and nothing objects, and the self-test says when it is needed), `gamemode` (`null` leaves the game mode alone).
 
 ## Keeping bots active when you leave
 

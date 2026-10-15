@@ -140,12 +140,27 @@ test("the monitor: stuck keys flip the tick numbering first, then say so once; a
     const stuck = mk();
     for (let i = 0; i < 4; i++) window(stuck.b, { intent: 40, moved: 0.1 });
     assert.equal(stuck.b.body.tickBase, "server", "the other tick numbering is tried first");
-    assert.equal(stuck.said.length, 0, "and nobody is bothered yet");
-    for (let i = 0; i < 4; i++) window(stuck.b, { intent: 40, moved: 0.1 });
     assert.equal(stuck.said.length, 1);
-    assert.match(stuck.said[0], /not moving/);
+    assert.match(stuck.said[0], /switched to counting my input ticks/, "and the world is told that it was changed");
+    assert.equal(stuck.b._tickBase, "server", "remembered for a reconnect");
+    assert.equal(stuck.b.newBody().tickBase, "server");
     for (let i = 0; i < 4; i++) window(stuck.b, { intent: 40, moved: 0.1 });
-    assert.equal(stuck.said.length, 1, "once per run");
+    assert.equal(stuck.said.length, 2);
+    assert.match(stuck.said[1], /without getting anywhere/);
+    for (let i = 0; i < 4; i++) window(stuck.b, { intent: 40, moved: 0.1 });
+    assert.equal(stuck.said.length, 2, "once per run");
+    // a body that has walked on this connection is never blamed on the numbering
+    const walked = mk();
+    walked.b.body.truthMoved = 30;
+    for (let i = 0; i < 4; i++) window(walked.b, { intent: 40, moved: 0.1 });
+    assert.equal(walked.b.body.tickBase, "zero");
+    // idle bodies and bodies the server objects to are not flipped
+    const idle = mk();
+    for (let i = 0; i < 8; i++) window(idle.b, {});
+    assert.equal(idle.b.body.tickBase, "zero"); assert.equal(idle.said.length, 0);
+    const objected = mk();
+    for (let i = 0; i < 4; i++) window(objected.b, { intent: 40, moved: 0.1, corr: 20 });
+    assert.equal(objected.b.body.tickBase, "zero");
     // a body that really walked is fine
     const ok = mk();
     for (let i = 0; i < 6; i++) window(ok.b, { intent: 60, moved: 8 });
@@ -173,6 +188,13 @@ test("frames are accepted from the addon's raw text, never from a person's chat;
     assert.equal(handled.length, 0, "a player cannot drive the body or the bridge by typing a frame");
     b.onText({ type: "raw", message: frame });
     assert.equal(handled.length, 1, "the addon's own text goes through");
+    b.onText({ type: "raw", message: "§r" + frame });
+    assert.equal(handled.length, 2, "even with a colour code in front");
+    for (const type of ["raw", "tip", "system", "popup", "json_whisper", "translation"]) b.onText({ type, message: "<Eve> " + frame });
+    b.onText({ type: "raw", message: "[Chat] " + frame });
+    assert.equal(handled.length, 2, "a line that merely contains a frame (a chat plugin or a bot repeating what a player typed) is not one");
+    handled.length = 0;
+    b.onText({ type: "raw", message: frame });
     assert.doesNotThrow(() => b.onText({ type: "raw", message: "AIB1|x|1/99999999999|" }));
     assert.doesNotThrow(() => b.onText({ type: "raw", message: "AIB1|x|1/513|a" }));
     assert.doesNotThrow(() => b.onText({ type: "raw", message: null }));
@@ -229,4 +251,56 @@ test("a pack that walks but predates the controls is reported too; the newest is
     const none = []; cur.b.sayInGame = (t) => { none.push(t); return true; };
     await cur.b.handle({ t: "hello", v: 2, version: "2.10.0", walks: true, tick: 1 });
     assert.equal(none.length, 0);
+});
+
+test("the addon's walk and input frames reach the Body as the addon meant them", async () => {
+    const { b, queued } = fakeBridge();
+    spawn(b, queued);
+    // input: keys with the ground ahead, measured from the position the addon says the body is at, with the ground height it stands on
+    await b.handle({ t: "input", f: 1, s: 0, sprint: true, sneak: false, jump: false, ms: 250, fx: 0, fy: 64, fz: 0, fg: 1, floor: 65, ed: 1.5 });
+    const k = b.body.keys;
+    assert.ok(k, "keys are held");
+    assert.equal(k.f, 1); assert.equal(k.sprint, true); assert.equal(k.floor, 65);
+    assert.ok(Math.abs(k.edgeS - 1.5) < 1e-9, "the ledge begins 1.5 blocks ahead of the addon's position (facing south, heading +z): edgeS " + k.edgeS);
+    assert.equal(k.left, 5, "250 ms is five ticks");
+    // an absurdly long lease is cut
+    await b.handle({ t: "input", f: 1, ms: 60000, fx: 0, fy: 64, fz: 0 });
+    assert.ok(b.body.keys.left <= 20);
+    // ground height learned from a frame that says the body is on the ground
+    await b.handle({ t: "input", f: 0, jump: true, fx: 0, fy: 64.375, fz: 0, fg: 1 });
+    assert.equal(b.body.floor, 64.375);
+    const air = fakeBridge(); spawn(air.b, air.queued);
+    await air.b.handle({ t: "input", f: 1, ms: 250, fx: 0, fy: 64.375, fz: 0, fg: 0 });
+    assert.equal(air.b.body.floor, 64, "a body in the air does not define the ground");
+    // walk: a target that lapses after forty ticks without a fresh frame
+    const w = fakeBridge(); spawn(w.b, w.queued);
+    await w.b.handle({ t: "walk", x: 0, y: 64, z: 50, mode: "walk", fx: 0, fy: 64, fz: 0 });
+    assert.equal(w.b.body.targetLeft, 40);
+    for (let i = 0; i < 39; i++) w.b.body.step();
+    assert.ok(w.b.body.target, "alive");
+    for (let i = 0; i < 3; i++) w.b.body.step();
+    assert.equal(w.b.body.target, null, "lapsed");
+    // frames without a position still work, and a position that is not a number is not believed
+    await w.b.handle({ t: "walk", x: 0, y: 64, z: 5, mode: "sprint" });
+    assert.ok(w.b.body.target);
+    const resyncs = w.b.body.resyncs;
+    await w.b.handle({ t: "walk", x: 0, y: 64, z: 5, fx: "far", fy: 64, fz: NaN });
+    assert.equal(w.b.body.resyncs, resyncs);
+});
+
+test("in self-test mode the bridge neither says hello nor listens to the addon", async () => {
+    const quiet = new Bridge({ _path: "t", defaults: { provider: "openai" }, providers: { openai: { apiKey: "k" } }, connect: { username: "Bot" }, selfTest: true });
+    const queued = [];
+    quiet.client = { username: "Bot", status: 3, queue: (n, p) => queued.push({ name: n, params: p }), on() {} };
+    quiet.entityId = 5n; quiet.body.onStartGame(START);
+    quiet.finishSpawn("Bot");
+    assert.equal(quiet.spawned, true);
+    assert.ok(!quiet.outQueue.some(c => /realai:in/.test(c)), "no hello for the addon");
+    await quiet.handle({ t: "walk", x: 50, y: 64, z: 50, mode: "sprint" });
+    await quiet.handle({ t: "stop" });
+    assert.equal(quiet.body.target, null, "addon frames are ignored");
+    quiet.sendToAddon({ t: "died" });
+    quiet.notice("x", "a notice");
+    assert.ok(!quiet.outQueue.some(c => /realai:in/.test(c)));
+    assert.ok(!queued.some(q => q.name === "text"), "and nothing said in the world's chat");
 });

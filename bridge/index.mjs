@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { PROVIDERS, getProvider } from "../packs/RealAI_BP/scripts/brain/providers/index.js";
-import { encodeFrames, Reassembler, nextMessageId, packMessage, unpackMessage, DEFAULT_CHUNK } from "../packs/RealAI_BP/scripts/brain/frame.js";
+import { encodeFrames, Reassembler, nextMessageId, packMessage, unpackMessage, DEFAULT_CHUNK, FRAME_PREFIX } from "../packs/RealAI_BP/scripts/brain/frame.js";
 import { REPLY_SCHEMA } from "../packs/RealAI_BP/scripts/brain/action_schema.js";
 import { Body } from "./body.mjs";
 
@@ -264,7 +264,7 @@ export class Bridge {
 
     stopRespawnLoop() { if (this.respawnTimer) { clearTimeout(this.respawnTimer); this.respawnTimer = null; } this._respawnSent = false; }
 
-    newBody() { return new Body({ startConvention: this.cfg.connect?.startConvention, tickBase: this.cfg.connect?.tickBase }); }
+    newBody() { return new Body({ startConvention: this.cfg.connect?.startConvention, tickBase: this._tickBase || this.cfg.connect?.tickBase }); }
 
     // A vanilla client puts its own account id (XUID) in every chat packet, and strict servers kick a client whose chat does not carry it.
     chatXuid() {
@@ -286,7 +286,7 @@ export class Bridge {
 
     /** A notice for the people in the world about the bridge itself: once per kind per run, four in all. */
     notice(kind, text) {
-        if (this._notices.has(kind) || this._notices.size >= 4 || !this.spawned) return;
+        if (this._notices.has(kind) || this._notices.size >= 4 || !this.spawned || this.cfg.selfTest) return;
         this._notices.add(kind);
         this.sayInGame("[Real AI bridge] " + text);
     }
@@ -312,14 +312,16 @@ export class Bridge {
         // keys held for most of 20 s and the real position hardly changed
         if (recent.length === 4 && sum(recent, "intent") >= 80 && sum(recent, "truth") < 1 && b.lastTruth && this.addonHello) {
             log("warn", `keys were down for ${(sum(recent, "intent") / 20).toFixed(0)} s in the last 20 s but the body moved ${sum(recent, "truth").toFixed(1)} blocks (pull-backs ${sum(recent, "corr")}). Either something blocks the way, or the server ignores this client's movement. Run: bash ~/real-ai/bridge/phone.sh selftest`);
-            if (sum(recent, "corr") === 0 && !this._tickFlipped) {
+            if (sum(recent, "corr") === 0 && !this._tickFlipped && b.truthMoved < 1) {      // only a body that has never moved on this connection: a body that walked has the right numbering
                 // nothing objected and nothing moved: the classic look of input the server drops. The other way of
                 // numbering the input ticks is the one thing left to try on our side.
                 this._tickFlipped = true;
                 const base = b.flipTickBase();
+                this._tickBase = base;                       // a reconnect keeps it
                 this._monWindows = [];
                 log("warn", `trying the other input tick numbering (${base}) in case the server drops inputs with ticks it does not expect; set connect.tickBase in config.json to keep it`);
-            } else this.notice("stuck", `I am walking but my body is not moving. If this keeps happening the server is ignoring my movement: run the self-test on the phone (bash ~/real-ai/bridge/phone.sh selftest).`);
+                this.notice("tickflip", `My body was not moving although I was walking and nothing objected, so I switched to counting my input ticks the way the server does (${base}). If I am still stuck, run the self-test on the phone (bash ~/real-ai/bridge/phone.sh selftest).`);
+            } else this.notice("stuck", `I keep walking without getting anywhere. Either something I cannot see is in the way, or the server ignores my movement: run the self-test on the phone (bash ~/real-ai/bridge/phone.sh selftest) if it keeps happening.`);
         }
         if (this._monN % 12 === 0 || w.intent > 0) log(w.intent > 0 ? "debug" : "info", `body: feet ${st.pos ? [st.pos.x, st.pos.y, st.pos.z].join(" ") : "?"} yaw ${st.yaw}, key-down ticks ${w.intent}, real movement ${w.truth.toFixed(1)} blocks, pull-backs ${b.corrections + b.teleports}, resyncs ${b.resyncs}${b.alive ? "" : ", DEAD"}`);
     }
@@ -436,11 +438,16 @@ export class Bridge {
             } catch (e) { /* keep raw */ }
         }
         if (typeof message !== "string") return;
-        if (message.includes("AIB1|")) {
-            // Frames come from the addon through Player.sendMessage (raw/json text). A chat, whisper or
-            // announcement line is a person typing: it must never be able to drive this body or the bridge.
-            if (p.type === "chat" || p.type === "whisper" || p.type === "announcement") return;
-            const got = this.reassembler.push(message);
+        if (message.includes(FRAME_PREFIX)) {
+            // Frames come from the addon through Player.sendMessage: the line is exactly the frame (a colour code or two in front at most).
+            // A line that merely contains one, or any chat, whisper or announcement, is a person's words (or a bot's, repeated by some
+            // chat formatter): it must never be able to drive this body or the bridge.
+            const plain = message.replace(/^(?:§.)+/, "");
+            if (p.type === "chat" || p.type === "whisper" || p.type === "announcement" || !plain.startsWith(FRAME_PREFIX)) {
+                if (!this._frameWarned) { this._frameWarned = true; log("warn", `ignored a ${p.type || "text"} line that contains a bridge frame but is not one from the addon (someone typing it, or a chat plugin repeating it)`); }
+                return;
+            }
+            const got = this.reassembler.push(plain);
             if (got) {
                 const msg = unpackMessage(got.text);
                 if (msg) this.handle(msg).catch(e => log("error", "handle failed:", e));
@@ -572,6 +579,7 @@ export class Bridge {
     }
 
     sendToAddon(obj) {
+        if (this.cfg.selfTest) return;           // the self-test is about the body alone: the addon is not told about it
         const text = packMessage(obj);
         for (const f of encodeFrames(nextMessageId("b"), text, DEFAULT_CHUNK)) this.outQueue.push(`/scriptevent ${SCRIPT_EVENT} ${f}`);
     }
@@ -599,19 +607,24 @@ export class Bridge {
     /**
      * Does the server accept this body's movement? Walks and turns it with the same key presses the AI uses and
      * asks the server where it really is (/tp @s ~ ~ ~ makes the server send the player its true position).
-     * The addon is not told about the test (cfg.selfTest), so nothing else moves the body meanwhile. The body walks
-     * in the first of the four compass headings that has room; if none of them moves it, the other way of numbering
-     * input ticks is tried before giving up. The account needs to be an Operator with cheats on for the position check.
-     * -> { ok, checks: [{ name, ok, detail }] }
+     * The addon is not told about the test (cfg.selfTest), so nothing else moves the body meanwhile. The account
+     * cannot be placed, so the first leg picks the compass heading with the most room, and every later leg is sized to the
+     * ground the body has already crossed (nothing is ever pushed into unknown ground); a leg that cannot be judged
+     * for lack of room is SKIPPED, not failed. If no heading moves the body at all, the other way of numbering input
+     * ticks is tried, and a success is checked against the original numbering before it is recommended.
+     * The account needs to be an Operator with cheats on for the position check.
+     * -> { ok, checks: [{ name, ok, detail, skipped? }] }   opts.timeScale makes it faster (tests)
      */
-    async selfTest(say = (line) => console.log(line)) {
+    async selfTest(say = (line) => console.log(line), { timeScale = 1 } = {}) {
+        const T = (ms) => ms / timeScale;
         const checks = [];
         const check = (name, ok, detail = "") => { checks.push({ name, ok, detail }); say(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? " - " + detail : ""}`); return ok; };
-        const waitFor = async (fn, ms) => { const t = Date.now(); while (Date.now() - t < ms) { if (fn()) return true; await sleep(100); } return !!fn(); };
+        const skip = (name, detail) => { checks.push({ name, ok: true, skipped: true, detail }); say(`SKIP  ${name} - ${detail}`); };
+        const waitFor = async (fn, ms) => { const t = Date.now(); while (Date.now() - t < ms) { if (fn()) return true; await sleep(Math.min(100, T(100))); } return !!fn(); };
         say("Self-test: joining and walking the body with the AI's own key presses ...");
         const joined = await waitFor(() => this.spawned && this.body.ready && this.body.pos, 120_000);
         if (!check("joined the world and spawned", joined, joined ? `feet ${JSON.stringify(this.body.status().pos)}` : "the account never got into the world (see the log above)")) return { ok: false, checks };
-        await sleep(2500);
+        await sleep(T(2500));
         let asked = 0;
         const truth = async () => {
             const n = this.body.teleports;
@@ -619,14 +632,14 @@ export class Bridge {
             this.runCommand("/tp @s ~ ~ ~");
             const got = await waitFor(() => this.body.teleports > n, 5000);
             if (!got) return null;
-            await sleep(150);
+            await sleep(T(150));
             return { x: this.body.pos.x, y: this.body.pos.y, z: this.body.pos.z, yaw: this.body.yaw, pitch: this.body.pitch };
         };
         const hold = async (keys, ms) => {
-            const end = Date.now() + ms;
-            while (Date.now() < end) { this.body.press({ ...keys, ms: 250 }); await sleep(100); }
+            const end = Date.now() + T(ms);
+            while (Date.now() < end) { this.body.press({ ...keys, ms: 250 }); await sleep(T(100)); }
             this.body.release();
-            await sleep(900);
+            await sleep(T(900));
         };
         const flat = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
         const c0 = this.body.corrections, t0 = this.body.teleports;
@@ -641,61 +654,121 @@ export class Bridge {
             check("walking 2 s drew no corrections from the server", this.body.corrections - before < 5, `${this.body.corrections - before} corrections (the position could not be read, so this is only half a test: a server that silently ignores the input would also pass)`);
             return { ok: checks.every(c => c.ok), checks };
         }
-        // 1. a heading with room to walk: the first of S, W, N, E (the account cannot be placed, so a tree or a wall may be in the way)
+        // 1. the heading with room: walk 2 s along each of S, W, N, E until one gives a full walk (vanilla 7.5 blocks)
         const headings = [{ name: "south", yaw: 0 }, { name: "west", yaw: 90 }, { name: "north", yaw: 180 }, { name: "east", yaw: -90 }];
-        let used = null, walked = 0, from = p0, after = null, triedFlip = false;
-        for (let round = 0; round < 2 && !used; round++) {
+        const tryHeadings = async () => {
+            let best = null;
             for (const h of headings) {
                 this.body.setLook(h.yaw, 0);
-                await sleep(300);
-                from = (await truth()) || from;
+                await sleep(T(300));
+                const from = (await truth()) || p0;
                 await hold({ f: 1 }, 2000);
-                after = await truth();
+                const after = await truth();
                 const d = after ? flat(from, after) : 0;
-                if (d >= 4) { used = h; walked = d; break; }
-                if (pulledBack() >= 8) break;     // the server is resetting the body: more directions will not change that
+                if (!best || d > best.d) best = { h, d, from, after };
+                if (d >= 7) break;
             }
-            if (!used && !triedFlip && pulledBack() < 8) {
-                triedFlip = true;
-                const base = this.body.flipTickBase();
-                say(`      nothing moved in any direction; trying the other input tick numbering (${base}) ...`);
-                continue;
-            }
-            break;
+            return best;
+        };
+        let best = await tryHeadings();
+        let triedFlip = false, flipRelevant = false;
+        if (best.d < 1 && pulledBack() < 8 && this.body.serverTick0 > 0n) {
+            // nothing moved in any direction and nothing objected: the one thing left on our side is how input ticks are numbered
+            triedFlip = true;
+            const base = this.body.flipTickBase();
+            say(`      nothing moved in any direction; trying the other input tick numbering (${base}) ...`);
+            const second = await tryHeadings();
+            if (second.d >= 4) {
+                // control: back to the original numbering on the heading that worked; if that moves too, the numbering was not the cause
+                this.body.flipTickBase();
+                this.body.setLook(second.h.yaw, 0);
+                await sleep(T(300));
+                const cf = (await truth()) || second.after;
+                await hold({ f: 1 }, 1500);
+                const ca = await truth();
+                const cd = ca ? flat(cf, ca) : 0;
+                flipRelevant = cd < 1.5;
+                if (flipRelevant) this.body.flipTickBase();            // stay on the numbering that works for the remaining legs
+                best = { ...second, after: ca || second.after };       // the control walk went on along the same ground
+            } else { this.body.flipTickBase(); }                    // neither worked: leave the original numbering
         }
+        const used = best.d >= 4 ? best.h : null;
+        const walked = best.d;
         const pulled1 = pulledBack();
-        const what = used ? "" : (pulled1 ? ": the server keeps resetting the body (rubber-banding)" : ": the server ignores this client's movement, or something blocks all four directions around here (stand on open flat ground and try again)");
-        check("walking forward for 2 s moves the body (vanilla walk is about 7.5 blocks)", !!used, used ? `${walked.toFixed(1)} blocks ${used.name}${triedFlip ? ` (only with input ticks counted the "${this.body.tickBase}" way: set "tickBase": "${this.body.tickBase}" under connect in config.json)` : ""}` : `the server has it ${(after ? flat(from, after) : 0).toFixed(1)} blocks further on${pulled1 ? `, and pulled it back ${pulled1} times` : ""}${what}`);
+        const nowBase = this.body.tickBase;
+        check("walking forward for 2 s moves the body (vanilla walk is about 7.5 blocks)", !!used,
+            used ? `${walked.toFixed(1)} blocks ${used.name}${triedFlip ? (flipRelevant ? ` (only with input ticks counted the "${nowBase}" way, the original numbering failed on the control run: set "tickBase": "${nowBase}" under connect in config.json)` : " (the other tick numbering was not the reason: the original one moved the body as well on the control run, so the server just needed time)") : ""}${walked < 7 ? ` (short of 7.5: ${walked < 5 ? "something was in the way, or " : ""}the ground here may not be flat)` : ""}`
+                : `the best heading moved ${walked.toFixed(1)} blocks${pulled1 ? `, and the server pulled the body back ${pulled1} times: it keeps resetting the body (rubber-banding)` : ": the server ignores this client's movement, or something blocks all four directions around here (stand on open flat ground and try again)"}`);
+        const pulledBase = pulledBack();
         if (used) {
-            const hv = { x: -Math.sin(used.yaw / 57.29578), z: Math.cos(used.yaw / 57.29578) };       // unit vector the body faces
+            const rad = used.yaw / 57.29578;
+            const hv = { x: -Math.sin(rad), z: Math.cos(rad) };       // unit vector the body faced
             const along = (a, b) => (b.x - a.x) * hv.x + (b.z - a.z) * hv.z;
-            const across = (a, b) => (b.x - a.x) * hv.z - (b.z - a.z) * hv.x;   // + is the body's left
-            const p1 = after;
-            await hold({ f: 1, sprint: true }, 2000);
-            const p2 = await truth();
-            const sprinted = p2 ? flat(p1, p2) : 0;
-            check("sprinting for 2 s goes further than walking", sprinted >= Math.max(5, walked * 1.1), `${sprinted.toFixed(1)} blocks (vanilla sprint is about 10)`);
-            const pb = p2 || p1;
-            await hold({ f: -1 }, 1000);
-            const p3 = await truth();
-            check("stepping back for 1 s moves the body backwards", !!p3 && along(pb, p3) <= -1.5, p3 ? `${along(pb, p3).toFixed(1)} blocks along the way it faces` : "no answer");
-            const pc = p3 || pb;
+            let cur = best.after;
+            // 2. step back (the ground behind us is the ground we just crossed)
+            this.body.setLook(used.yaw, 0);
+            const backMs = Math.max(400, Math.min(1000, (walked - 1) / 4.3 * 1000));
+            await hold({ f: -1 }, backMs);
+            let p = await truth();
+            const stepped = p ? along(cur, p) : 0;
+            check("stepping back moves the body backwards", !!p && stepped <= -0.3 * 4.3 * backMs / 1000, p ? `${stepped.toFixed(1)} blocks along the way it faces` : "no answer");
+            cur = p || cur;
+            // 3. sprint back towards where we started (known ground), 1 s or less
+            const room = along(best.from, cur);
+            if (room >= 2.5) {
+                this.body.setLook(used.yaw + 180, 0);
+                await sleep(T(300));
+                const sprintMs = Math.min(1000, room / 5.6 * 1000 * 0.9);
+                const before = (await truth()) || cur;
+                await hold({ f: 1, sprint: true }, sprintMs);
+                p = await truth();
+                const sprinted = p ? flat(before, p) : 0;
+                const walkSpeed = walked / 2.0;
+                check("sprinting is faster than walking", !!p && sprinted / (sprintMs / 1000) >= 1.08 * walkSpeed, `${sprinted.toFixed(1)} blocks in ${(sprintMs / 1000).toFixed(1)} s = ${(sprinted / (sprintMs / 1000)).toFixed(1)} blocks/s against ${walkSpeed.toFixed(1)} walking (vanilla 5.6 against 4.3)`);
+                cur = p || before;
+            } else skip("sprinting is faster than walking", `only ${room.toFixed(1)} blocks of known ground to sprint over`);
+            // 4. strafe: left, and if that side has no room, right
+            const side = async (dir) => { const b4 = (await truth()) || cur; await hold({ s: dir }, 1000); const a4 = await truth(); return { b4, a4, d: a4 ? Math.abs(across(b4, a4)) : 0, signed: a4 ? across(b4, a4) : 0 }; };
+            this.body.setLook(used.yaw + 180, 0);
+            await sleep(T(300));
+            // facing the other way round, "left" is the opposite side of the first heading's frame, so judge by the key, not the frame
+            const faceRad = (used.yaw + 180) / 57.29578;
+            const leftOf = { x: Math.cos(faceRad), z: Math.sin(faceRad) };       // the body's left at that facing
+            const lateral = (a, b) => (b.x - a.x) * leftOf.x + (b.z - a.z) * leftOf.z;
+            let b4 = (await truth()) || cur;
             await hold({ s: 1 }, 1000);
-            const p4 = await truth();
-            check("strafing left for 1 s moves the body to its left", !!p4 && across(pc, p4) >= 1.5, p4 ? `${across(pc, p4).toFixed(1)} blocks to the left` : "no answer");
-            const pd = p4 || pc;
+            let a4 = await truth();
+            let moved = a4 ? lateral(b4, a4) : 0;
+            let which = "left";
+            if (moved < 1.5) {
+                b4 = a4 || b4;
+                await hold({ s: -1 }, 1000);
+                a4 = await truth();
+                const m2 = a4 ? -lateral(b4, a4) : 0;
+                if (m2 > moved) { moved = m2; which = "right"; }
+            }
+            if (moved >= 1.5) check(`strafing ${which} moves the body sideways`, true, `${moved.toFixed(1)} blocks to its ${which}`);
+            else skip("strafing moves the body sideways", `neither side moved the body (${moved.toFixed(1)} blocks): walls on both sides, or strafing is not accepted; walking, sprinting and backing worked`);
+            cur = a4 || b4;
+            // 5. sneak forward along the first heading (ground we crossed)
+            this.body.setLook(used.yaw, 0);
+            await sleep(T(300));
+            const sb = (await truth()) || cur;
             await hold({ f: 1, sneak: true }, 2000);
-            const p5 = await truth();
-            const crept = p5 ? flat(pd, p5) : 0;
-            check("sneaking forward for 2 s is slow (vanilla is about 2.6 blocks)", crept > 0.5 && crept < walked * 0.6, `${crept.toFixed(1)} blocks`);
+            const sa = await truth();
+            const crept = sa ? flat(sb, sa) : 0;
+            if (crept < 0.3 && pulledBack() === pulledBase) skip("sneaking forward is slow (vanilla about 2.6 blocks in 2 s)", "the body did not move at all (something in the way?)");
+            else check("sneaking forward is slow (vanilla about 2.6 blocks in 2 s)", crept > 0.5 && crept < Math.max(3.2, walked * 0.6), `${crept.toFixed(1)} blocks`);
+        } else {
+            skip("stepping back, sprinting, strafing and sneaking", "not run: the body never walked");
         }
         this.body.setLook(90, -20);
-        await sleep(700);
+        await sleep(T(700));
         const p6 = await truth();
         const dyaw = p6 ? Math.abs(((p6.yaw - 90 + 540) % 360) - 180) : 999;
         check("turning the head is accepted", !!p6 && dyaw < 12 && Math.abs(p6.pitch + 20) < 8, p6 ? `the server has yaw ${p6.yaw.toFixed(0)}, pitch ${p6.pitch.toFixed(0)} (asked 90, -20)` : "no answer");
-        const pulled = pulledBack();
-        check("the server did not keep pulling the body back during the test", pulled < 10, `${pulled} times pulled back (${this.body.corrections - c0} corrections), ${this.body.resyncs} resyncs`);
+        const pulled = pulledBack() - (used ? pulledBase : 0);
+        check("the server did not keep pulling the body back during the test", pulled < 10, `${pulled} times pulled back after the walk (${pulledBack()} in all), ${this.body.resyncs} resyncs`);
         return { ok: checks.every(c => c.ok), checks };
     }
 

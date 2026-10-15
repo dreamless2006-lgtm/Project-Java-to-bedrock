@@ -96,6 +96,7 @@ for (const m of manifests) {
         const j = JSON.parse(stripJsonComments(readFileSync(m, "utf8")));
         if (j.header?.version) vers.set(relative(ROOT, m) + " header", j.header.version.join("."));
         for (const mod of j.modules ?? []) if (Array.isArray(mod.version)) vers.set(relative(ROOT, m) + " module " + mod.type, mod.version.join("."));
+        for (const dep of j.dependencies ?? []) if (dep.uuid && headers.has(dep.uuid) && Array.isArray(dep.version)) vers.set(relative(ROOT, m) + " dependency on " + headers.get(dep.uuid), dep.version.join("."));
     }
     const grab = (file, re) => { try { return re.exec(readFileSync(join(ROOT, file), "utf8"))?.[1]; } catch { return undefined; } };
     vers.set("ADDON_BUILD (bridge_channel.js)", grab("packs/RealAI_BP/scripts/brain/bridge_channel.js", /ADDON_BUILD = "([\d.]+)"/));

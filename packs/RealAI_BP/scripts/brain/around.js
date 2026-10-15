@@ -33,7 +33,7 @@ export function aroundReport(bot, { yaw = 0, full = false, visited } = {}) {
     });
     const facing = compassOf(yaw).name;
     const seenBefore = visited ? (end) => visited.has(chunkKey(dim.id, end.x, end.z)) : undefined;
-    const under = idAt(Math.floor(loc.x), Math.floor(loc.y + 0.05) - 1, Math.floor(loc.z));
+    const under = idAt(Math.floor(loc.x), Math.floor(loc.y + 0.15) - 1, Math.floor(loc.z));
     const text = describeAround(rows, seen, facing, { visited: seenBefore }) + `. Underfoot: ${under ? under.replace(/^minecraft:/, "") : "unknown"}. Overhead: ${describeAbove(idAt, loc)}.`;
     return { text, rows, seen, facing };
 }

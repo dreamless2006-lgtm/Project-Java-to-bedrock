@@ -186,3 +186,21 @@ test("the floor is not a sight: standing on planks, rays that land on the floor 
     for (const s of seen) assert.deepEqual(s.seen, [], s.dir);
     assert.ok(seen.every(s => s.open), "and the level view is open");
 });
+
+test("landmarks: moss carpet and torchflowers are ground cover, not buildings", () => {
+    const rows = {};
+    for (let x = -30; x <= 30; x++) for (let z = -30; z <= 30; z++) { rows[`${x},64,${z}`] = (x + z) % 2 ? "minecraft:pale_moss_carpet" : "minecraft:torchflower"; }
+    const lm = landmarks(world(rows), feet);
+    assert.deepEqual(lm.flatMap(s => s.seen.filter(x => x.cls === "built")), [], "nothing built in a garden");
+    const b = {}; for (let y = 64; y <= 66; y++) for (let z = -6; z <= 6; z++) b[`15,${y},${z}`] = "minecraft:oak_planks";
+    assert.ok(landmarks(world(b), feet).find(s => s.dir === "E").seen.some(x => x.cls === "built"), "a wall still is");
+});
+
+test("survey agrees with the pathfinder about a drop under a low ceiling", () => {
+    const rows = {};
+    for (let x = 1; x <= 30; x++) for (let z = -3; z <= 3; z++) { rows[`${x},63,${z}`] = "minecraft:air"; rows[`${x},65,${z}`] = "minecraft:spruce_leaves"; }
+    const r = survey(world(rows), { x: 0.5, y: 64, z: 0.5 });
+    const e = row(r, "E");
+    assert.equal(e.steps, 0, "cannot step off under the leaves: " + describeRow(e));
+    assert.equal(probeAhead(world(rows), { x: 0.5, y: 64, z: 0.5 }, 1, 0, 3).ok, false);
+});
