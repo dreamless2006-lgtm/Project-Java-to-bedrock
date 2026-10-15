@@ -24,7 +24,7 @@ lower than the copy it already has, and a Realm keeps its own copy of the
 pack. To update, remove the old Real AI packs from the device (Settings >
 Storage), import the new `.mcaddon`, activate it on the world, and have
 everyone leave and rejoin the Realm. The bridge's log says which build the
-world runs (`addon says hello (build 2.7.0, walks yes)`); a `walks no` line
+world runs (`addon says hello (build 2.8.0, walks yes)`); a `walks no` line
 means the Realm still serves an older pack that cannot move the body.
 
 ## 2. Prepare a second Microsoft account for the bridge

@@ -6,7 +6,7 @@ import { ALL_AI_CACHE } from "../greeting.js";
 import { recordBotMessage } from "../ai_conversations.js";
 import { registerBrain, unregisterBrain, getBrain, allBrains, setBrainEnabled, isBrainEnabled } from "./gate.js";
 import { getWorldConfig, updateWorldConfig, callConfigFor, readBotSettings, writeBotSettings, patchBotSettings, configuredProviders, MEMORY_KEY, BUDGET_KEY } from "./config.js";
-import { loadMemory, saveMemory, addFact, forgetFact, addEpisode, addChat, notePerson, createMemory, setSelf, setPlans } from "./memory.js";
+import { loadMemory, saveMemory, addFact, forgetFact, addEpisode, addChat, notePerson, createMemory, setSelf, setPlans, findOwned, forgetChest } from "./memory.js";
 import { createDrives, updateDrives, renderDrives, cadenceFactor } from "./drives.js";
 import { createMission, renderMission, assessMission } from "./progress.js";
 import { inventoryMap } from "./perception.js";
@@ -362,6 +362,30 @@ export class BotBrain {
             try { autoEat(this, now); } catch (e) { /* ignore */ }
         }
         if (now % 40 === 0) { try { const got = autoEquip(this.bot, now < this.dangerUntil || this.actuator.current?.action.type === "attack"); if (got.length) this.noteEvent("action_done", `reflex: now wearing/holding ${got.join(", ")}`); } catch (e) { /* ignore */ } }
+        if (now % 100 === 0) { try { this.upkeep(now); } catch (e) { /* ignore */ } }
+    }
+
+    // Looking after its own things: a full bag, a tool about to break, no food left.
+    upkeep(now) {
+        const bot = this.bot;
+        this.upkeepAt = this.upkeepAt || new Map();
+        const say = (key, text, every = 20 * 120) => { if ((this.upkeepAt.get(key) || -Infinity) > now - every) return; this.upkeepAt.set(key, now); this.noteEvent("action_done", text); };
+        let c = null; try { c = bot.getComponent(EntityComponentTypes.Inventory)?.container || null; } catch (e) { c = null; }
+        if (!c) return;
+        let used = 0, food = 0;
+        for (let i = 0; i < c.size; i++) {
+            let st; try { st = c.getItem(i); } catch (e) { continue; }
+            if (!st) continue;
+            used++;
+            if (/bread|apple|cooked_|carrot|potato|melon_slice|berries|stew|cookie|pie|beef|porkchop|mutton|chicken|cod|salmon/.test(st.typeId)) food += st.amount;
+            try {
+                const d = st.getComponent("minecraft:durability");
+                if (d && d.maxDurability > 0 && /pickaxe|axe|shovel|sword|hoe|shears/.test(st.typeId) && (d.maxDurability - d.damage) <= Math.max(8, d.maxDurability * 0.1)) say("worn:" + st.typeId, `your ${st.typeId.replace(/^.*:/, "").replace(/_/g, " ")} is nearly worn out (${d.maxDurability - d.damage} uses left): craft a replacement before it breaks`, 20 * 300);
+            } catch (e) { /* no durability */ }
+        }
+        if (used >= c.size - 4) say("full", `your inventory is nearly full (${used}/${c.size} slots): store things in a chest at home (open_container store), craft, or drop junk`);
+        let hunger = null; try { const h = bot.getComponent("minecraft:player.hunger"); if (h && typeof h.currentValue === "number") hunger = h.currentValue; } catch (e) { /* ignore */ }
+        if (food === 0 && hunger !== null && hunger <= 12) say("nofood", "you have no food left and you are getting hungry: hunt, fish, pick berries or harvest crops soon");
     }
 
     // ---- reflexes (a real player body has no engine reflexes of its own) ----
@@ -473,6 +497,7 @@ export class BotBrain {
         if (reply.self) setSelf(this.memory, reply.self);
         if (reply.plans) setPlans(this.memory, reply.plans);
         this.lastReplyIdle = !reply.say && (reply.actions.length === 0 || reply.actions.every(a => a.type === "wait"));
+        if (this.lastReplyIdle && !this.actuator.current && !this.actuator.queue.length && this.memory.plans && this.memory.plans.length) this.problems.push(`you had nothing running and waited; your plan says "${this.memory.plans[0]}": start on it, or change the plan`);
         if (reply.actions.some(a => a.type === "sleep")) this.sleptSince = true;
         if (reply.say) {
             const quiet = cfg.chatVolume === 1 && !reply.sayTo && !this.chatBuffer.length && Math.random() < 0.5;
@@ -725,21 +750,47 @@ class BrainManager {
                     const name = nameOfBlock(block);
                     for (const [, br] of allBrains()) {
                         try {
+                            if (br.bot.id === player.id || br.settings.owner === player.id) continue;
+                            const owned = findOwned(br.memory, block.location, block.dimension.id);
                             const home = br.memory?.home;
-                            if (!home || (home.dim && home.dim !== block.dimension.id) || dist(home, block.location) > 12) continue;
-                            if (br.settings.owner === player.id) continue;
-                            const key = player.id + "|" + verb;
+                            const atHome = home && (!home.dim || home.dim === block.dimension.id) && dist(home, block.location) <= 12;
+                            if (!owned && !atHome) continue;
+                            if (owned && owned.kind === "chest" && verb === "broke") forgetChest(br.memory, { ...owned.ref });
+                            const key = player.id + "|" + verb + "|" + (owned ? owned.kind : "home");
                             br._touchRate = br._touchRate || new Map();
-                            if ((br._touchRate.get(key) || 0) > system.currentTick - 400) continue;
+                            if ((br._touchRate.get(key) || 0) > system.currentTick - 200) continue;
                             br._touchRate.set(key, system.currentTick);
-                            br.noteEvent("home_touched", `${player.name} ${verb} ${name} at your home (${Math.round(dist(home, block.location))}m from its centre)`);
-                            notePerson(br.memory, player.name, { note: `${verb} blocks at my home` }, Date.now());
+                            const where = owned ? (owned.kind === "chest" ? `your chest at ${fmtPos(block.location)}` : `your ${owned.name} at ${fmtPos(block.location)}`) : `your home (${Math.round(dist(home, block.location))}m from its centre)`;
+                            br.noteEvent("home_touched", `${player.name} ${verb} ${name} ${owned && owned.kind === "chest" && verb === "broke" ? "(it was " : "at "}${where}${owned && owned.kind === "chest" && verb === "broke" ? ")" : ""}; it is yours to deal with`);
+                            notePerson(br.memory, player.name, { note: `${verb} ${name} at my ${owned ? owned.name : "home"}` }, Date.now());
                         } catch (e) { /* ignore */ }
                     }
                 } catch (e) { /* ignore */ }
             };
             try { world.afterEvents.playerBreakBlock.subscribe(ev => touched(ev.player, ev.block, "broke")); } catch (e) { /* ignore */ }
             try { world.afterEvents.playerPlaceBlock.subscribe(ev => touched(ev.player, ev.block, "placed")); } catch (e) { /* ignore */ }
+            // Someone opening one of the bot's chests
+            try {
+                world.afterEvents.playerInteractWithBlock.subscribe(ev => {
+                    try {
+                        const block = ev.block, player = ev.player;
+                        if (!block || !player || !/chest$|barrel$|shulker_box$/.test(block.typeId)) return;
+                        for (const [, br] of allBrains()) {
+                            try {
+                                if (br.bot.id === player.id) continue;
+                                const owned = findOwned(br.memory, block.location, block.dimension.id);
+                                if (!owned || owned.kind !== "chest") continue;
+                                br._touchRate = br._touchRate || new Map();
+                                const key = player.id + "|opened";
+                                if ((br._touchRate.get(key) || 0) > system.currentTick - 400) continue;
+                                br._touchRate.set(key, system.currentTick);
+                                br.noteEvent("home_touched", `${player.name} opened your chest at ${fmtPos(block.location)} (it held ${owned.ref.items && owned.ref.items.length ? owned.ref.items.join(", ") : "nothing you remember"}); check it and deal with it as you see fit`);
+                                notePerson(br.memory, player.name, { note: "opened my chest" }, Date.now());
+                            } catch (e) { /* ignore */ }
+                        }
+                    } catch (e) { /* ignore */ }
+                });
+            } catch (e) { /* older API */ }
             // A stale body of a resident (left behind in a far chunk when a fresh one was
             // spawned next to a joining player) is removed the moment it loads again.
             world.afterEvents.entityLoad.subscribe(ev => {

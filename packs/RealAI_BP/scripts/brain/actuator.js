@@ -9,7 +9,7 @@ import { setAITarget, clearAITarget } from "../ai_combat_tactics.js";
 import { challengeToDuel } from "../ai_duels.js";
 import { dist, dirName, fmtPos, inventoryMap, containerOf, healthOf, virtualFood } from "./perception.js";
 import { nameOf, isModdedId } from "./world_content.js";
-import { addFact } from "./memory.js";
+import { addFact, noteChest, noteBuild } from "./memory.js";
 import { craftPlan, smeltPlan, isLog, isPlanks } from "./crafting.js";
 import { getWorldConfig } from "./config.js";
 import { presetBlueprint } from "./blueprints.js";
@@ -858,7 +858,10 @@ H.build = {
         const bot = ctx.bot;
         const finish = (msg) => { stopMoving(bot); try { bot.removeTag("is_busy_building"); bot.triggerEvent("stroll_switch"); } catch (e) { /* ignore */ } return { done: true, result: msg }; };
         for (let n = 0; n < 2; n++) {
-            if (s.i >= s.steps.length) return finish(`finished building ${s.name} at ${fmtPos(s.origin)}: ${s.placed} blocks placed${s.skipped ? `, ${s.skipped} skipped` : ""}`);
+            if (s.i >= s.steps.length) {
+                if (s.placed > 0) { try { const xs = s.steps.map(p => p.x), ys = s.steps.map(p => p.y), zs = s.steps.map(p => p.z); noteBuild(ctx.brain.memory, { name: String(s.name || "build"), dim: bot.dimension.id, x1: Math.min(...xs), y1: Math.min(...ys), z1: Math.min(...zs), x2: Math.max(...xs), y2: Math.max(...ys), z2: Math.max(...zs) }, Date.now()); } catch (e) { /* ignore */ } }
+                return finish(`finished building ${s.name} at ${fmtPos(s.origin)}: ${s.placed} blocks placed${s.skipped ? `, ${s.skipped} skipped` : ""}`);
+            }
             const st = s.steps[s.i];
             const b = blockAt(bot.dimension, st.x, st.y, st.z);
             if (!b) { s.i++; s.skipped++; continue; }
@@ -888,16 +891,27 @@ H.build = {
     },
 };
 
+function rememberContainer(ctx, pos, id) {
+    if (!/chest$|barrel$|shulker_box$/.test(String(id))) return;
+    try { noteChest(ctx.brain.memory, { x: pos.x, y: pos.y, z: pos.z, dim: ctx.bot.dimension.id, items: [] }, Date.now()); } catch (e) { /* ignore */ }
+}
+function containerSummary(container) {
+    const map = {};
+    for (let i = 0; i < container.size; i++) { let st; try { st = container.getItem(i); } catch (e) { continue; } if (st) map[st.typeId] = (map[st.typeId] || 0) + st.amount; }
+    return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([id, n]) => `${nameOf(id)} x${n}`);
+}
+
 H.place_block = {
     start: (a, ctx) => {
         const id = materialBlockId(ctx.bot, a.block);
         const pos = { x: a.x, y: a.y, z: a.z };
         if (dist(eye(ctx.bot), center(pos)) > REACH + 2) return { pos, id, started: ctx.now };
         const r = placeBlock(ctx.bot, pos, id);
+        if (r.ok) rememberContainer(ctx, pos, id);
         return { done: true, result: r.ok ? `placed ${nameOf(id)} at ${fmtPos(pos)}` : `could not place ${nameOf(id)}: ${r.reason}` };
     },
     step: (s, ctx) => {
-        if (dist(eye(ctx.bot), center(s.pos)) <= REACH) { stopMoving(ctx.bot); const r = placeBlock(ctx.bot, s.pos, s.id); return { done: true, result: r.ok ? `placed ${nameOf(s.id)} at ${fmtPos(s.pos)}` : `could not place ${nameOf(s.id)}: ${r.reason}` }; }
+        if (dist(eye(ctx.bot), center(s.pos)) <= REACH) { stopMoving(ctx.bot); const r = placeBlock(ctx.bot, s.pos, s.id); if (r.ok) rememberContainer(ctx, s.pos, s.id); return { done: true, result: r.ok ? `placed ${nameOf(s.id)} at ${fmtPos(s.pos)}` : `could not place ${nameOf(s.id)}: ${r.reason}` }; }
         if (ctx.now - s.started > 20 * 30) { stopMoving(ctx.bot); return { done: true, result: `could not get close enough to ${fmtPos(s.pos)}` }; }
         goTo(ctx.bot, { x: s.pos.x + 0.5, y: s.pos.y, z: s.pos.z + 0.5 }, "walk", PRIO, true);
         return undefined;
@@ -1189,6 +1203,7 @@ H.open_container = {
             for (let i = 0; i < chest.size; i++) { const st = chest.getItem(i); if (!st || !matches(st.typeId)) continue; const rest = mine.addItem(st); chest.setItem(i, rest); moved.push(nameOf(st.typeId) + " x" + (st.amount - (rest?.amount || 0))); if (rest) break; }
         }
         try { bot.playAnimation("set_block"); } catch (e) { /* ignore */ }
+        try { noteChest(ctx.brain.memory, { x: s.pos.x, y: s.pos.y, z: s.pos.z, dim: bot.dimension.id, items: containerSummary(chest) }, Date.now()); } catch (e) { /* ignore */ }
         return { done: true, result: moved.length ? `${s.mode === "store" ? "stored" : "took"} ${moved.slice(0, 8).join(", ")}` : `nothing to ${s.mode}` };
     },
 };

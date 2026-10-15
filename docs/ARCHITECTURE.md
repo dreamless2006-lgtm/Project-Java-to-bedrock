@@ -114,6 +114,17 @@ tick and hits exactly every ten ticks (the damage-immunity window);
 reflex scan runs every tick. A `dangerUntil` mark (hurt, or a monster
 within eight blocks) shortens the think cadence to `thinkCombatSec`.
 
+Ownership lives in memory (`memory.chests`, `memory.builds`, bounded;
+`noteChest`/`noteBuild`/`findOwned`/`forgetChest` in `memory.js`): a
+finished `build` records its box, a placed chest and every
+`open_container` record the chest and a summary of its contents, and
+`renderMemory` lists them under "My things". The manager's block events
+(`playerBreakBlock`, `playerPlaceBlock`, `playerInteractWithBlock`) check
+`findOwned` and raise a `home_touched` event naming the player and the
+thing, and note the person. `BotBrain.upkeep` (every five seconds on a
+player body) points out a nearly full bag, a tool about to break and no
+food; `apply` adds a problem when the model waited with plans pending.
+
 With `bridgePlays` (default on) the manager finds the bridge's player
 (`transportInfo().bridgePlayer`) and gives it a `BotBrain` with mode
 `bridge`. Scripts cannot push a real player, so `actuator.js` moves a player

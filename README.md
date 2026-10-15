@@ -97,6 +97,17 @@ decision fails (a rate limit, a bad key, a timeout) the reason is said in
 chat instead of the player silently standing still. `!ai bridgeplays off`
 turns it back into a plain relay.
 
+## Its own things, and yours to mess with
+
+What the AI builds, the chests it fills and what it carries are its own: it
+remembers them ("My things" in its memory), keeps tools in shape, stores
+surplus, keeps food on it, and is nudged when its bag is full, a tool is
+about to break or it has waited with plans pending. Nothing is protected
+from you: hit it, prank it, open its chests, take or wreck what it made.
+It is told who did what, remembers it, and answers in character (confront,
+forgive, bargain, rebuild, move, hide its things, hit back), never by
+griefing your things in return.
+
 ## Who lives in your world
 
 By default there is exactly one AI player: the bridge account itself. When

@@ -17,6 +17,7 @@ bot.addTag("good");
 await advanceTicksAsync(400);     // legacy boot (100) + brain start (140) + first discover/caches
 check(log.errors.length === 0, "no errors during boot: " + log.errors.slice(0, 3).join(" | "));
 const brainMod = await import("../../packs/RealAI_BP/scripts/brain/core.js");
+const { renderMemory } = await import("../../packs/RealAI_BP/scripts/brain/memory.js");
 const gate = await import("../../packs/RealAI_BP/scripts/brain/gate.js");
 
 // Bridge handshake: the relay account runs /scriptevent realai:in <frames>
@@ -492,6 +493,61 @@ check(residents().length === 8, "still 8 residents after the respawn: " + reside
         await run(5, 1, () => overworld.getBlock({ x: cx, y: 64, z: cz + 20 }).typeId === "minecraft:water");
         check(overworld.getBlock({ x: cx, y: 64, z: cz + 20 }).typeId === "minecraft:water", "a water bucket breaks the fall");
         relay.velocity = { x: 0, y: 0, z: 0 };
+    }
+}
+// Twelfth cycle: its own things. What the body builds and the chests it fills are remembered as
+// its own; when a player breaks its wall or opens its chest it is told and may react as it likes;
+// a full bag is pointed out; waiting with plans pending is pointed out.
+{
+    const bb = gate.getBrain(relay.id);
+    if (bb) {
+        const act = (...a) => { if (bb.actuator.current?.action.type === "wait") bb.actuator.finish("wait cancelled"); bb.actuator.enqueue(a); };
+        const idle = () => !bb.actuator.current && !bb.actuator.queue.length;
+        const seen = [];
+        const origNote = bb.noteEvent.bind(bb);
+        bb.noteEvent = (type, text) => { seen.push({ type, text }); return origNote(type, text); };
+        const ox = 600, oz = 600;
+        relay.teleport({ x: ox + 0.5, y: 64, z: oz + 0.5 }); bb.actuator.stopAll(); await run(20);
+        const inv = relay.getComponent("minecraft:inventory").container;
+        for (let i = 0; i < 3; i++) inv.addItem(new ItemStack("minecraft:oak_planks", 64));
+        act({ type: "build", preset: "wall", material: "oak_planks", width: 5, height: 2 });
+        await run(1500, 10, idle);
+        check(bb.memory.builds.some(b => /wall/.test(b.name)), "a finished build is one of its things: " + JSON.stringify(bb.memory.builds.slice(-1)));
+        const wall = bb.memory.builds[bb.memory.builds.length - 1];
+        inv.addItem(new ItemStack("minecraft:chest", 1));
+        act({ type: "place_block", block: "chest", x: ox + 2, y: 64, z: oz - 2 });
+        await run(300, 10, idle);
+        check(overworld.getBlock({ x: ox + 2, y: 64, z: oz - 2 }).typeId === "minecraft:chest" && bb.memory.chests.some(c => c.x === ox + 2 && c.z === oz - 2), "a chest it places is one of its things");
+        inv.addItem(new ItemStack("minecraft:coal", 20));
+        act({ type: "open_container", x: ox + 2, y: 64, z: oz - 2, mode: "store", items: ["coal"] });
+        await run(300, 10, idle);
+        const chest = bb.memory.chests.find(c => c.x === ox + 2 && c.z === oz - 2);
+        check(chest && chest.items.some(i => /coal x20/.test(i)), "and it knows what it put inside: " + JSON.stringify(chest && chest.items));
+        check(/my chest at .* coal x20/.test(renderMemory(bb.memory, Date.now())) && /my wall at/.test(renderMemory(bb.memory, Date.now())), "its things are listed in its memory");
+        // Steve breaks a block of the wall and opens the chest
+        seen.length = 0;
+        const wb = overworld.getBlock({ x: wall.x1, y: wall.y1, z: wall.z1 });
+        world.afterEvents.playerBreakBlock.emit({ player: steve, block: wb, brokenBlockPermutation: {}, dimension: overworld });
+        world.afterEvents.playerInteractWithBlock.emit({ player: steve, block: overworld.getBlock({ x: ox + 2, y: 64, z: oz - 2 }) });
+        await run(5);
+        check(seen.some(e => e.type === "home_touched" && /Steve broke .* your wall/.test(e.text) && /yours to deal with/.test(e.text)), "it is told when Steve breaks its wall: " + seen.map(e => e.text).join(" | "));
+        check(seen.some(e => e.type === "home_touched" && /Steve opened your chest/.test(e.text) && /coal x20/.test(e.text)), "and when Steve opens its chest");
+        check(bb.memory.people.Steve && /opened my chest|broke/.test(bb.memory.people.Steve.note || ""), "and remembers who did it: " + JSON.stringify(bb.memory.people.Steve));
+        // a nearly full bag is pointed out once
+        seen.length = 0;
+        for (let i = 0; i < 36; i++) inv.addItem(new ItemStack("minecraft:cobblestone", 1));
+        for (let i = 0; i < inv.size; i++) if (!inv.getItem(i)) inv.setItem(i, new ItemStack("minecraft:dirt", 1));
+        await run(120);
+        check(seen.filter(e => /inventory is nearly full/.test(e.text)).length === 1, "a full bag is pointed out once: " + seen.filter(e => /full/.test(e.text)).length);
+        for (let i = 0; i < inv.size; i++) inv.setItem(i, undefined);
+        // waiting with plans pending is pointed out on the next turn
+        bb.memory.plans = ["gather 16 oak logs for a bigger house"];
+        bb.actuator.stopAll(); await run(5);
+        captured = null; wanted = msg => msg.bot === bb.id; bb.request("anything?"); await run(200, 5, () => !!captured);
+        if (captured) fromBridge({ t: "result", turnId: captured.turnId, ok: true, text: JSON.stringify({ thought: "nothing", say: "", say_to: "", mood: "", goal: "", actions: [{ type: "wait", seconds: 20 }], remember: [], forget: [] }), usage: { input: 1, output: 1 }, model: "mock", provider: "anthropic", attempts: 1 });
+        captured = null; wanted = null; await run(10);
+        check(bb.problems.some(p => /your plan says "gather 16 oak logs/.test(p)), "waiting with plans pending is pointed out: " + bb.problems.slice(-1));
+        bb.noteEvent = origNote;
     }
 }
 check(log.errors.length === 0, "no engine-level errors after lifecycle: " + log.errors.slice(0, 3).join(" | "));

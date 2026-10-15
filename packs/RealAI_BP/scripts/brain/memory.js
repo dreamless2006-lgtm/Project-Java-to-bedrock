@@ -14,10 +14,12 @@ export const MEMORY_LIMITS = {
     selfChars: 400,
     maxPlans: 6,
     planChars: 100,
+    maxChests: 8,
+    maxBuilds: 6,
 };
 
 export function createMemory() {
-    return { v: 1, facts: [], episodes: [], chat: [], people: {}, goal: null, home: null, created: 0, self: "", plans: [], drives: null };
+    return { v: 1, facts: [], episodes: [], chat: [], people: {}, goal: null, home: null, created: 0, self: "", plans: [], drives: null, chests: [], builds: [] };
 }
 
 export function loadMemory(raw) {
@@ -63,6 +65,46 @@ export function setPlans(mem, list) {
     return true;
 }
 
+// ---- the bot's own things: chests it filled and structures it built ----
+const sameSpot = (a, b) => a.x === b.x && a.y === b.y && a.z === b.z && (a.dim || "minecraft:overworld") === (b.dim || "minecraft:overworld");
+
+/** Remember (or refresh) a chest the bot placed or used. items: short strings like "oak planks x64". */
+export function noteChest(mem, chest, t) {
+    if (!chest || typeof chest.x !== "number") return;
+    mem.chests = Array.isArray(mem.chests) ? mem.chests : [];
+    const c = { x: Math.floor(chest.x), y: Math.floor(chest.y), z: Math.floor(chest.z), dim: chest.dim || "minecraft:overworld", items: (chest.items || []).slice(0, 8).map(s => String(s).slice(0, 40)), t };
+    mem.chests = mem.chests.filter(o => !sameSpot(o, c));
+    mem.chests.push(c);
+    if (mem.chests.length > MEMORY_LIMITS.maxChests) mem.chests.splice(0, mem.chests.length - MEMORY_LIMITS.maxChests);
+}
+
+export function forgetChest(mem, pos) {
+    if (!Array.isArray(mem.chests)) return false;
+    const before = mem.chests.length;
+    mem.chests = mem.chests.filter(o => !sameSpot(o, { x: Math.floor(pos.x), y: Math.floor(pos.y), z: Math.floor(pos.z), dim: pos.dim || "minecraft:overworld" }));
+    return mem.chests.length < before;
+}
+
+/** Remember a structure the bot built: a name and the box of blocks it covers. */
+export function noteBuild(mem, build, t) {
+    if (!build || typeof build.x1 !== "number") return;
+    mem.builds = Array.isArray(mem.builds) ? mem.builds : [];
+    const b = { name: String(build.name || "build").slice(0, 32), dim: build.dim || "minecraft:overworld", x1: Math.min(build.x1, build.x2), y1: Math.min(build.y1, build.y2), z1: Math.min(build.z1, build.z2), x2: Math.max(build.x1, build.x2), y2: Math.max(build.y1, build.y2), z2: Math.max(build.z1, build.z2), t };
+    mem.builds.push(b);
+    if (mem.builds.length > MEMORY_LIMITS.maxBuilds) mem.builds.splice(0, mem.builds.length - MEMORY_LIMITS.maxBuilds);
+}
+
+/** Is this block one of the bot's things? Returns {kind: "chest"|"build", name, ref} or null. */
+export function findOwned(mem, pos, dimId = "minecraft:overworld") {
+    const x = Math.floor(pos.x), y = Math.floor(pos.y), z = Math.floor(pos.z);
+    for (const c of mem.chests || []) if (c.x === x && c.y === y && c.z === z && (c.dim || "minecraft:overworld") === dimId) return { kind: "chest", name: "chest", ref: c };
+    for (const b of (mem.builds || []).slice().reverse()) {
+        if ((b.dim || "minecraft:overworld") !== dimId) continue;
+        if (x >= b.x1 - 1 && x <= b.x2 + 1 && y >= b.y1 - 1 && y <= b.y2 + 1 && z >= b.z1 - 1 && z <= b.z2 + 1) return { kind: "build", name: b.name, ref: b };
+    }
+    return null;
+}
+
 export function addEpisode(mem, text, t) {
     const s = String(text).trim().slice(0, MEMORY_LIMITS.episodeChars);
     if (!s) return;
@@ -98,6 +140,8 @@ export function saveMemory(mem, maxBytes = MEMORY_LIMITS.maxBytes) {
         if (mem.chat.length > 4) mem.chat.shift();
         else if (mem.self && mem.self.length > 200) mem.self = mem.self.slice(0, 200);
         else if (mem.episodes.length > 4) mem.episodes.shift();
+        else if (mem.chests && mem.chests.length > 2) mem.chests.shift();
+        else if (mem.builds && mem.builds.length > 2) mem.builds.shift();
         else if (mem.facts.length > 8) mem.facts.shift();
         else {
             const names = Object.keys(mem.people);
@@ -126,6 +170,11 @@ export function renderMemory(mem, now, limits = {}) {
     if (mem.plans && mem.plans.length) {
         lines.push("My plans:");
         mem.plans.forEach((p, i) => lines.push(`${i + 1}. ${p}`));
+    }
+    if ((mem.chests && mem.chests.length) || (mem.builds && mem.builds.length)) {
+        lines.push("My things:");
+        for (const c of (mem.chests || []).slice(-6)) lines.push(`- my chest at ${c.x} ${c.y} ${c.z}${c.dim && c.dim !== "minecraft:overworld" ? " in " + String(c.dim).replace("minecraft:", "") : ""}: ${c.items && c.items.length ? c.items.join(", ") : "empty"} (checked ${ago(now - (c.t || now))})`);
+        for (const b of (mem.builds || []).slice(-4)) lines.push(`- my ${b.name} at ${b.x1} ${b.y1} ${b.z1} to ${b.x2} ${b.y2} ${b.z2}`);
     }
     if (mem.facts.length) {
         lines.push("Things I know:");

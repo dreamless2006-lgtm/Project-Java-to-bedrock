@@ -4,7 +4,7 @@
     "name": "Real AI Skins",
     "description": "Player models and skins for the Real AI players (needed by the Real AI behavior pack).",
     "uuid": "bc66c966-7c98-4029-b4c1-095b71bfb72f",
-    "version": [2, 7, 0],
+    "version": [2, 8, 0],
     "min_engine_version": [
       1,
       26,
@@ -16,7 +16,7 @@
       "description": "Resources",
       "type": "resources",
       "uuid": "26b2aa40-4052-4363-8287-0d8b7e59dfee",
-      "version": [2, 7, 0]
+      "version": [2, 8, 0]
     }
   ],
   "metadata": {
