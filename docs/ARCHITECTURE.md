@@ -205,15 +205,12 @@ face it came in through) and `entityInSight()`; `look_at` and the walker's own t
 record the head's pending direction (`setView`) because the game shows a turn a tick
 or two late.
 
-`sightcam.js` runs a per-tick loop while anyone watches: the viewer is a spectator
-whose body is kept at the AI's eyes (the game only loads the world near a body), the
-camera preset `minecraft:free` is set to the AI's head location and rotation each tick
-(behind: pulled in along a ray so it does not pass through a wall), camera and
-movement input are locked, and the action bar shows the AI's current action and last
-thought (`BotBrain.lastThought`). The previous game mode and place are written to a
-dynamic property on the viewer first; leaving, the AI going away, or the viewer
-rejoining after a restart restores them. If `Player.camera` throws, the viewer's own
-body is turned to the AI's view instead (`!ai sight body` forces that).
+The live view is not in the game. `viewstream.js` streams the AI's pose, state and
+the blocks around it to the bridge, but only while the bridge's website has a viewer
+(the bridge sends `view` on/off frames), and `bridge/web.mjs` serves them to the
+browser; see [WEBVIEW.md](WEBVIEW.md) for the wire format, the renderer and the
+security notes. Nobody is made a spectator and no controls, cameras or game modes are
+touched. Players in spectator mode (if anyone is) are skipped by the AI's senses.
 
 Independence (`independent`, default true; pinned by the bridge's hello
 when its config sets it): `commands.js` refuses the steering commands
@@ -302,7 +299,8 @@ bots, up to `maxBrains`). The original random spawner is behind the
 | `path.js` | A* over block cells: eight-way, jumps, drops, partial paths, corner clearance | yes |
 | `senses.js` | the eyes: walk survey, line-of-sight rays, sights, what is under the crosshair | yes |
 | `sight.js` | the picture of the view: a ray cast through every cell of a small screen (material letters beside distance digits, people and creatures drawn over the world), the legend the prompt carries | yes |
-| `sightcam.js` | the operator's spectator view: free camera at the AI's eyes (or over its shoulder, or the viewer's own body), input lock, game mode and place restored on leaving and after a restart | in-game |
+| `voxel.js` | a box of blocks as a message: palette, run-length coding, base64 without Buffer/atob; the pack, Node and the page all run this file | yes |
+| `viewstream.js` | in-game: while the bridge's website has a viewer, streams the AI's pose, state and the blocks around it to the bridge | in-game |
 | `around.js` | the "Around you" report and the explored-columns memory | in-game (reads the dimension) |
 | `perception.js` | observation from the live world | in-game |
 | `actuator.js` | every action on the real body | in-game |

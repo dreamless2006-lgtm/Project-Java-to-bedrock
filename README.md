@@ -178,21 +178,18 @@ door, `H` a hostile creature...) and the right one how far (a digit per
 distance band). People and creatures are drawn where they stand and are hidden
 behind walls; turning its head changes the picture. `!ai see` prints it for you.
 
-## Watch the game through its eyes
+## Watch the AI on the phone: a website, not part of the game
 
-An operator can sit in the AI's head: **`!ai sight`** (or *Watch the AI* in the
-menu). You become an invisible spectator whose screen is the AI's own view,
-turned the way it turns, every tick; an action bar shows what it is doing and
-thinking. Your own controls are locked while you watch, and nothing in the
-world can see or touch you.
-
-* `!ai sight behind` puts the camera over its shoulder, `!ai sight eyes` back in
-  its head, `!ai sight body` skips the camera API (if the picture looks wrong,
-  your own spectator body takes the AI's view instead), `!ai sight Name` picks
-  another AI.
-* `!ai sight off` puts you back where you were with your game mode and controls;
-  `!ai sight stay` leaves the view but keeps you beside the AI.
-* If the game restarts while you watch, you get everything back when you rejoin.
+The bridge on the phone also runs a small website. Open the address it prints
+(`http://127.0.0.1:8787/`) in the phone's browser and you see the AI play: a
+live 3D picture from its eyes (or from behind it, or from anywhere you drag),
+its health, hunger and hotbar, what it is doing and thinking, the chat, and
+the exact text picture its model is given each turn. Nothing happens in the
+game for this: nobody becomes a spectator and no controls are locked. Use
+Android's split-screen or a floating window to have it next to Minecraft, or
+set `"web": { "lan": true }` in `config.json` to open it on another device on
+the same Wi-Fi (the bridge then prints an address with a secret key). Details,
+the data format and the security notes are in [docs/WEBVIEW.md](docs/WEBVIEW.md).
 
 ## What you need (plain language)
 
@@ -290,8 +287,8 @@ account: [docs/SETUP-DEDICATED-SERVER.md](docs/SETUP-DEDICATED-SERVER.md). Desig
   `/realai:talk Ellie "hi"` whispers.
 * `!ai status` lists the residents and every thinking bot; `!ai memory Ellie`,
   `!ai pause`, `!ai budget`.
-* Operators: `!ai sight` watches through the AI's eyes (see above), `!ai see` prints
-  the picture its model is given.
+* Operators: `!ai see` prints the text picture its model is given each turn;
+  `!ai picture off` stops giving it (the live website view is separate).
 * Operators: `!ai players 8`, `!ai thoughts on`, `!ai mix on`, `!ai bridgeplays on`,
   `!ai provider anthropic`, `!ai model claude-haiku-5-5`, `!ai volume 2`,
   `!ai rules Speak Spanish`, `!ai callbyname on`,
