@@ -27,7 +27,7 @@ function roundTrip(name, params) {
 }
 
 test("player_auth_input packets from the body encode and decode intact", { skip }, () => {
-    const b = new Body(); b.onStartGame({ runtime_entity_id: 7n, player_position: { x: 10, y: 64, z: 10 }, rotation: { x: 0, z: 0 }, rewind_history_size: 40 });
+    const b = new Body({ startConvention: "feet" }); b.onStartGame({ runtime_entity_id: 7n, player_position: { x: 10, y: 64, z: 10 }, rotation: { x: 0, z: 0 }, rewind_history_size: 40 });
     const idle = b.step();
     let back = roundTrip("player_auth_input", idle);
     assert.deepEqual(back.input_data, idle.input_data);

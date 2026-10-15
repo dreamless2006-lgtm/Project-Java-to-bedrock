@@ -7,7 +7,7 @@ import { Bridge } from "../bridge/index.mjs";
 import { EYE_HEIGHT } from "../bridge/body.mjs";
 
 function fakeBridge(connect = {}) {
-    const b = new Bridge({ _path: "test", defaults: { provider: "openai" }, providers: { openai: { apiKey: "k" } }, connect: { username: "Bot", ...connect } });
+    const b = new Bridge({ _path: "test", defaults: { provider: "openai" }, providers: { openai: { apiKey: "k" } }, connect: { username: "Bot", startConvention: "feet", ...connect } });
     const queued = [];
     b.client = { username: "Bot", status: 3, queue: (name, params) => queued.push({ name, params }), on() {} };
     return { b, queued };

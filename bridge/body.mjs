@@ -12,7 +12,8 @@
 //
 // Positions inside this class are FEET positions. On the wire, player_auth_input, move_player,
 // correct_player_move_prediction and respawn carry the EYE position (feet + 1.62); start_game and
-// change_dimension carry feet (as the BDS-facing implementations read them).
+// change_dimension have been seen to carry the eye position too (Dragonfly, and a real Realm), so
+// that is the default reading; the first position report corrects it where a server means feet.
 
 export const EYE_HEIGHT = 1.62;
 // Vanilla player physics per tick (what the server simulates from the same inputs).
@@ -33,10 +34,10 @@ const sortFlags = (set) => [...set].sort((a, b) => (INPUT_ORDINAL[a] ?? 999) - (
 export class Body {
     constructor(opts = {}) {
         this.eye = typeof opts.eyeHeight === "number" ? opts.eyeHeight : EYE_HEIGHT;
-        // Where start_game (and change_dimension) put the player: "eye" (PocketMine, Dragonfly), "feet"
-        // (what ViaBedrock and Oomph read from BDS) or "auto": servers that keep a rewind history are
-        // read as BDS (feet), the others as eye. The first correction or addon report that is about
-        // 1.62 blocks off in height flips a wrong guess (see calibrate), so this only shapes the first moments.
+        // Where start_game (and change_dimension) put the player: "eye" or "feet", or "auto": eye. A real Realm (BDS, rewind
+        // history 40) was seen to send start_game y 70.62 for a player whose feet were at 69.00, as Dragonfly and PocketMine do.
+        // The first correction or position report that is about 1.62 blocks off in height flips a wrong guess (see
+        // calibrate), so this only shapes the first moments.
         this.startConvention = opts.startConvention === "eye" || opts.startGameEyeLevel === true ? "eye" : opts.startConvention === "feet" ? "feet" : "auto";
         this.startIsEye = this.startConvention === "eye";
         this.calibrated = this.startConvention !== "auto";
@@ -93,7 +94,7 @@ export class Body {
         try { this.runtimeId = BigInt(p.runtime_entity_id ?? 0); } catch (e) { this.runtimeId = 0n; }
         const v = p.player_position || { x: 0, y: 64, z: 0 };
         this.rewindSize = Math.max(1, Number(p.rewind_history_size) || 40);
-        if (this.startConvention === "auto" && !this.calibrated) this.startIsEye = !(Number(p.rewind_history_size) > 0);
+        if (this.startConvention === "auto" && !this.calibrated) this.startIsEye = true;
         this.pos = { x: Number(v.x) || 0, y: (Number(v.y) || 0) - (this.startIsEye ? this.eye : 0), z: Number(v.z) || 0 };
         if (p.rotation) { this.pitch = Number(p.rotation.x) || 0; this.yaw = Number(p.rotation.z) || 0; }
         this.gameMode = p.player_gamemode ?? null;

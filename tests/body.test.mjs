@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { Body, EYE_HEIGHT, SPEED, PHYS, GROUND_DELTA_Y, INPUT_ORDINAL } from "../bridge/body.mjs";
 
-const start = (b, pos = { x: 10, y: 64, z: 10 }) => b.onStartGame({ runtime_entity_id: 7n, player_position: pos, rotation: { x: 0, z: 90 }, current_tick: 1000n, rewind_history_size: 40, player_gamemode: "survival" });
+const start = (b, pos = { x: 10, y: 64, z: 10 }) => { b.startConvention = "feet"; b.startIsEye = false; b.calibrated = true; return b.onStartGame({ runtime_entity_id: 7n, player_position: pos, rotation: { x: 0, z: 90 }, current_tick: 1000n, rewind_history_size: 40, player_gamemode: "survival" }); };
 const near = (a, b, eps = 1e-6) => Math.abs(a - b) <= eps;
 const sorted = (flags) => flags.every((f, i) => i === 0 || INPUT_ORDINAL[flags[i - 1]] < INPUT_ORDINAL[f]);
 
@@ -22,8 +22,18 @@ test("start_game seeds feet from player_position, tick from zero, and idle packe
     assert.equal(p.input_mode, "mouse"); assert.equal(p.play_mode, "screen"); assert.equal(p.interaction_model, "touch");
     for (const k of ["pitch", "yaw", "head_yaw", "interact_rotation", "camera_orientation", "raw_move_vector"]) assert.ok(k in p, k);
     assert.equal(b.step().tick, 2n);
-    const eye = new Body({ startGameEyeLevel: true }); start(eye, { x: 0, y: 64 + EYE_HEIGHT, z: 0 });
+    const eye = new Body({ startGameEyeLevel: true }); eye.onStartGame({ runtime_entity_id: 7n, player_position: { x: 0, y: 64 + EYE_HEIGHT, z: 0 }, rotation: { x: 0, z: 0 }, current_tick: 1n, rewind_history_size: 0 });
     assert.ok(near(eye.pos.y, 64));
+    // a Realm (BDS, rewind history 40) sent start_game y 70.62 for feet at 69.00: with nothing configured the height is read as eye level
+    const realm = new Body(); realm.onStartGame({ runtime_entity_id: 7n, player_position: { x: -347.17, y: 70.62, z: -1001.13 }, rotation: { x: 0, z: 0 }, current_tick: 5000n, rewind_history_size: 40 });
+    assert.ok(near(realm.pos.y, 69.0, 1e-9), "feet at " + realm.pos.y);
+    // and a server that did mean feet is noticed from its first position report
+    const feetServer = new Body(); feetServer.onStartGame({ runtime_entity_id: 7n, player_position: { x: 0, y: 64, z: 0 }, rotation: { x: 0, z: 0 }, current_tick: 1n, rewind_history_size: 40 });
+    assert.ok(near(feetServer.pos.y, 64 - EYE_HEIGHT, 1e-9));
+    feetServer.anchorFrom({ x: 0, y: 64, z: 0 }, true);
+    assert.equal(feetServer.startIsEye, false, "flipped to feet");
+    const configured = new Body({ startConvention: "feet" }); configured.onStartGame({ runtime_entity_id: 7n, player_position: { x: 0, y: 64, z: 0 }, rotation: { x: 0, z: 0 }, current_tick: 1n, rewind_history_size: 40 });
+    assert.equal(configured.pos.y, 64);
 });
 
 test("walking accelerates like the server simulates, converges to vanilla speed and stops near the target", () => {

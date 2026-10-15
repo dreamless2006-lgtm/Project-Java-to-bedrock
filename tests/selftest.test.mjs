@@ -8,7 +8,7 @@ import { EYE_HEIGHT } from "../bridge/body.mjs";
 
 const SCALE = 10;           // ten times faster than real time
 
-function simulate({ walls = [], freeze = false, rubber = false, dropSmallTicks = false, deadPackets = 0 } = {}) {
+function simulate({ walls = [], freeze = false, rubber = false, dropSmallTicks = false, deadPackets = 0, stepRing = null } = {}) {
     const b = new Bridge({ _path: "test", defaults: { provider: "openai" }, providers: { openai: { apiKey: "k" } }, connect: { username: "Bot" }, selfTest: true });
     const truth = { x: 100.5, y: 64, z: 100.5, yaw: 0, pitch: 0 };
     let packets = 0;
@@ -23,7 +23,9 @@ function simulate({ walls = [], freeze = false, rubber = false, dropSmallTicks =
                 if (++packets <= deadPackets) return;                                 // the server is not simulating us yet
                 if (dropSmallTicks && params.tick < 1000n) return;
                 const x = params.position.x, z = params.position.z;
-                if (!inWall(x, z) && Math.hypot(x - truth.x, z - truth.z) < 0.8) { truth.x = x; truth.z = z; }     // a wall clamps the body without a word, and a claim that jumps is not believed
+                const level = (a, c) => Math.floor(Math.hypot(a - 100.5, c - 100.5) / stepRing);               // terrain that steps down, a block every stepRing blocks, away from the spawn
+                const blockedStep = stepRing !== null && level(x, z) < level(truth.x, truth.z);                  // down is free, back up needs a jump
+                if (!inWall(x, z) && !blockedStep && Math.hypot(x - truth.x, z - truth.z) < 0.8) { truth.x = x; truth.z = z; if (stepRing !== null) truth.y = 64 - level(x, z); }     // a wall clamps the body without a word, and a claim that jumps is not believed
                 truth.yaw = params.yaw; truth.pitch = params.pitch;
             } else if (name === "command_request" && /^\/tp @s ~ ~ ~/.test(params.command)) {
                 b.body.onMovePlayer({ runtime_id: b.body.runtimeId, mode: "teleport", position: { x: truth.x, y: truth.y + EYE_HEIGHT, z: truth.z }, yaw: truth.yaw, pitch: truth.pitch, on_ground: true });
@@ -109,4 +111,13 @@ test("the self-test never talks to the addon", { timeout: 60000 }, async () => {
     sim.b.onDeath("health 0");
     assert.equal(sim.b.outQueue.filter(c => /realai:in/.test(c)).length, 0, "not even a death notice");
     sim.b.stopRespawnLoop();
+});
+
+test("the way back over a step down is uphill: the real Realm's terrain must not fail a healthy server, the legs are skipped and the heights are reported", { timeout: 60000 }, async () => {
+    const r = await simulate({ stepRing: 3.5 }).run();
+    assert.ok(r.ok, r.lines.join("\n"));
+    assert.ok(r.lines.some(l => /^SKIP\s+stepping back/.test(l)), "stepping back is skipped, not failed:\n" + r.lines.join("\n"));
+    assert.ok(r.lines.some(l => /^SKIP\s+sprinting/.test(l)));
+    assert.ok(r.lines.some(l => /^PASS\s+walking forward.*not flat/.test(l)), "the walk says the ground was not flat:\n" + r.lines.join("\n"));
+    assert.ok(r.lines.some(l => /^PASS\s+strafing/.test(l)) && r.lines.some(l => /^PASS\s+sneaking/.test(l)), "the legs that can be judged still are");
 });

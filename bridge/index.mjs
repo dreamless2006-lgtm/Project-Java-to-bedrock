@@ -665,8 +665,10 @@ export class Bridge {
                 await hold({ f: 1 }, 2000);
                 const after = await truth();
                 const d = after ? flat(from, after) : 0;
-                if (!best || d > best.d) best = { h, d, from, after };
-                if (d >= 7) break;
+                const dy = after ? after.y - from.y : 0;
+                const score = d - 8 * Math.max(0, Math.abs(dy) - 0.3);       // level ground is preferred: the body is not told the terrain here
+                if (!best || score > best.score) best = { h, d, dy, from, after, score };
+                if (d >= 7 && Math.abs(dy) < 0.4) break;
             }
             return best;
         };
@@ -697,7 +699,7 @@ export class Bridge {
         const pulled1 = pulledBack();
         const nowBase = this.body.tickBase;
         check("walking forward for 2 s moves the body (vanilla walk is about 7.5 blocks)", !!used,
-            used ? `${walked.toFixed(1)} blocks ${used.name}${triedFlip ? (flipRelevant ? ` (only with input ticks counted the "${nowBase}" way, the original numbering failed on the control run: set "tickBase": "${nowBase}" under connect in config.json)` : " (the other tick numbering was not the reason: the original one moved the body as well on the control run, so the server just needed time)") : ""}${walked < 7 ? ` (short of 7.5: ${walked < 5 ? "something was in the way, or " : ""}the ground here may not be flat)` : ""}`
+            used ? `${walked.toFixed(1)} blocks ${used.name}${Math.abs(best.dy) >= 0.5 ? ` (the ground there is ${best.dy < 0 ? "lower" : "higher"} by ${Math.abs(best.dy).toFixed(1)}: not flat)` : ""}${triedFlip ? (flipRelevant ? ` (only with input ticks counted the "${nowBase}" way, the original numbering failed on the control run: set "tickBase": "${nowBase}" under connect in config.json)` : " (the other tick numbering was not the reason: the original one moved the body as well on the control run, so the server just needed time)") : ""}${walked < 7 ? ` (short of 7.5: ${walked < 5 ? "something was in the way, or " : ""}the ground here may not be flat)` : ""}`
                 : `the best heading moved ${walked.toFixed(1)} blocks${pulled1 ? `, and the server pulled the body back ${pulled1} times: it keeps resetting the body (rubber-banding)` : ": the server ignores this client's movement, or something blocks all four directions around here (stand on open flat ground and try again)"}`);
         const pulledBase = pulledBack();
         if (used) {
@@ -705,17 +707,25 @@ export class Bridge {
             const hv = { x: -Math.sin(rad), z: Math.cos(rad) };       // unit vector the body faced
             const along = (a, b) => (b.x - a.x) * hv.x + (b.z - a.z) * hv.z;
             let cur = best.after;
-            // 2. step back (the ground behind us is the ground we just crossed)
+            // 2. step back (the ground behind us is the ground we just crossed). If that ground sloped down, the way back is
+            // uphill and a held key cannot climb a block: the legs that go back over it cannot be judged here.
+            const downhill = best.dy <= -0.5;
             this.body.setLook(used.yaw, 0);
-            const backMs = Math.max(400, Math.min(1000, (walked - 1) / 4.3 * 1000));
-            await hold({ f: -1 }, backMs);
-            let p = await truth();
-            const stepped = p ? along(cur, p) : 0;
-            check("stepping back moves the body backwards", !!p && stepped <= -0.3 * 4.3 * backMs / 1000, p ? `${stepped.toFixed(1)} blocks along the way it faces` : "no answer");
+            let p = null;
+            if (downhill) {
+                skip("stepping back moves the body backwards", `the ground sloped down by ${(-best.dy).toFixed(1)} blocks on the way here, so the way back is uphill, which a held key does not climb (the AI hops such steps); stand on flat ground to test this`);
+            } else {
+                const backMs = Math.max(400, Math.min(1000, (walked - 1) / 4.3 * 1000));
+                await hold({ f: -1 }, backMs);
+                p = await truth();
+                const stepped = p ? along(cur, p) : 0;
+                check("stepping back moves the body backwards", !!p && stepped <= -0.3 * 4.3 * backMs / 1000, p ? `${stepped.toFixed(1)} blocks along the way it faces${p && Math.abs(p.y - cur.y) >= 0.5 ? ` (height changed by ${(p.y - cur.y).toFixed(1)}: not flat)` : ""}` : "no answer");
+            }
             cur = p || cur;
             // 3. sprint back towards where we started (known ground), 1 s or less
             const room = along(best.from, cur);
-            if (room >= 2.5) {
+            if (downhill) skip("sprinting is faster than walking", "not run: the way back is uphill (see above)");
+            else if (room >= 2.5) {
                 this.body.setLook(used.yaw + 180, 0);
                 await sleep(T(300));
                 const sprintMs = Math.min(1000, room / 5.6 * 1000 * 0.9);

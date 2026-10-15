@@ -152,7 +152,7 @@ interacting with a bot opens its card.
    `look_around`: the report names what ends each direction.
 
 Config keys for odd servers (`connect` in `config.json`): `deviceOS` (a number, the device the account
-claims to be), `startConvention` (`"auto"`, `"eye"` or `"feet"`: how the server's start position is read),
+claims to be), `startConvention` (`"auto"` (the default: eye level, corrected by the first position report), `"eye"` or `"feet"`: how the server's start position is read; a real Realm sends eye level),
 `tickBase` (`"zero"` by default, or `"server"`: whether the numbers on the body's input packets count from
 zero or continue from the server's tick; the bridge tries the other one by itself when the body never moves
 and nothing objects, and the self-test says when it is needed), `gamemode` (`null` leaves the game mode alone).
