@@ -21,7 +21,7 @@ import { Body } from "./body.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const VERSION = "0.2.0";
-const EXPECT_ADDON = "2.8.0";          // the pack build whose addon walks this bridge's body
+const EXPECT_ADDON = "2.9.0";          // the pack build whose addon walks this bridge's body
 const SCRIPT_EVENT = "realai:in";
 const ENV_KEYS = {
     anthropic: "ANTHROPIC_API_KEY", openai: "OPENAI_API_KEY", xai: "XAI_API_KEY", gemini: "GEMINI_API_KEY",
@@ -219,7 +219,7 @@ export class Bridge {
     }
 
     helloMessage(username) {
-        return { t: "hello", v: 2, name: username, version: VERSION, body: 1, expectAddon: EXPECT_ADDON, providers: Object.keys(PROVIDERS).filter(id => !PROVIDERS[id].needsKey || this.cfg.providers[id]?.apiKey) };
+        return { t: "hello", v: 2, name: username, version: VERSION, body: 1, expectAddon: EXPECT_ADDON, independent: this.cfg.independent !== false, providers: Object.keys(PROVIDERS).filter(id => !PROVIDERS[id].needsKey || this.cfg.providers[id]?.apiKey) };
     }
 
     // The first play_status player_spawn: close the loading screen like a real client, then tell the

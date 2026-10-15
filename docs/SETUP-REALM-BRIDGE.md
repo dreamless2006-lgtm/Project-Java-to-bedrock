@@ -24,7 +24,7 @@ lower than the copy it already has, and a Realm keeps its own copy of the
 pack. To update, remove the old Real AI packs from the device (Settings >
 Storage), import the new `.mcaddon`, activate it on the world, and have
 everyone leave and rejoin the Realm. The bridge's log says which build the
-world runs (`addon says hello (build 2.8.0, walks yes)`); a `walks no` line
+world runs (`addon says hello (build 2.9.0, walks yes)`); a `walks no` line
 means the Realm still serves an older pack that cannot move the body.
 
 ## 2. Prepare a second Microsoft account for the bridge
@@ -103,7 +103,12 @@ tick), food is eaten when the bar is low and nothing hostile is near,
 better armour goes on the moment it is in the bag, and a water bucket is
 poured under the body when it falls. While in danger the model is asked
 every `thinkCombatSec` seconds (default 3) instead of every
-`thinkActiveSec`. `!ai status` shows `bridge (<gamertag>)` as the
+`thinkActiveSec`. The AI is independent by default: `!ai walk`, `!ai pause`,
+`!ai forget`, `!ai rules`, `!ai mission` and `!ai summon` are refused for
+everyone, the menu offers talk and memory only, and the legacy friend-request
+items are not handed out. `"independent": false` in the bridge's
+`config.json` (then restart the bridge) brings the controls back; the
+movement test `!ai walk` is only available then. `!ai status` shows `bridge (<gamertag>)` as the
 transport and lists every thinking player with its provider and model. For
 more AI players, `!ai players <n>` spawns named residents that join next to
 you. Put several keys in `config.json` and the residents are spread

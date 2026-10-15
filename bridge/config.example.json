@@ -69,5 +69,6 @@
   },
   "maxConcurrentThinks": 4,
   "requestTimeoutSeconds": 40,
-  "log": "info"
+  "log": "info",
+  "independent": true
 }

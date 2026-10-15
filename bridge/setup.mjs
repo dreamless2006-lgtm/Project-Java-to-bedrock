@@ -87,6 +87,7 @@ export async function runSetup({ configPath = join(HERE, "config.json"), example
     }
     cfg.connect.username = tag;
 
+    if (cfg.independent === undefined) cfg.independent = true;   // nobody in the game steers the AI; talk is the only way in
     writeFileSync(configPath, JSON.stringify(cfg, null, 2) + "\n");
     rl.close();
     console.log(`\nSaved ${configPath}. Starting the bridge...\n`);

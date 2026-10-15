@@ -10,6 +10,9 @@ import { renderMemory } from "./memory.js";
 import { worldContent } from "./world_content.js";
 import { showHub, playerAllowed } from "./ui.js";
 
+// What counts as steering the AI (refused while it is independent); talking, reading and setup stay.
+const STEERING = new Set(["walk", "pause", "resume", "think", "forget", "rules", "mission", "summon", "despawn"]);
+
 const HELP = [
     "§b!ai§r - open the Real AI menu",
     "§b!ai status§r - transport, provider, budget and every thinking bot",
@@ -19,6 +22,7 @@ const HELP = [
     "§b!ai memory <Name>§r | §b!ai forget <Name>§r - read or wipe a bot's memory",
     "§b!ai pause|resume [Name]§r - pause thinking (all bots or one)",
     "§b!ai where [Name]§r - where the server keeps a bot's body and what its walker is doing",
+    "§7Independent (default): nobody can steer the AI in game (no pause, walk, forget, rules, mission, summon); talk is the only way in. §b!ai independent on|off§r (pinned by the bridge's config.json when it sets it).",
     "§b!ai walk <Name> <dx> <dz>§r - make a bot walk that far from where it stands (a movement test)",
     "§7operator: §b!ai provider <id>§r, §b!ai model <name>§r, §b!ai transport auto|direct|bridge§r, §b!ai volume 0-3§r, §b!ai budget soft|hard <tokens>|reset§r, §b!ai rules <text>§r, §b!ai callbyname on|off§r, §b!ai freebuild on|off§r, §b!ai debug on|off§r, §b!ai fakechat on|off§r, §b!ai players 0-16§r, §b!ai thoughts on|off§r, §b!ai mix on|off§r, §b!ai bridgeplays on|off§r, §b!ai mission beat|free§r, §b!ai wildspawns on|off§r, §b!ai companiondeath respawn|permadeath§r, §b!ai jointeleport on|off§r, §b!ai content§r",
 ];
@@ -46,6 +50,7 @@ export function handleCommand(player, message) {
     const rest = parts.slice(2);
     const op = isOperator(player);
     const cfg = getWorldConfig();
+    if (cfg.independent !== false && STEERING.has(cmd)) return reply(player, `§7The AI runs its own life here: nobody in this world can steer it (no "${cmd}"). Talk to it in chat like anyone else.${op ? (manager.independentPinned ? ' To change that, set "independent": false in the bridge\'s config.json and restart it.' : " To change that: !ai independent off.") : ""}`);
     switch (cmd) {
         case "":
         case "menu":
@@ -168,6 +173,14 @@ export function handleCommand(player, message) {
         case "companiondeath": { const v = rest[0]; if (!["respawn", "permadeath"].includes(v)) return reply(player, "§cusage: !ai companiondeath respawn|permadeath"); updateWorldConfig({ companionDeath: v }); return reply(player, `§acompanions now ${v === "respawn" ? "respawn next to their owner after dying" : "stay dead (permadeath)"}`); }
         case "jointeleport": updateWorldConfig({ companionJoinTeleport: rest[0] === "on" }); return reply(player, `§acompanions ${rest[0] === "on" ? "come to their owner on join" : "stay where they are when their owner joins"}`);
         case "maxbrains": { const n = Number(rest[0]); if (!(n >= 0 && n <= 40)) return reply(player, "§cusage: !ai maxbrains 0-40"); updateWorldConfig({ maxBrains: n }); return reply(player, `§amax brains ${n}`); }
+        case "independent": {
+            if (!op) return reply(player, "§coperator only");
+            if (manager.independentPinned) return reply(player, `§7independence is ${cfg.independent !== false ? "on" : "off"} and pinned by the bridge's config.json ("independent"); change it there and restart the bridge`);
+            const v = rest[0] === "off" ? false : rest[0] === "on" ? true : null;
+            if (v === null) return reply(player, `§7independent is ${cfg.independent !== false ? "on" : "off"}; usage: !ai independent on|off`);
+            updateWorldConfig({ independent: v }); for (const [, b] of allBrains()) b.systemCache = null;
+            return reply(player, v ? "§athe AI runs its own life: nobody in this world can steer it" : "§eplayers may now steer the AI (pause, walk, jobs, rules, summons)");
+        }
         case "autonomy": { const v = rest[0]; if (!["full", "companions_only", "off"].includes(v)) return reply(player, "§cusage: !ai autonomy full|companions_only|off"); updateWorldConfig({ autonomy: v }); manager.refreshEnabled(); return reply(player, `§aautonomy ${v}`); }
         case "budget": {
             const sub = rest[0];

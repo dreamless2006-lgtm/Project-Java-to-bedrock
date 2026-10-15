@@ -34,6 +34,7 @@ export const DEFAULTS = Object.freeze({
     bridgePlays: true,          // the bridge account's own player gets a brain and plays too (walks, builds, chats as itself)
     reflectEvery: 20,           // every N thinks a bot looks back and updates memory, self and plans
     autonomy: "full",           // full | companions_only | off
+    independent: true,          // nobody in the world can steer the AI (no pause, walk, jobs, rules, summons): talk is the only way in
     freeBuild: false,           // place blocks without inventory (creative-style); off = honest survival
     mission: "beat_the_game",   // beat_the_game | free : the sole AI's long-term purpose
     keepAlive: true,            // ticking areas around bot homes when nobody is online (BDS)
@@ -80,7 +81,7 @@ function applyServerOverrides(cfg) {
     if (!hasServerAdmin) return;
     const map = {
         "realai.provider": "provider", "realai.model": "model", "realai.transport": "transport", "realai.effort": "effort",
-        "realai.maxTokens": "maxTokens", "realai.maxBrains": "maxBrains", "realai.autonomy": "autonomy", "realai.chatVolume": "chatVolume",
+        "realai.maxTokens": "maxTokens", "realai.maxBrains": "maxBrains", "realai.autonomy": "autonomy", "realai.independent": "independent", "realai.chatVolume": "chatVolume",
         "realai.callByName": "callByName", "realai.freeBuild": "freeBuild", "realai.keepAlive": "keepAlive", "realai.serverRules": "serverRules",
         "realai.thinkIdleSec": "thinkIdleSec", "realai.thinkActiveSec": "thinkActiveSec", "realai.thinkCombatSec": "thinkCombatSec", "realai.enabled": "enabled", "realai.bridgeName": "bridgeName",
         "realai.worldPlayers": "worldPlayers", "realai.wildSpawns": "wildSpawns", "realai.mixProviders": "mixProviders", "realai.showThoughts": "showThoughts", "realai.innerLife": "innerLife", "realai.reflectEvery": "reflectEvery", "realai.bridgePlays": "bridgePlays", "realai.mission": "mission",

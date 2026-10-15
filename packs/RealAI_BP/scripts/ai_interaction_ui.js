@@ -3,6 +3,7 @@ import { ActionFormData, ModalFormData } from "@minecraft/server-ui";
 import { assignFriendTask, getFriendTask } from "./ai_task_worker.js";
 import { showSettingsForm } from "./ai_settings.js";
 import { startTrade, tradeOnCooldown } from "./ai_bot_trading.js";
+import { getWorldConfig } from "./brain/config.js";
 import { challengeToDuel } from "./ai_duels.js";
 
 // --- Configuration ---
@@ -146,6 +147,7 @@ function friendDataFromCache(ai, player) {
  * Give friend configuration items to player
  */
 function giveFriendConfigItems(player) {
+    try { if (getWorldConfig().independent !== false) return; } catch (e) { /* ignore */ }   // no steering items for an independent AI
     player.runCommand(`give @s ${ITEM_friend_request}`);
     player.runCommand(`give @s ${FRIEND_LIST_ITEM_ID}`);
 }
@@ -1353,6 +1355,7 @@ function handleItemUse(event) {
 
 function handleEntityInteract(event) {
     const { player, target, itemStack } = event;
+    try { if (getWorldConfig().independent !== false) return; } catch (e) { /* ignore */ }   // an independent AI takes no orders through items
 
     // Target must be our AI
     if (target.typeId !== ai_player_id) return;

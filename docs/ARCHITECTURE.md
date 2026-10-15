@@ -125,6 +125,13 @@ thing, and note the person. `BotBrain.upkeep` (every five seconds on a
 player body) points out a nearly full bag, a tool about to break and no
 food; `apply` adds a problem when the model waited with plans pending.
 
+Independence (`independent`, default true; pinned by the bridge's hello
+when its config sets it): `commands.js` refuses the steering commands
+(STEERING set), the hub shows talk and memory only, server rules are not
+injected into the system prompt, the legacy friend-request/job UI is
+disabled, and the system prompt tells the AI that nobody can command it
+and that players' asks are requests between equals.
+
 With `bridgePlays` (default on) the manager finds the bridge's player
 (`transportInfo().bridgePlayer`) and gives it a `BotBrain` with mode
 `bridge`. Scripts cannot push a real player, so `actuator.js` moves a player

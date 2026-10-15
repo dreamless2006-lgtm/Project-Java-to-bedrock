@@ -57,12 +57,13 @@ function showGettingStarted(player) {
 function showCompanions(player) {
     const mine = manager.companionsOf(player);
     const f = new ActionFormData().title("My Squad").body(`Stored: ${(() => { try { return JSON.parse(player.getDynamicProperty("realai:companions") || "[]").length; } catch (e) { return 0; } })()}  Live: ${mine.length}`);
-    f.button("§aSummon a new companion", "textures/items/friend_request");
+    const independent = getWorldConfig().independent !== false;
+    f.button(independent ? "§7Summoning is off: the AI runs its own life" : "§aSummon a new companion", "textures/items/friend_request");
     for (const b of mine) f.button(`${b.name}\n§7${b.status().current || b.memory.goal || "idle"}`, "textures/items/friends");
     f.button("§cBack");
     f.show(player).then(r => {
         if (r.canceled) return;
-        if (r.selection === 0) return later(() => summonForm(player));
+        if (r.selection === 0) { if (independent) { player.sendMessage("§7The AI runs its own life here: nobody can summon companions for it. Talk to it instead."); return; } return later(() => summonForm(player)); }
         if (r.selection === mine.length + 1) return later(() => showHub(player));
         later(() => companionDetail(player, mine[r.selection - 1]));
     });
@@ -86,6 +87,20 @@ function summonForm(player) {
 
 function companionDetail(player, b) {
     const st = b.status();
+    if (getWorldConfig().independent !== false) {
+        // an independent AI: you can talk to it and read its memory, nothing else
+        const g = new ActionFormData().title(b.name).body(`Status: ${st.paused ? "paused" : "thinking"} (${st.thinks} turns)\nGoal: ${st.goal || "none"}\nDoing: ${st.current || "idle"}\n\n§7${b.name} runs its own life. Nobody in this world can steer it; you can talk to it and see what it remembers.`);
+        g.button("Talk", "textures/ui/icon_chat");
+        g.button("Memory", "textures/items/paper");
+        g.button("Back");
+        g.show(player).then(r => {
+            if (r.canceled) return;
+            if (r.selection === 0) later(() => talkForm(player, b));
+            else if (r.selection === 1) later(() => memoryView(player, b));
+            else later(() => showCompanions(player));
+        });
+        return;
+    }
     const f = new ActionFormData().title(b.name).body(`Status: ${st.paused ? "paused" : "thinking"} (${st.thinks} turns)\nGoal: ${st.goal || "none"}\nDoing: ${st.current || "idle"}\nProvider: ${st.provider}\n${st.lastError ? "§cLast error: " + st.lastError : ""}`);
     f.button("Whistle (come here)", "textures/items/coords");
     f.button("Talk", "textures/ui/icon_chat");
@@ -119,10 +134,11 @@ function talkForm(player, b) {
 }
 
 function memoryView(player, b) {
-    new MessageFormData().title(`${b.name}'s memory`).body(renderMemory(b.memory, Date.now(), { facts: 16, episodes: 8, chat: 6 }) || "(nothing yet)").button1("Forget everything").button2("Back").show(player).then(r => {
+    const independent = getWorldConfig().independent !== false;
+    new MessageFormData().title(`${b.name}'s memory`).body(renderMemory(b.memory, Date.now(), { facts: 16, episodes: 8, chat: 6 }) || "(nothing yet)").button1(independent ? "Close" : "Forget everything").button2("Back").show(player).then(r => {
         if (r.canceled) return;
-        if (r.selection === 0) { b.memory.facts = []; b.memory.episodes = []; b.memory.chat = []; b.memory.people = {}; b.history = []; b.saveMemory(); player.sendMessage(`§7${b.name} forgot everything.`); }
-        else later(() => companionDetail(player, b));
+        if (r.selection === 0 && !independent) { b.memory.facts = []; b.memory.episodes = []; b.memory.chat = []; b.memory.people = {}; b.history = []; b.saveMemory(); player.sendMessage(`§7${b.name} forgot everything.`); }
+        else if (r.selection === 1) later(() => companionDetail(player, b));
     });
 }
 
@@ -161,7 +177,7 @@ function showBehavior(player) {
         if (r.canceled) return;
         if (!op) return player.sendMessage("§coperator permission required");
         const [vol, cbn, auto, worldPlayers, wild, mix, thoughts, maxBrains, idle, freeBuild, keepAlive, fake, death, joinTp, rules] = r.formValues;
-        updateWorldConfig({ chatVolume: Number(vol), callByName: !!cbn, autonomy: ["full", "companions_only", "off"][Number(auto)], worldPlayers: Number(worldPlayers), wildSpawns: !!wild, mixProviders: !!mix, showThoughts: !!thoughts, maxBrains: Number(maxBrains), thinkIdleSec: Number(idle), freeBuild: !!freeBuild, keepAlive: !!keepAlive, legacyFakeChat: !!fake, companionDeath: Number(death) === 1 ? "permadeath" : "respawn", companionJoinTeleport: !!joinTp, serverRules: String(rules || "").slice(0, 600) });
+        updateWorldConfig({ chatVolume: Number(vol), callByName: !!cbn, autonomy: ["full", "companions_only", "off"][Number(auto)], worldPlayers: Number(worldPlayers), wildSpawns: !!wild, mixProviders: !!mix, showThoughts: !!thoughts, maxBrains: Number(maxBrains), thinkIdleSec: Number(idle), freeBuild: !!freeBuild, keepAlive: !!keepAlive, legacyFakeChat: !!fake, companionDeath: Number(death) === 1 ? "permadeath" : "respawn", companionJoinTeleport: !!joinTp, serverRules: cfg.independent !== false ? (cfg.serverRules || "") : String(rules || "").slice(0, 600) });
         for (const [, b] of allBrains()) b.systemCache = null;
         manager.refreshEnabled();
         manager.populate("menu", player);

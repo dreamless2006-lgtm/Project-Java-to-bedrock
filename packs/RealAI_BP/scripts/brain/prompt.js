@@ -70,7 +70,7 @@ export function renderObservation(obs) {
     if (obs.items && obs.items.length) L.push(`Dropped items: ${obs.items.join("; ")}.`);
     if (obs.world) L.push(`World: ${obs.world}.`);
     if (obs.events && obs.events.length) L.push(`Events: ${obs.events.join("; ")}.`);
-    if (obs.requests && obs.requests.length) L.push(`Requests from players: ${obs.requests.join("; ")}.`);
+    if (obs.requests && obs.requests.length) L.push(`Players asked you (your call, as between equals): ${obs.requests.join("; ")}.`);
     if (obs.newChat && obs.newChat.length) L.push(`New chat:\n${obs.newChat.map(c => `<${c.from}> ${c.text}`).join("\n")}`);
     if (obs.problems && obs.problems.length) L.push(`Your previous reply had problems: ${obs.problems.join("; ")}.`);
     return L.join("\n");

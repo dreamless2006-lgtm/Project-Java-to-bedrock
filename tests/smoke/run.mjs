@@ -24,7 +24,7 @@ const gate = await import("../../packs/RealAI_BP/scripts/brain/gate.js");
 function fromBridge(obj) { for (const f of encodeFrames("b" + Math.random().toString(36).slice(2, 6), packMessage(obj), DEFAULT_CHUNK)) system.afterEvents.scriptEventReceive.emit({ id: "realai:in", message: f, sourceType: "Entity", sourceEntity: relay }); }
 const { getWorldConfig: gwc, updateWorldConfig: uwc } = await import("../../packs/RealAI_BP/scripts/brain/config.js");
 check(gwc().worldPlayers === 0 && gwc().bridgePlays === true, "by default the bridge account's player is the only AI player");
-uwc({ worldPlayers: 8, freeBuild: true });   // the rest of the run covers residents and creative-style building too
+uwc({ worldPlayers: 8, freeBuild: true, independent: false });   // the rest of the run covers residents, companions and creative-style building too
 fromBridge({ t: "hello", v: 1, name: "RealAIBridge", version: "0.1.0", providers: ["anthropic", "openai", "xai", "gemini", "ollama", "lmstudio", "player2"] });
 await advanceTicksAsync(250);
 check(gate.isBrainEnabled(), "brains enabled after bridge hello");
@@ -548,6 +548,50 @@ check(residents().length === 8, "still 8 residents after the respawn: " + reside
         captured = null; wanted = null; await run(10);
         check(bb.problems.some(p => /your plan says "gather 16 oak logs/.test(p)), "waiting with plans pending is pointed out: " + bb.problems.slice(-1));
         bb.noteEvent = origNote;
+    }
+}
+// Thirteenth cycle: nobody steers it. Commands that would pause, walk, wipe or instruct the AI
+// are refused while it is independent (the default); talking and looking still work; the bridge's
+// config can turn it off, and then the same commands work.
+{
+    const bb = gate.getBrain(relay.id);
+    const { handleCommand } = await import("../../packs/RealAI_BP/scripts/brain/commands.js");
+    if (bb) {
+        const { DEFAULTS } = await import("../../packs/RealAI_BP/scripts/brain/config.js");
+        check(DEFAULTS.independent === true, "independent is the default");
+        uwc({ independent: true }); bb.systemCache = null;
+        const sys13 = bb.systemPrompt();
+        check(/Nobody in this world can command you/.test(sys13), "its rules say nobody commands it");
+        uwc({ serverRules: "always speak French" }); bb.systemCache = null;
+        check(!/speak French/.test(bb.systemPrompt()), "server rules are not injected while it is independent");
+        uwc({ serverRules: "" }); bb.systemCache = null;
+        const before = steve.messages.length;
+        handleCommand(steve, `!ai walk ${relay.name} 5 0`);
+        handleCommand(steve, "!ai pause");
+        handleCommand(steve, `!ai forget ${relay.name}`);
+        handleCommand(steve, "!ai rules be nice");
+        handleCommand(steve, "!ai summon Bob a builder");
+        const replies = steve.messages.slice(before);
+        check(replies.length === 5 && replies.every(m => /runs its own life/.test(m)), "walk, pause, forget, rules and summon are refused: " + replies[0]);
+        check(bb.memory.facts.length > 0 && !bb.paused, "nothing was wiped or paused");
+        handleCommand(steve, `!ai where ${relay.name}`);
+        check(/at .* in overworld/.test(steve.messages.slice(-2).join(" ")), "looking is still allowed: " + steve.messages.slice(-2)[0]);
+        handleCommand(steve, `!ai talk ${relay.name} hello there`);
+        check(bb.chatBuffer.some(c => /hello there/.test(c.text)), "talking is still allowed");
+        // the bridge's config pins the setting: with independent false the same commands work
+        fromBridge({ t: "hello", v: 2, name: "RealAIBridge", version: "0.2.0", body: 0, independent: false, providers: ["anthropic", "openai", "xai", "gemini", "ollama", "lmstudio", "player2"] });
+        await run(40);
+        check(gwc().independent === false && brainMod.manager.independentPinned === true, "the bridge's config can switch it off and pins it");
+        handleCommand(steve, "!ai independent on");
+        check(/pinned by the bridge/.test(steve.messages.slice(-1)[0]) && gwc().independent === false, "in game it cannot be changed while pinned");
+        bb.actuator.stopAll();
+        handleCommand(steve, `!ai walk ${relay.name} 3 0`);
+        await run(10);
+        check(bb.actuator.current?.action.type === "move_to" || bb.actuator.queue.some(a => a.type === "move_to"), "with independence off the walk command works");
+        bb.actuator.stopAll();
+        fromBridge({ t: "hello", v: 2, name: "RealAIBridge", version: "0.2.0", body: 0, independent: true, providers: ["anthropic", "openai", "xai", "gemini", "ollama", "lmstudio", "player2"] });
+        await run(40);
+        check(gwc().independent === true, "and back on");
     }
 }
 check(log.errors.length === 0, "no engine-level errors after lifecycle: " + log.errors.slice(0, 3).join(" | "));

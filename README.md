@@ -97,16 +97,26 @@ decision fails (a rate limit, a bad key, a timeout) the reason is said in
 chat instead of the player silently standing still. `!ai bridgeplays off`
 turns it back into a plain relay.
 
-## Its own things, and yours to mess with
+## Its own things, and nobody steers it
 
 What the AI builds, the chests it fills and what it carries are its own: it
 remembers them ("My things" in its memory), keeps tools in shape, stores
 surplus, keeps food on it, and is nudged when its bag is full, a tool is
-about to break or it has waited with plans pending. Nothing is protected
-from you: hit it, prank it, open its chests, take or wreck what it made.
-It is told who did what, remembers it, and answers in character (confront,
-forgive, bargain, rebuild, move, hide its things, hit back), never by
-griefing your things in return.
+about to break or it has waited with plans pending. In the world, nothing
+is protected from you: hit it, prank it, open its chests, take or wreck
+what it made. It is told who did what, remembers it, and answers in
+character (confront, forgive, bargain, rebuild, move, hide its things, hit
+back), never by griefing your things in return.
+
+Its functions are another matter: by default the AI is **independent**.
+Nobody in the game can pause it, walk it, give it jobs, wipe its memory,
+inject rules, change its mission or summon companions for it; the menu
+shows talk and memory only, and the steering commands answer "the AI runs
+its own life here". Talking to it is the only way in, and what you ask is
+a request between equals that it may refuse. The bridge's `config.json`
+(`"independent": true`) pins this; set it to `false` there and restart the
+bridge to get the controls back (or `!ai independent off` on a world
+without a bridge).
 
 ## Who lives in your world
 
