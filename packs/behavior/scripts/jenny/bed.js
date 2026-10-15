@@ -49,7 +49,7 @@ async function openBedMenu(/** @type {Player} */ player, /** @type {Block} */ bl
     player.onScreenDisplay.setActionBar({ translate: reason, with: { rawtext: [nameOf(female)] } });
     return;
   }
-  requestScene(record, player, bedOf(block));
+  if (requestScene(record, player, bedOf(block)) === 'busy') player.onScreenDisplay.setActionBar({ translate: 'minepreggo.bed.busy', with: { rawtext: [nameOf(female)] } });
 }
 
 system.beforeEvents.startup.subscribe(({ blockComponentRegistry }) => {

@@ -91,20 +91,6 @@
           "variable.is_blinking = 0.0;",
           "variable.last_blink_time = 0.0;",
           "variable.melee_spear_equipped = 0.0;",
-          "variable.melee_spear_equipped = 0.0;",
-          "variable.melee_spear_equipped = 0.0;",
-          "variable.melee_spear_equipped = 0.0;",
-          "variable.melee_spear_equipped = 0.0;",
-          "variable.melee_spear_equipped = 0.0;",
-          "variable.melee_spear_equipped = 0.0;",
-          "variable.melee_spear_equipped = 0.0;",
-          "variable.melee_spear_equipped = 0.0;",
-          "variable.melee_spear_equipped = 0.0;",
-          "variable.melee_spear_equipped = 0.0;",
-          "variable.melee_spear_equipped = 0.0;",
-          "variable.melee_spear_equipped = 0.0;",
-          "variable.melee_spear_equipped = 0.0;",
-          "variable.melee_spear_equipped = 0.0;",
           "variable.attack_body_rot_y = 0.0;",
           "variable.belly_growth = 0.0;",
           "variable.boot_layer_visible = 0.0;",
@@ -195,6 +181,7 @@
           "variable.k_top_kick_x = 0.0;",
           "variable.k_top_kick_y = 0.0;",
           "variable.k_top_kick_z = 0.0;",
+          "variable.kick_shown = 0.0;",
           "variable.kick_w = 0.0;",
           "variable.kicking = 0.0;",
           "variable.kl = 0.0;",
@@ -257,9 +244,12 @@
           "variable.mp_pregnant = variable.mp_female && variable.mp_phase >= 0;",
           "variable.mp_labor = variable.mp_female && (variable.mp_pose == 'water_breaking' || variable.mp_pose == 'prebirth' || variable.mp_pose == 'birth' || variable.mp_pose == 'postbirth' || variable.mp_pose == 'miscarriage');",
           "variable.kicking = variable.mp_pose == 'fetal_movement' || variable.mp_pose == 'kicking_sit' || variable.mp_pose == 'prebirth' || variable.mp_pose == 'birth';",
+          "variable.kick_shown = variable.kicking ? variable.mp_kick : variable.kick_shown;",
           "variable.contracting = variable.mp_pose == 'contraction' || variable.mp_pose == 'prebirth';",
           "variable.kick_w = math.clamp(variable.kick_w + (variable.kicking ? 1.6 : -1.1) * math.clamp(q.delta_time, 0.0, 0.1), 0.0, 1.0);",
           "variable.cw = math.clamp(variable.cw + (variable.contracting ? 0.6 : -0.45) * math.clamp(q.delta_time, 0.0, 0.1), 0.0, 1.0);",
+          "variable.kick_shown = variable.kicking ? variable.mp_kick : variable.kick_shown;",
+          "variable.kick_shown = variable.kicking ? variable.mp_kick : variable.kick_shown;",
           "v.kl = 1.0 + variable.mp_kick;",
           "variable.belly_growth = (variable.mp_phase <= 2 ? 1.0 : (variable.mp_phase <= 4 ? 0.9 : (variable.mp_phase == 5 ? 0.8 : (variable.mp_phase <= 7 ? 0.7 : 0.6)))) * query.property('minepreggo:growth');",
           "v.jdt = math.clamp(q.delta_time, 0.0, 0.1);",
@@ -354,67 +344,67 @@
             "minepreggo_belly_rubs_iii": "variable.mp_pregnant && variable.mp_pose == 'belly_rubs' && variable.mp_phase >= 7"
           },
           {
-            "minepreggo_fetal_p3_i": "variable.kick_w * (variable.mp_phase == 3 && variable.mp_kick == 0)"
+            "minepreggo_fetal_p3_i": "variable.kick_w * (variable.mp_phase == 3 && variable.kick_shown == 0)"
           },
           {
-            "minepreggo_fetal_p3_ii": "variable.kick_w * (variable.mp_phase == 3 && variable.mp_kick == 1)"
+            "minepreggo_fetal_p3_ii": "variable.kick_w * (variable.mp_phase == 3 && variable.kick_shown == 1)"
           },
           {
-            "minepreggo_fetal_p3_iii": "variable.kick_w * (variable.mp_phase == 3 && variable.mp_kick == 2)"
+            "minepreggo_fetal_p3_iii": "variable.kick_w * (variable.mp_phase == 3 && variable.kick_shown == 2)"
           },
           {
-            "minepreggo_fetal_p4_i": "variable.kick_w * (variable.mp_phase == 4 && variable.mp_kick == 0)"
+            "minepreggo_fetal_p4_i": "variable.kick_w * (variable.mp_phase == 4 && variable.kick_shown == 0)"
           },
           {
-            "minepreggo_fetal_p4_ii": "variable.kick_w * (variable.mp_phase == 4 && variable.mp_kick == 1)"
+            "minepreggo_fetal_p4_ii": "variable.kick_w * (variable.mp_phase == 4 && variable.kick_shown == 1)"
           },
           {
-            "minepreggo_fetal_p4_iii": "variable.kick_w * (variable.mp_phase == 4 && variable.mp_kick == 2)"
+            "minepreggo_fetal_p4_iii": "variable.kick_w * (variable.mp_phase == 4 && variable.kick_shown == 2)"
           },
           {
-            "minepreggo_fetal_p5_i": "variable.kick_w * (variable.mp_phase == 5 && variable.mp_kick == 0)"
+            "minepreggo_fetal_p5_i": "variable.kick_w * (variable.mp_phase == 5 && variable.kick_shown == 0)"
           },
           {
-            "minepreggo_fetal_p5_ii": "variable.kick_w * (variable.mp_phase == 5 && variable.mp_kick == 1)"
+            "minepreggo_fetal_p5_ii": "variable.kick_w * (variable.mp_phase == 5 && variable.kick_shown == 1)"
           },
           {
-            "minepreggo_fetal_p5_iii": "variable.kick_w * (variable.mp_phase == 5 && variable.mp_kick == 2)"
+            "minepreggo_fetal_p5_iii": "variable.kick_w * (variable.mp_phase == 5 && variable.kick_shown == 2)"
           },
           {
-            "minepreggo_fetal_p6_i": "variable.kick_w * (variable.mp_phase == 6 && variable.mp_kick == 0)"
+            "minepreggo_fetal_p6_i": "variable.kick_w * (variable.mp_phase == 6 && variable.kick_shown == 0)"
           },
           {
-            "minepreggo_fetal_p6_ii": "variable.kick_w * (variable.mp_phase == 6 && variable.mp_kick == 1)"
+            "minepreggo_fetal_p6_ii": "variable.kick_w * (variable.mp_phase == 6 && variable.kick_shown == 1)"
           },
           {
-            "minepreggo_fetal_p6_iii": "variable.kick_w * (variable.mp_phase == 6 && variable.mp_kick == 2)"
+            "minepreggo_fetal_p6_iii": "variable.kick_w * (variable.mp_phase == 6 && variable.kick_shown == 2)"
           },
           {
-            "minepreggo_fetal_p7_i": "variable.kick_w * (variable.mp_phase == 7 && variable.mp_kick == 0)"
+            "minepreggo_fetal_p7_i": "variable.kick_w * (variable.mp_phase == 7 && variable.kick_shown == 0)"
           },
           {
-            "minepreggo_fetal_p7_ii": "variable.kick_w * (variable.mp_phase == 7 && variable.mp_kick == 1)"
+            "minepreggo_fetal_p7_ii": "variable.kick_w * (variable.mp_phase == 7 && variable.kick_shown == 1)"
           },
           {
-            "minepreggo_fetal_p7_iii": "variable.kick_w * (variable.mp_phase == 7 && variable.mp_kick == 2)"
+            "minepreggo_fetal_p7_iii": "variable.kick_w * (variable.mp_phase == 7 && variable.kick_shown == 2)"
           },
           {
-            "minepreggo_fetal_p8_i": "variable.kick_w * (variable.mp_phase == 8 && variable.mp_kick == 0)"
+            "minepreggo_fetal_p8_i": "variable.kick_w * (variable.mp_phase == 8 && variable.kick_shown == 0)"
           },
           {
-            "minepreggo_fetal_p8_ii": "variable.kick_w * (variable.mp_phase == 8 && variable.mp_kick == 1)"
+            "minepreggo_fetal_p8_ii": "variable.kick_w * (variable.mp_phase == 8 && variable.kick_shown == 1)"
           },
           {
-            "minepreggo_fetal_p8_iii": "variable.kick_w * (variable.mp_phase == 8 && variable.mp_kick == 2)"
+            "minepreggo_fetal_p8_iii": "variable.kick_w * (variable.mp_phase == 8 && variable.kick_shown == 2)"
           },
           {
-            "minepreggo_fetal_p9_i": "variable.kick_w * (variable.mp_phase == 9 && variable.mp_kick == 0)"
+            "minepreggo_fetal_p9_i": "variable.kick_w * (variable.mp_phase == 9 && variable.kick_shown == 0)"
           },
           {
-            "minepreggo_fetal_p9_ii": "variable.kick_w * (variable.mp_phase == 9 && variable.mp_kick == 1)"
+            "minepreggo_fetal_p9_ii": "variable.kick_w * (variable.mp_phase == 9 && variable.kick_shown == 1)"
           },
           {
-            "minepreggo_fetal_p9_iii": "variable.kick_w * (variable.mp_phase == 9 && variable.mp_kick == 2)"
+            "minepreggo_fetal_p9_iii": "variable.kick_w * (variable.mp_phase == 9 && variable.kick_shown == 2)"
           },
           {
             "minepreggo_jiggle": "variable.mp_female"
@@ -501,13 +491,13 @@
             "minepreggo_birth_push": "variable.mp_pregnant && variable.mp_pose == 'birth'"
           },
           {
-            "minepreggo_kick_i": "variable.kick_w * (variable.mp_pregnant && variable.mp_phase >= 3 && variable.mp_kick == 0)"
+            "minepreggo_kick_i": "variable.kick_w * (variable.mp_pregnant && variable.mp_phase >= 3 && variable.kick_shown == 0)"
           },
           {
-            "minepreggo_kick_ii": "variable.kick_w * (variable.mp_pregnant && variable.mp_phase >= 3 && variable.mp_kick == 1)"
+            "minepreggo_kick_ii": "variable.kick_w * (variable.mp_pregnant && variable.mp_phase >= 3 && variable.kick_shown == 1)"
           },
           {
-            "minepreggo_kick_iii": "variable.kick_w * (variable.mp_pregnant && variable.mp_phase >= 3 && variable.mp_kick == 2)"
+            "minepreggo_kick_iii": "variable.kick_w * (variable.mp_pregnant && variable.mp_phase >= 3 && variable.kick_shown == 2)"
           },
           {
             "minepreggo_contraction_wave": "variable.mp_pregnant"

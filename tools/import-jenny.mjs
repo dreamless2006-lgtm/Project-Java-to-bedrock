@@ -40,6 +40,8 @@ export const PORT_GIRLS = ['fapcraft:jenny', 'kum:bia', 'kum:slime_girl', 'kum:l
 export const PORT_STAGES = ['jhjenjava:jenny_stage', 'jhelliedev:ellie_stage'];
 /** Which girl a stage stands in for (her skin tone is the stage belly's). */
 const STAGE_OF = /** @type {Record<string, string>} */ ({ 'jhjenjava:jenny_stage': 'fapcraft:jenny', 'jhelliedev:ellie_stage': 'jhelliedev:ellie' });
+/** The header of the babies' names in every language file (cut off again on the next import). */
+const BABY_HEADER = '## Minepreggo babies (tools/import-jenny.mjs)';
 /** When a girl is in her own everyday state (not in one of her scenes): only then do our poses play on her. */
 const NORMAL = /** @type {Record<string, string>} */ ({ 'jhelliedev:ellie': "!q.property('jhelliedev:stage_hidden')" });
 const normalOf = (/** @type {string} */ id) => NORMAL[id] ?? 'q.skin_id == 0';
@@ -112,8 +114,8 @@ rmSync(join(RP, 'ui'), { recursive: true, force: true });
 for (const file of readdirSync(join(RP, 'texts')).filter((f) => f.endsWith('.lang'))) {
   const path = join(RP, 'texts', file);
   const text = readFileSync(path, 'utf8');
-  const at = text.indexOf('## Jenny Mod Java Port');
-  if (at >= 0) writeFileSync(path, text.slice(0, at));
+  const at = Math.min(...['## Jenny Mod Java Port', BABY_HEADER].map((h) => text.indexOf(h)).filter((i) => i >= 0));
+  if (Number.isFinite(at)) writeFileSync(path, text.slice(0, at));
 }
 
 /** The mod's pregnant player bodies, the source of every fitted belly. */
@@ -150,8 +152,17 @@ const counts = { files: 0, scripts: 0, girls: 0, bellies: 0, sounds: 0, poses: 0
 
 // ---- the Jenny Mod Java Port -----------------------------------------------------------------------
 if (portBP && portRP) {
-  /** Their asset paths move under jenny_port/, so nothing collides with ours or with another pack's. */
-  const rewrite = (/** @type {string} */ text) => text.replace(/"textures\//g, `"textures/${PORT}/`).replace(/"sounds\//g, `"sounds/${PORT}/`).replace(/"loot_tables\//g, `"loot_tables/${PORT}/`);
+  /**
+   * Their asset paths move under jenny_port/, so nothing collides with ours or with another pack's;
+   * a path to one of the game's own textures or loot tables (a vanilla sword, a diamond) stays as it is.
+   */
+  const shipped = (/** @type {Record<string, Uint8Array>} */ pack, /** @type {string} */ path) =>
+    ['', '.png', '.tga', '.jpg', '.json'].some((ext) => pack[path + ext]) || Object.keys(pack).some((f) => f.startsWith(`${path}/`));
+  const rewrite = (/** @type {string} */ text) =>
+    text
+      .replace(/"textures\/([^"]*)"/g, (whole, path) => (shipped(/** @type {any} */ (portRP), `textures/${path}`) ? `"textures/${PORT}/${path}"` : whole))
+      .replace(/"sounds\//g, `"sounds/${PORT}/`)
+      .replace(/"loot_tables\/([^"]*)"/g, (whole, path) => (shipped(/** @type {any} */ (portBP), `loot_tables/${path.replace(/\.json$/, '')}`) ? `"loot_tables/${PORT}/${path}"` : whole));
   /** "sounds/a/b/c.ogg" -> "sounds/jenny_port/a_b_c.ogg" (with or without the extension). */
   const flatSound = (/** @type {string} */ path) => `sounds/${PORT}/${path.replace(/^sounds\//, '').replace(/\//g, '_')}`;
   /** Script API 2.x: getAllPlayers is gone, applyKnockback takes a horizontal force vector. */
@@ -186,15 +197,6 @@ if (portBP && portRP) {
     if (PORT_GIRLS.includes(id)) {
       e.description.properties = { ...(e.description.properties ?? {}), ...MINEPREGGO_PROPERTIES };
       e.events = { ...(e.events ?? {}), ...phaseEvents() };
-      // Sneaking with an empty hand opens our pregnancy menu, so their own menu waits for a plain interaction.
-      for (const components of [e.components, ...Object.values(e.component_groups ?? {})]) {
-        for (const interaction of components?.['minecraft:interact']?.interactions ?? []) {
-          const on = interaction.on_interact;
-          if (!on || JSON.stringify(on.filters ?? {}).includes('is_sneaking')) continue;
-          const notSneaking = { test: 'is_sneaking', subject: 'other', value: false };
-          on.filters = on.filters ? { all_of: [...(Array.isArray(on.filters) ? on.filters : [on.filters]), notSneaking] } : notSneaking;
-        }
-      }
       for (const components of [e.components, ...Object.values(e.component_groups ?? {})]) {
         const family = components?.['minecraft:type_family']?.family;
         if (Array.isArray(family) && !family.includes(FAMILY_TAG)) family.push(FAMILY_TAG);
@@ -401,7 +403,7 @@ if (portBP && portRP) {
   writeFile(join(RP, 'textures', PORT, 'item_texture.json'), JSON.stringify(itemTextures, null, 2) + '\n');
   for (const file of readdirSync(join(RP, 'texts')).filter((f) => f.endsWith('.lang'))) {
     const path = join(RP, 'texts', file);
-    writeFileSync(path, readFileSync(path, 'utf8').replace(/\n?$/, '\n') + `${babyLang.join('\n')}\n`);
+    writeFileSync(path, readFileSync(path, 'utf8').replace(/\n?$/, '\n') + `${BABY_HEADER}\n${babyLang.join('\n')}\n`);
   }
 } else {
   console.warn('warning: the Jenny Mod Java Port .mcaddon (BP + RP) is not in vendor/jenny/; its girls are not imported');

@@ -96,6 +96,7 @@ const mean = (/** @type {number[][]} */ points) => [0, 1, 2].map((k) => points.r
  * @property {boolean} [absolute] mapped bones take the source's world orientation as it is (authored poses), not its change from neutral
  * @property {string[]} [straighten] bones held straight in line with their parent (forearms and shins: the mod's limbs are one piece)
  * @property {Record<string, number[]>} [bends] bones bent by this local rotation from straight (knees, elbows)
+ * @property {Record<string, number[]>} [limbs] each limb's modelled direction in its own frame at no rotation (from its cubes, cube rotations included): straight and absolute mean that direction, not a zero rotation
  */
 
 /**
@@ -128,10 +129,16 @@ export function solveAt(source, target, time) {
       const s = inverse[name];
       const d = s ? D.get(s) : undefined;
       const bend = target.bends?.[name];
-      if (bend) (pose[name] ??= {}).rotation = bone.rest.map((r, k) => bend[k] - r);
-      else if (target.straighten?.includes(name)) (pose[name] ??= {}).rotation = bone.rest.map((r) => -r);
-      else if (d) {
-        const want = target.absolute ? /** @type {any} */ (St.get(/** @type {string} */ (s))).R : mul(d, /** @type {any} */ (T0.get(name)).R);
+      if (bend || target.straighten?.includes(name)) {
+        // In line with its parent limb as the cubes are modelled (some rigs model a forearm folded
+        // and turn it straight with a cube rotation that cancels its rest rotation), then bent.
+        const own = target.limbs?.[name];
+        const parentDir = bone.parent ? target.limbs?.[bone.parent] : undefined;
+        const align = own && parentDir ? rotationFromTo(own, parentDir) : I3();
+        const local = bend ? mul(matFromEuler(bend), align) : align;
+        (pose[name] ??= {}).rotation = eulerFromMat(local).map((v, k) => v - bone.rest[k]);
+      } else if (d) {
+        const want = target.absolute ? limbFix(/** @type {any} */ (St.get(/** @type {string} */ (s))).R, target.limbs?.[name]) : mul(d, /** @type {any} */ (T0.get(name)).R);
         const local = mul(transpose(parentR), want);
         const total = eulerFromMat(local);
         (pose[name] ??= {}).rotation = total.map((v, k) => v - bone.rest[k]);
@@ -159,7 +166,7 @@ export function solveAt(source, target, time) {
       const bone = target.rig.get(g);
       const d = D.get(s);
       if (!bone || !d) continue;
-      const want = target.absolute ? /** @type {any} */ (St.get(s)).R : mul(d, /** @type {any} */ (T0.get(g)).R);
+      const want = target.absolute ? limbFix(/** @type {any} */ (St.get(s)).R, target.limbs?.[g]) : mul(d, /** @type {any} */ (T0.get(g)).R);
       const total = eulerFromMat(want);
       const restPivot = pivotOf(target.rig, T0, g);
       const onLegs = target.pelvis.includes(g);
@@ -173,6 +180,55 @@ export function solveAt(source, target, time) {
     if (p.position) o.position = vec(o.position).map((v, k) => v + vec(p.position)[k]);
   }
   return pose;
+}
+
+/** The rotation taking unit direction `a` onto `b` (the shortest one). */
+export function rotationFromTo(/** @type {number[]} */ a, /** @type {number[]} */ b) {
+  const na = Math.hypot(...a) || 1, nb = Math.hypot(...b) || 1;
+  const u = a.map((v) => v / na), w = b.map((v) => v / nb);
+  const axis = [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]];
+  const s = Math.hypot(...axis), c = u[0] * w[0] + u[1] * w[1] + u[2] * w[2];
+  if (s < 1e-9) return c > 0 ? I3() : [[1, 0, 0], [0, -1, 0], [0, 0, -1]];
+  const [x, y, z] = axis.map((v) => v / s);
+  const t = 1 - c;
+  return [
+    [t * x * x + c, t * x * y - s * z, t * x * z + s * y],
+    [t * x * y + s * z, t * y * y + c, t * y * z - s * x],
+    [t * x * z - s * y, t * y * z + s * x, t * z * z + c],
+  ];
+}
+
+/**
+ * An absolute world orientation for a limb whose cubes do not hang straight down at no rotation:
+ * the authored orientation is where a straight-down limb would point, so the limb's own modelled
+ * direction is first turned onto straight down.
+ */
+function limbFix(/** @type {Mat3} */ want, /** @type {number[] | undefined} */ limb) {
+  if (!limb) return want;
+  const n = Math.hypot(...limb) || 1;
+  if (limb[1] / n < -0.985) return want;
+  return mul(want, rotationFromTo(limb, [0, -1, 0]));
+}
+
+/**
+ * Each limb's modelled direction in its own frame at no rotation: from its pivot to the middle of
+ * its biggest cube, after that cube's own rotation.
+ * @param {{ bones: any[] }} geometry @param {string[]} names
+ */
+export function limbDirections(geometry, names) {
+  /** @type {Record<string, number[]>} */
+  const out = {};
+  for (const name of names) {
+    const bone = geometry.bones.find((b) => b.name === name);
+    const cubes = (bone?.cubes ?? []).filter((/** @type {any} */ c) => Array.isArray(c.size));
+    if (!bone || !cubes.length) continue;
+    const cube = cubes.reduce((/** @type {any} */ big, /** @type {any} */ c) => (c.size[0] * c.size[1] * c.size[2] > big.size[0] * big.size[1] * big.size[2] ? c : big));
+    let centre = cube.origin.map((/** @type {number} */ o, /** @type {number} */ k) => o + cube.size[k] / 2);
+    if (cube.rotation && cube.pivot) centre = apply(matFromEuler(vec(cube.rotation)), centre.map((/** @type {number} */ v, /** @type {number} */ k) => v - cube.pivot[k])).map((v, k) => v + cube.pivot[k]);
+    const dir = centre.map((/** @type {number} */ v, /** @type {number} */ k) => v - vec(bone.pivot)[k]);
+    if (Math.hypot(...dir) > 0.3) out[name] = dir;
+  }
+  return out;
 }
 
 /** Keeps a run of Euler triples continuous (no 359 -> -1 jumps between keyframes). */

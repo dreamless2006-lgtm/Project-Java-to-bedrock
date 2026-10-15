@@ -290,7 +290,7 @@ test('every entity, item and block the scripts name exists in the pack', () => {
   const named = new Set(scripts.match(/minepreggo:[a-z0-9_]+/g));
   const known = new Set([...ItemTypes.getAll(), ...BlockTypes.getAll(), ...EntityTypes.getAll()].map((t) => t.id));
   // Properties, dynamic properties, events, components, sounds and command ids are not game objects.
-  const notObjects = /^minepreggo:(phase|pose|kick|growth|gender|skin|savage|age|mob|crop|food_effects|impregnation_potion|pregnancy_acceleration|gradual_pregnancy_acceleration|breast_milk|pregnancy|female|pending|set_|on_tame|become_savage|calm_down|spawn_natural|hostile|tamed|tameable|fetal_movement_inducer|guide_given|guide$|belly$|forced|zero_gravity_belly$|metabolism_control$|eternal_pregnancy$|potion_effects$|debug|attack_impregnation|mob_courted|belly_touch|stomach_growls|pregnant_preggo_mob_death|player_|preggo_mob|loaded|selfcheck|hud|gender_|facing|scene$|go_to_bed|leave_bed|bed_reached|jenny_scene|bed\.|port\.)/;
+  const notObjects = /^minepreggo:(phase|pose|kick|growth|gender|skin|savage|age|mob|crop|food_effects|impregnation_potion|pregnancy_acceleration|gradual_pregnancy_acceleration|breast_milk|pregnancy|female|pending|set_|on_tame|become_savage|calm_down|spawn_natural|hostile|tamed|tameable|fetal_movement_inducer|guide_given|guide$|belly$|forced|zero_gravity_belly$|metabolism_control$|eternal_pregnancy$|potion_effects$|debug|attack_impregnation|mob_courted|belly_touch|stomach_growls|pregnant_preggo_mob_death|player_|preggo_mob|loaded|selfcheck|hud|gender_|facing|scene$|scene_locked|go_to_bed|leave_bed|bed_reached|jenny_scene|bed\.|port\.)/;
   const missing = [...named].filter((id) => !notObjects.test(id) && !known.has(id) && !id.startsWith('minepreggo:baby_'));
   assert.deepEqual(missing, [], 'ids used by the scripts that no JSON defines');
 });
@@ -803,6 +803,7 @@ test('timed potion effects: resistance stops pregnancy damage, zero gravity lift
 
   system.tick(100);
   assert.ok(record.effects.zeroGravity < 9600 && record.effects.resistance < 19200, 'the effects run down');
+  p.pain = null; // a random pain of P4 (back pain, weakness) may have come while the effects ran down
   emit(world.afterEvents.itemCompleteUse, { source: mother, itemStack: new ItemStack('minecraft:milk_bucket') });
   assert.deepEqual(record.effects, {});
   assert.ok(mother.messages.some((m) => text(m).includes('minepreggo.potion.cured')));
@@ -1001,8 +1002,9 @@ test('kicks and contractions are smooth: rolling kick pulses, eased in and out, 
   for (let phase = 3; phase <= 9; phase++) {
     const state = controller.states[`p${phase}`].animations.map((/** @type {any} */ a) => (typeof a === 'string' ? [a, ''] : Object.entries(a)[0]));
     for (const [n, strength] of [['i', 0], ['ii', 1], ['iii', 2]]) {
-      assert.deepEqual(state.find(([a]) => a === `kick_${n}`), [`kick_${n}`, `v.kick_w * (v.kick == ${strength})`], `p${phase}`);
-      assert.deepEqual(state.find(([a]) => a === `fetal_p${phase}_${n}`), [`fetal_p${phase}_${n}`, `v.kick_w * (v.kick == ${strength})`], `p${phase}`);
+      // weighted by the strength last kicked with, so a burst fades out in the strength it had
+      assert.deepEqual(state.find(([a]) => a === `kick_${n}`), [`kick_${n}`, `v.kick_w * (v.kick_shown == ${strength})`], `p${phase}`);
+      assert.deepEqual(state.find(([a]) => a === `fetal_p${phase}_${n}`), [`fetal_p${phase}_${n}`, `v.kick_w * (v.kick_shown == ${strength})`], `p${phase}`);
     }
     assert.ok(state.some(([a]) => a === 'contraction_wave'), `p${phase} contraction wave`);
     assert.ok(controller.states[`p${phase}`].blend_transition >= 0.3, 'sizes cross-fade');
@@ -1018,16 +1020,18 @@ test('kicks and contractions are smooth: rolling kick pulses, eased in and out, 
     assert.ok(pre.some((/** @type {string} */ l) => /^v\.kick_w = math\.clamp\(v\.kick_w \+ \(v\.kicking \? 1\.6 : -1\.1\) \* math\.clamp\(q\.delta_time, 0\.0, 0\.1\), 0\.0, 1\.0\);$/.test(l)), `${file}: eased kicks`);
     assert.ok(pre.some((/** @type {string} */ l) => l.startsWith('v.cw = math.clamp(v.cw + (v.contracting ?')), `${file}: eased contractions`);
     assert.ok(pre.some((/** @type {string} */ l) => l.includes("v.scene == 'kicking'") && l.startsWith('v.kicking =')), `${file}: a scene's kicks`);
+    assert.ok(pre.includes('v.kick_shown = v.kicking ? v.kick : v.kick_shown;'), `${file}: the strength holds while kicks fade`);
     assert.ok(d.scripts.initialize.includes('variable.kick_w = 0.0;') && d.scripts.initialize.includes('variable.cw = 0.0;'));
   }
   const player = json(join(RP, 'entity/player.entity.json'))['minecraft:client_entity'].description;
   for (const [n, kick] of ['kick_i', 'kick_ii', 'kick_iii'].entries()) {
     assert.equal(player.animations[`minepreggo_${kick}`], `animation.minepreggo.${kick}`);
     const entry = player.scripts.animate.find((/** @type {any} */ a) => typeof a === 'object' && `minepreggo_${kick}` in a);
-    assert.equal(entry?.[`minepreggo_${kick}`], `variable.kick_w * (variable.mp_pregnant && variable.mp_phase >= 3 && variable.mp_kick == ${n})`);
+    assert.equal(entry?.[`minepreggo_${kick}`], `variable.kick_w * (variable.mp_pregnant && variable.mp_phase >= 3 && variable.kick_shown == ${n})`);
   }
   const fetal = player.scripts.animate.find((/** @type {any} */ a) => typeof a === 'object' && 'minepreggo_fetal_p7_ii' in a);
-  assert.equal(fetal.minepreggo_fetal_p7_ii, 'variable.kick_w * (variable.mp_phase == 7 && variable.mp_kick == 1)');
+  assert.equal(fetal.minepreggo_fetal_p7_ii, 'variable.kick_w * (variable.mp_phase == 7 && variable.kick_shown == 1)');
+  assert.equal(player.scripts.initialize.filter((/** @type {string} */ l) => l === 'variable.melee_spear_equipped = 0.0;').length, 1, 'no duplicated init lines');
   assert.ok(player.scripts.pre_animation.some((/** @type {string} */ l) => l.startsWith('variable.kick_w = math.clamp(')));
 });
 
@@ -1293,9 +1297,9 @@ test('the merged Jenny Mod Java Port: patched entities, bellies under every body
   assert.deepEqual(poseController.states.default.transitions.find((/** @type {any} */ t) => 'birth' in t), { birth: "v.jp_normal && v.pose == 'birth'" });
   assert.ok(client.scripts.pre_animation.includes('v.jp_normal = q.skin_id == 0;'));
   assert.deepEqual(client.scripts.animate.slice(-3), ['mp_pose_controller', 'newborn', 'belly_controller']);
-  // Sneaking opens our pregnancy menu, so her own menu waits for a plain interaction.
+  // Her own interactions are hers as the port wrote them (our pregnancy menu answers sneak-use with an empty hand from a script).
   const interact = jenny.components['minecraft:interact'].interactions[0].on_interact;
-  assert.ok(JSON.stringify(interact.filters).includes('"test":"is_sneaking","subject":"other","value":false'));
+  assert.ok(!JSON.stringify(interact.filters ?? {}).includes('"test":"is_sneaking","subject":"other","value":false'));
   // Her baby: an item with an icon in her colours and a name.
   const baby = json(join(BP, 'items/jenny_port/minepreggo/baby_jenny.json'))['minecraft:item'];
   assert.equal(baby.description.identifier, 'minepreggo:baby_jenny');

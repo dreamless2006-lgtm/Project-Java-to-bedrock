@@ -242,7 +242,39 @@
         },
         "scene": {
           "animations": [
-            "scene_pose"
+            {
+              "scene_pose": "v.bp < 0"
+            },
+            {
+              "scene_pose_p0": "v.bp == 0"
+            },
+            {
+              "scene_pose_p1": "v.bp == 1"
+            },
+            {
+              "scene_pose_p2": "v.bp == 2"
+            },
+            {
+              "scene_pose_p3": "v.bp == 3"
+            },
+            {
+              "scene_pose_p4": "v.bp == 4"
+            },
+            {
+              "scene_pose_p5": "v.bp == 5"
+            },
+            {
+              "scene_pose_p6": "v.bp == 6"
+            },
+            {
+              "scene_pose_p7": "v.bp == 7"
+            },
+            {
+              "scene_pose_p8": "v.bp == 8"
+            },
+            {
+              "scene_pose_p9": "v.bp == 9"
+            }
           ],
           "transitions": [
             {
@@ -253,7 +285,39 @@
         },
         "scene_sit": {
           "animations": [
-            "scene_sit_pose"
+            {
+              "scene_sit_pose": "v.bp < 0"
+            },
+            {
+              "scene_sit_pose_p0": "v.bp == 0"
+            },
+            {
+              "scene_sit_pose_p1": "v.bp == 1"
+            },
+            {
+              "scene_sit_pose_p2": "v.bp == 2"
+            },
+            {
+              "scene_sit_pose_p3": "v.bp == 3"
+            },
+            {
+              "scene_sit_pose_p4": "v.bp == 4"
+            },
+            {
+              "scene_sit_pose_p5": "v.bp == 5"
+            },
+            {
+              "scene_sit_pose_p6": "v.bp == 6"
+            },
+            {
+              "scene_sit_pose_p7": "v.bp == 7"
+            },
+            {
+              "scene_sit_pose_p8": "v.bp == 8"
+            },
+            {
+              "scene_sit_pose_p9": "v.bp == 9"
+            }
           ],
           "transitions": [
             {

@@ -73,6 +73,8 @@ export function kickStateLines() {
     `v.scene = q.property('${MOD}:scene');`,
     "v.kicking = v.pose == 'fetal_movement' || v.pose == 'kicking_sit' || (v.pose == 'incapacitated' && v.scene == 'none') || v.pose == 'prebirth' || v.pose == 'birth' || v.scene == 'kicking';",
     "v.kick = (v.pose == 'incapacitated' && v.scene == 'none') ? 1 : v.kick;",
+    // the strength last kicked with stays while the kicks fade out (the property drops at once)
+    'v.kick_shown = v.kicking ? v.kick : v.kick_shown;',
     "v.contracting = v.pose == 'contraction' || v.pose == 'prebirth' || (v.pose == 'incapacitated' && v.scene == 'none') || v.scene == 'contraction';",
     `v.kick_w = math.clamp(v.kick_w + (v.kicking ? 1.6 : -1.1) * ${DT}, 0.0, 1.0);`,
     `v.cw = math.clamp(v.cw + (v.contracting ? 0.6 : -0.45) * ${DT}, 0.0, 1.0);`,
@@ -83,6 +85,7 @@ export function kickStateLines() {
 export function playerKickStateLines() {
   return [
     "variable.kicking = variable.mp_pose == 'fetal_movement' || variable.mp_pose == 'kicking_sit' || variable.mp_pose == 'prebirth' || variable.mp_pose == 'birth';",
+    'variable.kick_shown = variable.kicking ? variable.mp_kick : variable.kick_shown;',
     "variable.contracting = variable.mp_pose == 'contraction' || variable.mp_pose == 'prebirth';",
     `variable.kick_w = math.clamp(variable.kick_w + (variable.kicking ? 1.6 : -1.1) * ${DT}, 0.0, 1.0);`,
     `variable.cw = math.clamp(variable.cw + (variable.contracting ? 0.6 : -0.45) * ${DT}, 0.0, 1.0);`,
@@ -124,6 +127,9 @@ export function kickPulseAnimations() {
  * scene) the belly firms up in slow waves of six seconds: it lifts, rounds forward and narrows a
  * little, then eases off. Expression-only; at v.cw = 0 it changes nothing.
  */
+/** No pose at all: the scene pose of a body that keeps its own stance in a scene (the monsters). */
+export const NO_POSE = { [`animation.${MOD}.no_pose`]: { loop: true, bones: {} } };
+
 export function contractionWaveAnimation() {
   const w = '(v.cw * (0.5 - 0.5 * math.cos(q.life_time * 60.0)))';
   return {
@@ -215,8 +221,8 @@ export function bellyController(/** @type {boolean} */ navel) {
     const animations = [
       'belly_growth',
       { [p <= 2 ? 'belly_low' : p <= 6 ? 'belly_medium' : 'belly_high']: p <= 2 ? 'true' : 'q.is_tamed ? 1.0 : 1.0 - v.kick_w' },
-      ...(p >= 3 ? [{ [`fetal_p${p}_i`]: 'v.kick_w * (v.kick == 0)' }, { [`fetal_p${p}_ii`]: 'v.kick_w * (v.kick == 1)' }, { [`fetal_p${p}_iii`]: 'v.kick_w * (v.kick == 2)' }] : []),
-      ...(p >= 3 ? [{ kick_i: 'v.kick_w * (v.kick == 0)' }, { kick_ii: 'v.kick_w * (v.kick == 1)' }, { kick_iii: 'v.kick_w * (v.kick == 2)' }] : []),
+      ...(p >= 3 ? [{ [`fetal_p${p}_i`]: 'v.kick_w * (v.kick_shown == 0)' }, { [`fetal_p${p}_ii`]: 'v.kick_w * (v.kick_shown == 1)' }, { [`fetal_p${p}_iii`]: 'v.kick_w * (v.kick_shown == 2)' }] : []),
+      ...(p >= 3 ? [{ kick_i: 'v.kick_w * (v.kick_shown == 0)' }, { kick_ii: 'v.kick_w * (v.kick_shown == 1)' }, { kick_iii: 'v.kick_w * (v.kick_shown == 2)' }] : []),
       ...(p >= 2 ? ['contraction_wave'] : []),
       { fetal_push: 'v.kick_w' },
       { birth_push: "v.pose == 'birth'" },

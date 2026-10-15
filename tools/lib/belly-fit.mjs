@@ -328,13 +328,20 @@ export function smoothBelly(fitted, body, { rows = 16, steps = 12 } = {}) {
   };
   const dist = (/** @type {number[]} */ a, /** @type {number[]} */ b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
   const R = SKIN.radius, C = SKIN.size / 2;
-  /** The texture rectangle a patch of the shell shows: its position on the gradient, its size in proportion to the belly. */
-  const patchUv = (/** @type {number} */ t, /** @type {number} */ phi, /** @type {number} */ a, /** @type {number} */ b) => {
-    const u = C + Math.sin(phi) * R, v = C - (2 * t - 1) * R;
-    const w = Math.max(0.5, (a / (2 * W)) * 2 * R), h = Math.max(0.5, (b / H) * 2 * R);
-    const face = { uv: [round(u - w / 2), round(v - h / 2)], uv_size: [round(w), round(h)] };
-    const strip = { uv: [round(u - 0.5), round(v - h / 2)], uv_size: [1, round(h)] };
-    const flat = { uv: [round(u - w / 2), round(v - 0.5)], uv_size: [round(w), 1] };
+  /**
+   * The texture rectangle a patch of the shell shows: the part of the gradient between its own
+   * angles (left to right) and heights (bottom to top), kept inside the texture.
+   */
+  const clampU = (/** @type {number} */ u) => Math.max(0, Math.min(SKIN.size, u));
+  const patchUv = (/** @type {number} */ ta, /** @type {number} */ tb, /** @type {number} */ pa, /** @type {number} */ pb) => {
+    let u0 = clampU(C + Math.sin(pa) * R), u1 = clampU(C + Math.sin(pb) * R);
+    let v0 = clampU(C - (2 * tb - 1) * R), v1 = clampU(C - (2 * ta - 1) * R);
+    if (u1 - u0 < 0.5) [u0, u1] = [Math.min(u0, SKIN.size - 0.5), Math.min(u0, SKIN.size - 0.5) + 0.5];
+    if (v1 - v0 < 0.5) [v0, v1] = [Math.min(v0, SKIN.size - 0.5), Math.min(v0, SKIN.size - 0.5) + 0.5];
+    const face = { uv: [round(u0), round(v0)], uv_size: [round(u1 - u0), round(v1 - v0)] };
+    const um = round(Math.min(SKIN.size - 1, (u0 + u1) / 2)), vm = round(Math.min(SKIN.size - 1, (v0 + v1) / 2));
+    const strip = { uv: [um, round(v0)], uv_size: [1, round(v1 - v0)] };
+    const flat = { uv: [round(u0), vm], uv_size: [round(u1 - u0), 1] };
     return { north: face, south: face, east: strip, west: strip, up: flat, down: flat };
   };
   const THICK = 0.6, OVERLAP = 1.12;
@@ -359,7 +366,7 @@ export function smoothBelly(fitted, body, { rows = 16, steps = 12 } = {}) {
         size: [round(a), round(b), THICK],
         pivot: pivot.map(round),
         rotation: anglesForNormal(n),
-        uv: patchUv(tc, pc, a, b),
+        uv: patchUv(ta, tb, pa, pb),
       });
     }
   }
@@ -367,7 +374,7 @@ export function smoothBelly(fitted, body, { rows = 16, steps = 12 } = {}) {
   const rb = profile(T0 + 0.02);
   if (W * rb > 0.3) {
     const a = 2 * W * rb * 1.05, b = D * rb * 1.1;
-    cubes.push({ origin: [round(-a / 2), round(y0), round(zBack - b)], size: [round(a), 0.5, round(b)], uv: patchUv(0.02, 0, a, 1) });
+    cubes.push({ origin: [round(-a / 2), round(y0), round(zBack - b)], size: [round(a), 0.5, round(b)], uv: patchUv(0, 0.06, -0.4, 0.4) });
   }
   belly.cubes = cubes;
   delete belly.rotation;

@@ -7,7 +7,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { writeEntityJson } from './lib/entity-json.mjs';
-import { BELLY_ANIMATIONS, BELLY_PROPERTY, MINEPREGGO_PROPERTIES, MOD, PHASES, POSES, bellyController, bellyIndex, contractionWaveAnimation, initializers, kickPulseAnimations, kickRoomLines, kickStateLines, playerKickStateLines } from './lib/belly-render.mjs';
+import { BELLY_ANIMATIONS, BELLY_PROPERTY, MINEPREGGO_PROPERTIES, MOD, PHASES, POSES, bellyController, bellyIndex, contractionWaveAnimation, NO_POSE, initializers, kickPulseAnimations, kickRoomLines, kickStateLines, playerKickStateLines } from './lib/belly-render.mjs';
 
 const ROOT = new URL('../', import.meta.url).pathname;
 const RP = join(ROOT, 'packs/resource');
@@ -49,7 +49,7 @@ write(join(RP, 'animation_controllers/belly.animation_controllers.json'), {
 {
   const file = join(RP, 'animations/preggo_mob.animation.json');
   const doc = read(file);
-  Object.assign(doc.animations, kickPulseAnimations(), contractionWaveAnimation());
+  Object.assign(doc.animations, kickPulseAnimations(), contractionWaveAnimation(), NO_POSE);
   write(file, doc);
 }
 
@@ -59,7 +59,9 @@ write(join(RP, 'animation_controllers/belly.animation_controllers.json'), {
   const doc = read(file);
   const pain = doc.animation_controllers[`controller.animation.${MOD}.preggo_mob.pain`];
   for (const pose of ['scene', 'scene_sit']) {
-    pain.states[pose] = { animations: [`${pose}_pose`], transitions: [{ default: `!(v.pose == '${pose}')` }], blend_transition: 0.4 };
+    // the pose solved for the model of her belly size (each rests its arms and head a little differently)
+    const animations = [{ [`${pose}_pose`]: 'v.bp < 0' }, ...PHASES.map((p) => ({ [`${pose}_pose_p${p}`]: `v.bp == ${p}` }))];
+    pain.states[pose] = { animations, transitions: [{ default: `!(v.pose == '${pose}')` }], blend_transition: 0.4 };
     const into = pain.states.default.transitions;
     if (!into.some((/** @type {Record<string, string>} */ t) => pose in t)) into.push({ [pose]: `v.pose == '${pose}'` });
   }
@@ -137,8 +139,9 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
   // Her scene poses (tools/gen-scene-poses.mjs solves them onto her rig); a monster body (four
   // legs, a jelly) keeps her own stance in a scene.
   const monster = family.startsWith('monster_');
-  d.animations.scene_pose = monster ? d.animations.idle : `animation.${MOD}.${family}.scene`;
-  d.animations.scene_sit_pose = monster ? d.animations.idle : `animation.${MOD}.${family}.scene_sit`;
+  for (const pose of ['scene', 'scene_sit']) {
+    for (const suffix of ['', ...PHASES.map((p) => `_p${p}`)]) d.animations[`${pose}_pose${suffix}`] = monster ? `animation.${MOD}.no_pose` : `animation.${MOD}.${family}.${pose}${suffix}`;
+  }
   const animate = d.scripts.animate.filter((/** @type {string | Record<string, string>} */ a) => !(typeof a === 'object' && BELLY_ANIMATE.test(Object.keys(a)[0])) && a !== 'belly_controller');
   const pain = animate.indexOf('pain_controller');
   animate.splice(pain < 0 ? animate.length : pain + 1, 0, 'belly_controller');
@@ -195,14 +198,14 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
     else d.scripts.animate.push({ [name]: weight });
   };
   for (const p of PHASES.filter((n) => n >= 3)) for (const [n, strength] of [['i', 0], ['ii', 1], ['iii', 2]]) {
-    if (d.animations[`minepreggo_fetal_p${p}_${n}`]) setEntry(`minepreggo_fetal_p${p}_${n}`, `variable.kick_w * (variable.mp_phase == ${p} && variable.mp_kick == ${strength})`);
+    if (d.animations[`minepreggo_fetal_p${p}_${n}`]) setEntry(`minepreggo_fetal_p${p}_${n}`, `variable.kick_w * (variable.mp_phase == ${p} && variable.kick_shown == ${strength})`);
   }
   if (d.animations.minepreggo_fetal_push) setEntry('minepreggo_fetal_push', 'variable.kick_w * variable.mp_pregnant');
   d.animations.minepreggo_contraction_wave = `animation.${MOD}.contraction_wave`;
   setEntry('minepreggo_contraction_wave', 'variable.mp_pregnant');
   for (const [n, strength] of [['i', 0], ['ii', 1], ['iii', 2]]) {
     d.animations[`minepreggo_kick_${n}`] = `animation.${MOD}.kick_${n}`;
-    const entry = { [`minepreggo_kick_${n}`]: `variable.kick_w * (variable.mp_pregnant && variable.mp_phase >= 3 && variable.mp_kick == ${strength})` };
+    const entry = { [`minepreggo_kick_${n}`]: `variable.kick_w * (variable.mp_pregnant && variable.mp_phase >= 3 && variable.kick_shown == ${strength})` };
     const at = d.scripts.animate.findIndex((/** @type {string | Record<string, string>} */ a) => typeof a === 'object' && `minepreggo_kick_${n}` in a);
     if (at >= 0) d.scripts.animate[at] = entry;
     else d.scripts.animate.push(entry);
@@ -228,7 +231,8 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
   if (predefinedAt < 0) throw new Error('player: no mp_predefined line');
   pre.splice(predefinedAt + 1, 0, ...kickRoomLines('variable.mp_bp', bodyOf('custom'), bodyOf('predefined'), 'variable.mp_predefined'));
   d.scripts.pre_animation = pre;
-  d.scripts.initialize = initializers(pre, [...(d.scripts.initialize ?? []), 'variable.melee_spear_equipped = 0.0;']);
+  // (each run used to add one more copy of the spear line; one is enough)
+  d.scripts.initialize = [...new Set(initializers(pre, [...(d.scripts.initialize ?? []), 'variable.melee_spear_equipped = 0.0;']))];
   write(file, doc);
 
   const rcFile = join(RP, 'render_controllers/player.render_controllers.json');

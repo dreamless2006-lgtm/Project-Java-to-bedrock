@@ -196,22 +196,22 @@
               "belly_medium": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
             },
             {
-              "fetal_p3_i": "v.kick_w * (v.kick == 0)"
+              "fetal_p3_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "fetal_p3_ii": "v.kick_w * (v.kick == 1)"
+              "fetal_p3_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "fetal_p3_iii": "v.kick_w * (v.kick == 2)"
+              "fetal_p3_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             {
-              "kick_i": "v.kick_w * (v.kick == 0)"
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "kick_ii": "v.kick_w * (v.kick == 1)"
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "kick_iii": "v.kick_w * (v.kick == 2)"
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             "contraction_wave",
             {
@@ -265,22 +265,22 @@
               "belly_medium": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
             },
             {
-              "fetal_p4_i": "v.kick_w * (v.kick == 0)"
+              "fetal_p4_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "fetal_p4_ii": "v.kick_w * (v.kick == 1)"
+              "fetal_p4_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "fetal_p4_iii": "v.kick_w * (v.kick == 2)"
+              "fetal_p4_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             {
-              "kick_i": "v.kick_w * (v.kick == 0)"
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "kick_ii": "v.kick_w * (v.kick == 1)"
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "kick_iii": "v.kick_w * (v.kick == 2)"
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             "contraction_wave",
             {
@@ -334,22 +334,22 @@
               "belly_medium": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
             },
             {
-              "fetal_p5_i": "v.kick_w * (v.kick == 0)"
+              "fetal_p5_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "fetal_p5_ii": "v.kick_w * (v.kick == 1)"
+              "fetal_p5_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "fetal_p5_iii": "v.kick_w * (v.kick == 2)"
+              "fetal_p5_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             {
-              "kick_i": "v.kick_w * (v.kick == 0)"
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "kick_ii": "v.kick_w * (v.kick == 1)"
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "kick_iii": "v.kick_w * (v.kick == 2)"
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             "contraction_wave",
             {
@@ -403,22 +403,22 @@
               "belly_medium": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
             },
             {
-              "fetal_p6_i": "v.kick_w * (v.kick == 0)"
+              "fetal_p6_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "fetal_p6_ii": "v.kick_w * (v.kick == 1)"
+              "fetal_p6_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "fetal_p6_iii": "v.kick_w * (v.kick == 2)"
+              "fetal_p6_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             {
-              "kick_i": "v.kick_w * (v.kick == 0)"
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "kick_ii": "v.kick_w * (v.kick == 1)"
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "kick_iii": "v.kick_w * (v.kick == 2)"
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             "contraction_wave",
             {
@@ -472,22 +472,22 @@
               "belly_high": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
             },
             {
-              "fetal_p7_i": "v.kick_w * (v.kick == 0)"
+              "fetal_p7_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "fetal_p7_ii": "v.kick_w * (v.kick == 1)"
+              "fetal_p7_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "fetal_p7_iii": "v.kick_w * (v.kick == 2)"
+              "fetal_p7_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             {
-              "kick_i": "v.kick_w * (v.kick == 0)"
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "kick_ii": "v.kick_w * (v.kick == 1)"
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "kick_iii": "v.kick_w * (v.kick == 2)"
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             "contraction_wave",
             {
@@ -541,22 +541,22 @@
               "belly_high": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
             },
             {
-              "fetal_p8_i": "v.kick_w * (v.kick == 0)"
+              "fetal_p8_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "fetal_p8_ii": "v.kick_w * (v.kick == 1)"
+              "fetal_p8_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "fetal_p8_iii": "v.kick_w * (v.kick == 2)"
+              "fetal_p8_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             {
-              "kick_i": "v.kick_w * (v.kick == 0)"
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "kick_ii": "v.kick_w * (v.kick == 1)"
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "kick_iii": "v.kick_w * (v.kick == 2)"
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             "contraction_wave",
             {
@@ -610,22 +610,22 @@
               "belly_high": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
             },
             {
-              "fetal_p9_i": "v.kick_w * (v.kick == 0)"
+              "fetal_p9_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "fetal_p9_ii": "v.kick_w * (v.kick == 1)"
+              "fetal_p9_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "fetal_p9_iii": "v.kick_w * (v.kick == 2)"
+              "fetal_p9_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             {
-              "kick_i": "v.kick_w * (v.kick == 0)"
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "kick_ii": "v.kick_w * (v.kick == 1)"
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "kick_iii": "v.kick_w * (v.kick == 2)"
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             "contraction_wave",
             {
@@ -887,22 +887,22 @@
               "belly_medium": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
             },
             {
-              "fetal_p3_i": "v.kick_w * (v.kick == 0)"
+              "fetal_p3_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "fetal_p3_ii": "v.kick_w * (v.kick == 1)"
+              "fetal_p3_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "fetal_p3_iii": "v.kick_w * (v.kick == 2)"
+              "fetal_p3_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             {
-              "kick_i": "v.kick_w * (v.kick == 0)"
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "kick_ii": "v.kick_w * (v.kick == 1)"
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "kick_iii": "v.kick_w * (v.kick == 2)"
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             "contraction_wave",
             {
@@ -962,22 +962,22 @@
               "belly_medium": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
             },
             {
-              "fetal_p4_i": "v.kick_w * (v.kick == 0)"
+              "fetal_p4_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "fetal_p4_ii": "v.kick_w * (v.kick == 1)"
+              "fetal_p4_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "fetal_p4_iii": "v.kick_w * (v.kick == 2)"
+              "fetal_p4_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             {
-              "kick_i": "v.kick_w * (v.kick == 0)"
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "kick_ii": "v.kick_w * (v.kick == 1)"
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "kick_iii": "v.kick_w * (v.kick == 2)"
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             "contraction_wave",
             {
@@ -1037,22 +1037,22 @@
               "belly_medium": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
             },
             {
-              "fetal_p5_i": "v.kick_w * (v.kick == 0)"
+              "fetal_p5_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "fetal_p5_ii": "v.kick_w * (v.kick == 1)"
+              "fetal_p5_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "fetal_p5_iii": "v.kick_w * (v.kick == 2)"
+              "fetal_p5_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             {
-              "kick_i": "v.kick_w * (v.kick == 0)"
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "kick_ii": "v.kick_w * (v.kick == 1)"
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "kick_iii": "v.kick_w * (v.kick == 2)"
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             "contraction_wave",
             {
@@ -1112,22 +1112,22 @@
               "belly_medium": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
             },
             {
-              "fetal_p6_i": "v.kick_w * (v.kick == 0)"
+              "fetal_p6_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "fetal_p6_ii": "v.kick_w * (v.kick == 1)"
+              "fetal_p6_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "fetal_p6_iii": "v.kick_w * (v.kick == 2)"
+              "fetal_p6_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             {
-              "kick_i": "v.kick_w * (v.kick == 0)"
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "kick_ii": "v.kick_w * (v.kick == 1)"
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "kick_iii": "v.kick_w * (v.kick == 2)"
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             "contraction_wave",
             {
@@ -1187,22 +1187,22 @@
               "belly_high": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
             },
             {
-              "fetal_p7_i": "v.kick_w * (v.kick == 0)"
+              "fetal_p7_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "fetal_p7_ii": "v.kick_w * (v.kick == 1)"
+              "fetal_p7_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "fetal_p7_iii": "v.kick_w * (v.kick == 2)"
+              "fetal_p7_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             {
-              "kick_i": "v.kick_w * (v.kick == 0)"
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "kick_ii": "v.kick_w * (v.kick == 1)"
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "kick_iii": "v.kick_w * (v.kick == 2)"
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             "contraction_wave",
             {
@@ -1262,22 +1262,22 @@
               "belly_high": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
             },
             {
-              "fetal_p8_i": "v.kick_w * (v.kick == 0)"
+              "fetal_p8_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "fetal_p8_ii": "v.kick_w * (v.kick == 1)"
+              "fetal_p8_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "fetal_p8_iii": "v.kick_w * (v.kick == 2)"
+              "fetal_p8_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             {
-              "kick_i": "v.kick_w * (v.kick == 0)"
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "kick_ii": "v.kick_w * (v.kick == 1)"
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "kick_iii": "v.kick_w * (v.kick == 2)"
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             "contraction_wave",
             {
@@ -1337,22 +1337,22 @@
               "belly_high": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
             },
             {
-              "fetal_p9_i": "v.kick_w * (v.kick == 0)"
+              "fetal_p9_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "fetal_p9_ii": "v.kick_w * (v.kick == 1)"
+              "fetal_p9_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "fetal_p9_iii": "v.kick_w * (v.kick == 2)"
+              "fetal_p9_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             {
-              "kick_i": "v.kick_w * (v.kick == 0)"
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
             },
             {
-              "kick_ii": "v.kick_w * (v.kick == 1)"
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
             },
             {
-              "kick_iii": "v.kick_w * (v.kick == 2)"
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
             },
             "contraction_wave",
             {

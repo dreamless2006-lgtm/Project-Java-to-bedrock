@@ -7,7 +7,8 @@ import assert from 'node:assert/strict';
 import { InputButton, InputPermissionCategory, ItemStack, Mob, Player, emit, startup, system, world } from './mock-server.mjs';
 import '../../packs/behavior/scripts/main.js';
 import { STEP, getRecord, setPhase, startPregnancy } from '../../packs/behavior/scripts/mobs/system.js';
-import { BELLY_SCENE_TICKS, PUSH_TICKS, bellySceneOf, onSceneButton, startBellyScene } from '../../packs/behavior/scripts/jenny/belly_scenes.js';
+import { BELLY_SCENE_TICKS, PUSH_TICKS, bellySceneOf, onSceneButton, openPregnancyMenu, startBellyScene } from '../../packs/behavior/scripts/jenny/belly_scenes.js';
+import { femaleBusy, playerBusy, releaseStale } from '../../packs/behavior/scripts/jenny/occupancy.js';
 import { heatOf, requestScene, sceneOf } from '../../packs/behavior/scripts/jenny/scenes.js';
 import { portRhythmOf } from '../../packs/behavior/scripts/jenny/port.js';
 import { CONTRACTIONS_FROM, KICKS_FROM, Rhythm, nextBeat } from '../../packs/behavior/scripts/jenny/rhythm.js';
@@ -58,28 +59,30 @@ test('the game turns bones the way the vanilla animations say: sneaking leans fo
 
 test('a pose solved onto a Jenny-mod rig keeps its pelvis where the source puts it, and limbs where the source points them', () => {
   // a small hierarchical rig like the port's girls: a root, a trunk with a head and arms, legs on the root
-  const rig = rigOf({
+  // (her forearm is modelled folded and turned straight by a cube rotation that cancels its bone's)
+  const geometry = {
     bones: [
       { name: 'body', pivot: [0, 0, 0] },
       { name: 'upperBody', parent: 'body', pivot: [0, 11, 0] },
       { name: 'torso', parent: 'upperBody', pivot: [0, 16, 0] },
       { name: 'hip', parent: 'upperBody', pivot: [0, 16, 0] },
       { name: 'head', parent: 'torso', pivot: [0, 23, 0] },
-      { name: 'armR', parent: 'torso', pivot: [-4, 23, 0], rotation: [0, 0, 20] },
-      { name: 'lowerArmR', parent: 'armR', pivot: [-4, 17, 0], rotation: [-140, 0, 0] },
+      { name: 'armR', parent: 'torso', pivot: [-4, 23, 0], rotation: [0, 0, 20], cubes: [{ origin: [-5, 17, -1], size: [2, 6, 2] }] },
+      { name: 'lowerArmR', parent: 'armR', pivot: [-4, 17, 0], rotation: [-140, 0, 0], cubes: [{ origin: [-5, 11, -1], size: [2, 6, 2], pivot: [-4, 17, 0], rotation: [140, 0, 0] }] },
       { name: 'armL', parent: 'torso', pivot: [4, 23, 0], rotation: [0, 0, -20] },
       { name: 'legR', parent: 'body', pivot: [-2, 11, 0] },
       { name: 'shinR', parent: 'legR', pivot: [-2, 6, 0] },
       { name: 'legL', parent: 'body', pivot: [2, 11, 0] },
       { name: 'shinL', parent: 'legL', pivot: [2, 6, 0] },
     ],
-  });
-  const parts = jennyRig({ bones: [...rig.values()].map((b) => ({ name: b.name, parent: b.parent, pivot: b.pivot, rotation: b.rest })) });
+  };
+  const rig = rigOf(geometry);
+  const parts = jennyRig(geometry);
   assert.ok(parts);
   assert.equal(parts.mover, 'body');
   assert.deepEqual(parts.pelvis, ['legR', 'legL']);
   const source = { rig: NEUTRAL_RIG, poseAt: (/** @type {number} */ t) => poseAt(AUTHORED.scene_sit, t), pelvis: LEGS, trunk: 'body' };
-  const pose = solveAt(source, { rig, neutral: {}, map: parts.map, pelvis: parts.pelvis, mover: parts.mover, scale: parts.scale, absolute: true, straighten: parts.straighten }, 0);
+  const pose = solveAt(source, { rig, neutral: {}, map: parts.map, pelvis: parts.pelvis, mover: parts.mover, scale: parts.scale, absolute: true, straighten: parts.straighten, limbs: parts.limbs }, 0);
   const world0 = worldOf(rig, pose);
   // sitting: the hips drop by the source's 9.8, scaled to her leg length (11 / 12)
   const hip = pivotOf(rig, world0, 'legR');
@@ -91,8 +94,18 @@ test('a pose solved onto a Jenny-mod rig keeps its pelvis where the source puts 
   const R = /** @type {any} */ (world0.get('legR')).R;
   const down = [R[0][1] * -1, R[1][1] * -1, R[2][1] * -1];
   assert.ok(down[2] < -0.95 && Math.abs(down[1]) < 0.1, `the thigh points forward ${down}`);
-  // the forearm is straight in line with the upper arm (its rest bend cancelled)
-  assert.ok(near(/** @type {number[]} */ (pose.lowerArmR.rotation), [140, 0, 0]), `forearm ${pose.lowerArmR.rotation}`);
+  // the forearm as it is seen (its cube, folded back by the cube rotation) is straight in line with
+  // the upper arm: here that is the rest pose, so no rotation
+  const seen = (/** @type {string} */ name) => {
+    const w = /** @type {any} */ (world0.get(name)).R, d = /** @type {number[]} */ (parts.limbs[name]), n = Math.hypot(...d);
+    return w.map((/** @type {number[]} */ row) => (row[0] * d[0] + row[1] * d[1] + row[2] * d[2]) / n);
+  };
+  assert.ok(near(seen('lowerArmR'), seen('armR')), `forearm ${seen('lowerArmR')} along the arm ${seen('armR')}`);
+  const turn = matFromEuler(/** @type {number[]} */ (pose.lowerArmR.rotation));
+  assert.ok(turn.every((row, r) => row.every((v, c) => Math.abs(v - (r === c ? 1 : 0)) < 1e-6)), `forearm channel ${pose.lowerArmR.rotation}`);
+  // a forearm with no cubes to go by is held at no rotation at all (its rest bend cancelled)
+  const bare = solveAt(source, { rig, neutral: {}, map: parts.map, pelvis: parts.pelvis, mover: parts.mover, scale: parts.scale, absolute: true, straighten: parts.straighten }, 0);
+  assert.ok(near(/** @type {number[]} */ (bare.lowerArmR.rotation), [140, 0, 0]), `bare forearm ${bare.lowerArmR.rotation}`);
 });
 
 test('the scene rhythm: kicks from P3, contractions from P6, more often the hotter the scene, each lasting a few seconds', () => {
@@ -192,7 +205,7 @@ test('feel the baby: both hands on her belly, the babies kick into them, and you
     startBellyScene(record, /** @type {any} */ (owner), 'feel');
     assert.equal(owner.animations.at(-1)?.name, 'animation.minepreggo.scene.player_feel');
     assert.equal(owner.cameras.at(-1)?.preset, 'minecraft:free');
-    assert.equal(owner.permissions.get(InputPermissionCategory.Movement), false);
+    assert.equal(owner.permissions.get(InputPermissionCategory.LateralMovement), false);
     system.tick(STEP * 2);
     assert.equal(mob.getProperty('minepreggo:pose'), 'scene_sit', 'she sits back on her hands');
     assert.equal(mob.getProperty('minepreggo:scene'), 'kicking');
@@ -200,7 +213,7 @@ test('feel the baby: both hands on her belly, the babies kick into them, and you
     system.tick(BELLY_SCENE_TICKS.feel);
     assert.ok(!bellySceneOf(/** @type {any} */ (mob)));
     assert.ok(owner.messages.some((m) => text(m).includes('minepreggo.belly.heartbeats') && text(m).includes('"3"')), 'three heartbeats');
-    assert.equal(owner.permissions.get(InputPermissionCategory.Movement), true);
+    assert.equal(owner.permissions.get(InputPermissionCategory.LateralMovement), true);
     assert.equal(owner.cameras.at(-1), 'clear');
     system.tick(STEP);
     assert.equal(mob.getProperty('minepreggo:scene'), 'none');
@@ -221,10 +234,10 @@ test("helping her give birth: every sneak press pushes with her, the babies are 
     p.pain = { type: 'PREBIRTH', duration: 600, severity: 0, elapsed: 0 };
     // the menu offers the birth only in labor
     owner.isSneaking = true;
-    owner.formSelections = [2];
+    owner.formSelections = [0];
     emit(world.beforeEvents.playerInteractWithEntity, { player: owner, target: mob, itemStack: undefined, cancel: false });
     await flush();
-    assert.equal(owner.forms.at(-1).buttons.length, 4, 'rub, feel, help with the birth, OK');
+    assert.equal(owner.forms.at(-1).buttons.length, 2, 'in labor: help with the birth, OK');
     owner.isSneaking = false;
     const scene = bellySceneOf(/** @type {any} */ (mob));
     assert.equal(scene?.kind, 'birth');
@@ -246,6 +259,8 @@ test("helping her give birth: every sneak press pushes with her, the babies are 
     system.tick(STEP * 30);
     assert.ok(!bellySceneOf(/** @type {any} */ (mob)), 'over once the babies are born');
     assert.equal(record.birthHelper, undefined);
+    assert.ok(owner.messages.some((m) => text(m).includes('minepreggo.belly.birth_done')), 'all born');
+    assert.ok(!femaleBusy(mob.id) && !playerBusy(owner.id), 'both free again');
   } finally {
     world.players.splice(world.players.indexOf(owner), 1);
     mob.isValid = false;
@@ -269,7 +284,7 @@ test('a stranger cannot open the pregnancy menu of your tamed female, a Jenny gi
     assert.equal(record.data.pregnancy?.phase, 4);
     onSceneButton(/** @type {any} */ (owner), InputButton.Jump);
     assert.ok(!bellySceneOf(/** @type {any} */ (mob)), 'jump stops it');
-    assert.equal(owner.permissions.get(InputPermissionCategory.Movement), true);
+    assert.equal(owner.permissions.get(InputPermissionCategory.LateralMovement), true);
   } finally {
     world.players.splice(world.players.indexOf(owner), 1);
     world.players.splice(world.players.indexOf(stranger), 1);
@@ -296,21 +311,29 @@ test('every generated pose: each Jenny girl has her labor and scene poses and a 
   // our families: the pain controller enters the scene poses, each humanoid family has them solved onto her rig
   const pain = json(join(RP, 'animation_controllers/preggo_mob.animation_controllers.json')).animation_controllers['controller.animation.minepreggo.preggo_mob.pain'];
   for (const pose of ['scene', 'scene_sit']) {
-    assert.deepEqual(pain.states[pose].animations, [`${pose}_pose`]);
+    // the pose solved onto her body at her phase (each phase's belly sits on a body of its own)
+    const played = pain.states[pose].animations;
+    assert.deepEqual(played[0], { [`${pose}_pose`]: 'v.bp < 0' });
+    for (let n = 0; n < played.length - 1; n++) assert.deepEqual(played[n + 1], { [`${pose}_pose_p${n}`]: `v.bp == ${n}` });
     assert.ok(pain.states.default.transitions.some((/** @type {any} */ t) => t[pose] === `v.pose == '${pose}'`));
   }
   const scenePoses = existsSync(join(RP, 'animations/minepreggo/scene_poses.animation.json')) ? json(join(RP, 'animations/minepreggo/scene_poses.animation.json')).animations : undefined;
   for (const family of ['zombie_girl', 'humanoid_creeper_girl', 'ender_woman', 'humanoid_slime_girl', 'monster_creeper_girl', 'monster_slime_girl']) {
     const d = json(join(RP, 'entity', `${family}.entity.json`))['minecraft:client_entity'].description;
     if (family.startsWith('monster_')) {
-      assert.equal(d.animations.scene_pose, d.animations.idle, `${family} keeps her stance`);
+      assert.equal(d.animations.scene_pose, 'animation.minepreggo.no_pose', `${family} keeps her stance (no second copy of her idle)`);
       continue;
     }
     assert.equal(d.animations.scene_pose, `animation.minepreggo.${family}.scene`);
+    const phased = Object.keys(d.animations).filter((n) => /^scene_pose_p\d+$/.test(n));
+    assert.ok(phased.length > 0, `${family} has her scene pose per phase body`);
     if (scenePoses) {
-      const scene = scenePoses[`animation.minepreggo.${family}.scene`];
-      assert.ok(scene?.override_previous_animation && scene.bones.body && scene.bones.right_leg, family);
-      assert.equal(scene.animation_length, 0.52, 'rocking to the beat of the player animation');
+      for (const suffix of ['', ...phased.map((n) => n.slice('scene_pose'.length))]) {
+        assert.equal(d.animations[`scene_pose${suffix}`], `animation.minepreggo.${family}.scene${suffix}`);
+        const scene = scenePoses[`animation.minepreggo.${family}.scene${suffix}`];
+        assert.ok(scene?.override_previous_animation && scene.bones.body && scene.bones.right_leg, `${family}${suffix}`);
+        assert.equal(scene.animation_length, 0.52, 'rocking to the beat of the player animation');
+      }
     }
   }
   const BIRTH_BONES = ['upperBody', 'head', 'armR', 'armL'];
@@ -334,4 +357,107 @@ test('every generated pose: each Jenny girl has her labor and scene poses and a 
   const slime = json(join(RP, 'animations/jenny_port/minepreggo/slime_girl_poses.animation.json')).animations['animation.minepreggo.jp_slime_girl.birth'];
   assert.deepEqual(slime.bones.dress, slime.bones.upperBody);
   assert.deepEqual(slime.bones.hat, slime.bones.head);
+});
+
+test('scenes never overlap: a second player choosing late, a female walking to the bed, a belly scene on a player already in one', async () => {
+  const a = new Player('FirstA');
+  a.location = { x: 130, y: 64, z: 130 };
+  const b = new Player('SecondB');
+  b.location = { x: 130, y: 64, z: 131 };
+  world.players.push(a, b);
+  const jenny = new Mob('fapcraft:jenny', { families: ['minepreggo_preggo_mob', 'jenny'] });
+  jenny.location = { x: 131, y: 64, z: 130 };
+  overworld.entities.push(jenny);
+  const record = getRecord(/** @type {any} */ (jenny));
+  startPregnancy(record, 1);
+  atPhase(record, 4);
+  try {
+    // both open her menu before either chooses; the second choice finds her taken
+    a.formSelections = [0];
+    b.formSelections = [1];
+    const first = openPregnancyMenu(/** @type {any} */ (a), record);
+    const second = openPregnancyMenu(/** @type {any} */ (b), record);
+    await Promise.all([first, second]);
+    assert.equal(bellySceneOf(/** @type {any} */ (jenny))?.playerId, a.id);
+    assert.ok(b.messages.some((m) => text(m).includes('minepreggo.bed.busy')), 'the late chooser is told she is busy');
+    assert.equal(b.permissions.get(InputPermissionCategory.LateralMovement), undefined, 'and is never locked');
+    assert.equal(startBellyScene(record, /** @type {any} */ (b), 'feel'), false);
+    onSceneButton(/** @type {any} */ (a), InputButton.Jump);
+    assert.ok(!femaleBusy(jenny.id));
+    // a hold every second whatever tick the scene started on
+    system.tick(3);
+    startBellyScene(record, /** @type {any} */ (a), 'rub');
+    jenny.teleports.length = 0;
+    system.tick(65);
+    assert.ok(jenny.teleports.length >= 2, `held in place (${jenny.teleports.length})`);
+    onSceneButton(/** @type {any} */ (a), InputButton.Jump);
+    // a female walking to the bed is taken: no belly scene for her or her player meanwhile
+    const owner = new Player('Walker');
+    owner.location = { x: 140, y: 64, z: 140 };
+    world.players.push(owner);
+    const { mob, record: ours } = pregnantFemale('minepreggo:zombie_girl', owner, 4);
+    assert.equal(requestScene(ours, /** @type {any} */ (owner), { location: { x: 150, y: 64, z: 140 }, facing: 2 }), 'walking');
+    assert.equal(startBellyScene(ours, /** @type {any} */ (owner), 'rub'), false, 'she is on her way to the bed');
+    owner.isSneaking = true;
+    emit(world.beforeEvents.playerInteractWithEntity, { player: owner, target: mob, itemStack: undefined, cancel: false });
+    await flush();
+    assert.ok(owner.messages.some((m) => text(m).includes('minepreggo.bed.busy')));
+    world.players.splice(world.players.indexOf(owner), 1);
+    emit(world.afterEvents.playerLeave, { playerId: owner.id });
+    assert.ok(!femaleBusy(mob.id), 'the walk is given back when the player leaves');
+    mob.isValid = false;
+    emit(world.afterEvents.entityRemove, { removedEntityId: mob.id });
+  } finally {
+    world.players.splice(world.players.indexOf(a), 1);
+    world.players.splice(world.players.indexOf(b), 1);
+    jenny.isValid = false;
+    emit(world.afterEvents.entityRemove, { removedEntityId: jenny.id });
+  }
+});
+
+test('a player who leaves in the middle of a scene gets their input and camera back when they return', () => {
+  const owner = new Player('Leaver');
+  owner.location = { x: 160, y: 64, z: 160 };
+  world.players.push(owner);
+  const { mob, record } = pregnantFemale('minepreggo:zombie_girl', owner, 5);
+  try {
+    startBellyScene(record, /** @type {any} */ (owner), 'feel');
+    assert.equal(owner.permissions.get(InputPermissionCategory.LateralMovement), false);
+    world.players.splice(world.players.indexOf(owner), 1);
+    emit(world.afterEvents.playerLeave, { playerId: owner.id });
+    assert.ok(!bellySceneOf(/** @type {any} */ (mob)));
+    // still locked (the game keeps it with the player), until they spawn again
+    assert.equal(owner.permissions.get(InputPermissionCategory.LateralMovement), false);
+    world.players.push(owner);
+    emit(world.afterEvents.playerSpawn, { player: owner, initialSpawn: true });
+    assert.equal(owner.permissions.get(InputPermissionCategory.LateralMovement), true);
+    assert.equal(owner.cameras.at(-1), 'clear');
+    assert.equal(releaseStale(/** @type {any} */ (owner)), false, 'only once');
+  } finally {
+    world.players.splice(world.players.indexOf(owner), 1);
+    mob.isValid = false;
+    emit(world.afterEvents.entityRemove, { removedEntityId: mob.id });
+  }
+});
+
+test("a Jenny girl's belly joins only her intimate scenes, not a fight, a walk or a chat", () => {
+  const jenny = new Mob('fapcraft:jenny', { families: ['minepreggo_preggo_mob', 'jenny'] });
+  jenny.location = { x: 170, y: 64, z: 170 };
+  overworld.entities.push(jenny);
+  const record = getRecord(/** @type {any} */ (jenny));
+  startPregnancy(record, 1);
+  atPhase(record, 6);
+  try {
+    for (const event of ['jhjenjava:start_combat', 'jhjenjava:start_strip', 'jhjenjava:start_payment', 'jhjenjava:start_doggy_stage']) {
+      emit(world.afterEvents.dataDrivenEntityTrigger, { entity: jenny, eventId: event });
+      assert.ok(!portRhythmOf(/** @type {any} */ (jenny)), event);
+    }
+    emit(world.afterEvents.dataDrivenEntityTrigger, { entity: jenny, eventId: 'jhjenjava:start_boobjob' });
+    assert.ok(portRhythmOf(/** @type {any} */ (jenny)), 'an intimate scene');
+    emit(world.afterEvents.dataDrivenEntityTrigger, { entity: jenny, eventId: 'jhjenjava:finish_stage' });
+    assert.ok(!portRhythmOf(/** @type {any} */ (jenny)));
+  } finally {
+    jenny.isValid = false;
+    emit(world.afterEvents.entityRemove, { removedEntityId: jenny.id });
+  }
 });

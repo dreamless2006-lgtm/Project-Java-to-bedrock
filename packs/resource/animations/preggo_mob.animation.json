@@ -398,6 +398,10 @@
           ]
         }
       }
+    },
+    "animation.minepreggo.no_pose": {
+      "loop": true,
+      "bones": {}
     }
   }
 }

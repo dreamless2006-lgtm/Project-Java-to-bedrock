@@ -182,13 +182,26 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   rocking to the player animation's beat) and through the Jenny girls' own scenes, on her and on
   the stage entity that plays Jenny's and Ellie's (the stages now carry every property and the belly
   animation). Crouching with an empty hand on a pregnant female (your own tamed one, or any Jenny
-  girl, whose own menu now waits for a plain interaction) opens her pregnancy menu
+  girl, for whom it opens ours instead of her own menu) opens her pregnancy menu
   (`jenny/belly_scenes.js`): rub her belly (the babies kick back, her belly-rubs need eases),
   feel the baby (they kick into your hands; you count their heartbeats) and, in labor, help her give
   birth: every sneak press moves the labor on, each baby is born into your arms, jump stops. Each is
   framed by a scene camera with a player animation (`animations/scene_player.animation.json`).
   *Babies.* Each Jenny girl's babies are her own item (Jenny's Baby ... Ellie's Baby) with an icon
   drawn from her skin and hair colours and her kind's trait; using any baby cuddles it.
+  *After review.* A female and a player are in at most one scene at a time (`jenny/occupancy.js`:
+  the bed scene, the walk to it and the belly scenes claim both, and a player who leaves in the
+  middle of one gets their input and camera back when they return). The solver lines limbs up by
+  the direction their cubes are modelled in (some girls model a forearm folded and straighten it
+  with a cube rotation), so forearms and shins stay in line with the arm and thigh; our females'
+  scene poses are solved onto each phase's body; the belly slabs' UVs stay on the gradient; the
+  stages copy her growth too; the importer leaves the port's own interactions as they are and
+  points only the textures and loot tables it ships at its own folder. `npm run check` now also
+  checks what the importer adds to the port's girls (our animations, controllers and the properties
+  their Molang reads on her client entity, her baby's icon and name), the game's limits on entity
+  properties (32 per entity, 16 values per enum) and message keys that reach a translate through a
+  table or a ternary. Known limit: the mod's keyframed side, top and bottom kicks slide along the
+  skin on the mounted kick domes, which only push straight out.
 - ✅ **Kicks that show, round bellies in her own skin, the walk to the bed (0.4.1).** Kicks: the
   mod's keyframed kicks are long loops with sparse keyframes, and a controller state starts all of
   its animations once on entry, so between the first beat and the next state change the kick cubes

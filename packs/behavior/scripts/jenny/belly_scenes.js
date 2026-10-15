@@ -16,7 +16,7 @@ import { ButtonState, EasingType, InputButton, InputPermissionCategory, system, 
 import { ActionFormData } from '@minecraft/server-ui';
 import { assistPush, familyOf, getRecord, isTamed, nameOf, ownerOf, particles, playSound, rubBelly, setScenePose, setSceneState } from '../mobs/system.js';
 import { KICKS_FROM, Rhythm, announce, kickOf } from './rhythm.js';
-import { inScene as inBedScene, sceneOf as bedSceneOf } from './scenes.js';
+import { claim, femaleBusy, lockInput, playerBusy, release } from './occupancy.js';
 
 /** @typedef {import('@minecraft/server').Entity} Entity */
 /** @typedef {import('@minecraft/server').Player} Player */
@@ -53,6 +53,8 @@ const LABOR = new Set(['WATER_BREAKING', 'PREBIRTH', 'BIRTH']);
  * @property {number} lastPush
  * @property {number} pushes
  * @property {boolean} felt a kick was announced
+ * @property {number} nextHold the tick both are next put back in place
+ * @property {number} nextRub the tick a rub next eases her need
  */
 
 /** @type {Map<string, BellyScene>} by her entity id */
@@ -78,7 +80,7 @@ export function pregnancyMenuBlock(record, player) {
     if (!isTamed(entity)) return 'minepreggo.bed.not_tamed';
     if (data.owner && data.owner !== player.id && ownerOf(record)?.id !== player.id) return 'minepreggo.bed.not_yours';
   }
-  if (scenes.has(entity.id) || byPlayer.has(player.id) || bedSceneOf(entity) || inBedScene(player)) return 'minepreggo.bed.busy';
+  if (scenes.has(entity.id) || byPlayer.has(player.id) || femaleBusy(entity.id) || playerBusy(player.id)) return 'minepreggo.bed.busy';
   return null;
 }
 
@@ -91,12 +93,12 @@ export async function openPregnancyMenu(/** @type {Player} */ player, /** @type 
     return;
   }
   const p = /** @type {NonNullable<typeof record.data.pregnancy>} */ (record.data.pregnancy);
+  // In labor there is only one thing to do; otherwise a rub, and from P3 a feel of the babies.
   /** @type {Kind[]} */
-  const kinds = ['rub'];
-  if (p.phase >= KICKS_FROM) kinds.push('feel');
-  if (inLabor(record)) kinds.push('birth');
+  const kinds = inLabor(record) ? ['birth'] : p.phase >= KICKS_FROM ? ['rub', 'feel'] : ['rub'];
+  const left = p.womb.length + (p.birth ? 1 : 0);
   const body = inLabor(record)
-    ? { translate: 'minepreggo.belly.menu.labor', with: { rawtext: [name, { text: String(p.womb.length + (p.birth ? 1 : 0)) }] } }
+    ? { translate: left === 1 ? 'minepreggo.belly.menu.labor_one' : 'minepreggo.belly.menu.labor', with: { rawtext: [name, { text: String(left) }] } }
     : { translate: 'minepreggo.belly.menu.body', with: { rawtext: [name, { text: `P${p.phase}` }] } };
   const form = new ActionFormData().title({ translate: 'minepreggo.belly.menu.title', with: { rawtext: [name] } }).body(body);
   for (const kind of kinds) form.button({ translate: `minepreggo.belly.menu.${kind}` });
@@ -104,22 +106,20 @@ export async function openPregnancyMenu(/** @type {Player} */ player, /** @type 
   const response = await form.show(player);
   if (response.canceled || response.selection === undefined || response.selection >= kinds.length) return;
   if (!record.entity.isValid || !player.isValid) return;
+  // Someone else (or a bed scene) may have taken her or the player while the menu was open.
+  const late = pregnancyMenuBlock(record, player);
+  if (late) {
+    player.onScreenDisplay.setActionBar({ translate: late, with: { rawtext: [name] } });
+    return;
+  }
   startBellyScene(record, player, kinds[response.selection]);
 }
 
-const LOCK_ALL = [InputPermissionCategory.Movement, InputPermissionCategory.Camera, InputPermissionCategory.Jump, InputPermissionCategory.Sneak];
-/** During a birth the player keeps sneak (to push) and jump (to stop). */
-const LOCK_BIRTH = [InputPermissionCategory.Movement, InputPermissionCategory.Camera];
+/** The player stays put with the camera on the scene; jump (to stop) stays free, and in a birth sneak (to push). */
+const LOCK_ALL = [InputPermissionCategory.LateralMovement, InputPermissionCategory.Camera, InputPermissionCategory.Sneak, InputPermissionCategory.Mount, InputPermissionCategory.Dismount];
+const LOCK_BIRTH = [InputPermissionCategory.LateralMovement, InputPermissionCategory.Camera, InputPermissionCategory.Mount, InputPermissionCategory.Dismount];
 
-function lock(/** @type {Player} */ player, /** @type {Kind} */ kind, /** @type {boolean} */ enabled) {
-  for (const category of kind === 'birth' ? LOCK_BIRTH : LOCK_ALL) {
-    try {
-      player.inputPermissions.setPermissionCategory(category, enabled);
-    } catch {
-      // not supported here
-    }
-  }
-}
+const lock = (/** @type {Player} */ player, /** @type {Kind} */ kind, /** @type {boolean} */ enabled) => lockInput(player, kind === 'birth' ? LOCK_BIRTH : LOCK_ALL, !enabled);
 
 function hold(/** @type {Entity} */ entity, /** @type {Player} */ player, /** @type {BellyScene} */ scene) {
   try {
@@ -140,10 +140,12 @@ function frame(/** @type {Player} */ player, /** @type {BellyScene} */ scene, /*
 
 /**
  * Starts a belly scene where she stands: she turns to the player, who stands in front of her.
+ * Returns false when she or the player is already in a scene.
  * @param {MobRecord} record @param {Player} player @param {Kind} kind
  */
 export function startBellyScene(record, player, kind) {
   const { entity } = record;
+  if (scenes.has(entity.id) || byPlayer.has(player.id) || !claim(kind, entity.id, player.id)) return false;
   const her = { ...entity.location };
   let dx = player.location.x - her.x, dz = player.location.z - her.z;
   const length = Math.hypot(dx, dz);
@@ -170,6 +172,8 @@ export function startBellyScene(record, player, kind) {
     lastPush: -PUSH_EVERY,
     pushes: 0,
     felt: false,
+    nextHold: system.currentTick + 20,
+    nextRub: system.currentTick + 60,
   };
   scenes.set(entity.id, scene);
   byPlayer.set(player.id, entity.id);
@@ -186,12 +190,14 @@ export function startBellyScene(record, player, kind) {
   }
   player.onScreenDisplay.setActionBar({ translate: `minepreggo.belly.started.${kind}`, with: { rawtext: [nameOf(entity)] } });
   if (kind === 'rub') rubBelly(record, 2);
+  return true;
 }
 
 /** Ends a belly scene: the player is released and her pose and belly are hers again. */
 export function endBellyScene(/** @type {BellyScene} */ scene, /** @type {boolean} */ finished) {
   scenes.delete(scene.id);
   byPlayer.delete(scene.playerId);
+  release(scene.kind, scene.id, scene.playerId);
   const player = world.getEntity(scene.playerId);
   const entity = world.getEntity(scene.id);
   if (player?.isValid && player.typeId === 'minecraft:player') {
@@ -224,7 +230,9 @@ export function endBellyScene(/** @type {BellyScene} */ scene, /** @type {boolea
     const babies = p ? p.womb.length + (p.birth ? 1 : 0) : 0;
     tell(babies === 1 ? 'minepreggo.belly.heartbeat' : 'minepreggo.belly.heartbeats', [{ text: String(babies) }]);
   } else {
-    tell(p ? 'minepreggo.belly.birth_paused' : 'minepreggo.belly.birth_done');
+    // done once the last baby is out (she rests after the birth, or the pregnancy is over)
+    const done = !p || /** @type {any} */ (p.pain)?.type === 'POSTBIRTH';
+    tell(done ? 'minepreggo.belly.birth_done' : 'minepreggo.belly.birth_paused');
   }
 }
 
@@ -256,7 +264,8 @@ function stepBelly(/** @type {Entity} */ entity, /** @type {Player} */ player, /
     const said = state === 'kicking' ? announce(next) : undefined;
     if (said) player.onScreenDisplay.setActionBar({ translate: said.key, with: { rawtext: [nameOf(entity)] } });
   }
-  if ((now - scene.start) % 60 === 0) {
+  if (now >= scene.nextRub) {
+    scene.nextRub = now + 60;
     rubBelly(record, 2);
     particles(entity, 'minecraft:heart_particle', 2, 1.0);
   }
@@ -282,7 +291,8 @@ system.runInterval(() => {
       continue;
     }
     if (scene.kind !== 'birth') stepBelly(entity, /** @type {Player} */ (player), scene);
-    if ((system.currentTick - scene.start) % 20 === 0) {
+    if (system.currentTick >= scene.nextHold) {
+      scene.nextHold = system.currentTick + 20;
       hold(entity, /** @type {Player} */ (player), scene);
       frame(/** @type {Player} */ (player), scene, 0);
     }

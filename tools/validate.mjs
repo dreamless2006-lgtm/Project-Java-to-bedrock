@@ -36,6 +36,16 @@ function* walk(dir, ext) {
   }
 }
 
+/** Every file, the merged Jenny port's included (but not its UI). */
+function* walkAll(dir, ext) {
+  if (!existsSync(dir)) return;
+  for (const entry of readdirSync(dir)) {
+    const path = join(dir, entry);
+    if (statSync(path).isDirectory()) { if (entry !== 'ui') yield* walkAll(path, ext); }
+    else if (path.endsWith(ext)) yield path;
+  }
+}
+
 function readJson(file) {
   try {
     return JSON.parse(readFileSync(file, 'utf8'));
@@ -268,6 +278,19 @@ for (const file of walk(join(BP, 'loot_tables'), '.json')) {
   }
 }
 
+// The game's limits on entity properties: past them it drops every property of the entity.
+const ENUM_VALUE = /^[A-Za-z][A-Za-z0-9_]{0,31}$/;
+function checkPropertyLimits(/** @type {string} */ file, /** @type {Record<string, any>} */ properties) {
+  const names = Object.keys(properties ?? {});
+  if (names.length > 32) fail(file, `${names.length} entity properties (at most 32)`);
+  for (const [name, def] of Object.entries(properties ?? {})) {
+    if (def.type !== 'enum') continue;
+    if ((def.values ?? []).length > 16) fail(file, `property ${name} has ${def.values.length} enum values (at most 16)`);
+    for (const value of def.values ?? []) if (!ENUM_VALUE.test(value)) fail(file, `property ${name}: enum value "${value}" must be a letter then up to 31 letters, digits or _`);
+    if (!def.values?.includes(def.default)) fail(file, `property ${name}: default "${def.default}" is not one of its values`);
+  }
+}
+
 // --- entities ----------------------------------------------------------------------------
 const entities = new Map(); // identifier -> { file, entity }
 for (const file of walk(join(BP, 'entities'), '.json')) {
@@ -286,6 +309,7 @@ for (const file of walk(join(BP, 'entities'), '.json')) {
   entities.set(id, { file, entity });
 
   const properties = entity.description?.properties ?? {};
+  checkPropertyLimits(file, properties);
   const groups = entity.component_groups ?? {};
   const events = entity.events ?? {};
   for (const components of [entity.components, ...Object.values(groups)]) {
@@ -407,6 +431,71 @@ for (const file of walk(join(RP, 'entity'), '.json')) {
   if (egg) checkTexture(file, itemTextures, egg, 'spawn egg');
 }
 
+// --- the Jenny port: what tools/import-jenny.mjs adds to its girls ------------------------------
+// The port's own definitions are the game's to check; ours (minepreggo properties, belly and pose
+// animations, controllers, the babies) are checked here like the rest of the pack.
+const PORT = 'jenny_port';
+if (existsSync(join(RP, 'entity', PORT))) {
+  const allIds = new Set(VANILLA_RP_IDS);
+  const allControllers = new Map();
+  /** @type {Map<string, any>} every animation, controller and render controller by id */
+  const allDefs = new Map();
+  for (const file of walkAll(join(RP, 'animations'), '.json')) for (const [id, def] of Object.entries(readJson(file)?.animations ?? {})) { allIds.add(id); allDefs.set(id, def); }
+  for (const file of walkAll(join(RP, 'animation_controllers'), '.json')) {
+    for (const [id, def] of Object.entries(readJson(file)?.animation_controllers ?? {})) { allIds.add(id); allControllers.set(id, def); allDefs.set(id, def); }
+  }
+  for (const file of walkAll(join(RP, 'render_controllers'), '.json')) for (const [id, def] of Object.entries(readJson(file)?.render_controllers ?? {})) { allIds.add(id); allDefs.set(id, def); }
+  const allGeometries = new Set(geometries);
+  for (const file of walkAll(join(RP, 'models'), '.json')) for (const geo of readJson(file)?.['minecraft:geometry'] ?? []) allGeometries.add(geo.description?.identifier);
+  const portEntities = new Map();
+  for (const file of walk(join(BP, 'entities', PORT), '.json')) {
+    const entity = readJson(file)?.['minecraft:entity'];
+    if (entity) { portEntities.set(entity.description?.identifier, entity); checkPropertyLimits(file, entity.description?.properties); }
+  }
+  for (const file of walkAll(join(RP, 'entity', PORT), '.json')) {
+    const description = readJson(file)?.['minecraft:client_entity']?.description;
+    if (!description) continue;
+    const server = portEntities.get(description.identifier);
+    const shortNames = description.animations ?? {};
+    const ours = (/** @type {string} */ id) => id.includes(`.${NS}.`);
+    for (const [name, id] of Object.entries(shortNames)) {
+      if (ours(id) && !allIds.has(id)) fail(file, `animation "${name}" refers to unknown ${id}`);
+      if (!ours(id)) continue;
+      for (const state of Object.values(allControllers.get(id)?.states ?? {})) {
+        for (const ref of animationRefs(state.animations)) if (!shortNames[ref]) fail(file, `controller ${id} plays "${ref}", which this entity does not define`);
+      }
+    }
+    for (const ref of animationRefs(description.scripts?.animate)) if (!shortNames[ref]) fail(file, `animate uses undefined "${ref}"`);
+    for (const geo of Object.values(description.geometry ?? {})) if (geo.includes(`.${NS}`) && !allGeometries.has(geo)) fail(file, `geometry "${geo}" not found`);
+    for (const id of description.render_controllers ?? []) {
+      const rc = typeof id === 'string' ? id : Object.keys(id)[0];
+      if (ours(rc) && !allIds.has(rc)) fail(file, `unknown render controller ${rc}`);
+    }
+    // Our properties read by Molang here or in what this entity plays must be defined and synced.
+    const used = new Set(molangProperties(JSON.stringify(description)));
+    for (const id of [...Object.values(shortNames), ...(description.render_controllers ?? []).map((r) => (typeof r === 'string' ? r : Object.keys(r)[0]))]) {
+      molangProperties(JSON.stringify(allDefs.get(id) ?? {})).forEach((p) => used.add(p));
+    }
+    for (const name of [...used].filter((p) => p.startsWith(`${NS}:`))) {
+      const def = server?.description?.properties?.[name];
+      if (!def) fail(file, `Molang reads undefined property "${name}"`);
+      else if (!def.client_sync) fail(file, `property "${name}" is read by the client but not client_sync`);
+    }
+  }
+  // Each girl's baby: its icon in the merged item atlas and its name.
+  const portTextures = { ...itemTextures, ...(readJson(join(RP, 'textures', PORT, 'item_texture.json'))?.texture_data ?? {}) };
+  for (const file of walkAll(join(BP, 'items', PORT, NS), '.json')) {
+    const item = readJson(file)?.['minecraft:item'];
+    if (!item) { fail(file, 'missing "minecraft:item"'); continue; }
+    check(SCHEMA.item, item, file, 'item');
+    const icon = item.components?.['minecraft:icon'];
+    if (typeof icon === 'string') checkTexture(file, portTextures, icon, 'item');
+    else fail(file, 'has no icon');
+    const name = item.components?.['minecraft:display_name']?.value;
+    if (name) checkLangKey(file, name);
+  }
+}
+
 // --- trades ------------------------------------------------------------------------------
 for (const file of walk(join(BP, 'trading'), '.json')) {
   const doc = readJson(file);
@@ -438,6 +527,26 @@ for (const file of walk(join(BP, 'scripts'), '.js')) {
   }
   for (const [, key] of source.matchAll(/(?:translate:\s*|(?:message|actionbar|tellOwner)\([^,]+,\s*)'([^'$]+)'/g)) {
     checkLangKey(file, key);
+  }
+}
+
+// Message keys passed around before reaching a translate (ternaries, tables, tell(...)).
+const sceneKinds = Object.keys(Object.fromEntries([...(scriptSource.match(/BELLY_SCENE_TICKS\s*=.*\{([^{}]*)\}\)?;/)?.[1] ?? '').matchAll(/(\w+)\s*:/g)].map((m) => [m[1], 1])));
+if (!sceneKinds.length) fail(join(BP, 'scripts/jenny/belly_scenes.js'), 'BELLY_SCENE_TICKS (the belly scene kinds) not found');
+for (const file of walk(join(BP, 'scripts'), '.js')) {
+  const source = readFileSync(file, 'utf8');
+  for (const [, key] of source.matchAll(/'(minepreggo\.(?:belly|scene|birth|baby|bed)\.[A-Za-z0-9_.]+)'/g)) checkLangKey(file, key);
+  for (const [, prefix] of source.matchAll(/`(minepreggo\.(?:belly|scene|birth|baby|bed)\.[A-Za-z0-9_.]*)\$\{kind\}`/g)) {
+    for (const kind of sceneKinds) checkLangKey(file, `${prefix}${kind}`);
+  }
+}
+if (langKeys) {
+  const seen = new Set();
+  for (const line of readFileSync(langFile, 'utf8').split('\n')) {
+    if (!line || line.startsWith('##') || !line.includes('=')) continue;
+    const key = line.split('=')[0];
+    if (seen.has(key) && key.includes(NS)) fail(langFile, `lang key "${key}" is defined twice`);
+    seen.add(key);
   }
 }
 

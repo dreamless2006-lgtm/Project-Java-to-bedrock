@@ -5,36 +5,261 @@
       "loop": true,
       "override_previous_animation": true,
       "bones": {
-        "waist": { "rotation": [40, 0, 0] },
-        "head": { "rotation": [-12, 0, 0] },
-        "rightArm": { "rotation": ["-60.0 + math.sin(q.life_time * 200.0) * 7.0", "math.cos(q.life_time * 200.0) * 9.0", -6] },
-        "leftArm": { "rotation": [-46, 0, 8] },
-        "rightLeg": { "rotation": [0, 0, 2] },
-        "leftLeg": { "rotation": [0, 0, -2] }
+        "root": {
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "waist": {
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "body": {
+          "rotation": [
+            40,
+            0,
+            0
+          ],
+          "position": [
+            0,
+            -2.807,
+            -7.713
+          ]
+        },
+        "head": {
+          "rotation": [
+            -12,
+            0,
+            0
+          ]
+        },
+        "rightArm": {
+          "rotation": [
+            "-60.0 + math.sin(q.life_time * 200.0) * 7.0",
+            "math.cos(q.life_time * 200.0) * 9.0",
+            -6
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            -46,
+            0,
+            8
+          ]
+        },
+        "rightLeg": {
+          "rotation": [
+            0,
+            0,
+            2
+          ],
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            0,
+            0,
+            -2
+          ],
+          "position": [
+            0,
+            0,
+            0
+          ]
+        }
       }
     },
     "animation.minepreggo.scene.player_feel": {
       "loop": true,
       "override_previous_animation": true,
       "bones": {
-        "waist": { "rotation": ["52.0 + math.sin(q.life_time * 72.0) * 1.5", 0, 0] },
-        "head": { "rotation": [-20, 8, 0] },
-        "rightArm": { "rotation": [-72, 0, -9] },
-        "leftArm": { "rotation": [-72, 0, 9] },
-        "rightLeg": { "rotation": [0, 0, 2] },
-        "leftLeg": { "rotation": [0, 0, -2] }
+        "root": {
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "waist": {
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "body": {
+          "rotation": [
+            "(52.0 + math.sin(q.life_time * 72.0) * 1.5)",
+            0,
+            0
+          ],
+          "position": [
+            0,
+            "-12.0 * (1.0 - math.cos((52.0 + math.sin(q.life_time * 72.0) * 1.5)))",
+            "-12.0 * math.sin((52.0 + math.sin(q.life_time * 72.0) * 1.5))"
+          ]
+        },
+        "head": {
+          "rotation": [
+            -20,
+            8,
+            0
+          ]
+        },
+        "rightArm": {
+          "rotation": [
+            -72,
+            0,
+            -9
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            -72,
+            0,
+            9
+          ]
+        },
+        "rightLeg": {
+          "rotation": [
+            0,
+            0,
+            2
+          ],
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            0,
+            0,
+            -2
+          ],
+          "position": [
+            0,
+            0,
+            0
+          ]
+        }
       }
     },
     "animation.minepreggo.scene.player_catch": {
       "loop": true,
       "override_previous_animation": true,
       "bones": {
-        "waist": { "rotation": ["44.0 + math.sin(q.life_time * 120.0) * 2.0", 0, 0] },
-        "head": { "rotation": [-24, 0, 0] },
-        "rightArm": { "rotation": ["-82.0 + math.sin(q.life_time * 120.0) * 4.0", 0, -7] },
-        "leftArm": { "rotation": ["-82.0 + math.sin(q.life_time * 120.0) * 4.0", 0, 7] },
-        "rightLeg": { "rotation": [0, 0, 4] },
-        "leftLeg": { "rotation": [0, 0, -4] }
+        "root": {
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "waist": {
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "body": {
+          "rotation": [
+            "(44.0 + math.sin(q.life_time * 120.0) * 2.0)",
+            0,
+            0
+          ],
+          "position": [
+            0,
+            "-12.0 * (1.0 - math.cos((44.0 + math.sin(q.life_time * 120.0) * 2.0)))",
+            "-12.0 * math.sin((44.0 + math.sin(q.life_time * 120.0) * 2.0))"
+          ]
+        },
+        "head": {
+          "rotation": [
+            -24,
+            0,
+            0
+          ]
+        },
+        "rightArm": {
+          "rotation": [
+            "-82.0 + math.sin(q.life_time * 120.0) * 4.0",
+            0,
+            -7
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            "-82.0 + math.sin(q.life_time * 120.0) * 4.0",
+            0,
+            7
+          ]
+        },
+        "rightLeg": {
+          "rotation": [
+            0,
+            0,
+            4
+          ],
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            0,
+            0,
+            -4
+          ],
+          "position": [
+            0,
+            0,
+            0
+          ]
+        }
       }
     }
   }

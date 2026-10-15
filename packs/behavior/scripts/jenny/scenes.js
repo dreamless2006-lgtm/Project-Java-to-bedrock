@@ -13,6 +13,7 @@ import { EasingType, EntityTypes, InputPermissionCategory, system, world } from 
 import { ENTITY_IDS } from '../generated/ids.js';
 import { babiesFromPotion } from '../pregnancy/math.js';
 import { familyOf, getRecord, isIncapacitated, isTamed, nameOf, ownerOf, particles, playSound, setScenePose, setSceneState, startPregnancy } from '../mobs/system.js';
+import { claim, femaleBusy, lockInput, playerBusy, release } from './occupancy.js';
 import { KICKS_FROM, Rhythm, announce } from './rhythm.js';
 
 /** @typedef {import('@minecraft/server').Entity} Entity */
@@ -107,6 +108,7 @@ export function hasPort() {
  * @property {number} cue the next sound cue to play
  * @property {boolean} pregnantBefore
  * @property {Rhythm} rhythm what her belly does through the scene when she is pregnant
+ * @property {number} nextHold the tick both are next put back in place
  */
 
 /** @type {Map<string, Scene>} by her entity id */
@@ -129,7 +131,7 @@ export function canStartScene(record, player) {
   const { entity, data } = record;
   const family = familyOf(entity);
   if (!family || family.external) return 'minepreggo.bed.not_female';
-  if (scenes.has(entity.id) || walking.has(entity.id) || byPlayer.has(player.id)) return 'minepreggo.bed.busy';
+  if (scenes.has(entity.id) || walking.has(entity.id) || byPlayer.has(player.id) || femaleBusy(entity.id) || playerBusy(player.id)) return 'minepreggo.bed.busy';
   if (data.wild) return 'minepreggo.bed.wild';
   if (!isTamed(entity)) return 'minepreggo.bed.not_tamed';
   const owner = ownerOf(record);
@@ -141,15 +143,7 @@ export function canStartScene(record, player) {
   return null;
 }
 
-function lock(/** @type {Player} */ player, /** @type {boolean} */ enabled) {
-  for (const category of LOCKED) {
-    try {
-      player.inputPermissions.setPermissionCategory(category, enabled);
-    } catch {
-      // not a player, or not supported here
-    }
-  }
-}
+const lock = (/** @type {Player} */ player, /** @type {boolean} */ enabled) => lockInput(player, LOCKED, !enabled);
 
 function hold(/** @type {Player} */ player, /** @type {Scene} */ scene) {
   try {
@@ -181,10 +175,11 @@ const distance = (/** @type {Vector3} */ a, /** @type {Vector3} */ b) => Math.hy
  * Takes her to the bed: at once when she stands next to it, else she walks there on her own and
  * the scene starts when she arrives (or she is placed on it after WALK_TICKS).
  * @param {MobRecord} record @param {Player} player @param {Bed} bed
- * @returns {'now' | 'walking'}
+ * @returns {'now' | 'walking' | 'busy'}
  */
 export function requestScene(record, player, bed) {
   const { entity } = record;
+  if (!claim('walk', entity.id, player.id)) return 'busy';
   const middle = { x: bed.location.x + 0.5, y: bed.location.y + 0.5, z: bed.location.z + 0.5 };
   if (distance(entity.location, middle) <= NEAR) {
     startScene(record, player, bed);
@@ -204,6 +199,10 @@ export function startScene(record, player, bed) {
   const { entity, data } = record;
   walking.delete(entity.id);
   trigger(entity, 'minepreggo:leave_bed');
+  if (!claim('bed', entity.id, player.id, { from: 'walk' })) {
+    release('walk', entity.id, player.id);
+    return;
+  }
   const facing = FACINGS[bed.facing] ?? FACINGS[2];
   const top = bed.location.y + 0.5625; // the bed is 9/16 high
   const her = { x: bed.location.x + 0.5 + facing.x * 0.75, y: top, z: bed.location.z + 0.5 + facing.z * 0.75 };
@@ -226,6 +225,7 @@ export function startScene(record, player, bed) {
     cue: 0,
     pregnantBefore: !!(data.pregnancy || data.wild || data.pending),
     rhythm: new Rhythm(),
+    nextHold: system.currentTick + 20,
   };
   scenes.set(entity.id, scene);
   byPlayer.set(player.id, entity.id);
@@ -251,6 +251,7 @@ export function startScene(record, player, bed) {
 export function endScene(/** @type {Scene} */ scene, /** @type {boolean} */ finished) {
   scenes.delete(scene.id);
   byPlayer.delete(scene.playerId);
+  release('bed', scene.id, scene.playerId);
   const player = world.getEntity(scene.playerId);
   if (player?.isValid && player.typeId === 'minecraft:player') {
     const p = /** @type {Player} */ (player);
@@ -329,7 +330,8 @@ system.runInterval(() => {
     if (hasPort()) playCues(entity, scene);
     beat(entity, /** @type {Player} */ (player), scene);
     // Both are kept in place (a push, a slide down the bed), and the camera stays where it is.
-    if ((system.currentTick - scene.start) % 20 === 0) {
+    if (system.currentTick >= scene.nextHold) {
+      scene.nextHold = system.currentTick + 20;
       hold(/** @type {Player} */ (player), scene);
       frame(/** @type {Player} */ (player), scene, 0);
       try {
@@ -345,6 +347,7 @@ system.runInterval(() => {
     const player = world.getEntity(wait.playerId);
     if (!entity?.isValid || !player?.isValid || player.typeId !== 'minecraft:player') {
       walking.delete(id);
+      release('walk', id, wait.playerId);
       if (entity?.isValid) trigger(entity, 'minepreggo:leave_bed');
       continue;
     }
@@ -361,6 +364,7 @@ world.afterEvents.dataDrivenEntityTrigger.subscribe(
     const player = world.getEntity(wait.playerId);
     if (!player?.isValid || player.typeId !== 'minecraft:player') {
       walking.delete(entity.id);
+      release('walk', entity.id, wait.playerId);
       return;
     }
     startScene(getRecord(entity), /** @type {Player} */ (player), wait.bed);
@@ -375,6 +379,7 @@ world.afterEvents.playerLeave.subscribe(({ playerId }) => {
   for (const [entityId, wait] of [...walking]) {
     if (wait.playerId !== playerId) continue;
     walking.delete(entityId);
+    release('walk', entityId, playerId);
     const entity = world.getEntity(entityId);
     if (entity?.isValid) trigger(entity, 'minepreggo:leave_bed');
   }
@@ -382,5 +387,7 @@ world.afterEvents.playerLeave.subscribe(({ playerId }) => {
 world.afterEvents.entityRemove.subscribe(({ removedEntityId }) => {
   const scene = scenes.get(removedEntityId);
   if (scene) endScene(scene, false);
+  const wait = walking.get(removedEntityId);
+  if (wait) release('walk', removedEntityId, wait.playerId);
   walking.delete(removedEntityId);
 });

@@ -9,7 +9,7 @@
 //     scenes. They are written as world orientations on a neutral humanoid and solved absolutely,
 //     so a girl's own stance does not bend them.
 import { poseAt } from './geo-render.mjs';
-import { animationSource, keyTimes, rigOf, solveAnimation } from './pose-solve.mjs';
+import { animationSource, keyTimes, limbDirections, rigOf, solveAnimation } from './pose-solve.mjs';
 
 /** A neutral flat humanoid (Minecraft's own proportions, no rest rotations): the authored poses' rig. */
 export const NEUTRAL_RIG = rigOf({
@@ -218,7 +218,8 @@ export function jennyRig(geometry) {
   const map = { body: 'upperBody' };
   for (const [s, g] of [['head', 'head'], ['right_arm', 'armR'], ['left_arm', 'armL'], ['right_leg', 'legR'], ['left_leg', 'legL']]) if (byName.has(g)) map[s] = g;
   const hipHeight = pelvis.reduce((sum, n) => sum + byName.get(n).pivot[1], 0) / pelvis.length;
-  return { map, pelvis, mover, scale: Math.max(0.5, Math.min(1.6, hipHeight / 12)), straighten: STRAIGHT.filter((n) => byName.has(n)) };
+  const limbs = limbDirections(geometry, ['armR', 'armL', 'legR', 'legL', 'lowerArmR', 'lowerArmL', 'shinR', 'shinL']);
+  return { map, pelvis, mover, scale: Math.max(0.5, Math.min(1.6, hipHeight / 12)), straighten: STRAIGHT.filter((n) => byName.has(n)), limbs };
 }
 
 /**
@@ -281,7 +282,7 @@ export function girlPoseAnimations({ geometry, idle, sourceGeometry, sourceAnima
       const anim = /** @type {any} */ (AUTHORED_LABOR)[authored];
       const solved = solveAnimation(
         animationSource(NEUTRAL_RIG, anim, { pelvis: LEGS, trunk: 'body' }),
-        { rig, neutral, map: parts.map, pelvis: parts.pelvis, mover: parts.mover, scale: parts.scale, absolute: true, straighten: parts.straighten, bends: bendsOf(anim.bends) },
+        { rig, neutral, limbs: parts.limbs, map: parts.map, pelvis: parts.pelvis, mover: parts.mover, scale: parts.scale, absolute: true, straighten: parts.straighten, bends: bendsOf(anim.bends) },
         { length: anim.animation_length, loop: true, times: keyTimes(anim), step: 0.2 }
       );
       out[pose] = finish(solved, pose);
@@ -302,7 +303,7 @@ export function girlPoseAnimations({ geometry, idle, sourceGeometry, sourceAnima
     }
     const solved = solveAnimation(
       animationSource(sourceRig, anim),
-      { rig, neutral, map: parts.map, pelvis: parts.pelvis, mover: parts.mover, scale: parts.scale, straighten: additive ? [] : parts.straighten, bends: bendsOf(bends) },
+      { rig, neutral, limbs: parts.limbs, map: parts.map, pelvis: parts.pelvis, mover: parts.mover, scale: parts.scale, straighten: additive ? [] : parts.straighten, bends: bendsOf(bends) },
       { length, loop: anim.loop ?? true, times: keyTimes(anim), step: 0.2, additive, passThrough }
     );
     out[pose] = finish(solved, pose);
@@ -310,7 +311,7 @@ export function girlPoseAnimations({ geometry, idle, sourceGeometry, sourceAnima
   for (const [pose, anim] of Object.entries(AUTHORED)) {
     const solved = solveAnimation(
       animationSource(NEUTRAL_RIG, anim, { pelvis: LEGS, trunk: 'body' }),
-      { rig, neutral, map: parts.map, pelvis: parts.pelvis, mover: parts.mover, scale: parts.scale, absolute: true, straighten: parts.straighten },
+      { rig, neutral, limbs: parts.limbs, map: parts.map, pelvis: parts.pelvis, mover: parts.mover, scale: parts.scale, absolute: true, straighten: parts.straighten },
       { length: anim.animation_length, loop: true, times: keyTimes(anim), step: 0.13 }
     );
     out[pose] = finish(solved, pose);

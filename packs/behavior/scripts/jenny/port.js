@@ -19,22 +19,23 @@ import { KICKS_FROM, Rhythm, announce } from './rhythm.js';
  * @property {RegExp} starts the events that start one of her scenes (the last one is remembered)
  * @property {string[]} fertile the scenes that get her pregnant when they finish
  * @property {string} finish the event that ends a scene
+ * @property {RegExp} intimate the events that start one of her intimate scenes (her belly joins in: kicks, contractions)
  */
 
 /** @type {Record<string, Scenes>} */
 export const PORT_GIRLS = {
-  'fapcraft:jenny': { starts: /^jhjenjava:start_/, fertile: ['jhjenjava:start_doggy_action'], finish: 'jhjenjava:finish_stage' },
-  'kum:bia': { starts: /^jh:start_/, fertile: ['jh:start_prone'], finish: 'jh:finish' },
-  'kum:slime_girl': { starts: /^jh:start_/, fertile: ['jh:start_doggy'], finish: 'jh:finish' },
-  'kum:luna': { starts: /^jh:start_/, fertile: ['jh:start_sitting'], finish: 'jh:finish' },
-  'kum:galath': { starts: /^jh:start_/, fertile: ['jh:start_cowgirl', 'jh:start_threesome'], finish: 'jh:finish' },
+  'fapcraft:jenny': { starts: /^jhjenjava:start_/, fertile: ['jhjenjava:start_doggy_action'], finish: 'jhjenjava:finish_stage', intimate: /^jhjenjava:start_(blowjob|boobjob|doggy_mount|doggy_action)$/ },
+  'kum:bia': { starts: /^jh:start_/, fertile: ['jh:start_prone'], finish: 'jh:finish', intimate: /^jh:start_(anal|prone)$/ },
+  'kum:slime_girl': { starts: /^jh:start_/, fertile: ['jh:start_doggy'], finish: 'jh:finish', intimate: /^jh:start_(blow|doggy)$/ },
+  'kum:luna': { starts: /^jh:start_/, fertile: ['jh:start_sitting'], finish: 'jh:finish', intimate: /^jh:start_(touch|sitting)$/ },
+  'kum:galath': { starts: /^jh:start_/, fertile: ['jh:start_cowgirl', 'jh:start_threesome'], finish: 'jh:finish', intimate: /^jh:start_(anal|cowgirl|threesome)$/ },
   // Manglelie has no scenes of her own; she shares Galath's threesome.
-  'kum:manglelie': { starts: /^$/, fertile: [], finish: '' },
-  'jhallie4:allie': { starts: /^jhallie4:start_/, fertile: ['jhallie4:start_reverse_cowgirl'], finish: 'jhallie4:finish_scene' },
-  'jhbee24:bee': { starts: /^jhbee24:start_/, fertile: ['jhbee24:start_scene'], finish: 'jhbee24:finish' },
-  'jhkobold:kobold': { starts: /^jhkobold:start_/, fertile: ['jhkobold:start_mating'], finish: 'jhkobold:finish' },
+  'kum:manglelie': { starts: /^$/, fertile: [], finish: '', intimate: /^$/ },
+  'jhallie4:allie': { starts: /^jhallie4:start_/, fertile: ['jhallie4:start_reverse_cowgirl'], finish: 'jhallie4:finish_scene', intimate: /^jhallie4:start_(deepthroat_first|deepthroat_repeat|reverse_cowgirl)$/ },
+  'jhbee24:bee': { starts: /^jhbee24:start_/, fertile: ['jhbee24:start_scene'], finish: 'jhbee24:finish', intimate: /^jhbee24:start_(scene|blowjob)$/ },
+  'jhkobold:kobold': { starts: /^jhkobold:start_/, fertile: ['jhkobold:start_mating'], finish: 'jhkobold:finish', intimate: /^jhkobold:start_(anal|blowjob|mating)$/ },
   // Ellie's scene is chosen on her stage entity; her own finish event ends it.
-  'jhelliedev:ellie': { starts: /^jhelliedev:start_scene_/, fertile: ['jhelliedev:start_scene_cowgirl', 'jhelliedev:start_scene_missionary'], finish: 'jhelliedev:finish_stage' },
+  'jhelliedev:ellie': { starts: /^jhelliedev:start_scene_/, fertile: ['jhelliedev:start_scene_cowgirl', 'jhelliedev:start_scene_missionary'], finish: 'jhelliedev:finish_stage', intimate: /^jhelliedev:start_scene_(cowgirl|missionary|facefuck)$/ },
 };
 /** The scene stages that stand in for a girl while her scene plays: they show her belly size. */
 export const PORT_STAGES = /** @type {Record<string, string>} */ ({ 'jhjenjava:jenny_stage': 'fapcraft:jenny', 'jhelliedev:ellie_stage': 'jhelliedev:ellie' });
@@ -73,6 +74,7 @@ function showOnStage(/** @type {Entity} */ stage, /** @type {Entity} */ girl, /*
   try {
     stage.setProperty('minepreggo:belly', girl.getProperty('minepreggo:belly') ?? 'none');
     stage.setProperty('minepreggo:phase', girl.getProperty('minepreggo:phase') ?? -1);
+    stage.setProperty('minepreggo:growth', girl.getProperty('minepreggo:growth') ?? 0);
     stage.setProperty('minepreggo:kick', kick);
     stage.setProperty('minepreggo:scene', state);
   } catch {
@@ -153,7 +155,7 @@ world.afterEvents.dataDrivenEntityTrigger.subscribe(
       const girl = nearest(entity, standsFor, STAGE_RANGE);
       if (girl && PORT_GIRLS[standsFor].starts.test(eventId)) {
         lastScene.set(girl.id, eventId);
-        startPortRhythm(girl);
+        if (PORT_GIRLS[standsFor].intimate.test(eventId)) startPortRhythm(girl);
       }
       return;
     }
@@ -161,7 +163,14 @@ world.afterEvents.dataDrivenEntityTrigger.subscribe(
     if (!scenes) return;
     if (scenes.starts.test(eventId)) {
       lastScene.set(entity.id, eventId);
-      startPortRhythm(entity);
+      // Only her intimate scenes bring her belly in (not a fight, a walk or a chat).
+      if (scenes.intimate.test(eventId)) {
+        startPortRhythm(entity);
+        if (eventId === THREESOME) {
+          const manglelie = nearest(entity, 'kum:manglelie', 6);
+          if (manglelie) startPortRhythm(manglelie);
+        }
+      }
       return;
     }
     if (eventId !== scenes.finish) return;
@@ -172,7 +181,10 @@ world.afterEvents.dataDrivenEntityTrigger.subscribe(
     conceive(entity);
     if (started === THREESOME) {
       const manglelie = nearest(entity, 'kum:manglelie', 6);
-      if (manglelie) conceive(manglelie);
+      if (manglelie) {
+        stopPortRhythm(manglelie);
+        conceive(manglelie);
+      }
     }
   },
   { entityTypes: [...PORT_GIRL_IDS, ...Object.keys(PORT_STAGES)] }

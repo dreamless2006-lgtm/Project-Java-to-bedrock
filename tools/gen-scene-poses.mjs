@@ -15,11 +15,15 @@ const FAMILIES = ['zombie_girl', 'humanoid_creeper_girl', 'ender_woman', 'humano
 
 /** @type {Record<string, unknown>} */
 const animations = {};
+// Each belly size is its own model whose arms and head rest a little differently, so the poses are
+// solved once per size (and once for her model when she is not pregnant).
 for (const family of FAMILIES) {
-  const file = join(RP, 'models/entity', MOD, `${family}.geo.json`);
-  if (!existsSync(file)) throw new Error(`${file} is missing: run tools/import-jar.mjs first`);
-  const geometry = JSON.parse(readFileSync(file, 'utf8'))['minecraft:geometry'][0];
-  for (const [pose, animation] of Object.entries(familySceneAnimations(geometry))) animations[`animation.${MOD}.${family}.${pose}`] = animation;
+  for (const suffix of ['', ...Array.from({ length: 10 }, (_, p) => `_p${p}`)]) {
+    const file = join(RP, 'models/entity', MOD, `${family}${suffix}.geo.json`);
+    if (!existsSync(file)) throw new Error(`${file} is missing: run tools/import-jar.mjs first`);
+    const geometry = JSON.parse(readFileSync(file, 'utf8'))['minecraft:geometry'][0];
+    for (const [pose, animation] of Object.entries(familySceneAnimations(geometry))) animations[`animation.${MOD}.${family}.${pose}${suffix}`] = animation;
+  }
 }
 const out = join(RP, 'animations', MOD, 'scene_poses.animation.json');
 mkdirSync(dirname(out), { recursive: true });
