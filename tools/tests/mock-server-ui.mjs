@@ -27,3 +27,27 @@ export class ActionFormData {
     return Promise.resolve(selection === undefined ? { canceled: true, cancelationReason: FormCancelationReason.UserClosed } : { canceled: false, selection });
   }
 }
+
+/** Modal forms: the player's scripted values (formValues), used up one form at a time. */
+export class ModalFormData {
+  constructor() {
+    this.titleText = '';
+    this.controls = [];
+  }
+  title(text) {
+    this.titleText = text;
+    return this;
+  }
+  toggle(label, options = {}) {
+    this.controls.push({ type: 'toggle', label, value: options.defaultValue ?? false });
+    return this;
+  }
+  submitButton() {
+    return this;
+  }
+  show(player) {
+    player.forms?.push({ title: this.titleText, controls: this.controls.map((c) => ({ ...c })) });
+    const values = player.formValues?.length ? player.formValues.shift() : undefined;
+    return Promise.resolve(values === undefined ? { canceled: true, cancelationReason: FormCancelationReason.UserClosed } : { canceled: false, formValues: values });
+  }
+}

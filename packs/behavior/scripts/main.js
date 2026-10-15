@@ -21,6 +21,7 @@ import './jenny/scenes.js';
 import './jenny/bed.js';
 import './jenny/belly_scenes.js';
 import './jenny/kobold_eggs.js';
+import './player/compat.js';
 import './items/babies.js';
 
 // The Jenny Mod Java Port's own scripts, merged into this pack by tools/import-jenny.mjs when its

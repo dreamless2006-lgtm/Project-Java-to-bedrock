@@ -2,7 +2,9 @@
 // documents itself through its wiki and GUIs). New players get one on their first join.
 
 import { ItemStack, Player, system, world } from '@minecraft/server';
-import { ActionFormData } from '@minecraft/server-ui';
+import { ActionFormData, ModalFormData } from '@minecraft/server-ui';
+import { setSettings, settingsOf } from '../player/compat.js';
+import { startBellyRub } from '../pregnancy/index.js';
 import { runMobCommand } from '../mobs/commands.js';
 import { runPregnancyCommand } from '../pregnancy/commands.js';
 import { getRecord } from '../pregnancy/system.js';
@@ -12,7 +14,7 @@ const GUIDE = 'minepreggo:guide_book';
 /** A forced state started from the book lasts long enough to close the book and look (30 s). */
 const BOOK_TICKS = 600;
 
-/** @type {{ title: string, body: string, debug?: boolean }[]} */
+/** @type {{ title: string, body: string, debug?: boolean, settings?: boolean, rub?: boolean }[]} */
 export const CHAPTERS = [
   {
     title: 'Getting started',
@@ -105,7 +107,34 @@ export const CHAPTERS = [
       'Buttons that give every potion and run the test commands on you and on the nearest female mob (within 16 blocks): show any belly size, force the kicks or a birth, start a pregnancy, jump to a phase, use any potion effect, start labor, see what the game renders from.',
     debug: true,
   },
+  {
+    title: 'Rub my belly',
+    body: 'Rubs your belly for a while (from P3), like crouching and looking down at it.',
+    rub: true,
+  },
+  {
+    title: 'Settings',
+    body: 'Actions & Stuff: show the pregnancy to players whose game runs it.',
+    settings: true,
+  },
 ];
+
+/** The Settings page: what Actions & Stuff players see (player/compat.js). */
+export function openSettings(/** @type {Player} */ player, /** @type {() => void} */ back) {
+  const now = settingsOf(player);
+  new ModalFormData()
+    .title('Minepreggo settings')
+    .toggle('My game runs Actions & Stuff (pregnancy poses play on it; rub your belly from this book)', { defaultValue: now.viewer })
+    .toggle('Show my belly to Actions & Stuff players (held in your off-hand while pregnant)', { defaultValue: now.belly })
+    .show(player)
+    .then((response) => {
+      if (response.canceled || !response.formValues || !player.isValid) return;
+      const [viewer, belly] = response.formValues;
+      setSettings(player, { viewer: !!viewer, belly: !!belly });
+      player.sendMessage({ translate: 'minepreggo.compat.saved' });
+      back();
+    });
+}
 
 /**
  * @typedef {object} DebugItem
@@ -259,6 +288,12 @@ export function openGuide(player) {
     const chapter = CHAPTERS[response.selection];
     if (!chapter) return;
     if (chapter.debug) return openDebugTools(player, () => openGuide(player));
+    if (chapter.settings) return openSettings(player, () => openGuide(player));
+    if (chapter.rub) {
+      const started = startBellyRub(getRecord(player));
+      player.onScreenDisplay.setActionBar({ translate: started ? 'minepreggo.compat.rubbing' : 'minepreggo.compat.no_rub' });
+      return;
+    }
     new ActionFormData()
       .title(chapter.title)
       .body(chapter.body)

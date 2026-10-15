@@ -136,6 +136,8 @@ export class PlayerRecord {
     // Per-session cooldowns, like the fields of Java's per-player pregnancy system objects.
     this.cooldowns = { pain: 0, symptom: 0, exhaustion: 0, weakness: 0, growl: 0, hurt: 0, push: 0, move: 0 };
     this.bellyRubTicks = 0;
+    /** until this tick she rubs her belly without the gesture (the guide book's "Rub my belly") */
+    this.rubUntil = 0;
     this.pushes = { count: 0, lastPressTick: 0 };
     /** @type {{ x: number, z: number } | undefined} */
     this.lastPosition = undefined;

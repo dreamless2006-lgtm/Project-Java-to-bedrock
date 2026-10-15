@@ -283,6 +283,9 @@
     },
     "minepreggo_kobold_egg": {
       "textures": "textures/port/kobold_egg"
+    },
+    "minepreggo_belly": {
+      "textures": "textures/port/belly"
     }
   }
 }

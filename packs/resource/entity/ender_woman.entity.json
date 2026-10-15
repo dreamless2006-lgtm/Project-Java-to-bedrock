@@ -93,6 +93,8 @@
           "v.kick_shown = v.kicking ? v.kick : v.kick_shown;",
           "v.kick_shown = v.kicking ? v.kick : v.kick_shown;",
           "v.kick_shown = v.kicking ? v.kick : v.kick_shown;",
+          "v.kick_shown = v.kicking ? v.kick : v.kick_shown;",
+          "v.kick_shown = v.kicking ? v.kick : v.kick_shown;",
           "v.savage = q.property('minepreggo:savage');",
           "v.aggressive = q.has_target;",
           "v.kl = 1.0 + v.kick;",

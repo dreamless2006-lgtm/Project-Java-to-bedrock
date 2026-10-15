@@ -218,6 +218,23 @@ for (const [family, spec] of Object.entries(FAMILY_CROWNING)) {
   for (let p = 4; p <= 9; p++) writeCrowning(`player_crowning_navel_p${p}`, readModel(`player_body_custom_p${p}`), ['body', 'belly'], 'navel', 'humanoid');
 }
 
+// The belly a pregnant player can hold in her off-hand for players whose game runs Actions & Stuff
+// (player/compat.js): the mod's predefined body of each size (belly, chest and hips) under bones
+// bound to her own body and legs, so it follows whatever animates her (attachables/belly_pN.json).
+for (let p = 0; p <= 9; p++) {
+  const g = readModel(`player_body_predefined_p${p}`);
+  const BOUND = { body: 'mp_body', rightLeg: 'mp_right_leg', leftLeg: 'mp_left_leg' };
+  const rename = (/** @type {string | undefined} */ name) => (name && name in BOUND ? BOUND[/** @type {keyof typeof BOUND} */ (name)] : name);
+  const bones = g.bones.map((/** @type {any} */ b) => ({
+    ...b,
+    name: rename(b.name),
+    ...(b.parent ? { parent: rename(b.parent) } : {}),
+    ...(b.name in BOUND ? { binding: `'${b.name}'` } : {}),
+  }));
+  const doc = { format_version: '1.12.0', 'minecraft:geometry': [{ ...g, description: { ...g.description, identifier: `geometry.${MOD_ID}.belly_attachable_p${p}` }, bones }] };
+  writeFile(join(modelOut, 'attachable', `belly_p${p}.geo.json`), JSON.stringify(doc, null, 2) + '\n');
+}
+
 // One model per family with every phase's belly (tools/lib/belly-merge.mjs): the belly no longer
 // depends on switching geometry or texture at render time. The composite texture sits below the
 // family's base texture; the per-phase models and textures stay available for tooling.

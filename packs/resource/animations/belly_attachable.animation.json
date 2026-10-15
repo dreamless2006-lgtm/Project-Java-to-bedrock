@@ -1,0 +1,19 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.minepreggo.belly_attachable": {
+      "loop": true,
+      "bones": {
+        "mp_body": {
+          "scale": "v.hidden ? 0.0 : 1.0"
+        },
+        "mp_right_leg": {
+          "scale": "v.hidden ? 0.0 : 1.0"
+        },
+        "mp_left_leg": {
+          "scale": "v.hidden ? 0.0 : 1.0"
+        }
+      }
+    }
+  }
+}

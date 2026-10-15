@@ -102,6 +102,7 @@ export const world = {
 
 export const EntityDamageCause = { magic: 'magic', entityExplosion: 'entityExplosion', blockExplosion: 'blockExplosion', fall: 'fall', entityAttack: 'entityAttack' };
 export const EquipmentSlot = { Mainhand: 'Mainhand', Offhand: 'Offhand', Chest: 'Chest' };
+export const ItemLockMode = { none: 'none', inventory: 'inventory', slot: 'slot' };
 export const GameMode = { Survival: 'Survival', Creative: 'Creative', Adventure: 'Adventure', Spectator: 'Spectator' };
 export const InputButton = { Jump: 'Jump', Sneak: 'Sneak' };
 export const InputPermissionCategory = { Camera: 1, Movement: 2, LateralMovement: 4, Sneak: 5, Jump: 6, Mount: 7, Dismount: 8, MoveForward: 9, MoveBackward: 10, MoveLeft: 11, MoveRight: 12 };
@@ -172,10 +173,12 @@ export class Player {
       'minecraft:player.saturation': attribute(5),
       'minecraft:inventory': { container: { addItem: (stack) => void self.inventory.push(stack.typeId) } },
       'minecraft:equippable': {
-        getEquipment: (slot) => (slot === EquipmentSlot.Mainhand ? self.held : undefined),
-        setEquipment: (slot, stack) => (slot === EquipmentSlot.Mainhand ? ((self.held = stack), true) : true),
+        getEquipment: (slot) => (slot === EquipmentSlot.Mainhand ? self.held : slot === EquipmentSlot.Offhand ? self.offhand : undefined),
+        setEquipment: (slot, stack) => (slot === EquipmentSlot.Mainhand ? ((self.held = stack), true) : slot === EquipmentSlot.Offhand ? ((self.offhand = stack), true) : true),
       },
     };
+    /** @type {ItemStack | undefined} */
+    this.offhand = undefined;
     this.isInWater = false;
     this.fireSeconds = 0;
     this.teleports = [];

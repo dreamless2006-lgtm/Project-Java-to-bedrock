@@ -1,0 +1,33 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:attachable": {
+    "description": {
+      "identifier": "minepreggo:belly_p9",
+      "materials": {
+        "default": "entity_alphatest",
+        "enchanted": "entity_alphatest_glint"
+      },
+      "textures": {
+        "default": "textures/minepreggo/entity/player/predefined/alex/alex_p9_extra",
+        "enchanted": "textures/misc/enchanted_item_glint"
+      },
+      "geometry": {
+        "default": "geometry.minepreggo.belly_attachable_p9"
+      },
+      "scripts": {
+        "pre_animation": [
+          "v.hidden = c.is_first_person || c.owning_entity->v.mp_native;"
+        ],
+        "animate": [
+          "shown"
+        ]
+      },
+      "animations": {
+        "shown": "animation.minepreggo.belly_attachable"
+      },
+      "render_controllers": [
+        "controller.render.item_default"
+      ]
+    }
+  }
+}

@@ -224,7 +224,8 @@
           "variable.push = 0.0;",
           "variable.riding_y_offset = 0.0;",
           "variable.strain = 0.0;",
-          "variable.tcos0 = 0.0;"
+          "variable.tcos0 = 0.0;",
+          "variable.mp_native = 1.0;"
         ],
         "pre_animation": [
           "variable.helmet_layer_visible = !query.has_head_gear;",
@@ -279,6 +280,8 @@
           "variable.contracting = variable.mp_pose == 'contraction' || variable.mp_pose == 'prebirth';",
           "variable.kick_w = math.clamp(variable.kick_w + (variable.kicking ? 1.6 : -1.1) * math.clamp(q.delta_time, 0.0, 0.1), 0.0, 1.0);",
           "variable.cw = math.clamp(variable.cw + (variable.contracting ? 0.6 : -0.45) * math.clamp(q.delta_time, 0.0, 0.1), 0.0, 1.0);",
+          "variable.kick_shown = variable.kicking ? variable.mp_kick : variable.kick_shown;",
+          "variable.kick_shown = variable.kicking ? variable.mp_kick : variable.kick_shown;",
           "variable.kick_shown = variable.kicking ? variable.mp_kick : variable.kick_shown;",
           "variable.kick_shown = variable.kicking ? variable.mp_kick : variable.kick_shown;",
           "variable.kick_shown = variable.kicking ? variable.mp_kick : variable.kick_shown;",
@@ -806,7 +809,10 @@
           "controller.render.minepreggo.player_crowning_navel_p9": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.crowning && variable.mp_navel && variable.mp_bp == 9 && variable.mp_baby >= 1 && variable.mp_baby <= 4"
         }
       ],
-      "enable_attachables": true
+      "enable_attachables": true,
+      "variables": {
+        "variable.mp_native": "public"
+      }
     }
   }
 }
