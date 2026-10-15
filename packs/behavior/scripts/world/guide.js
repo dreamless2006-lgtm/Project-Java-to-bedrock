@@ -85,7 +85,8 @@ export const CHAPTERS = [
       'The Jenny Bed (creative inventory, or Give items here) is for the Minepreggo females: place it, stand one of your tamed females within 5 blocks, use the bed and choose her. A 50 second scene follows and she comes out pregnant. A small house with a bed spawns now and then in forests and plains.\n\n' +
       'When she is already pregnant, her babies kick in bursts during a scene and, from P6, her belly tightens in contractions now and then: in the Jenny Bed scene and in the Jenny girls\' own scenes alike.\n\n' +
       'Crouch and use an empty hand on a pregnant female (your own tamed one, or any Jenny girl) for her pregnancy menu: Rub her belly (eases her need for belly rubs, the babies kick back), Feel the baby (they kick into your hands, and you count their heartbeats), and in labor Help her give birth: tap sneak to push with her, every baby is born into your arms, jump to stop.\n\n' +
-      'Each Jenny girl has her own labor and birth: she bends over her belly in a contraction, crouches before the birth, lies back with her knees up to give birth, and her baby is hers (Jenny\'s Baby, Luna\'s Baby, ...). Use a baby to cuddle it.',
+      'Each Jenny girl has her own labor and birth: she bends over her belly in a contraction, crouches before the birth, lies back with her knees up to give birth, and her baby is hers (Jenny\'s Baby, Luna\'s Baby, ...); its head crowns between her legs with each push. Use a baby to cuddle it.\n\n' +
+      'The Kobold lays eggs. Late in her pregnancy her Mating scene becomes an egg-laying scene: her belly hardens, and once her partner pulls back an egg slides out between her legs and she hands it to you; a second one follows, and any left come as you help her push. Place Kobold Eggs as a clutch (up to four, use an egg on it to add one): they crack over the next minutes, faster with a kobold nearby, and hatch into her baby.',
   },
   {
     title: 'Commands',

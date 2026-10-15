@@ -280,6 +280,9 @@
     },
     "minepreggo_eternal_pregnancy_potion": {
       "textures": "textures/port/eternal_pregnancy_potion"
+    },
+    "minepreggo_kobold_egg": {
+      "textures": "textures/port/kobold_egg"
     }
   }
 }

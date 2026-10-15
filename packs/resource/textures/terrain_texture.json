@@ -30,6 +30,15 @@
     },
     "minepreggo_jenny_bed": {
       "textures": "textures/minepreggo/block/jenny_bed"
+    },
+    "minepreggo_kobold_egg_c0": {
+      "textures": "textures/port/kobold_egg_c0"
+    },
+    "minepreggo_kobold_egg_c1": {
+      "textures": "textures/port/kobold_egg_c1"
+    },
+    "minepreggo_kobold_egg_c2": {
+      "textures": "textures/port/kobold_egg_c2"
     }
   }
 }

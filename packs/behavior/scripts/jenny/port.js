@@ -63,6 +63,17 @@ export const PORT_SCENE_TICKS = 3600;
 const rhythms = new Map();
 export const portRhythmOf = (/** @type {Entity} */ entity) => rhythms.get(entity.id);
 
+/**
+ * Modules with more to do in some of the girls' scenes (jenny/kobold_eggs.js): `started` returns
+ * true when it takes her belly over for that scene (no kicks and contractions of ours then);
+ * `finished` runs when the scene is over, before her belly is hers again.
+ * @type {{ started: ((girl: Entity, eventId: string) => boolean)[], finished: ((girl: Entity, eventId: string) => void)[] }}
+ */
+export const sceneHooks = { started: [], finished: [] };
+
+/** The scene she is in (its start event and tick), if any. */
+export const portSceneOf = (/** @type {Entity} */ entity) => lastScene.get(entity.id);
+
 /** Whether one of her own scenes is playing (started, not finished; never longer than PORT_SCENE_TICKS). */
 export function inPortScene(/** @type {Entity} */ entity) {
   const scene = lastScene.get(entity.id);
@@ -168,6 +179,7 @@ export function conceive(/** @type {Entity} */ entity) {
 /** One of her scenes started (on her, or on the stage that plays it for her). */
 function sceneStarted(/** @type {Entity} */ girl, /** @type {string} */ eventId) {
   lastScene.set(girl.id, { event: eventId, tick: system.currentTick });
+  if (sceneHooks.started.some((hook) => hook(girl, eventId))) return;
   // Only her intimate scenes bring her belly in (not a fight, a walk or a chat).
   if (!PORT_GIRLS[girl.typeId].intimate.test(eventId)) return;
   startPortRhythm(girl);
@@ -179,8 +191,9 @@ function sceneStarted(/** @type {Entity} */ girl, /** @type {string} */ eventId)
 
 /** Her scene is over: her belly calms down, and a fertile scene that played out gets her pregnant. */
 export function sceneFinished(/** @type {Entity} */ girl) {
-  stopPortRhythm(girl);
   const started = lastScene.get(girl.id);
+  for (const hook of sceneHooks.finished) hook(girl, started?.event ?? '');
+  stopPortRhythm(girl);
   lastScene.delete(girl.id);
   const length = started && PORT_GIRLS[girl.typeId]?.fertile[started.event];
   if (!started || !length || system.currentTick - started.tick < length * FERTILE_SHARE) return;

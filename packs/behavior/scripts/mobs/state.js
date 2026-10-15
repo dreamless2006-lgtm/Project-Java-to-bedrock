@@ -83,6 +83,12 @@ export class MobRecord {
     this.scene = null;
     /** @type {string | undefined} the player helping her give birth, who catches the babies (jenny/belly_scenes.js) */
     this.birthHelper = undefined;
+    /**
+     * While set, a scene lays her eggs (jenny/kobold_eggs.js): it drives her labor itself, and the
+     * progress of the egg on its way out is what the client shows.
+     * @type {{ progress: number } | undefined}
+     */
+    this.laying = undefined;
   }
 
   save() {

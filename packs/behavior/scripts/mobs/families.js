@@ -17,6 +17,7 @@ import { CRAVING_ITEMS } from '../pregnancy/data.js';
  * @property {Record<string, number>} foods food items the tamed mob eats, with their nutrition
  * @property {Record<string, { craving: Craving, gratification: number }>} cravings
  * @property {string} babyItem
+ * @property {string} [eggItem] she lays eggs instead (the kobold): what each birth yields
  * @property {string} deadFetusItem
  * @property {string} milkItem
  * @property {number} [hungerP0] ticks per fullness point in P0, when not the P1 value
@@ -169,6 +170,9 @@ const HUMAN = {
   milkItem: 'minepreggo:human_breast_milk_bottle',
 };
 
+/** The girls who lay eggs (a kobold is a little dragon): the egg, which hatches into her baby (blocks/kobold_egg.js). */
+const EGGS = /** @type {Record<string, string>} */ ({ 'jhkobold:kobold': 'minepreggo:kobold_egg' });
+
 /**
  * The Jenny Mod Java Port's girls (merged by tools/import-jenny.mjs): human women of another add-on.
  * Their own scenes get them pregnant (jenny/port.js); the pregnancy, belly, kicks and birth are ours.
@@ -178,9 +182,11 @@ export const PORT_GIRL_FAMILIES = Object.fromEntries(
   ['fapcraft:jenny', 'kum:bia', 'kum:slime_girl', 'kum:luna', 'kum:galath', 'jhallie4:allie', 'kum:manglelie', 'jhbee24:bee', 'jhkobold:kobold', 'jhelliedev:ellie'].map((id) => [
     id,
     // Her babies are her own (tools/import-jenny.mjs makes a baby item in her colours for each girl).
-    /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: `minepreggo:baby_${id.split(':')[1]}` }),
+    /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: `minepreggo:baby_${id.split(':')[1]}`, ...(EGGS[id] ? { eggItem: EGGS[id] } : {}) }),
   ])
 );
+/** What each birth of hers yields: her eggs if she lays them, else her baby. */
+export const birthItemOf = (/** @type {Family} */ family) => family.eggItem ?? family.babyItem;
 export const COURTING_TICKS = 60;
 export const COURTING_RANGE = 2;
 

@@ -12,7 +12,7 @@ import { EntityDamageCause, ItemStack, system, world } from '@minecraft/server';
 import { BABIES_BY_FINAL_PHASE, BELLY_RUBS_TICKS, CONFIG, CRAVING_TICKS, MAX_LEVEL, MILKING_TICKS, PHASES, TICKS } from '../pregnancy/data.js';
 import { accelerationDays, advancePhases, babiesFromPotion, clampBabies, createCommonPain, daysByPhase, distributeExtraDays, duplicateBabies as planDuplication, gradualAccelerationSpeed, pregnancyDamage, randomCraving, sigmoid, symptomSeverity } from '../pregnancy/math.js';
 import { clampLevel, newPregnancy } from '../pregnancy/state.js';
-import { COURTERS, COURTING_RANGE, COURTING_TICKS, FAMILIES, FULLNESS, birthTicks, hungerTicks, postBirthTicks } from './families.js';
+import { COURTERS, COURTING_RANGE, COURTING_TICKS, FAMILIES, FULLNESS, birthItemOf, birthTicks, hungerTicks, postBirthTicks } from './families.js';
 import { MobRecord } from './state.js';
 
 /** @typedef {import('@minecraft/server').Entity} Entity */
@@ -171,10 +171,11 @@ function stackOf(/** @type {string} */ item) {
 }
 
 /**
- * A baby is born: into the arms of the player helping her (jenny/belly_scenes.js), else onto the ground in front of her.
+ * A baby (or an egg) is born: into the arms of the player helping her (jenny/belly_scenes.js), else onto the ground in front of her.
  * @param {MobRecord} record @param {string} item
  */
 function deliverBaby(record, item) {
+  const egg = familyOf(record.entity)?.eggItem === item;
   const { entity } = record;
   const helper = record.birthHelper ? world.getEntity(record.birthHelper) : undefined;
   if (helper?.isValid && helper.typeId === 'minecraft:player' && helper.dimension.id === entity.dimension.id) {
@@ -183,7 +184,7 @@ function deliverBaby(record, item) {
       const stack = stackOf(item);
       const leftover = /** @type {any} */ (helper.getComponent('minecraft:inventory'))?.container?.addItem(stack);
       if (leftover) helper.dimension.spawnItem(leftover, helper.location);
-      /** @type {Player} */ (helper).sendMessage({ translate: 'minepreggo.birth.caught', with: { rawtext: [nameOf(entity)] } });
+      /** @type {Player} */ (helper).sendMessage({ translate: egg ? 'minepreggo.egg.caught' : 'minepreggo.birth.caught', with: { rawtext: [nameOf(entity)] } });
       particles(entity, 'minecraft:heart_particle', 6, 1.0);
       return;
     }
@@ -616,19 +617,14 @@ function evaluateLabor(/** @type {MobRecord} */ record) {
       record.save();
       return;
     case 'PREBIRTH':
+      if (record.laying) return; // her egg-laying scene keeps the time (jenny/kobold_eggs.js)
       if (!expired) {
         pain.elapsed += STEP;
         particles(entity, 'minecraft:water_drip_particle', 3, 0.4);
         return;
       }
       tryHurt(record);
-      p.postBirthTicks = p.womb.length * postBirthTicks(family);
-      p.originalBabies = p.womb.length;
-      p.womb.shift();
-      p.pain = { type: 'BIRTH', duration: -1, severity: 0, elapsed: 0 };
-      p.birth = /** @type {any} */ ({ remaining: birthTicks(family), babiesBorn: 0 });
-      tellOwner(record, 'chat.minepreggo.preggo_mob.birth.message.pre');
-      record.save();
+      enterBirth(record);
       return;
     case 'BIRTH': {
       const birth = /** @type {{ remaining: number, babiesBorn: number } | null} */ (/** @type {unknown} */ (p.birth));
@@ -637,18 +633,14 @@ function evaluateLabor(/** @type {MobRecord} */ record) {
         record.save();
         return;
       }
+      if (record.laying) return;
       birth.remaining -= STEP;
       if (birth.remaining > 0) {
         particles(entity, 'minecraft:redstone_ore_dust_particle', 2, 0.4);
         return;
       }
       tryHurt(record);
-      deliverBaby(record, family.babyItem);
-      particles(entity, 'minecraft:redstone_ore_dust_particle', 10, 0.4);
-      playSound(entity, 'minepreggo.splash', 0.3);
-      const next = p.womb.shift();
-      p.birth = next ? /** @type {any} */ ({ remaining: birthTicks(family), babiesBorn: birth.babiesBorn + 1 }) : null;
-      record.save();
+      deliverNext(record);
       return;
     }
     case 'POSTBIRTH':
@@ -662,6 +654,59 @@ function evaluateLabor(/** @type {MobRecord} */ record) {
 }
 
 // --- per-update logic --------------------------------------------------------------------------
+
+/**
+ * The pre-birth is over: the first baby (or egg) is on its way out.
+ * @param {MobRecord} record
+ */
+export function enterBirth(record) {
+  const p = /** @type {Pregnancy} */ (record.data.pregnancy);
+  const family = /** @type {Family} */ (familyOf(record.entity));
+  p.postBirthTicks = p.womb.length * postBirthTicks(family);
+  p.originalBabies = p.womb.length;
+  p.womb.shift();
+  p.pain = { type: 'BIRTH', duration: -1, severity: 0, elapsed: 0 };
+  p.birth = /** @type {any} */ ({ remaining: birthTicks(family), babiesBorn: 0 });
+  tellOwner(record, 'chat.minepreggo.preggo_mob.birth.message.pre');
+  record.save();
+}
+
+/**
+ * The baby (or egg) on its way out is born, and the next one starts; returns whether that was the last.
+ * @param {MobRecord} record
+ */
+export function deliverNext(record) {
+  const { entity } = record;
+  const p = /** @type {Pregnancy} */ (record.data.pregnancy);
+  const family = /** @type {Family} */ (familyOf(entity));
+  const birth = /** @type {{ remaining: number, babiesBorn: number }} */ (/** @type {unknown} */ (p.birth));
+  deliverBaby(record, birthItemOf(family));
+  particles(entity, 'minecraft:redstone_ore_dust_particle', 10, 0.4);
+  playSound(entity, 'minepreggo.splash', 0.3);
+  const next = p.womb.shift();
+  p.birth = next ? /** @type {any} */ ({ remaining: birthTicks(family), babiesBorn: (birth?.babiesBorn ?? 0) + 1 }) : null;
+  record.save();
+  return !next;
+}
+
+/**
+ * Her labor comes on at once (an egg-laying scene: jenny/kobold_eggs.js): at the end of her
+ * pregnancy, in the pre-birth (or still in the birth she is in). False when she has nothing to lay.
+ * @param {MobRecord} record
+ */
+export function startLaying(record) {
+  const p = record.data.pregnancy;
+  if (!p || p.pain?.type === 'MISCARRIAGE' || p.pain?.type === 'POSTBIRTH' || !(p.womb.length > 0 || p.birth)) return false;
+  if (p.pain?.type === 'BIRTH') return true;
+  if (p.phase !== p.lastPhase) setPhase(record, p.lastPhase);
+  p.daysPassed = Math.max(p.daysPassed, p.daysByPhase[p.phase] ?? 0);
+  p.pain = { type: 'PREBIRTH', duration: PHASES[p.phase].preBirthTicks, severity: 0, elapsed: 0 };
+  record.save();
+  return true;
+}
+
+/** Writes what the client shows now, not at the next update (a scene's finer steps). */
+export const refreshClient = (/** @type {MobRecord} */ record) => syncClient(record);
 
 /** One update of a pregnancy (PreggoMobPregnancySystemP0-P9.evaluatePregnancySystem). */
 function tickPregnancy(/** @type {MobRecord} */ record) {
@@ -805,7 +850,7 @@ function clientState(/** @type {MobRecord} */ record) {
   if (pain?.type === 'BIRTH' && birth) {
     const family = familyOf(record.entity);
     const total = family ? birthTicks(family) : 300;
-    growth = Math.min(1, Math.max(0, 1 - birth.remaining / total));
+    growth = record.laying ? record.laying.progress : Math.min(1, Math.max(0, 1 - birth.remaining / total));
   }
   return { pose, kick, growth: Math.round(growth * 100) / 100 };
 }
