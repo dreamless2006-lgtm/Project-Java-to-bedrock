@@ -204,3 +204,13 @@ test("survey agrees with the pathfinder about a drop under a low ceiling", () =>
     assert.equal(e.steps, 0, "cannot step off under the leaves: " + describeRow(e));
     assert.equal(probeAhead(world(rows), { x: 0.5, y: 64, z: 0.5 }, 1, 0, 3).ok, false);
 });
+
+test("castRay says which face it came in through: the spot to place a block against, and the side of the block that is hit", () => {
+    const eye = { x: 0.5, y: 65.62, z: 0.5 };
+    const at = world({ "10,65,0": "minecraft:stone", "0,65,10": "minecraft:stone", "0,70,0": "minecraft:stone" });
+    assert.deepEqual(castRay(at, eye, -90, 0, 40).hit.face, { x: -1, y: 0, z: 0 }, "from the west into the block's west face");
+    assert.deepEqual(castRay(at, eye, 0, 0, 40).hit.face, { x: 0, y: 0, z: -1 });
+    assert.deepEqual(castRay(at, eye, 0, -90, 40).hit.face, { x: 0, y: -1, z: 0 }, "looking up, into the bottom of the block");
+    assert.deepEqual(castRay(at, eye, 0, 90, 10).hit.face, { x: 0, y: 1, z: 0 }, "looking down at the ground");
+    assert.deepEqual(lookingAt(at, eye, -90, 0).face, { x: -1, y: 0, z: 0 });
+});

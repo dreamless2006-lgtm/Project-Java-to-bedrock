@@ -151,16 +151,16 @@ export function castRay(idAt, origin, yaw, pitch, maxDist = 40) {
     let ty = Math.abs(dy) < 1e-9 ? Infinity : ((dy > 0 ? y + 1 - origin.y : origin.y - y) * tdy);
     let tz = Math.abs(dz) < 1e-9 ? Infinity : ((dz > 0 ? z + 1 - origin.z : origin.z - z) * tdz);
     for (let guard = 0; guard < 400; guard++) {
-        let t;
-        if (tx <= ty && tx <= tz) { t = tx; x += sx; tx += tdx; }
-        else if (ty <= tz) { t = ty; y += sy; ty += tdy; }
-        else { t = tz; z += sz; tz += tdz; }
+        let t, face;
+        if (tx <= ty && tx <= tz) { t = tx; x += sx; tx += tdx; face = { x: -sx, y: 0, z: 0 }; }
+        else if (ty <= tz) { t = ty; y += sy; ty += tdy; face = { x: 0, y: -sy, z: 0 }; }
+        else { t = tz; z += sz; tz += tdz; face = { x: 0, y: 0, z: -sz }; }
         if (t > maxDist) break;
         const id = idAt(x, y, z);
         if (id === null || id === undefined) return { hit: null, unloaded: true, range: t };
         const kind = kindOf(id);
         if (kind === "air" || kind === "passable") continue;
-        return { hit: { id, kind, x, y, z, dist: t }, unloaded: false, range: t };
+        return { hit: { id, kind, x, y, z, dist: t, face }, unloaded: false, range: t };      // face: the side of the block the ray came in through (a unit vector pointing out of it)
     }
     return { hit: null, unloaded: false, range: maxDist };
 }
@@ -247,7 +247,7 @@ export function landmarks(idAt, feet, { radius = 24, stride = 3 } = {}) {
 /** The block under the crosshair, or what is (not) there. */
 export function lookingAt(idAt, eye, yaw, pitch, max = 24) {
     const r = castRay(idAt, eye, yaw, pitch, max);
-    if (r.hit) return { id: short(r.hit.id), x: r.hit.x, y: r.hit.y, z: r.hit.z, dist: Math.round(r.hit.dist * 10) / 10, cls: sightClass(r.hit.id, r.hit.kind) };
+    if (r.hit) return { id: short(r.hit.id), x: r.hit.x, y: r.hit.y, z: r.hit.z, dist: Math.round(r.hit.dist * 10) / 10, cls: sightClass(r.hit.id, r.hit.kind), face: r.hit.face };
     return { id: null, dist: null, open: !r.unloaded, unloaded: r.unloaded };
 }
 

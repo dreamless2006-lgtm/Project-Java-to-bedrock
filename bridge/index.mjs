@@ -94,6 +94,23 @@ export async function callProvider(cfg, botCfg, turn, timeoutSeconds = 40) {
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/** One line for the log: what the model chose to do, from its reply text. */
+export function summarizeDecision(text) {
+    try {
+        const t = String(text || "");
+        const i = t.indexOf("{"), j = t.lastIndexOf("}");
+        const o = JSON.parse(t.slice(i, j + 1));
+        const acts = (Array.isArray(o.actions) ? o.actions : []).map(a => {
+            const detail = a && typeof a === "object" ? Object.entries(a).filter(([k]) => k !== "type").slice(0, 3).map(([k, v]) => `${k}=${typeof v === "object" ? "…" : v}`).join(" ") : "";
+            return `${a && a.type}${detail ? "(" + detail + ")" : ""}`;
+        });
+        const bits = [acts.length ? acts.join(", ") : "no action"];
+        if (o.say) bits.push(`says "${String(o.say).slice(0, 80)}"`);
+        if (o.thought) bits.push(`thinks "${String(o.thought).slice(0, 100)}"`);
+        return bits.join(" | ");
+    } catch (e) { return "(reply not readable as JSON)"; }
+}
 const versionParts = (v) => String(v || "0").split(".").map(n => parseInt(n, 10) || 0);
 /** "2.9.0" < "2.10.0" (numeric, part by part). */
 export function versionLess(a, b) {
@@ -567,7 +584,7 @@ export class Bridge {
         try {
             const res = await callProvider(this.cfg, botCfg, { systemStable: sys.text, systemDynamic: null, messages }, this.cfg.requestTimeoutSeconds || 40);
             const ms = Date.now() - started;
-            if (res.ok) log("info", `${bot}: ${res.provider}/${res.model} ok in ${ms}ms (${res.usage?.input ?? "?"} in / ${res.usage?.output ?? "?"} out)`);
+            if (res.ok) { log("info", `${bot}: ${res.provider}/${res.model} ok in ${ms}ms (${res.usage?.input ?? "?"} in / ${res.usage?.output ?? "?"} out)`); log("info", `${bot} decided: ${summarizeDecision(res.text)}`); }
             else log("warn", `${bot}: think failed: ${res.error}`);
             this.sendToAddon({ t: "result", turnId, ...res });
         } catch (e) {
@@ -696,9 +713,13 @@ export class Bridge {
         }
         const used = best.d >= 4 ? best.h : null;
         const walked = best.d;
+        const boxedIn = !used && best.d >= 1.5;      // the server did move it, then something stopped it in every direction
         const pulled1 = pulledBack();
         const nowBase = this.body.tickBase;
-        check("walking forward for 2 s moves the body (vanilla walk is about 7.5 blocks)", !!used,
+        if (boxedIn) {
+            check("walking forward moves the body", true, `the server moved it ${best.d.toFixed(1)} blocks ${best.h.name}, then something stopped it in every direction it tried (a block, water, a step it cannot climb, or the account is boxed in): the server accepts the movement. For the full test stand in the open and run it again`);
+            skip("the rest of the legs", "not run: there is no room around the body");
+        } else check("walking forward for 2 s moves the body (vanilla walk is about 7.5 blocks)", !!used,
             used ? `${walked.toFixed(1)} blocks ${used.name}${Math.abs(best.dy) >= 0.5 ? ` (the ground there is ${best.dy < 0 ? "lower" : "higher"} by ${Math.abs(best.dy).toFixed(1)}: not flat)` : ""}${triedFlip ? (flipRelevant ? ` (only with input ticks counted the "${nowBase}" way, the original numbering failed on the control run: set "tickBase": "${nowBase}" under connect in config.json)` : " (the other tick numbering was not the reason: the original one moved the body as well on the control run, so the server just needed time)") : ""}${walked < 7 ? ` (short of 7.5: ${walked < 5 ? "something was in the way, or " : ""}the ground here may not be flat)` : ""}`
                 : `the best heading moved ${walked.toFixed(1)} blocks${pulled1 ? `, and the server pulled the body back ${pulled1} times: it keeps resetting the body (rubber-banding)` : ": the server ignores this client's movement, or something blocks all four directions around here (stand on open flat ground and try again)"}`);
         const pulledBase = pulledBack();
@@ -823,8 +844,9 @@ async function main() {
         process.on("SIGINT", () => { bridge.stopped = true; try { bridge.client?.close(); } catch (e) { /* ignore */ } process.exit(130); });
         bridge.start().catch(e => log("error", e));
         const res = await bridge.selfTest();
+        const skipped = res.checks.filter(c => c.skipped).length;
         console.log(res.ok
-            ? "\nSELFTEST PASSED: the server accepts this body walking, sprinting, stepping back and turning. If the AI still stands still in the game, the problem is on the addon side (is the pack up to date and active? is this account an Operator?): in the game chat type  !ai body  and  !ai where."
+            ? `\nSELFTEST PASSED${skipped ? ` (${skipped} leg${skipped > 1 ? "s" : ""} skipped, see the SKIP lines: usually not enough flat room around the account)` : ""}: the server accepts this body's movement. If the AI still stands still in the game, the problem is on the addon side (is the pack up to date and active? is this account an Operator?): in the game chat type  !ai body  and  !ai where.`
             : "\nSELFTEST FAILED: see the FAIL lines above. Send a screenshot of this whole output.");
         bridge.stopped = true; try { bridge.client?.close(); } catch (e) { /* ignore */ }
         setTimeout(() => process.exit(res.ok ? 0 : 1), 300);

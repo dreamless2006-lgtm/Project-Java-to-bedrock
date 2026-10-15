@@ -61,8 +61,16 @@ test("a wall 7 blocks south does not fail a healthy server: another heading is u
     assert.ok(r.lines.some(l => /walking forward.*(west|north|east)/.test(l)), "it walked another way:\n" + r.lines.join("\n"));
 });
 
-test("walls close on every side: the verdict is 'no room', not a blamed server, and the legs that cannot run are skipped", { timeout: 60000 }, async () => {
+test("a body boxed in by walls: the server did move it, so that is reported as accepted, with the rest skipped", { timeout: 60000 }, async () => {
     const r = await simulate({ walls: [wall(97, 97, 104, 99), wall(97, 102, 104, 104), wall(97, 97, 99, 104), wall(102, 97, 104, 104)] }).run();       // a pen three blocks wide
+    assert.ok(r.ok, r.lines.join("\n"));
+    const walk = r.checks.find(c => /walking forward/.test(c.name));
+    assert.ok(walk && walk.ok && /something stopped it in every direction/.test(walk.detail), walk && walk.detail);
+    assert.ok(r.checks.some(c => c.skipped && /rest of the legs/.test(c.name)));
+});
+
+test("walls so close that the body cannot move at all: the verdict is 'no room', not a blamed server", { timeout: 60000 }, async () => {
+    const r = await simulate({ walls: [wall(98.5, 98.5, 102.5, 100), wall(98.5, 101, 102.5, 102.5), wall(98.5, 98.5, 100, 102.5), wall(101, 98.5, 102.5, 102.5)] }).run();
     assert.equal(r.ok, false);
     const walk = r.checks.find(c => /walking forward/.test(c.name));
     assert.ok(walk && !walk.ok && /something blocks all four directions/.test(walk.detail), walk && walk.detail);

@@ -5,6 +5,7 @@ import { nameOf, isModdedId } from "./world_content.js";
 import { getFriendTask } from "../ai_task_worker.js";
 import { whoOwns } from "../ai_navigation.js";
 import { aroundReport, markVisited } from "./around.js";
+import { hotbarLine } from "./actuator.js";
 import { lookingAt } from "./senses.js";
 
 const SCAN_R = 5;           // horizontal radius of the block scan
@@ -224,6 +225,7 @@ export function observe(bot, brain, extras = {}) {
     if (foodCount) obs.inventory.push(...Object.entries(food).filter(([, n]) => n > 0).map(([id, n]) => `${nameOf(id)} x${n} (food)`));
     const eq = equipmentOf(bot);
     if (eq) obs.equipment = eq;
+    try { const hb = hotbarLine(bot); if (hb) obs.hotbar = hb; } catch (e) { /* ignore */ }
 
     const home = brain?.memory?.home;
     if (home) obs.home = `${fmtPos(home)}${home.dim ? " in " + dimensionLabel(home.dim) : ""} (${Math.round(dist(loc, home))}m away)`;

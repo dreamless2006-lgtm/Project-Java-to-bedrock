@@ -320,6 +320,66 @@ check(residents().length === 8, "still 8 residents after the respawn: " + reside
         await run(1500, 10, idle);
         check(Math.hypot(relay.location.x - (bx - 12 + 0.5), relay.location.z - (bz + 0.5)) < 2.5, "it dug through the hill and arrived: " + last() + " at " + JSON.stringify(relay.location));
         check(count("minecraft:dirt") >= 2, "the dirt it dug is in its inventory: " + count("minecraft:dirt"));
+        // the crosshair actions, the way a player works: look, mine, hold, place, use, hit
+        {
+            const px = bx + 40, pz = bz + 40;
+            relay.teleport({ x: px + 0.5, y: 64, z: pz + 0.5 }); relay.setRotation({ x: 0, y: 0 });       // facing south
+            bb.actuator.stopAll();
+            for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 8; dz++) for (let y = 64; y <= 67; y++) overworld._set(px + dx, y, pz + dz, "minecraft:air");
+            overworld._set(px, 65, pz + 2, "minecraft:oak_log");
+            const logsBefore = count("minecraft:oak_log");
+            act({ type: "mine" });
+            await run(300, 10, idle);
+            check(/^mine: mined 1 block \(.*oak log x1/.test(last()) && overworld.getBlock({ x: px, y: 65, z: pz + 2 }).isAir && count("minecraft:oak_log") === logsBefore + 1, "mine breaks the block under the crosshair and the drop is in the bag: " + last());
+            act({ type: "look", facing: "up" });
+            act({ type: "mine" });
+            await run(60, 10, idle);
+            check(/nothing in reach/.test(last()), "with nothing under the crosshair it says so: " + last());
+            act({ type: "look", pitch: 0, yaw: 0 });
+            overworld._set(px, 65, pz + 2, "minecraft:bedrock");
+            act({ type: "mine" });
+            await run(60, 10, idle);
+            check(/cannot mine bedrock/.test(last()), "what cannot be mined is refused with the reason: " + last());
+            overworld._set(px, 65, pz + 2, "minecraft:air");
+            // hold and place: on the ground ahead
+            inv.addItem(new ItemStack("minecraft:cobblestone", 8));
+            act({ type: "hold", item: "cobblestone" });
+            await run(20, 5, idle);
+            check(/^hold: holding cobblestone/.test(last()), "hold puts the item in the hand: " + last());
+            const hb = (await import("../../packs/RealAI_BP/scripts/brain/perception.js")).observe(relay, bb, {}).hotbar || "";
+            check(/cobblestone x\d+\*/.test(hb), "and the hotbar line shows it in hand: " + hb);
+            act({ type: "look", pitch: 45, yaw: 0 });
+            await run(10, 5, idle);
+            const cobBefore = count("minecraft:cobblestone");
+            act({ type: "place" });
+            await run(40, 5, idle);
+            const placedAt = [1, 2].map(dz => overworld.getBlock({ x: px, y: 64, z: pz + dz }).typeId);
+            check(/^place: placed cobblestone/.test(last()) && placedAt.includes("minecraft:cobblestone") && count("minecraft:cobblestone") === cobBefore - 1, "place puts the held block on the face under the crosshair: " + last() + " " + placedAt);
+            act({ type: "look", facing: "down" });
+            act({ type: "place" });
+            await run(20, 5, idle);
+            check(/where you stand/.test(last()), "not into its own body: " + last());
+            // a door in front is used, a creature in front is hit
+            relay.setRotation({ x: 0, y: 0 });
+            overworld._set(px, 64, pz + 2, "minecraft:oak_door"); overworld._set(px, 65, pz + 2, "minecraft:oak_door");
+            act({ type: "look", pitch: 0, yaw: 0 });
+            act({ type: "use" });
+            await run(30, 5, idle);
+            check(/using the oak door/.test(bb.actuator.results.join(" | ")), "use right-clicks the door in front: " + bb.actuator.results.slice(-3).join(" | "));
+            overworld._set(px, 64, pz + 2, "minecraft:air"); overworld._set(px, 65, pz + 2, "minecraft:air");
+            const cow = overworld.spawnEntity("minecraft:cow", { x: px + 0.5, y: 64, z: pz + 3.5 });
+            bb.actuator.stopAll();
+            act({ type: "look_at", x: px + 0.5, y: 64.9, z: pz + 3.5 });
+            act({ type: "hit" });
+            await run(20, 5, () => bb.actuator.results.some(r => /^hit:/.test(r)));
+            check(bb.actuator.results.some(r => /^hit: hit the cow/.test(r)), "hit strikes the creature under the crosshair: " + bb.actuator.results.slice(-3).join(" | "));
+            bb.actuator.stopAll();
+            try { cow.remove(); } catch (e) { /* ignore */ }
+            act({ type: "hold", slot: 1 });
+            await run(10, 5, idle);
+            check(/^hold: (holding|slot 1 is empty)/.test(last()), "hold by slot: " + last());
+            bb.actuator.stopAll();
+        }
         // mine down with a wooden pickaxe: a staircase, cobblestone in the bag, six levels lower
         act({ type: "mine_down", depth: 6 });
         await run(100, 10, idle);

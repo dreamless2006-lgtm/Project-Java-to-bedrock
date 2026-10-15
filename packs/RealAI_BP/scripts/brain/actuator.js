@@ -17,7 +17,7 @@ import { dropsOf, harvestCheck, breakTicks, materialMatcher, isOreId, bestTool }
 import { bridge } from "./transport.js";
 import { findPath } from "./path.js";
 import { kindOf, canStand, isOpen } from "./terrain.js";
-import { COMPASS, compassOf, yawOf, yawFromWord, wrapYaw, lookingAt, probeAhead } from "./senses.js";
+import { COMPASS, compassOf, yawOf, yawFromWord, wrapYaw, lookingAt, probeAhead, castRay } from "./senses.js";
 import { aroundReport, idAtFor, chunkKey } from "./around.js";
 export { presetBlueprint };
 
@@ -168,9 +168,25 @@ function footing(dim, x, y, z, enterWater, from) {
 export function walkerBlocked(bot) { const w = walkers.get(bot.id); return w ? (w.blocked || 0) : 0; }
 /** For !ai where: what the walker is doing with this body. */
 export function walkerInfo(bot) { const w = walkers.get(bot.id); return w ? { target: { x: +w.goal.x.toFixed(1), y: +w.goal.y.toFixed(1), z: +w.goal.z.toFixed(1) }, mode: w.mode, blocked: w.blocked || 0, viaBridge: !!w.sent, path: w.path ? `${w.pathIdx}/${w.path.length}` : "straight" } : null; }
-function lookAt(bot, target) {
-    if (bridgeWalks(bot)) { bridgeSend({ t: "look", x: target.x + 0.5, y: (typeof target.y === "number" ? target.y : bot.location.y) + 0.5, z: target.z + 0.5 }); return; }
-    try { faceBlock(bot, target); } catch (e) { /* ignore */ }
+/** Turn the head to a point in the world (exact, not a block corner): the view is remembered so the crosshair follows at once. */
+function aimAt(bot, point) {
+    const e = eyeOf(bot);
+    const dx = point.x - e.x, dy = point.y - e.y, dz = point.z - e.z;
+    const flat = Math.hypot(dx, dz);
+    if (flat < 0.05 && Math.abs(dy) < 0.05) return;                 // standing on the point: nothing to turn to
+    const yaw = flat < 0.05 ? viewOf(bot).yaw : Math.atan2(-dx, dz) * 180 / Math.PI;
+    const pitch = -Math.atan2(dy, flat) * 180 / Math.PI;
+    setView(bot, yaw, pitch);
+}
+/** Face a block (its middle). */
+function lookAt(bot, block) {
+    if (bridgeWalks(bot)) { aimAt(bot, { x: block.x + 0.5, y: (typeof block.y === "number" ? block.y : bot.location.y) + 0.5, z: block.z + 0.5 }); return; }
+    try { faceBlock(bot, block); } catch (e) { /* ignore */ }
+}
+/** Face a creature or player standing at `loc` (about the chest). */
+function lookAtThing(bot, loc) {
+    if (bridgeWalks(bot)) { aimAt(bot, { x: loc.x, y: loc.y + 1.0, z: loc.z }); return; }
+    try { faceBlock(bot, { x: loc.x - 0.5, y: loc.y + 0.5, z: loc.z - 0.5 }); } catch (e) { /* ignore */ }
 }
 // ---- the head: where the body faces, and turning it ----------------------------------------------
 // A turn the bridge has been told about shows up in the game a tick or two later; until then the AI's own
@@ -193,6 +209,51 @@ function describeLooking(bot, view) {
     const l = lookingAt(idAtFor(bot.dimension), eyeOf(bot), view.yaw, view.pitch);
     if (l.id) return `looking at ${l.id} ${l.dist}m away at ${l.x} ${l.y} ${l.z}`;
     return l.unloaded ? "looking at the edge of the loaded world" : "nothing in sight that way (open air)";
+}
+/** The block under the crosshair within reach: { id, kind, x, y, z, dist, face } or null. Grass and snow layers are looked through, like a ray in the game does for a hit on what is behind. */
+function crosshair(bot, reach = REACH) {
+    const v = viewOf(bot);
+    const r = castRay(idAtFor(bot.dimension), eyeOf(bot), v.yaw, v.pitch, reach);
+    return r.hit || null;
+}
+/** The creature or player under the crosshair, nearer than the block behind it: { entity, dist } or null. */
+function entityInSight(bot, reach = REACH, blockDist = Infinity) {
+    const v = viewOf(bot), yr = v.yaw * Math.PI / 180, pr = v.pitch * Math.PI / 180;
+    const d = { x: -Math.sin(yr) * Math.cos(pr), y: -Math.sin(pr), z: Math.cos(yr) * Math.cos(pr) };
+    const e0 = eye(bot);
+    let ents = [];
+    try { ents = bot.dimension.getEntities({ location: e0, maxDistance: reach + 1 }); } catch (e) { return null; }
+    let best = null;
+    for (const e of ents) {
+        try {
+            if (e.id === bot.id || e.typeId === "minecraft:item" || e.typeId === "minecraft:xp_orb") continue;
+            const l = e.location;
+            const vx = l.x - e0.x, vy = l.y + 0.9 - e0.y, vz = l.z - e0.z;
+            const t = vx * d.x + vy * d.y + vz * d.z;                       // how far along the line of sight
+            if (t < 0.3 || t > reach || t > blockDist) continue;
+            if (Math.hypot(vx - d.x * t, vy - d.y * t, vz - d.z * t) > 0.65) continue;     // about the width of a body off the line
+            if (!best || t < best.dist) best = { entity: e, dist: t };
+        } catch (e2) { /* ignore */ }
+    }
+    return best;
+}
+const INTERACTABLE = /door|trapdoor|fence_gate|chest|barrel|shulker_box|furnace|smoker|crafting_table|anvil|enchanting_table|brewing_stand|loom|grindstone|stonecutter|cartography_table|smithing_table|_bed$|^minecraft:bed$|button|lever|lectern|jukebox|note_block|bell|cauldron|composter|campfire|respawn_anchor|beacon|hopper|dropper|dispenser|repeater|comparator|daylight_detector/;
+const FOOD = /bread|apple|carrot|potato|beef|porkchop|mutton|chicken|rabbit|cod|salmon|cookie|melon_slice|pie|stew|soup|berries|dried_kelp|beetroot|honey_bottle/;
+function entityName(e) { try { return e.nameTag || String(e.typeId).replace(/^.*:/, ""); } catch (x) { return "creature"; } }
+/** The hotbar as the model reads it: "1 wooden_pickaxe*, 2 oak_planks x12" (* = in hand). */
+export function hotbarLine(bot) {
+    try {
+        const c = containerOf(bot);
+        if (!c || !isPlayerBody(bot)) return "";
+        const sel = typeof bot.selectedSlotIndex === "number" ? bot.selectedSlotIndex : 0;
+        const parts = [];
+        for (let i = 0; i < 9 && i < c.size; i++) {
+            let st; try { st = c.getItem(i); } catch (e) { continue; }
+            if (st) parts.push(`${i + 1} ${nameOf(st.typeId)}${st.amount > 1 ? " x" + st.amount : ""}${i === sel ? "*" : ""}`);
+            else if (i === sel) parts.push(`${i + 1} (empty hand)*`);
+        }
+        return parts.join(", ");
+    } catch (e) { return ""; }
 }
 function cfg() { return getWorldConfig(); }
 
@@ -287,7 +348,7 @@ function placeBlock(bot, pos, blockId) {
         takeItems(c, blockId, 1);
     }
     try {
-        lookAt(bot, { x: x + 0.5, y, z: z + 0.5 });
+        lookAt(bot, { x, y, z });
         try { bot.playAnimation("set_block"); } catch (e) { /* ignore */ }
         const r = dim.runCommand(`setblock ${x} ${y} ${z} ${blockId}`);
         if (!r || r.successCount === 0) {
@@ -306,7 +367,16 @@ function swing(bot) {
     try { bot.playAnimation(isPlayerBody(bot) ? "animation.player.attack.rotations" : "animation.humanoid.attack.rotations"); } catch (e) { /* ignore */ }
 }
 
-function heldId(bot) { try { return bot.getComponent(EntityComponentTypes.Equippable)?.getEquipment(EquipmentSlot.Mainhand)?.typeId || null; } catch (e) { return null; } }
+function heldId(bot) {
+    try {
+        if (isPlayerBody(bot) && typeof bot.selectedSlotIndex === "number") {      // a player's hand is the selected hotbar slot
+            const c = containerOf(bot);
+            const st = c ? c.getItem(bot.selectedSlotIndex) : null;
+            if (st) return st.typeId;
+        }
+    } catch (e) { /* fall through to the equipment slot */ }
+    try { return bot.getComponent(EntityComponentTypes.Equippable)?.getEquipment(EquipmentSlot.Mainhand)?.typeId || null; } catch (e) { return null; }
+}
 // {id: count} of the inventory plus whatever is in the hand (an entity bot's hand is outside its container).
 function invWithHand(bot) { const inv = inventoryMap(bot); const h = heldId(bot); if (h && !inv[h]) inv[h] = 1; return inv; }
 
@@ -487,12 +557,16 @@ H.stop = {
 
 H.look_at = {
     start: (a, ctx) => {
-        let t = a.name ? findEntityByName(ctx.bot, a.name, 64) : null;
-        if (t && t.dimension?.id !== ctx.bot.dimension.id) t = null;
-        const target = t ? t.location : (a.x !== undefined ? { x: a.x, y: a.y ?? ctx.bot.location.y, z: a.z } : null);
-        if (!target) return { done: true, result: `look_at: could not find ${a.name || "target"}` };
-        lookAt(ctx.bot, target);
-        return { done: true, result: `looking at ${a.name || fmtPos(target)}` };
+        const bot = ctx.bot;
+        let t = a.name ? findEntityByName(bot, a.name, 64) : null;
+        if (t && t.dimension?.id !== bot.dimension.id) t = null;
+        if (t) { aimAt(bot, { x: t.location.x, y: t.location.y + 1.0, z: t.location.z }); return { done: true, result: `looking at ${a.name}` }; }
+        if (a.x === undefined || a.z === undefined) return { done: true, result: `look_at: could not find ${a.name || "target"}` };
+        // whole numbers are a block (its middle); a fractional point is aimed at exactly; no y means straight ahead at that spot
+        const whole = Number.isInteger(a.x) && Number.isInteger(a.z) && (a.y === undefined || Number.isInteger(a.y));
+        const point = { x: a.x + (whole ? 0.5 : 0), y: a.y === undefined ? eyeOf(bot).y : a.y + (whole ? 0.5 : 0), z: a.z + (whole ? 0.5 : 0) };
+        aimAt(bot, point);
+        return { done: true, result: `looking at ${fmtPos(point)}; ${describeLooking(bot, viewOf(bot))}` };
     },
 };
 
@@ -609,6 +683,108 @@ H.move = {
     },
 };
 
+// ---- working the world like a player: what the crosshair is on --------------------------------
+// mine: hold the attack button on the block under the crosshair until it breaks (the right tool in hand,
+// the arm swinging, the real break time), then the next one the crosshair is on, count times.
+H.mine = {
+    start: (a, ctx) => ({ count: Math.max(1, Math.min(32, Math.floor(Number(a.count)) || 1)), mined: 0, got: {}, started: ctx.now, target: null, lastSwing: -10 }),
+    step: (s, ctx) => {
+        const bot = ctx.bot, now = ctx.now;
+        const summary = () => `${s.mined} block${s.mined > 1 ? "s" : ""} (${Object.entries(s.got).map(([k, n]) => `${nameOf(k)} x${n}`).join(", ") || "nothing dropped"})`;
+        const finish = (why) => { stopMoving(bot); return { done: true, result: s.mined ? `mined ${summary()}${why ? "; " + why : ""}` : (why || "mined nothing") }; };
+        if (now - s.started > 20 * 60) return finish("stopped after a minute");
+        const inv = invWithHand(bot);
+        const t = crosshair(bot, REACH);
+        if (!t) return finish(`nothing in reach under the crosshair (${describeLooking(bot, viewOf(bot))}): step closer, or look at the block`);
+        if (t.kind === "water" || t.kind === "lava") return finish(`the crosshair is on ${nameOf(t.id)}, which cannot be mined`);
+        const key = `${t.x},${t.y},${t.z}`;
+        if (!s.target || s.target.key !== key) {                 // a new block, or the head moved off the one being mined: the progress starts again, as in the game
+            const chk = harvestCheck(t.id, inv);
+            if (!chk.ok) return finish(`cannot mine ${nameOf(t.id)}: ${chk.reason}`);
+            if (chk.tool) holdItem(bot, chk.tool);
+            s.target = { key, x: t.x, y: t.y, z: t.z, id: t.id, since: now, need: breakTicks(t.id, inv) };
+        }
+        if (now - s.lastSwing >= 5) { swing(bot); s.lastSwing = now; }
+        if (now - s.target.since < s.target.need) return undefined;
+        const tg = s.target; s.target = null;
+        const r = harvestBlock(bot, tg);
+        if (!r.ok) return finish(`could not break ${nameOf(tg.id)}: ${r.reason}`);
+        s.mined++;
+        if (Array.isArray(r.drops) && r.drops.length) for (const d of r.drops) s.got[d.id] = (s.got[d.id] || 0) + (d.n || 1);
+        system.runTimeout(() => { try { collectNearbyItems(bot, 5); } catch (e) { /* ignore */ } }, 12);
+        if (s.mined >= s.count) return finish("");
+        return undefined;
+    },
+};
+H.mine.fast = true;
+
+// place: right-click a block face with a block in hand: the block goes on the face under the crosshair.
+H.place = {
+    start: (a, ctx) => {
+        const bot = ctx.bot;
+        const t = crosshair(bot, REACH);
+        if (!t) return { done: true, result: `nothing to place against (${describeLooking(bot, viewOf(bot))}): look at the block or the ground you want to build on` };
+        const f = t.face || { x: 0, y: 1, z: 0 };
+        const pos = { x: t.x + f.x, y: t.y + f.y, z: t.z + f.z };
+        const bx = Math.floor(bot.location.x), bz = Math.floor(bot.location.z), by = Math.floor(bot.location.y + 0.15);
+        if (pos.x === bx && pos.z === bz && (pos.y === by || pos.y === by + 1)) return { done: true, result: "that spot is where you stand: step back, or look at another face of the block" };
+        const id = a.block ? materialBlockId(bot, a.block) : heldId(bot);
+        if (!id) return { done: true, result: "your hand is empty: hold a block first (hold), or name one with block" };
+        const r = placeBlock(bot, pos, id);
+        if (r.ok) rememberContainer(ctx, pos, id);
+        return { done: true, result: r.ok ? `placed ${nameOf(id)} at ${fmtPos(pos)} on the ${nameOf(t.id)}` : `could not place ${nameOf(id)}: ${r.reason}` };
+    },
+};
+
+// use: right-click. A creature in front is interacted with, a door, chest or other usable block is used, food in hand is eaten,
+// a block in hand goes on the face in front, anything else in hand is used.
+H.use = {
+    start: (a, ctx) => {
+        const bot = ctx.bot;
+        const t = crosshair(bot, REACH);
+        const e = entityInSight(bot, REACH, t ? t.dist : Infinity);
+        if (e) { const name = entityName(e.entity); ctx.actuator.enqueueFront({ type: "interact", name }); return { done: true, result: `using the ${name} in front of you` }; }
+        const held = heldId(bot);
+        if (t && INTERACTABLE.test(t.id)) { ctx.actuator.enqueueFront({ type: "interact", x: t.x, y: t.y, z: t.z }); return { done: true, result: `using the ${nameOf(t.id)} in front of you` }; }
+        if (held && FOOD.test(held)) { ctx.actuator.enqueueFront({ type: "eat" }); return { done: true, result: `eating (${nameOf(held)} in hand)` }; }
+        if (held && t) { const r = H.place.start({}, ctx); if (/^placed/.test(r.result)) return r; }
+        if (held) { ctx.actuator.enqueueFront({ type: "use_item", item: held }); return { done: true, result: `using ${nameOf(held)}` }; }
+        return { done: true, result: `nothing to use: your hand is empty and ${t ? "the " + nameOf(t.id) + " in front of you does nothing" : "nothing is in front of you"}` };
+    },
+};
+
+// hit: one left click: a swing, and if a creature or player is under the crosshair, a fight with it.
+H.hit = {
+    start: (a, ctx) => {
+        const bot = ctx.bot;
+        swing(bot);
+        const t = crosshair(bot, 4);
+        const e = entityInSight(bot, 4.2, t ? t.dist : Infinity);
+        if (!e) return { done: true, result: "swung at nothing" };
+        const name = entityName(e.entity);
+        ctx.actuator.enqueueFront({ type: "attack", name });
+        return { done: true, result: `hit the ${name} (${e.dist.toFixed(1)}m): fighting it` };
+    },
+};
+
+// hold: pick what is in the hand: a hotbar slot (1-9) or an item by name.
+H.hold = {
+    start: (a, ctx) => {
+        const bot = ctx.bot;
+        if (a.slot !== undefined) {
+            const n = Math.floor(Number(a.slot));
+            if (!(n >= 1 && n <= 9)) return { done: true, result: "hold: slot must be 1 to 9" };
+            if (!isPlayerBody(bot)) return { done: true, result: "hold: only a player body has a hotbar" };
+            try { bot.selectedSlotIndex = n - 1; } catch (e) { return { done: true, result: "could not change the hotbar slot" }; }
+            let st = null; try { st = containerOf(bot)?.getItem(n - 1); } catch (e) { /* ignore */ }
+            return { done: true, result: st ? `holding ${nameOf(st.typeId)}${st.amount > 1 ? " x" + st.amount : ""} (slot ${n})` : `slot ${n} is empty: bare hands` };
+        }
+        const id = resolveItemId(bot, a.item);
+        if (!id) return { done: true, result: `no ${a.item} in the inventory` };
+        return { done: true, result: holdItem(bot, id) ? `holding ${nameOf(id)}` : `could not put ${nameOf(id)} in hand` };
+    },
+};
+
 H.move_to = {
     start: (a, ctx) => ({ target: { x: a.x + 0.5, y: a.y, z: a.z + 0.5 }, mode: a.sprint === false ? "walk" : "sprint", started: ctx.now, lastPos: { ...ctx.bot.location }, stuck: 0 }),
     step: (s, ctx) => {
@@ -634,7 +810,7 @@ H.go_to_player = {
     step: (s, ctx) => {
         let t; try { t = world.getEntity(s.targetId); } catch (e) { t = null; }
         if (!t || !t.isValid) { stopMoving(ctx.bot); return { done: true, result: `${s.name} is gone` }; }
-        if (near(ctx.bot, t.location, 2.5)) { stopMoving(ctx.bot); lookAt(ctx.bot, t.location); return { done: true, result: `reached ${s.name}` }; }
+        if (near(ctx.bot, t.location, 2.5)) { stopMoving(ctx.bot); lookAtThing(ctx.bot, t.location); return { done: true, result: `reached ${s.name}` }; }
         if (ctx.now - s.started > MOVE_TIMEOUT) { stopMoving(ctx.bot); return { done: true, result: `could not reach ${s.name}` }; }
         goTo(ctx.bot, t.location, "sprint", PRIO, true);
         return undefined;
@@ -687,7 +863,7 @@ H.attack = {
         if (isPlayerBody(bot)) return undefined;   // combatTick runs this body every tick
         const d = dist(bot.location, t.location);
         if (d > 2.4) goTo(bot, t.location, "sprint", NAV.COMBAT + 1, true);
-        else { stopMoving(bot); lookAt(bot, t.location); if (ctx.now - (s.lastHit || 0) >= 20) { s.lastHit = ctx.now; try { t.applyDamage(meleeDamage(bot), { cause: EntityDamageCause.entityAttack, damagingEntity: bot }); swing(bot); } catch (e) { /* ignore */ } } }
+        else { stopMoving(bot); lookAtThing(bot, t.location); if (ctx.now - (s.lastHit || 0) >= 20) { s.lastHit = ctx.now; try { t.applyDamage(meleeDamage(bot), { cause: EntityDamageCause.entityAttack, damagingEntity: bot }); swing(bot); } catch (e) { /* ignore */ } } }
         return undefined;
     },
 };
@@ -703,7 +879,7 @@ export function combatTick(brain, now) {
     let t; try { t = world.getEntity(s.targetId); } catch (e) { t = null; }
     if (!t || !t.isValid) return false;
     const d = dist(bot.location, t.location);
-    if (now % 3 === 0) lookAt(bot, { x: t.location.x - 0.5, y: t.location.y + 0.5, z: t.location.z - 0.5 });
+    if (now % 3 === 0) lookAtThing(bot, t.location);
     if (d > REACH_MELEE - 0.2) { goTo(bot, t.location, "sprint", NAV.COMBAT + 1, true); return true; }
     stopMoving(bot);
     if (now - (s.lastHit || -100) >= HIT_COOLDOWN) {
@@ -1410,7 +1586,7 @@ H.interact = {
             if (!t) return { done: true, result: `no ${a.name} nearby` };
             if (/horse|donkey|mule|camel|boat|minecart|pig|strider/.test(t.typeId)) { try { bot.runCommand(`ride @s start_riding @e[type=${t.typeId},c=1,r=8]`); bot.addTag("is_mounted"); return { done: true, result: `riding ${nameOf(t.typeId)}` }; } catch (e) { return { done: true, result: "could not mount" }; } }
             if (/wolf|cat|parrot/.test(t.typeId)) { try { const tame = t.getComponent(EntityComponentTypes.Tameable); if (tame && !tame.isTamed) { t.setDynamicProperty("rg:ai_owner_id", bot.id); t.triggerEvent("minecraft:on_tame"); return { done: true, result: `tamed the ${nameOf(t.typeId)}` }; } } catch (e) { /* ignore */ } }
-            if (t.typeId === "rg:bot" || t.typeId === "minecraft:player") { lookAt(bot, t.location); return { done: true, result: `waved at ${a.name}` }; }
+            if (t.typeId === "rg:bot" || t.typeId === "minecraft:player") { lookAtThing(bot, t.location); return { done: true, result: `waved at ${a.name}` }; }
             return { done: true, result: `poked the ${nameOf(t.typeId)}; nothing special happened` };
         }
         const pos = { x: a.x, y: a.y, z: a.z };
@@ -1682,7 +1858,7 @@ export class Actuator {
             if (a.type === "stop") { this.queue.length = 0; if (this.current) this.finish(`cancelled ${this.current.action.type}`); this.run(a, system.currentTick); continue; }
             if (a.type === "follow" || a.type === "set_home" || a.type === "emote") { this.run(a, system.currentTick); continue; }   // instant
             // turning the head and jumping happen at their place in the order: right away when nothing is going on, otherwise after what comes first
-            if ((a.type === "look_at" || a.type === "look" || a.type === "jump") && !this.current && !this.queue.length) { this.run(a, system.currentTick); continue; }
+            if ((a.type === "look_at" || a.type === "look" || a.type === "jump" || a.type === "hold") && !this.current && !this.queue.length) { this.run(a, system.currentTick); continue; }
             this.queue.push(a);
         }
     }
@@ -1742,7 +1918,7 @@ export class Actuator {
         const d = dist(this.bot.location, t.location);
         const busy = this.current && this.current.action.type !== "wait";
         if (d > 4 && !busy) goTo(this.bot, t.location, d > 10 ? "sprint" : "walk", NAV.FOLLOW + 1, true);
-        else if (!busy && d <= 4) { releaseMove(this.bot, SOURCE); if (now % 40 < STEP) lookAt(this.bot, t.location); }
+        else if (!busy && d <= 4) { releaseMove(this.bot, SOURCE); if (now % 40 < STEP) lookAtThing(this.bot, t.location); }
     }
 
     cancelFollow() { this.follow = null; }

@@ -21,6 +21,11 @@ export const ACTIONS = {
     look_around:  { doc: "Turn all the way round (about a second) and report, in every direction, how far you can walk, what stops you, and what you can see far off: trees, ore, water, lava, buildings.", params: {} },
     move:         { doc: "Hold the movement keys for a few seconds, relative to where you face: direction forward | back | left | right, seconds 0.2-15, optionally sprint, sneak or jump. You stop by yourself before a wall, a deep drop, lava or water, step up one-block ledges, and are told how far you got and what stopped you.", params: { direction: { type: "string", enum: ["forward", "back", "backward", "left", "right"] }, seconds: { type: "number", min: 0.2, max: 15 }, sprint: { type: "boolean" }, sneak: { type: "boolean" }, jump: { type: "boolean" } } },
     jump:         { doc: "Jump once (to hop up a block, over a gap, or just because).", params: {} },
+    mine:         { doc: "Hold the attack button on the block under your crosshair until it breaks (right tool in hand, real break time, drops picked up), then the next block the crosshair is on, count times. Look at the block first (look, look_at). Says what is in reach and what you got.", params: { count: { type: "number", min: 1, max: 32 } } },
+    place:        { doc: "Right-click with a block: put it on the face of the block under your crosshair (look at the ground or a wall first). Uses the block in your hand, or the one named in block.", params: { block: { type: "string" } } },
+    use:          { doc: "Right-click what is in front of you: talk to or ride a creature, open a door/chest/crafting table, press a button, eat the food in your hand, place the block in your hand, or use the item in your hand.", params: {} },
+    hit:          { doc: "Left-click once: swing your arm, and if a creature or player is under your crosshair, fight it.", params: {} },
+    hold:         { doc: "Choose what is in your hand: hotbar slot 1-9 (see Hotbar in the observation) or an item by name.", params: { slot: { type: "number", min: 1, max: 9 }, item: { type: "string" } } },
     look_at:      { doc: "Face a player/entity by name or a position.", params: { name: { type: "string" }, x: { type: "number" }, y: { type: "number" }, z: { type: "number" } } },
     attack:       { doc: "Fight a named entity/player (uses best weapon, strafes, blocks).", params: { name: { type: "string", required: true } } },
     defend:       { doc: "Fight back against anything hostile nearby, protect named player if given.", params: { protect: { type: "string" } } },
@@ -163,6 +168,7 @@ export function validateAction(a) {
         }
         action[k] = v;
     }
+    if (type === "hold" && action.slot === undefined && !action.item) return { ok: false, error: "hold needs a slot (1-9) or an item" };
     if (type === "look_at" && !action.name && action.x === undefined) return { ok: false, error: "look_at needs a name or x,y,z" };
     if (type === "look" && ["facing", "yaw", "pitch", "turn", "tilt"].every(k => action[k] === undefined)) return { ok: false, error: "look needs facing, yaw/pitch or turn/tilt" };
     if (type === "interact" && !action.name && action.x === undefined) return { ok: false, error: "interact needs a name or x,y,z" };

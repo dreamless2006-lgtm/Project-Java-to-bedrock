@@ -304,3 +304,13 @@ test("in self-test mode the bridge neither says hello nor listens to the addon",
     assert.ok(!quiet.outQueue.some(c => /realai:in/.test(c)));
     assert.ok(!queued.some(q => q.name === "text"), "and nothing said in the world's chat");
 });
+
+test("the decision line for the log says what the model chose", async () => {
+    const { summarizeDecision } = await import("../bridge/index.mjs");
+    const line = summarizeDecision('Sure! {"thought":"trees to the east","say":"on my way","actions":[{"type":"move_to","x":12,"y":64,"z":3},{"type":"gather","material":"oak_log","amount":4}]} done');
+    assert.match(line, /move_to\(x=12 y=64 z=3\), gather\(material=oak_log amount=4\)/);
+    assert.match(line, /says "on my way"/); assert.match(line, /thinks "trees to the east"/);
+    assert.equal(summarizeDecision('{"actions":[]}'), "no action");
+    assert.match(summarizeDecision("sorry"), /not readable/);
+    assert.match(summarizeDecision(undefined), /not readable/);
+});
