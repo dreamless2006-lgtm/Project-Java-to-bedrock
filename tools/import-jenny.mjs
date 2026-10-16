@@ -21,7 +21,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { strFromU8, unzipSync } from 'fflate';
 import { BABY_LOOKS, babyIcon } from './lib/baby-icon.mjs';
-import { addNewborn, babyScale, fitBelly, measureBody, smoothBelly } from './lib/belly-fit.mjs';
+import { SHELL_KICK_GROW, addNewborn, babyScale, fitBelly, measureBody, smoothBelly } from './lib/belly-fit.mjs';
 import { EGG_DEPTH, FETUS_SCALE, crowningLines } from './lib/crowning.mjs';
 import { eulerFromMat } from './lib/bedrock-math.mjs';
 import { poseAt, poseBones } from './lib/geo-render.mjs';
@@ -372,9 +372,10 @@ if (portBP && portRP) {
         });
         d.render_controllers = entries;
         d.scripts ??= {};
-        const pre = (d.scripts.pre_animation ?? []).filter((/** @type {string} */ l) => !/^v\.(bp|phase|pose|pregnant_pose|push|kick|kicking|kl|belly_growth|k_[a-z_]+|kr_f)\s*=/.test(l));
+        const pre = (d.scripts.pre_animation ?? []).filter((/** @type {string} */ l) => !/^v\.(bp|phase|pose|pregnant_pose|push|kick|kicking|kl|belly_growth|k_[a-z_]+|kr_f|kick_grow)\s*=/.test(l));
         // Girls and the stages that play their scenes: the belly, the kicks, the contractions, the newborn.
-        pre.push(...bellyPreAnimation(), ...kickRoomLines('v.bp', (p) => firstSet[p]));
+        // (Her kicks are patches of a smooth skin: they swell less as they push than the mod's cubes.)
+        pre.push(...bellyPreAnimation(), ...kickRoomLines('v.bp', (p) => firstSet[p]), `v.kick_grow = ${SHELL_KICK_GROW};`);
         // Her baby (or egg) crowns between her legs with each push of the birth (tools/lib/crowning.mjs).
         pre.push(...crowningLines({ when: "v.pose == 'birth'", scale: FETUS_SCALE * babyScale(sets[0].body), ...(egg ? EGG_DEPTH : {}) }));
         d.animations = { ...(d.animations ?? {}), ...BELLY_ANIMATIONS, newborn: `animation.${MOD}.crowning_free`, belly_controller: `controller.animation.${MOD}.belly` };

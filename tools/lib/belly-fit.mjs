@@ -6,7 +6,7 @@
 // controller per size (like the other females) with the mod's Alex "extra" texture of that phase.
 // Measured from the Jenny-mod style of rig (body > upperBody > hip > torso ...), which every girl of
 // the Jenny Mod Java Port uses.
-import { anglesForFront, rotateBedrock } from './bedrock-math.mjs';
+import { anglesForFront, eulerFromMat, matFromEuler, rotateBedrock } from './bedrock-math.mjs';
 import { crowningGeometry, simpleBaby, simpleEgg } from './crowning.mjs';
 
 /** The player torso box the mod's bellies are built around. */
@@ -15,6 +15,7 @@ const PLAYER_BOX = [[-4, 4], [12, 24], [-2, 2]];
 const NOT_TRUNK = /arm|leg|head|boob|booty|cheek|vagina|tail|wing|hair|eye|mouth|lash|smile|neck|choker|bell|flower|hat|ear|steve|cock|nut|item|shin|knee|foot|hand|finger|thigh|cape|hood|scarf|bag|lamp|cum|backpack|layer|stars|bra|string|asshole|fuckhole|pillow|bed|zipper|bone\d|cloth|skirt|slip|hotpants|dress/i;
 
 const round = (/** @type {number} */ v) => Math.round(v * 10000) / 10000;
+const transposed = (/** @type {number[][]} */ m) => [0, 1, 2].map((r) => [0, 1, 2].map((c) => m[c][r]));
 
 const rotate = rotateBedrock;
 
@@ -266,8 +267,32 @@ export function fitBelly(playerBody, id, body) {
 
 // ---- the smooth shell -----------------------------------------------------------------------------
 
-/** How far under the shell's surface a kick dome rests (what its pulse pushes it out by, plus the bulge). */
-export const KICK_INSET = 0.6;
+// A kick on the smooth shell is a patch of the skin itself bulging out, not a block pushing through
+// it: tiles shaped and shaded like the shell around the spot rest just under it, the middle ones
+// shallow and the rim ones deeper, so when the kick pushes them all out together the middle rises
+// most and the rim barely clears the skin - a round bump that follows the belly's curve.
+/** How far under the skin the middle of a kick patch rests. */
+export const KICK_REST = 0.25;
+/** How much deeper the patch's rim rests than its middle. */
+const KICK_RIM = 0.7;
+/**
+ * Where each kick shows on a smooth belly: [height as a share of the belly from the bottom, angle
+ * round it in radians, 0 straight ahead and positive toward her left]. Spread over the front and the
+ * sides, clear of the navel (straight ahead just below the middle).
+ */
+export const SHELL_KICK_SPOTS = /** @type {Record<string, [number, number]>} */ ({
+  front_kick: [0.58, 0.32],
+  top_kick: [0.76, -0.22],
+  bottom_kick: [0.27, -0.3],
+  left_kick: [0.46, 0.92],
+  right_kick: [0.42, -0.95],
+});
+/** The terraces of a kick patch: [reach as a share of its radius, depth as a share of KICK_RIM]. */
+const TERRACES = [[1, 0.5], [0.6, 0]];
+/** Tile thickness: enough that no gap opens under a tile at the strongest kick's peak. */
+const KICK_THICK = 1.8;
+/** How much a skin-patch kick swells as it pushes, next to the mod's cubes (v.kick_grow of the kick pulses). */
+export const SHELL_KICK_GROW = 0.35;
 /** Where the belly is fullest, as a fraction of its height from the bottom: below the navel. */
 const FULLEST = 0.45;
 
@@ -284,9 +309,9 @@ export const anglesForNormal = anglesForFront;
  * slabs, each turned to lie tangent to a pregnant profile (an ellipsoid-like surface fullest below
  * the navel, as wide as a bit more than her torso, as deep as the mod's belly of that size would be
  * on her), each slab's outer face mapped onto the skin texture (tools/lib/belly-skin.mjs) by its
- * position so the gradient shades the whole thing round. The kick bones become domes (three
- * stacked slabs) resting KICK_INSET under the surface on mounts turned to the local normal, so a
- * kick pushes straight out of the skin wherever it is.
+ * position so the gradient shades the whole thing round. Each kick bone becomes a patch of that skin
+ * resting just under it on a mount turned to the local normal, so a kick bulges the skin straight
+ * out wherever it is.
  * @param {any} fitted a geometry file from fitBelly
  * @param {Body} body the waist box the belly was fitted to
  * @param {{ rows?: number, steps?: number }} [options]
@@ -389,34 +414,67 @@ export function smoothBelly(fitted, body, { rows = 16, steps = 12 } = {}) {
   }
   belly.cubes = cubes;
   delete belly.rotation;
-  // The kicks: domes on mounts turned to the local normal, resting KICK_INSET under the surface.
+  // The kicks: patches of the skin on mounts turned to the local normal (so a kick's push, along the
+  // mount's -z, goes straight out of the skin), drawn by a child bone that turns them back, so each
+  // tile keeps its place and slant on the shell.
   const kickBones = names.filter(isKick);
   /** @type {any[]} */
   const mounts = [];
+  /** @type {any[]} */
+  const skins = [];
+  const speed = (/** @type {number} */ t, /** @type {number} */ phi, /** @type {'t' | 'phi'} */ along) => {
+    const e = 1e-3;
+    const [a, b] = along === 't' ? [point(Math.min(1, t + e), phi), point(Math.max(0, t - e), phi)] : [point(t, phi + e), point(t, phi - e)];
+    return Math.max(1e-3, dist(a, b) / (2 * e));
+  };
   for (const name of kickBones) {
     const bone = byName.get(name);
     const cube = bone?.cubes?.[0];
     if (!bone || !cube) continue;
-    const c = cube.origin.map((/** @type {number} */ o, /** @type {number} */ k) => o + cube.size[k] / 2);
-    const t = Math.max(0.1, Math.min(0.9, (c[1] - y0) / H));
-    const phi = Math.max(-1.2, Math.min(1.2, Math.atan2(c[0] / Math.max(0.5, W), Math.max(0.05, (zBack - c[2]) / Math.max(0.5, D)))));
+    // her own spot on the round belly (the mod's kick cubes huddle low in its box belly)
+    const [t, phi] = SHELL_KICK_SPOTS[name] ?? [0.5, 0];
     const surface = point(t, phi);
     const n = normal(t, phi);
-    const width = Math.max(1.2, Math.min(cube.size[0], 2 * W * 0.55));
-    const height = width * 0.55;
-    // the mount sits at the dome's base, so the dome rises along the mount's -z out of the skin
-    const base = surface.map((v, k) => v - n[k] * (KICK_INSET + height));
-    const centre = { uv: [SKIN.size / 2 - 4, SKIN.size / 2 - 4], uv_size: [8, 8] };
-    const uv = { north: centre, south: centre, east: centre, west: centre, up: centre, down: centre };
-    const layer = (/** @type {number} */ w, /** @type {number} */ z0, /** @type {number} */ z1) => ({ origin: [round(base[0] - w / 2), round(base[1] - w / 2), round(base[2] - z1)], size: [round(w), round(w), round(z1 - z0)], uv });
-    bone.cubes = [layer(width, 0, height * 0.35), layer(width * 0.72, height * 0.35, height * 0.7), layer(width * 0.42, height * 0.7, height)];
+    // the bump's radius: about a seventh of the belly's smaller extent, within reason
+    const radius = Math.max(0.85, Math.min(1.45, 0.15 * Math.min(2 * W, H, 2.4 * D)));
+    const step = radius / 3.5;
+    const dt = step / speed(t, phi, 't'), dphi = step / speed(t, phi, 'phi');
+    /** @type {any[]} */
+    const tiles = [];
+    // Three terraces, each a continuous piece of the skin at its own depth: the widest deepest, the
+    // smallest shallowest, so a push raises a round bump stepped only at two soft rims.
+    for (const [reach, depth] of TERRACES) {
+      for (let i = -4; i <= 4; i++) {
+        for (let j = -4; j <= 4; j++) {
+          if (Math.hypot(i, j) * step > reach * radius + 1e-6) continue;
+          const ti = Math.max(0.04, Math.min(0.96, t + i * dt)), pi = Math.max(-1.45, Math.min(1.45, phi + j * dphi));
+          const p = point(ti, pi);
+          const ni = normal(ti, pi);
+          const inset = KICK_REST + KICK_RIM * depth;
+          // the tile's outer face rests `inset` under the shell's outer face (which stands 0.1 proud of the surface)
+          const centre = p.map((v, k) => v + ni[k] * (0.1 - inset - KICK_THICK / 2));
+          const side = step * 1.2;
+          tiles.push({
+            origin: [round(centre[0] - side / 2), round(centre[1] - side / 2), round(centre[2] - KICK_THICK / 2)],
+            size: [round(side), round(side), KICK_THICK],
+            pivot: centre.map(round),
+            rotation: anglesForNormal(ni),
+            uv: patchUv(ti - dt * 0.6, ti + dt * 0.6, pi - dphi * 0.6, pi + dphi * 0.6),
+          });
+        }
+      }
+    }
+    const turn = anglesForNormal(n);
+    const back = eulerFromMat(transposed(matFromEuler(turn))).map(round);
+    mounts.push({ name: `${name}_mount`, parent: 'belly', pivot: surface.map(round), rotation: turn });
     bone.parent = `${name}_mount`;
-    bone.pivot = base.map(round);
+    bone.pivot = surface.map(round);
     delete bone.rotation;
-    mounts.push({ name: `${name}_mount`, parent: 'belly', pivot: base.map(round), rotation: anglesForNormal(n) });
+    delete bone.cubes;
+    skins.push({ name: `${name}_skin`, parent: name, pivot: surface.map(round), rotation: back, cubes: tiles });
   }
   // The mod's rotated side and bottom boxes go; the kicks stay on their mounts.
-  g.bones = [...g.bones.filter((/** @type {any} */ b) => !names.includes(b.name) || b.name === 'belly'), ...mounts, ...kickBones.map((n) => byName.get(n)).filter(Boolean)];
+  g.bones = [...g.bones.filter((/** @type {any} */ b) => !names.includes(b.name) || b.name === 'belly'), ...mounts, ...kickBones.map((n) => byName.get(n)).filter(Boolean), ...skins];
   g.description.texture_width = SKIN.size;
   g.description.texture_height = SKIN.size;
   return doc;

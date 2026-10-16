@@ -114,7 +114,8 @@ export function kickPulseAnimations() {
       const pulse = `math.pow(math.max(0.0, math.sin(q.life_time * ${Number(f).toFixed(1)} + ${Number(phi).toFixed(1)})), 3.0)`;
       channels[bone] = {
         position: [0, `${Number(drift).toFixed(2)} * math.sin(q.life_time * ${(Number(f) * 0.31).toFixed(1)} + ${Number(phi).toFixed(1)}) * ${pulse}`, `-(v.k_${bone}_z + ${Number(bulge).toFixed(2)}) * ${pulse}`],
-        scale: [`1.0 + ${Number(grow).toFixed(2)} * ${pulse}`, `1.0 + ${Number(grow).toFixed(2)} * ${pulse}`, '1.0'],
+        // v.kick_grow (unset: 1) lets a body whose kicks are patches of a smooth skin swell them less
+        scale: [`1.0 + ${Number(grow).toFixed(2)} * (v.kick_grow ?? 1.0) * ${pulse}`, `1.0 + ${Number(grow).toFixed(2)} * (v.kick_grow ?? 1.0) * ${pulse}`, '1.0'],
       };
     }
     out[`animation.${MOD}.${name}`] = { loop: true, bones: channels };

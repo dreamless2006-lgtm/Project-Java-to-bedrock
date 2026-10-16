@@ -989,7 +989,8 @@ test('kicks and contractions are smooth: rolling kick pulses, eased in and out, 
       assert.equal(channels.position[0], 0);
       // ...drifting a little along the skin as it rolls
       assert.match(String(channels.position[1]), new RegExp(`^0\\.\\d\\d \\* math\\.sin\\(q\\.life_time \\* \\d+\\.\\d \\+ \\d+\\.0\\) ${pulse}$`), `${name} ${bone} drifts`);
-      assert.match(String(channels.scale[0]), /^1\.0 \+ 0\.\d\d \* math\.pow/, `${name} ${bone} grows as it pushes`);
+      // (v.kick_grow, 1 unless a body sets it, lets the port girls' skin-patch kicks swell less)
+      assert.match(String(channels.scale[0]), /^1\.0 \+ 0\.\d\d \* \(v\.kick_grow \?\? 1\.0\) \* math\.pow/, `${name} ${bone} grows as it pushes`);
       assert.equal(channels.scale[2], '1.0', 'never deeper');
     }
     const bulges = Object.values(anim.bones).map((c) => Number(/\+ (\d\.\d\d)\)/.exec(String(c.position[2]))?.[1]));
@@ -1304,12 +1305,27 @@ test('the merged Jenny Mod Java Port: patched entities, bellies under every body
   assert.ok(existsSync(join(RP, 'textures/jenny_port/minepreggo/jenny_belly.png')));
   const rcs = json(join(RP, 'render_controllers/jenny_port/minepreggo_bellies.render_controllers.json')).render_controllers;
   for (const rc of bellyRcs) assert.deepEqual(rcs[Object.keys(rc)[0]].textures, ['Texture.minepreggo_belly'], Object.keys(rc)[0]);
-  // Her kicks are domes on mounts turned to the skin, so a kick pushes straight out of it.
+  // Her kicks are patches of her own skin on mounts turned to the belly's surface: a kick bulges the
+  // skin straight out of it as a low round bump (the mod's kick cubes are only for its box bellies).
   for (const kick of ['kick_i', 'kick_ii', 'kick_iii', 'contraction_wave']) assert.equal(client.animations[kick], `animation.minepreggo.${kick}`);
   const frontKick = belly.bones.find((/** @type {any} */ b) => b.name === 'front_kick');
+  const mount = belly.bones.find((/** @type {any} */ b) => b.name === 'front_kick_mount');
+  const skin = belly.bones.find((/** @type {any} */ b) => b.name === 'front_kick_skin');
   assert.equal(frontKick.parent, 'front_kick_mount');
-  assert.equal(belly.bones.find((/** @type {any} */ b) => b.name === 'front_kick_mount').parent, 'belly');
-  assert.equal(frontKick.cubes.length, 3, 'a dome of three layers');
+  assert.equal(mount.parent, 'belly');
+  assert.equal(skin.parent, 'front_kick');
+  assert.ok(!frontKick.cubes?.length, 'the kick bone only moves its patch');
+  assert.ok(skin.cubes.length >= 20 && skin.cubes.every((/** @type {any} */ c) => c.rotation && c.uv.north && c.size[0] < 1.5), `a patch of ${skin.cubes.length} small tiles, turned to the skin and shaded like it`);
+  // the patch's bone turns back what the mount turned, so at rest the tiles lie exactly where they were built
+  const { matFromEuler } = await import('../lib/bedrock-math.mjs');
+  const product = (/** @type {number[][]} */ a, /** @type {number[][]} */ b) => a.map((row) => [0, 1, 2].map((c) => row[0] * b[0][c] + row[1] * b[1][c] + row[2] * b[2][c]));
+  const turned = product(matFromEuler(mount.rotation), matFromEuler(skin.rotation));
+  turned.forEach((row, r) => row.forEach((v, c) => assert.ok(Math.abs(v - (r === c ? 1 : 0)) < 1e-3, `mount x skin is the identity (${JSON.stringify(turned)})`)));
+  // and hidden under the skin until a kick lifts it: SHELL_KICK.travel out, barely sliding
+  const { kickRoom, SHELL_KICK, BULGE } = await import('../lib/kick-clamp.mjs');
+  assert.deepEqual(kickRoom(belly).front_kick, { x: SHELL_KICK.lateral - BULGE.x, y: SHELL_KICK.lateral - BULGE.y, z: SHELL_KICK.travel - BULGE.z });
+  // its kicks swell less than the mod's cubes do
+  assert.ok(client.scripts.pre_animation.includes('v.kick_grow = 0.35;'));
   // The crowning: her baby under her hip at her opening, head first, shown only while she pushes during the birth.
   const bone = (/** @type {string} */ name) => belly.bones.find((/** @type {any} */ b) => b.name === name);
   assert.equal(bone('crowning')?.parent, 'hip');

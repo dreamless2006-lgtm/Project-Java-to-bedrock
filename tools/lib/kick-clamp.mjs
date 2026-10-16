@@ -13,6 +13,8 @@ export const KICK_BONES = ['front_kick', 'left_kick', 'right_kick', 'top_kick', 
 /** How far a kick shows beyond the skin at its peak, in model units: forward, sideways and up/down. */
 export const BULGE = { z: 1.5, x: 1.25, y: 1.25 };
 const MAX_SCALE = 1.25;
+/** How far a skin-patch kick on a smooth shell bulges out at a clamped kick's peak, and slides along the skin. */
+export const SHELL_KICK = { travel: 1.15, lateral: 0.2 };
 /** A channel whose peak travel is below this (model units) is a jitter, kept inside but not stretched. */
 export const MIN_TRAVEL = 0.5;
 
@@ -144,14 +146,15 @@ export function kickRoom(geometry) {
   if (!bellyCubes.length) return room;
   const belly = union(bellyCubes);
   for (const bone of KICK_BONES) {
-    const cubes = byName.get(bone)?.cubes;
-    if (!cubes?.length) continue;
-    // A kick dome on a mount (the smooth shells of tools/lib/belly-fit.mjs) rests a fixed KICK_INSET
-    // under the skin along the mount's own -z: that is its room out, and it can slide a little sideways.
+    // A kick on a mount (the smooth shells of tools/lib/belly-fit.mjs) is a patch of the skin that
+    // bulges along the mount's own -z: its "room" is set so that the clamped kicks (room plus the
+    // bulge) lift it SHELL_KICK.travel out and let it slide only SHELL_KICK.lateral along the skin.
     if (byName.has(`${bone}_mount`)) {
-      room[bone] = { x: 1, y: 1, z: 0.6 };
+      room[bone] = { x: SHELL_KICK.lateral - BULGE.x, y: SHELL_KICK.lateral - BULGE.y, z: SHELL_KICK.travel - BULGE.z };
       continue;
     }
+    const cubes = byName.get(bone)?.cubes;
+    if (!cubes?.length) continue;
     const kick = union(cubes.map((cube) => ({ cube, bone: undefined })));
     const r = (/** @type {number} */ v) => Math.max(0, Math.round(v * 100) / 100);
     room[bone] = {

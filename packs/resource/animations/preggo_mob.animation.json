@@ -257,8 +257,8 @@
             "-(v.k_front_kick_z + 1.50) * math.pow(math.max(0.0, math.sin(q.life_time * 80.0 + 0.0)), 3.0)"
           ],
           "scale": [
-            "1.0 + 0.30 * math.pow(math.max(0.0, math.sin(q.life_time * 80.0 + 0.0)), 3.0)",
-            "1.0 + 0.30 * math.pow(math.max(0.0, math.sin(q.life_time * 80.0 + 0.0)), 3.0)",
+            "1.0 + 0.30 * (v.kick_grow ?? 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 80.0 + 0.0)), 3.0)",
+            "1.0 + 0.30 * (v.kick_grow ?? 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 80.0 + 0.0)), 3.0)",
             "1.0"
           ]
         },
@@ -269,8 +269,8 @@
             "-(v.k_right_kick_z + 1.20) * math.pow(math.max(0.0, math.sin(q.life_time * 80.0 + 200.0)), 3.0)"
           ],
           "scale": [
-            "1.0 + 0.22 * math.pow(math.max(0.0, math.sin(q.life_time * 80.0 + 200.0)), 3.0)",
-            "1.0 + 0.22 * math.pow(math.max(0.0, math.sin(q.life_time * 80.0 + 200.0)), 3.0)",
+            "1.0 + 0.22 * (v.kick_grow ?? 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 80.0 + 200.0)), 3.0)",
+            "1.0 + 0.22 * (v.kick_grow ?? 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 80.0 + 200.0)), 3.0)",
             "1.0"
           ]
         }
@@ -286,8 +286,8 @@
             "-(v.k_front_kick_z + 1.75) * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 0.0)), 3.0)"
           ],
           "scale": [
-            "1.0 + 0.38 * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 0.0)), 3.0)",
-            "1.0 + 0.38 * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 0.0)), 3.0)",
+            "1.0 + 0.38 * (v.kick_grow ?? 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 0.0)), 3.0)",
+            "1.0 + 0.38 * (v.kick_grow ?? 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 0.0)), 3.0)",
             "1.0"
           ]
         },
@@ -298,8 +298,8 @@
             "-(v.k_left_kick_z + 1.60) * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 120.0)), 3.0)"
           ],
           "scale": [
-            "1.0 + 0.32 * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 120.0)), 3.0)",
-            "1.0 + 0.32 * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 120.0)), 3.0)",
+            "1.0 + 0.32 * (v.kick_grow ?? 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 120.0)), 3.0)",
+            "1.0 + 0.32 * (v.kick_grow ?? 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 120.0)), 3.0)",
             "1.0"
           ]
         },
@@ -310,8 +310,8 @@
             "-(v.k_right_kick_z + 1.60) * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 240.0)), 3.0)"
           ],
           "scale": [
-            "1.0 + 0.32 * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 240.0)), 3.0)",
-            "1.0 + 0.32 * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 240.0)), 3.0)",
+            "1.0 + 0.32 * (v.kick_grow ?? 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 240.0)), 3.0)",
+            "1.0 + 0.32 * (v.kick_grow ?? 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 240.0)), 3.0)",
             "1.0"
           ]
         }
@@ -327,8 +327,8 @@
             "-(v.k_front_kick_z + 2.00) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 0.0)), 3.0)"
           ],
           "scale": [
-            "1.0 + 0.48 * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 0.0)), 3.0)",
-            "1.0 + 0.48 * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 0.0)), 3.0)",
+            "1.0 + 0.48 * (v.kick_grow ?? 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 0.0)), 3.0)",
+            "1.0 + 0.48 * (v.kick_grow ?? 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 0.0)), 3.0)",
             "1.0"
           ]
         },
@@ -339,8 +339,8 @@
             "-(v.k_left_kick_z + 1.90) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 72.0)), 3.0)"
           ],
           "scale": [
-            "1.0 + 0.42 * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 72.0)), 3.0)",
-            "1.0 + 0.42 * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 72.0)), 3.0)",
+            "1.0 + 0.42 * (v.kick_grow ?? 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 72.0)), 3.0)",
+            "1.0 + 0.42 * (v.kick_grow ?? 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 72.0)), 3.0)",
             "1.0"
           ]
         },
@@ -351,8 +351,8 @@
             "-(v.k_right_kick_z + 1.90) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 144.0)), 3.0)"
           ],
           "scale": [
-            "1.0 + 0.42 * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 144.0)), 3.0)",
-            "1.0 + 0.42 * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 144.0)), 3.0)",
+            "1.0 + 0.42 * (v.kick_grow ?? 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 144.0)), 3.0)",
+            "1.0 + 0.42 * (v.kick_grow ?? 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 144.0)), 3.0)",
             "1.0"
           ]
         },
@@ -363,8 +363,8 @@
             "-(v.k_top_kick_z + 1.80) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 216.0)), 3.0)"
           ],
           "scale": [
-            "1.0 + 0.38 * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 216.0)), 3.0)",
-            "1.0 + 0.38 * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 216.0)), 3.0)",
+            "1.0 + 0.38 * (v.kick_grow ?? 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 216.0)), 3.0)",
+            "1.0 + 0.38 * (v.kick_grow ?? 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 216.0)), 3.0)",
             "1.0"
           ]
         },
@@ -375,8 +375,8 @@
             "-(v.k_bottom_kick_z + 1.80) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 288.0)), 3.0)"
           ],
           "scale": [
-            "1.0 + 0.38 * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 288.0)), 3.0)",
-            "1.0 + 0.38 * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 288.0)), 3.0)",
+            "1.0 + 0.38 * (v.kick_grow ?? 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 288.0)), 3.0)",
+            "1.0 + 0.38 * (v.kick_grow ?? 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 288.0)), 3.0)",
             "1.0"
           ]
         }
