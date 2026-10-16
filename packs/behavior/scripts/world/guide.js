@@ -37,7 +37,7 @@ export const CHAPTERS = [
     body:
       'Cravings: eat the craved kind of food (sweet, salty, sour or spicy). Other food feeds you less until you do.\n' +
       'Lactation: use a glass bottle to fill it with breast milk, which cures effects.\n' +
-      'Belly rubs (P3+): crouch and look down to rub your belly, or let another player crouch and interact with an empty hand.\n\n' +
+      'Belly rubs (P3+): crouch and look down (or use \'Rub my belly\' in this book) to rub your belly, or let another player crouch and interact with an empty hand.\n\n' +
       'Morning sickness, fetal movements (P3+), contractions (last phase) and back pain come on their own. Spicy food is risky from P4. Getting hurt while weak harms the pregnancy; at 0 % it ends in a miscarriage.',
   },
   {
@@ -114,23 +114,30 @@ export const CHAPTERS = [
   },
   {
     title: 'Settings',
-    body: 'Actions & Stuff: show the pregnancy to players whose game runs it.',
+    body: 'Actions & Stuff: your belly, its skin tone, and the belly-rub gesture.',
     settings: true,
   },
 ];
 
-/** The Settings page: what Actions & Stuff players see (player/compat.js). */
+/** The belly's skin tones, in the order of player/compat.js (0 is the Alex belly of 0.6.0). */
+const TONE_NAMES = ['Alex (default)', 'Light', 'Medium', 'Tan', 'Brown', 'Dark'];
+
+/** The Settings page: what players with another player model (Actions & Stuff) see of her (player/compat.js). */
 export function openSettings(/** @type {Player} */ player, /** @type {() => void} */ back) {
   const now = settingsOf(player);
   new ModalFormData()
     .title('Minepreggo settings')
-    .toggle('My game runs Actions & Stuff (pregnancy poses play on it; rub your belly from this book)', { defaultValue: now.viewer })
-    .toggle('Show my belly to Actions & Stuff players (held in your off-hand while pregnant)', { defaultValue: now.belly })
+    .label('Players whose game runs Actions & Stuff (or another pack with its own player model) cannot see this pack\'s pregnant body. They get the poses automatically; the belly needs your off-hand.')
+    .toggle('Show my belly to them (held in my off-hand from P2; invisible to everyone else and to me in first person)', { defaultValue: now.belly === true })
+    .dropdown('Skin tone of that belly', TONE_NAMES, { defaultValueIndex: now.tone })
+    .toggle('Crouch and look down to rub my belly (turn off if Actions & Stuff sits you down instead; \'Rub my belly\' in this book always works)', { defaultValue: now.rubGesture })
+    .label('Check: with Actions & Stuff on and pregnant, press F5 - you should see your belly.')
     .show(player)
     .then((response) => {
       if (response.canceled || !response.formValues || !player.isValid) return;
-      const [viewer, belly] = response.formValues;
-      setSettings(player, { viewer: !!viewer, belly: !!belly });
+      // labels may or may not take a slot in formValues (undefined); the three answers are what is left
+      const [belly, tone, rub] = response.formValues.filter((v) => v !== undefined);
+      setSettings(player, { belly: !!belly, tone: Number(tone) || 0, rubGesture: !!rub });
       player.sendMessage({ translate: 'minepreggo.compat.saved' });
       back();
     });

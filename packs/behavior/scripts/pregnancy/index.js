@@ -11,7 +11,7 @@ import { applyEffects } from './effects.js';
 import { pregnancyDamage } from './math.js';
 import { clampLevel } from './state.js';
 import { onNightSkipped as onMobsNightSkipped } from '../mobs/system.js';
-import { settingsOf } from '../player/compat.js';
+import { rubGesture } from '../player/compat.js';
 import {
   actionbar,
   chestItem,
@@ -72,7 +72,7 @@ function updateHud(/** @type {PlayerRecord} */ record) {
  * Rubbing your own belly (Java: key R plays an animation; every 120 animation ticks lowers the
  * belly-rub need by 4). Here: crouch and look down.
  */
-/** A belly rub from the guide book ("Rub my belly"), for players whose crouch-and-look-down is taken. */
+/** A belly rub from the guide book ("Rub my belly"): it works whether or not the crouch-and-look-down gesture is on. */
 export function startBellyRub(/** @type {PlayerRecord} */ record, ticks = 240) {
   const p = record.pregnancy;
   if (!p || p.phase < 3 || isLaborOrMisbirth(p)) return false;
@@ -84,8 +84,9 @@ function tickBellyRub(/** @type {PlayerRecord} */ record) {
   const p = record.pregnancy;
   const { player } = record;
   const timed = (record.rubUntil ?? 0) > system.currentTick;
-  // crouching and looking at her belly, unless that is Actions & Stuff's sit gesture on her game
-  const gesture = player.isSneaking && player.getRotation().x >= LOOKING_AT_BELLY_PITCH && !settingsOf(player).viewer;
+  // crouching and looking at her belly, unless she turned that off in the guide book's Settings
+  // (on Actions & Stuff the same gesture sits her down)
+  const gesture = player.isSneaking && player.getRotation().x >= LOOKING_AT_BELLY_PITCH && rubGesture(player);
   if (!p || p.phase < 3 || isLaborOrMisbirth(p) || !(timed || gesture)) {
     record.bellyRubTicks = 0;
     return;

@@ -1,0 +1,174 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:attachable": {
+    "description": {
+      "identifier": "minepreggo:belly_p8_t4",
+      "materials": {
+        "default": "entity_alphatest",
+        "enchanted": "entity_alphatest_glint"
+      },
+      "textures": {
+        "default": "textures/minepreggo/attachable/belly_p8_t4",
+        "enchanted": "textures/misc/enchanted_item_glint"
+      },
+      "geometry": {
+        "default": "geometry.minepreggo.belly_attachable_p8"
+      },
+      "scripts": {
+        "initialize": [
+          "variable.belly_growth = 0.0;",
+          "variable.contracting = 0.0;",
+          "variable.crown = 0.0;",
+          "variable.crown_scale = 0.0;",
+          "variable.crown_t = 0.0;",
+          "variable.crown_x = 0.0;",
+          "variable.crowning = 0.0;",
+          "variable.cw = 0.0;",
+          "variable.growth = 0.0;",
+          "variable.growth_target = 0.0;",
+          "variable.hidden = 0.0;",
+          "variable.k_bottom_kick_x = 0.0;",
+          "variable.k_bottom_kick_y = 0.0;",
+          "variable.k_bottom_kick_z = 0.0;",
+          "variable.k_front_kick_x = 0.0;",
+          "variable.k_front_kick_y = 0.0;",
+          "variable.k_front_kick_z = 0.0;",
+          "variable.k_left_kick_x = 0.0;",
+          "variable.k_left_kick_y = 0.0;",
+          "variable.k_left_kick_z = 0.0;",
+          "variable.k_right_kick_x = 0.0;",
+          "variable.k_right_kick_y = 0.0;",
+          "variable.k_right_kick_z = 0.0;",
+          "variable.k_top_kick_x = 0.0;",
+          "variable.k_top_kick_y = 0.0;",
+          "variable.k_top_kick_z = 0.0;",
+          "variable.kick = 0.0;",
+          "variable.kick_shown = 0.0;",
+          "variable.kick_w = 0.0;",
+          "variable.kicking = 0.0;",
+          "variable.kl = 0.0;",
+          "variable.kr_f = 0.0;",
+          "variable.mp_baby = 0.0;",
+          "variable.navel = 0.0;",
+          "variable.pose = 0.0;",
+          "variable.push = 0.0;",
+          "variable.strain = 0.0;"
+        ],
+        "pre_animation": [
+          "v.pose = c.owning_entity->q.property('minepreggo:pose');",
+          "v.kick = c.owning_entity->q.property('minepreggo:kick');",
+          "v.growth = c.owning_entity->q.property('minepreggo:growth');",
+          "v.navel = c.owning_entity->q.property('minepreggo:navel');",
+          "v.mp_baby = c.owning_entity->q.property('minepreggo:baby') == 'human' ? 1 : (c.owning_entity->q.property('minepreggo:baby') == 'zombie' ? 2 : (c.owning_entity->q.property('minepreggo:baby') == 'creeper' ? 3 : (c.owning_entity->q.property('minepreggo:baby') == 'ender' ? 4 : (c.owning_entity->q.property('minepreggo:baby') == 'slime' ? 5 : (c.owning_entity->q.property('minepreggo:baby') == 'villager' ? 6 : (0))))));",
+          "v.hidden = c.is_first_person || c.owning_entity->v.mp_native || c.owning_entity->q.is_invisible || c.owning_entity->q.is_sleeping;",
+          "v.push = v.pose == 'birth' ? v.growth : 0.0;",
+          "v.kicking = v.pose == 'fetal_movement' || v.pose == 'kicking_sit' || v.pose == 'prebirth' || v.pose == 'birth';",
+          "v.kick_shown = v.kicking ? v.kick : v.kick_shown;",
+          "v.contracting = v.pose == 'contraction' || v.pose == 'prebirth';",
+          "v.kick_w = math.clamp(v.kick_w + (v.kicking ? 1.6 : -1.1) * math.clamp(q.delta_time, 0.0, 0.1), 0.0, 1.0);",
+          "v.kick_w = v.kicking ? math.max(0.5, v.kick_w) : v.kick_w;",
+          "v.cw = math.clamp(v.cw + (v.contracting ? 0.6 : -0.45) * math.clamp(q.delta_time, 0.0, 0.1), 0.0, 1.0);",
+          "v.cw = v.contracting ? math.max(0.5, v.cw) : v.cw;",
+          "v.kl = 1.0 + v.kick;",
+          "v.growth_target = 0.6 * v.growth;",
+          "v.belly_growth = math.abs(v.belly_growth - v.growth_target) > 0.2 ? v.growth_target : v.belly_growth + (v.growth_target - v.belly_growth) * math.min(1.0, 3.0 * math.clamp(q.delta_time, 0.0, 0.1));",
+          "v.k_front_kick_x = 2.35;",
+          "v.k_front_kick_y = 3.10;",
+          "v.k_front_kick_z = 6.61;",
+          "v.k_left_kick_x = 2.35;",
+          "v.k_left_kick_y = 4.10;",
+          "v.k_left_kick_z = 7.61;",
+          "v.k_right_kick_x = 4.35;",
+          "v.k_right_kick_y = 4.10;",
+          "v.k_right_kick_z = 5.61;",
+          "v.k_top_kick_x = 3.35;",
+          "v.k_top_kick_y = 3.10;",
+          "v.k_top_kick_z = 6.61;",
+          "v.k_bottom_kick_x = 3.35;",
+          "v.k_bottom_kick_y = 3.56;",
+          "v.k_bottom_kick_z = 5.61;",
+          "v.kr_f = v.k_front_kick_z;",
+          "v.crown_scale = 0.875;",
+          "v.strain = math.clamp(v.strain + (c.owning_entity->q.is_sneaking ? 6.0 : -1.5) * q.delta_time, 0.0, 1.0);",
+          "v.crowning = (v.pose == 'birth' && v.mp_baby > 0) && v.push > 0.0;",
+          "v.crown_x = math.clamp((v.push - 0.15) / 0.65, 0.0, 1.0);",
+          "v.crown_t = v.push < 0.8 ? 3.0 * v.crown_x * v.crown_x * (3.0 - 2.0 * v.crown_x) : 3.0 + 8.0 * math.pow((v.push - 0.8) / 0.2, 2.0);",
+          "v.crown = v.crown_t;"
+        ],
+        "animate": [
+          "shown",
+          "baby",
+          "inflation",
+          "growth",
+          "contraction",
+          {
+            "rubs_need": "v.pose == 'belly_rubs'"
+          },
+          {
+            "postbirth": "v.pose == 'postbirth'"
+          },
+          {
+            "fetal_push": "v.kick_w"
+          },
+          {
+            "birth_push": "v.pose == 'birth'"
+          },
+          {
+            "crowning": "v.pose == 'birth' && !v.navel"
+          },
+          {
+            "fetal_i": "v.kick_w * (v.kick_shown == 0)"
+          },
+          {
+            "fetal_ii": "v.kick_w * (v.kick_shown == 1)"
+          },
+          {
+            "fetal_iii": "v.kick_w * (v.kick_shown == 2)"
+          },
+          {
+            "kick_i": "v.kick_w * (v.kick_shown == 0)"
+          },
+          {
+            "kick_ii": "v.kick_w * (v.kick_shown == 1)"
+          },
+          {
+            "kick_iii": "v.kick_w * (v.kick_shown == 2)"
+          },
+          {
+            "navel_prebirth": "v.navel && v.pose == 'prebirth'"
+          },
+          {
+            "navel_birth": "v.navel && v.pose == 'birth'"
+          },
+          {
+            "crowning_navel": "v.pose == 'birth' && v.navel"
+          }
+        ]
+      },
+      "animations": {
+        "shown": "animation.minepreggo.belly_attachable",
+        "baby": "animation.minepreggo.belly_attachable.baby",
+        "inflation": "animation.minepreggo.belly.high_belly_inflation",
+        "growth": "animation.minepreggo.belly_growth",
+        "contraction": "animation.minepreggo.contraction_wave",
+        "rubs_need": "animation.minepreggo.belly.belly_rubs_needs_iii",
+        "postbirth": "animation.minepreggo.player.belly_hidden",
+        "fetal_push": "animation.minepreggo.fetal_push",
+        "birth_push": "animation.minepreggo.birth_push",
+        "crowning": "animation.minepreggo.crowning_free",
+        "fetal_i": "animation.minepreggo.belly.fetal_movement_p8_i",
+        "fetal_ii": "animation.minepreggo.belly.fetal_movement_p8_ii",
+        "fetal_iii": "animation.minepreggo.belly.fetal_movement_p8_iii",
+        "kick_i": "animation.minepreggo.kick_i",
+        "kick_ii": "animation.minepreggo.kick_ii",
+        "kick_iii": "animation.minepreggo.kick_iii",
+        "navel_prebirth": "animation.minepreggo.navel_prebirth",
+        "navel_birth": "animation.minepreggo.navel_birth",
+        "crowning_navel": "animation.minepreggo.belly_attachable.crowning_navel"
+      },
+      "render_controllers": [
+        "controller.render.item_default"
+      ]
+    }
+  }
+}

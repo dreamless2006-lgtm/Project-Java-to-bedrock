@@ -1,49 +1,79 @@
 // Actions & Stuff (Oreville Studios' resource pack) draws players with its own player model, which
-// replaces this pack's (a client entity file never merges with another pack's: the higher one
-// wins), so on a game running it the pregnant body, the poses and the births of packs/resource/
-// entity/player.entity.json do not show. Two opt-in settings (the guide book's Settings) bring the
-// pregnancy back there without touching its files:
+// replaces this pack's: a client entity file never merges with another pack's, the higher one wins.
+// On a game running it (or any other pack with its own player model), the pregnant body, the poses
+// and the births of packs/resource/entity/player.entity.json do not show. A server cannot tell which
+// packs a client runs, so everything here works without knowing it:
 //
-//   * "My game runs Actions & Stuff": the poses of pregnant players nearby (labor, birth, back pain,
-//     rubbing her belly) reach this player's game through the Script API, which plays them on
-//     whatever player model draws them (named controller, ended on the client by the pose
-//     property). Belly rubs then come from the guide book ("Rub my belly"): crouching and looking
-//     down is its sit gesture.
-//   * "Show my belly to Actions & Stuff players": while she is pregnant she holds her belly in her
-//     off-hand (an item locked there, attachables/belly_pN.json), drawn on her body by any player
-//     model; it hides itself where this pack's own player model draws her belly already.
+//   * Poses reach every player near her, with no setting. They are compat copies of our pose
+//     animations (animation.minepreggo.as.*, written by tools/gen/compat-poses.mjs) whose
+//     blend_weight is 0 wherever our own model draws her (variable.mp_native) and in first person,
+//     so they only move her on other player models. Each is played again in step with its loop
+//     length (re-sending restarts it, so sooner would cut the birth short) and at once to players
+//     who come near.
+//   * The belly is an item locked in her off-hand (attachables/belly_pN[_tT].json), which any
+//     player model draws on her body; it hides itself where our model draws her belly already. It
+//     takes her off-hand, so she is asked once, in a popup, when she first shows (P2), and can
+//     change her mind in the guide book's Settings, with a skin tone for it (an attachable cannot
+//     use her skin).
+//   * Crouching and looking down rubs her belly unless she turns that off: on Actions & Stuff the
+//     same gesture sits her down. "Rub my belly" in the guide book always works.
 
-import { EquipmentSlot, ItemLockMode, ItemStack, system, world } from '@minecraft/server';
+import { EquipmentSlot, GameMode, ItemLockMode, ItemStack, system, world } from '@minecraft/server';
+import { FormCancelationReason, MessageFormData } from '@minecraft/server-ui';
 
 /** @typedef {import('@minecraft/server').Player} Player */
+/** @typedef {{ belly: boolean | undefined, tone: number, rubGesture: boolean }} Settings */
+/** @typedef {{ animation: string, stop: string, loop: number }} Pose a compat animation, the Molang that ends it on the client, and how often it is played again (ticks) */
+/** @typedef {'pose' | 'walk'} Track */
 
-const VIEWER = 'minepreggo:as_viewer';
+/** Her belly consent: true, false, or undefined while she has never been asked. */
 const BELLY = 'minepreggo:as_belly';
-export const BELLY_ITEM = /^minepreggo:belly_p\d$/;
-const CONTROLLER = 'minepreggo_pose';
-/** Poses are played again now and then, for players who came near or back since. */
-export const RESEND_TICKS = 100;
-const RANGE = 96;
-/** The pose animations of the player model, by pose. */
-const POSES = /** @type {Record<string, string>} */ ({
-  water_breaking: 'animation.minepreggo.player.labor_water_breaking',
-  prebirth: 'animation.minepreggo.player.labor_prebirth',
-  birth: 'animation.minepreggo.player.labor_birth',
-  postbirth: 'animation.minepreggo.player.labor_postbirth',
-  miscarriage: 'animation.minepreggo.player.labor_miscarriage',
-  back_pain: 'animation.minepreggo.player.back_pain',
-});
+/** The skin tone of that belly, 0 (Alex) to 5. */
+const TONE = 'minepreggo:as_tone';
+/** false turns the crouch-and-look-down belly rub off; undefined means on. */
+const GESTURE = 'minepreggo:rub_gesture';
+/** The version whose join hint she has seen. */
+const HINT = 'minepreggo:as_hint';
+const HINT_VERSION = '0.7.0';
+/** 0.6.0's "My game runs Actions & Stuff": it turned the rub gesture off, so it migrates to that. */
+const VIEWER = 'minepreggo:as_viewer';
 
-/** A player's Actions & Stuff settings. */
-export function settingsOf(/** @type {Player} */ player) {
-  return { viewer: !!player.getDynamicProperty(VIEWER), belly: !!player.getDynamicProperty(BELLY) };
-}
+/** Alex (0) plus five skin tones, as in the guide book's dropdown. */
+export const TONE_COUNT = 6;
+/** Any belly item: one per phase, with a tone suffix for tones 1 to 5. */
+export const BELLY_ITEM = /^minepreggo:belly_p\d(_t[1-5])?$/;
+/** Players this close to her (blocks, same dimension) get her poses; she is one of them. */
+export const RANGE = 128;
+/** A popup she could not see (another form was open) is shown again this much later. */
+export const ASK_RETRY_TICKS = 100;
+/** The "off-hand is taken" hint is shown at most this often. */
+const OFFHAND_HINT_TICKS = 1200;
+/** Poses during which nothing pops up: she is busy giving birth. */
+const LABOR = new Set(['water_breaking', 'prebirth', 'birth', 'postbirth', 'miscarriage']);
+const AS = 'animation.minepreggo.as.';
+/**
+ * The compat animation of each pose and how often it is played again: one or two of its loops,
+ * so the restart lands where it would start over anyway (water breaking and back pain hold still).
+ * @type {Record<string, [string, number]>}
+ */
+const POSES = {
+  water_breaking: ['labor_water_breaking', 100],
+  prebirth: ['labor_prebirth', 120],
+  birth: ['labor_birth', 180],
+  postbirth: ['labor_postbirth', 160],
+  miscarriage: ['labor_miscarriage', 195],
+  back_pain: ['back_pain', 100],
+};
+/** Poses and the heavy walk run on controllers of their own, so one never overwrites the other. */
+const CONTROLLERS = /** @type {Record<Track, string>} */ ({ pose: 'minepreggo_pose', walk: 'minepreggo_walk' });
 
-export function setSettings(/** @type {Player} */ player, /** @type {{ viewer: boolean, belly: boolean }} */ { viewer, belly }) {
-  player.setDynamicProperty(VIEWER, viewer || undefined);
-  player.setDynamicProperty(BELLY, belly || undefined);
-  syncBelly(player);
-}
+/** @type {Set<string>} what has been logged already: a broken call would otherwise log every 10 ticks */
+const warned = new Set();
+const warnOnce = (/** @type {string} */ what, /** @type {unknown} */ error) => {
+  if (warned.has(what)) return;
+  warned.add(what);
+  console.warn(`[minepreggo] Actions & Stuff ${what}: ${error}`);
+};
 
 const property = (/** @type {Player} */ player, /** @type {string} */ name, /** @type {any} */ fallback) => {
   try {
@@ -53,27 +83,55 @@ const property = (/** @type {Player} */ player, /** @type {string} */ name, /** 
   }
 };
 
-/** The pose animation to play on her now, and the client-side condition that ends it. */
-export function poseOf(/** @type {Player} */ player) {
-  const pose = String(property(player, 'pose', 'none'));
-  const phase = Number(property(player, 'phase', -1));
-  if (pose === 'rubbing' && phase >= 0) {
-    return { animation: `animation.minepreggo.player.belly_rubbing_p${phase}`, stop: `q.property('minepreggo:pose') != 'rubbing' || q.property('minepreggo:phase') != ${phase}` };
-  }
-  const animation = POSES[pose];
-  return animation ? { animation, stop: `q.property('minepreggo:pose') != '${pose}'` } : undefined;
+// --- settings -------------------------------------------------------------------------------
+
+/** Her Actions & Stuff settings. @returns {Settings} */
+export function settingsOf(/** @type {Player} */ player) {
+  const belly = player.getDynamicProperty(BELLY);
+  const tone = Number(player.getDynamicProperty(TONE) ?? 0);
+  return {
+    belly: typeof belly === 'boolean' ? belly : undefined,
+    tone: Number.isInteger(tone) && tone >= 0 && tone < TONE_COUNT ? tone : 0,
+    rubGesture: player.getDynamicProperty(GESTURE) !== false,
+  };
 }
 
-const offhand = (/** @type {Player} */ player) => /** @type {any} */ (player.getComponent('minecraft:equippable'));
+/** Saves the settings given (the others stay as they are) and puts her belly in or out of her off-hand. */
+export function setSettings(/** @type {Player} */ player, /** @type {Partial<Settings>} */ changes) {
+  const { belly, tone, rubGesture } = { ...settingsOf(player), ...changes };
+  player.setDynamicProperty(BELLY, belly);
+  const t = Math.trunc(Number(tone));
+  player.setDynamicProperty(TONE, t > 0 && t < TONE_COUNT ? t : undefined);
+  player.setDynamicProperty(GESTURE, rubGesture ? undefined : false);
+  syncBelly(player);
+}
+
+/** Whether crouching and looking down rubs her belly. */
+export const rubGesture = (/** @type {Player} */ player) => player.getDynamicProperty(GESTURE) !== false;
+
+/** 0.6.0's viewer toggle meant "my crouch-and-look-down sits me down"; it becomes the gesture setting. */
+export function migrate(/** @type {Player} */ player) {
+  const viewer = player.getDynamicProperty(VIEWER);
+  if (viewer === undefined) return;
+  if (viewer === true) player.setDynamicProperty(GESTURE, false);
+  player.setDynamicProperty(VIEWER, undefined);
+}
+
+// --- the off-hand belly ---------------------------------------------------------------------
+
+/** The belly item of a phase and skin tone. */
+export const bellyItemId = (/** @type {number} */ phase, /** @type {number} */ tone) => (tone > 0 ? `minepreggo:belly_p${phase}_t${tone}` : `minepreggo:belly_p${phase}`);
+
 /** @type {Map<string, number>} player id -> the tick the "off-hand is taken" hint was last shown */
 const hinted = new Map();
 
-/** Her belly in her off-hand while she wants it and is visibly pregnant; gone otherwise. */
+/** Her belly in her off-hand while she said yes and shows a belly (not as a spectator); gone otherwise. */
 export function syncBelly(/** @type {Player} */ player) {
-  const equipment = offhand(player);
+  const equipment = player.getComponent('minecraft:equippable');
   if (!equipment) return;
+  const { belly, tone } = settingsOf(player);
   const phase = Number(property(player, 'phase', -1));
-  const want = settingsOf(player).belly && phase >= 2 ? `minepreggo:belly_p${phase}` : undefined;
+  const want = belly === true && phase >= 2 && phase <= 9 && player.getGameMode() !== GameMode.Spectator ? bellyItemId(phase, tone) : undefined;
   const held = equipment.getEquipment(EquipmentSlot.Offhand);
   if (!want) {
     if (held && BELLY_ITEM.test(held.typeId)) equipment.setEquipment(EquipmentSlot.Offhand, undefined);
@@ -83,53 +141,192 @@ export function syncBelly(/** @type {Player} */ player) {
   if (held && !BELLY_ITEM.test(held.typeId)) {
     // something else is in her off-hand: hers to put away
     const last = hinted.get(player.id) ?? -Infinity;
-    if (system.currentTick - last >= 1200) {
+    if (system.currentTick - last >= OFFHAND_HINT_TICKS) {
       hinted.set(player.id, system.currentTick);
       player.onScreenDisplay.setActionBar({ translate: 'minepreggo.compat.offhand_taken' });
     }
     return;
   }
+  // nothing there, or the belly of another phase or tone: swap it
   const stack = new ItemStack(want, 1);
   stack.lockMode = ItemLockMode.slot;
   stack.keepOnDeath = true;
   equipment.setEquipment(EquipmentSlot.Offhand, stack);
 }
 
-/** @type {Map<string, { animation: string, at: number }>} the pose last played on each player */
-const played = new Map();
+/** Clears belly items out of her inventory: they belong in the off-hand only (and a copy could be given away). */
+export function sweep(/** @type {Player} */ player) {
+  const container = player.getComponent('minecraft:inventory')?.container;
+  if (!container) return;
+  for (let slot = 0; slot < container.size; slot++) {
+    const stack = container.getItem(slot);
+    if (stack && BELLY_ITEM.test(stack.typeId)) container.setItem(slot, undefined);
+  }
+}
 
-/** Plays her pose on the games of the Actions & Stuff players near her (when it changed, and now and then). */
-export function sendPose(/** @type {Player} */ player, /** @type {Player[]} */ viewers) {
-  const pose = poseOf(player);
-  if (!pose) {
-    played.delete(player.id);
-    return false;
-  }
-  const last = played.get(player.id);
-  if (last?.animation === pose.animation && system.currentTick - last.at < RESEND_TICKS) return false;
-  const near = viewers.filter((v) => v.dimension.id === player.dimension.id && Math.hypot(v.location.x - player.location.x, v.location.z - player.location.z) <= RANGE);
-  if (!near.length) return false;
+// --- consent --------------------------------------------------------------------------------
+
+/** @type {Map<string, number>} player id -> the phase she was last asked at (also while the popup is open) */
+const asked = new Map();
+/** @type {Map<string, number>} player id -> the tick before which she is not asked again (she was busy) */
+const askAfter = new Map();
+
+/**
+ * Asks her once per phase, from P2 and never in labor, whether her belly may take her off-hand.
+ * She is asked again at the next phase if she closes the popup, and soon if another form was open.
+ */
+export function askBelly(/** @type {Player} */ player) {
+  if (settingsOf(player).belly !== undefined) return false;
+  const phase = Number(property(player, 'phase', -1));
+  if (phase < 2 || LABOR.has(String(property(player, 'pose', 'none')))) return false;
+  if (asked.get(player.id) === phase || (askAfter.get(player.id) ?? -Infinity) > system.currentTick) return false;
+  asked.set(player.id, phase);
+  const busy = () => {
+    asked.delete(player.id);
+    askAfter.set(player.id, system.currentTick + ASK_RETRY_TICKS);
+  };
   try {
-    player.playAnimation(pose.animation, { controller: CONTROLLER, blendOutTime: 0.25, stopExpression: pose.stop, players: near });
+    new MessageFormData()
+      .title({ translate: 'minepreggo.compat.ask_title' })
+      .body({ translate: 'minepreggo.compat.ask_body' })
+      .button1({ translate: 'minepreggo.compat.ask_yes' })
+      .button2({ translate: 'minepreggo.compat.ask_no' })
+      .show(player)
+      .then((response) => {
+        if (!player.isValid) return;
+        if (response.canceled) {
+          // closed: left unanswered until the next phase; busy: she never saw it
+          if (response.cancelationReason === FormCancelationReason.UserBusy) busy();
+          return;
+        }
+        if (response.selection === 0) {
+          setSettings(player, { belly: true });
+          player.onScreenDisplay.setActionBar({ translate: 'minepreggo.compat.belly_on' });
+        } else if (response.selection === 1) {
+          setSettings(player, { belly: false });
+        }
+      })
+      .catch((error) => {
+        busy();
+        warnOnce('belly popup', error);
+      });
   } catch (error) {
-    console.warn(`[minepreggo] Actions & Stuff pose: ${error}`);
+    busy();
+    warnOnce('belly popup', error);
   }
-  played.set(player.id, { animation: pose.animation, at: system.currentTick });
   return true;
 }
 
+// --- poses ----------------------------------------------------------------------------------
+
+/** The compat pose to play on her now, or undefined. @returns {Pose | undefined} */
+export function poseOf(/** @type {Player} */ player) {
+  const pose = String(property(player, 'pose', 'none'));
+  const phase = Number(property(player, 'phase', -1));
+  // the stop expressions end on v.mp_native too, in case a game ignored the blend weight on our model
+  if (pose === 'rubbing') {
+    if (phase < 0 || phase > 9) return undefined;
+    return { animation: `${AS}belly_rubbing_p${phase}`, stop: `q.property('minepreggo:pose') != 'rubbing' || q.property('minepreggo:phase') != ${phase} || v.mp_native`, loop: 100 };
+  }
+  const entry = POSES[pose];
+  return entry ? { animation: AS + entry[0], stop: `q.property('minepreggo:pose') != '${pose}' || v.mp_native`, loop: entry[1] } : undefined;
+}
+
+/** The heavy walk from P4 while she holds no other pose (it only shows while she walks). @returns {Pose | undefined} */
+export function walkOf(/** @type {Player} */ player) {
+  const pose = String(property(player, 'pose', 'none'));
+  const phase = Number(property(player, 'phase', -1));
+  if (pose !== 'none' || phase < 4 || phase > 9) return undefined;
+  return { animation: `${AS}walking_heavy_p${phase}`, stop: `q.property('minepreggo:phase') != ${phase} || q.property('minepreggo:pose') != 'none' || v.mp_native`, loop: 100 };
+}
+
+/** @type {Map<string, Map<Track, { animation: string, at: number, seen: Set<string> }>>} mother id -> what each track last played, when, and to whom */
+const sent = new Map();
+
+const inRange = (/** @type {Player} */ mother, /** @type {Player} */ player) =>
+  player.dimension.id === mother.dimension.id &&
+  Math.hypot(player.location.x - mother.location.x, player.location.y - mother.location.y, player.location.z - mother.location.z) <= RANGE;
+
+/**
+ * Plays her pose (or heavy walk) on the games of the players near her: to all of them when it
+ * changed or a loop has gone by, otherwise only to those who came near since. True if it played.
+ */
+export function deliver(/** @type {Player} */ mother, /** @type {Track} */ track, /** @type {Player[]} */ players) {
+  const want = track === 'pose' ? poseOf(mother) : walkOf(mother);
+  let tracks = sent.get(mother.id);
+  if (!want) {
+    tracks?.delete(track);
+    if (tracks && !tracks.size) sent.delete(mother.id);
+    return false;
+  }
+  const near = players.filter((p) => inRange(mother, p));
+  const now = system.currentTick;
+  const last = tracks?.get(track);
+  /** @type {Player[]} */
+  let to;
+  if (!last || last.animation !== want.animation || now - last.at >= want.loop) {
+    to = near;
+    if (!tracks) sent.set(mother.id, (tracks = new Map()));
+    tracks.set(track, { animation: want.animation, at: now, seen: new Set(near.map((p) => p.id)) });
+  } else {
+    to = near.filter((p) => !last.seen.has(p.id));
+    for (const p of to) last.seen.add(p.id);
+  }
+  if (!to.length) return false;
+  try {
+    mother.playAnimation(want.animation, { controller: CONTROLLERS[track], blendOutTime: 0.25, stopExpression: want.stop, players: to });
+  } catch (error) {
+    warnOnce('pose', error);
+  }
+  return true;
+}
+
+/** A player who respawned or changed dimension: her own pose goes out again, and everyone else's reaches her again. */
+function forget(/** @type {string} */ id) {
+  sent.delete(id);
+  for (const tracks of sent.values()) for (const state of tracks.values()) state.seen.delete(id);
+}
+
+// --- the loop and the events ----------------------------------------------------------------
+
 system.runInterval(() => {
   const players = world.getPlayers();
-  const viewers = players.filter((p) => settingsOf(p).viewer);
   for (const player of players) {
-    syncBelly(player);
-    if (viewers.length) sendPose(player, viewers);
+    // one player's error (half loaded, just left) must not stop the others' bellies and poses
+    try {
+      syncBelly(player);
+      askBelly(player);
+      deliver(player, 'pose', players);
+      deliver(player, 'walk', players);
+    } catch (error) {
+      warnOnce('update', error);
+    }
   }
 }, 10);
 
-world.afterEvents.playerLeave.subscribe(({ playerId }) => {
-  played.delete(playerId);
-  hinted.delete(playerId);
+world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
+  try {
+    migrate(player);
+    sweep(player);
+  } catch (error) {
+    warnOnce('spawn', error);
+  }
+  forget(player.id);
+  // a one-time hint, after the join banner
+  if (initialSpawn && player.getDynamicProperty(HINT) !== HINT_VERSION) {
+    system.runTimeout(() => {
+      if (!player.isValid) return;
+      player.sendMessage({ translate: 'minepreggo.compat.hint' });
+      player.setDynamicProperty(HINT, HINT_VERSION);
+    }, 200);
+  }
 });
-// a player who comes back (or a new viewer) gets the poses again at once
-world.afterEvents.playerSpawn.subscribe(() => played.clear());
+
+world.afterEvents.playerDimensionChange.subscribe(({ player }) => forget(player.id));
+
+world.afterEvents.playerLeave.subscribe(({ playerId }) => {
+  forget(playerId);
+  hinted.delete(playerId);
+  asked.delete(playerId);
+  askAfter.delete(playerId);
+});

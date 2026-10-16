@@ -14,6 +14,56 @@
           "scale": "v.hidden ? 0.0 : 1.0"
         }
       }
+    },
+    "animation.minepreggo.belly_attachable.baby": {
+      "loop": true,
+      "bones": {
+        "c_human": {
+          "scale": "(v.crowning && !v.navel && v.mp_baby == 1) ? 1.0 : 0.0"
+        },
+        "c_zombie": {
+          "scale": "(v.crowning && !v.navel && v.mp_baby == 2) ? 1.0 : 0.0"
+        },
+        "c_creeper": {
+          "scale": "(v.crowning && !v.navel && v.mp_baby == 3) ? 1.0 : 0.0"
+        },
+        "c_ender": {
+          "scale": "(v.crowning && !v.navel && v.mp_baby == 4) ? 1.0 : 0.0"
+        },
+        "c_slime": {
+          "scale": "(v.crowning && !v.navel && v.mp_baby == 5) ? 1.0 : 0.0"
+        },
+        "c_villager": {
+          "scale": "(v.crowning && !v.navel && v.mp_baby == 6) ? 1.0 : 0.0"
+        },
+        "n_human": {
+          "scale": "(v.crowning && v.navel && v.mp_baby == 1) ? 1.0 : 0.0"
+        },
+        "n_zombie": {
+          "scale": "(v.crowning && v.navel && v.mp_baby == 2) ? 1.0 : 0.0"
+        },
+        "n_creeper": {
+          "scale": "(v.crowning && v.navel && v.mp_baby == 3) ? 1.0 : 0.0"
+        },
+        "n_ender": {
+          "scale": "(v.crowning && v.navel && v.mp_baby == 4) ? 1.0 : 0.0"
+        }
+      }
+    },
+    "animation.minepreggo.belly_attachable.crowning_navel": {
+      "loop": true,
+      "bones": {
+        "crowning_navel": {
+          "scale": "v.crowning ? v.crown_scale : 0.0"
+        },
+        "crowning_navel_slide": {
+          "position": [
+            0,
+            "-(v.crown - math.min(1.2, 0.45 * v.crown) * (1.0 - (v.strain >= 0.0 ? v.strain : math.pow(math.max(0.0, math.sin(q.anim_time * 120.0)), 2.0))))",
+            0
+          ]
+        }
+      }
     }
   }
 }
