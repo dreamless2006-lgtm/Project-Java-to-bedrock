@@ -240,12 +240,16 @@ npm install
 cp /path/to/minepreggo-official-1.3.2-mc1.20.1.jar vendor/   # or pass the path to `npm run import`
 mkdir -p vendor/jenny                                         # optional: the Jenny add-ons to merge in
 cp "/path/to/Jenny-Mod-Java-Port-v2.7.2.mcaddon" /path/to/jenny*.mcpack vendor/jenny/
+mkdir -p vendor/reign                                         # optional: Reign of Nether's source tree
+git clone https://github.com/SoLegendary/reignofnether vendor/reign/reignofnether
 npm run import   # extracts textures, sounds, translations, models, animations and icon into packs/,
                  # then merges the Jenny add-ons (tools/import-jenny.mjs) when vendor/jenny/ has them
+                 # and Reign of Nether (tools/import-reign.mjs) when vendor/reign/ has it
 npm run check    # type-checks scripts, validates JSON against Mojang's schemas and cross-references
 npm test         # unit tests, model conversion checks, pregnancy simulations (players and mobs) and a
                  # smoke test that loads the whole script entry point against the mocked game API
-npm run build    # writes dist/minepreggo-<version>.mcaddon
+npm run build    # writes dist/minepreggo-<version>.mcaddon (`npm run build -- --no-reign` leaves
+                 # Reign of Nether out)
 ```
 
 Open the `.mcaddon` on a device with Minecraft installed (double-click on Windows, "open with
@@ -276,7 +280,8 @@ packs/resource/   resource pack: client entities, render and animation controlle
 tools/            import-jar.mjs, validate.mjs, build.mjs, lib/ (Java model converter),
                   bedrock-schemas/ (Mojang's JSON schemas), lang/ (strings the port adds), tests/
 docs/             porting plan and known differences
-vendor/           your local copy of the mod jar, and vendor/jenny/ the Jenny add-ons (git-ignored)
+vendor/           your local copy of the mod jar, vendor/jenny/ the Jenny add-ons and vendor/reign/
+                  Reign of Nether's source (git-ignored)
 ```
 
 ## The Jenny add-ons
