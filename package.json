@@ -5,7 +5,7 @@
   "description": "Bedrock Edition (.mcaddon) port of the Minepreggo Forge mod",
   "type": "module",
   "scripts": {
-    "import": "node tools/import-jar.mjs && node tools/gen-scene-poses.mjs && node tools/import-jenny.mjs && node tools/import-reign.mjs",
+    "import": "node tools/import-jar.mjs && node tools/gen-scene-poses.mjs && node tools/import-jenny.mjs",
     "check": "node tools/gen-ids.mjs && tsc -p jsconfig.json && node tools/validate.mjs",
     "build": "node tools/build.mjs",
     "test": "node --import ./tools/tests/register-mock.mjs --test tools/tests/*.test.mjs"

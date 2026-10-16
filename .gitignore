@@ -20,8 +20,3 @@ packs/resource/jenny_port/
 packs/resource/ui/
 packs/resource/pack_icon.png
 packs/behavior/pack_icon.png
-# Reign of Nether (GPL-3.0, vendor/reign/, merged by tools/import-reign.mjs): its units, art, sounds,
-# text and numbers under reign_port/ sub-folders
-packs/behavior/**/reign_port/
-packs/resource/**/reign_port/
-packs/resource/reign_port/
