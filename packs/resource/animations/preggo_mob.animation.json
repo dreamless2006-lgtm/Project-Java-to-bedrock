@@ -401,7 +401,15 @@
     },
     "animation.minepreggo.no_pose": {
       "loop": true,
-      "bones": {}
+      "bones": {
+        "body": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        }
+      }
     },
     "animation.minepreggo.crowning": {
       "loop": true,
