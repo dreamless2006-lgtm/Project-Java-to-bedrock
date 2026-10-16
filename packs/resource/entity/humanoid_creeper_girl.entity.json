@@ -79,7 +79,7 @@
           "v.savage = q.property('minepreggo:savage');",
           "v.aggressive = q.has_target;",
           "v.kl = 1.0 + v.kick;",
-          "v.belly_growth = (v.phase <= 2 ? 1.0 : (v.phase <= 4 ? 0.9 : (v.phase == 5 ? 0.8 : (v.phase <= 7 ? 0.7 : 0.6)))) * q.property('minepreggo:growth');",
+          "v.belly_growth = (v.phase <= 2 ? 1.0 : (v.phase <= 4 ? 0.9 : (v.phase == 5 ? 0.8 : (v.phase <= 7 ? 0.7 : 0.6)))) * (v.pose == 'birth' ? 1.0 - v.push : q.property('minepreggo:growth'));",
           "v.fuse_ticks = v.phase <= 2 ? 30 : (v.phase <= 5 ? 38 : (v.phase <= 7 ? 46 : 62));",
           "v.swell_raw = q.fuse_time >= 0 ? math.clamp(v.fuse_ticks - q.fuse_time + q.frame_alpha - 1.0, 0.0, 30.0) / 28.0 : 0.0;",
           "v.swell = math.clamp(v.swell_raw, 0.0, 1.0);",
@@ -88,6 +88,10 @@
           "v.scale_xz = (0.9375 + v.swell * 0.399) * v.wobble;",
           "v.scale_y = (0.9375 + v.swell * 0.099) / v.wobble;",
           "v.flash = (v.swell_raw > 0.0 && math.mod(math.floor(q.life_time * 20.0), 6.0) != 0.0) ? math.clamp(v.swell_raw, 0.5, 1.0) * 0.75 : 0.0;",
+          "v.bt = v.pose == 'birth' ? v.bt + q.delta_time : 0.0;",
+          "v.bph = math.mod(v.bt, 9.0);",
+          "v.bflash = ((v.bph >= 0.9 && v.bph < 1.5) || (v.bph >= 7.5 && v.bph < 8.0)) && math.mod(math.floor(v.bt * 10.0), 2.0) == 0.0 ? 0.6 : 0.0;",
+          "v.flash = math.max(v.flash, v.bflash);",
           "v.jdt = math.clamp(q.delta_time, 0.0, 0.1);",
           "v.jf = v.jdt / 0.05;",
           "v.jvy = q.position_delta(1) / 0.05;",
@@ -180,7 +184,10 @@
         "initialize": [
           "variable.aggressive = 0.0;",
           "variable.belly_growth = 0.0;",
+          "variable.bflash = 0.0;",
           "variable.bp = 0.0;",
+          "variable.bph = 0.0;",
+          "variable.bt = 0.0;",
           "variable.contracting = 0.0;",
           "variable.crown = 0.0;",
           "variable.crown_scale = 0.0;",
@@ -369,7 +376,21 @@
         "scene_sit_pose_p7": "animation.minepreggo.humanoid_creeper_girl.scene_sit_p7",
         "scene_sit_pose_p8": "animation.minepreggo.humanoid_creeper_girl.scene_sit_p8",
         "scene_sit_pose_p9": "animation.minepreggo.humanoid_creeper_girl.scene_sit_p9",
-        "crowning": "animation.minepreggo.crowning"
+        "crowning": "animation.minepreggo.crowning.humanoid_creeper_girl",
+        "birth_p4": "animation.minepreggo.humanoid_creeper_girl.birth",
+        "birth_p5": "animation.minepreggo.humanoid_creeper_girl.birth",
+        "birth_p6": "animation.minepreggo.humanoid_creeper_girl.birth",
+        "birth_p7": "animation.minepreggo.humanoid_creeper_girl.birth",
+        "birth_p8": "animation.minepreggo.humanoid_creeper_girl.birth",
+        "birth_p9": "animation.minepreggo.humanoid_creeper_girl.birth",
+        "postbirth_p4": "animation.minepreggo.humanoid_creeper_girl.postbirth",
+        "postbirth_p5": "animation.minepreggo.humanoid_creeper_girl.postbirth",
+        "postbirth_p6": "animation.minepreggo.humanoid_creeper_girl.postbirth",
+        "postbirth_p7": "animation.minepreggo.humanoid_creeper_girl.postbirth",
+        "postbirth_p8": "animation.minepreggo.humanoid_creeper_girl.postbirth",
+        "postbirth_p9": "animation.minepreggo.humanoid_creeper_girl.postbirth",
+        "birth_flair": "animation.minepreggo.humanoid_creeper_girl.birth_flair",
+        "labor_flair": "animation.minepreggo.no_pose"
       },
       "render_controllers": [
         {
@@ -445,7 +466,11 @@
       "spawn_egg": {
         "texture": "minepreggo_hostile_humanoid_creeper_girl_spawn_egg"
       },
-      "enable_attachables": true
+      "enable_attachables": true,
+      "sound_effects": {
+        "mp_hiss": "random.fuse",
+        "mp_push": "minepreggo.player_push"
+      }
     }
   }
 }

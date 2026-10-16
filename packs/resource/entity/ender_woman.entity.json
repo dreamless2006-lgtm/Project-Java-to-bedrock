@@ -56,6 +56,7 @@
           "v.bp = (q.property('minepreggo:belly') == 'p0' ? 0 : (q.property('minepreggo:belly') == 'p1' ? 1 : (q.property('minepreggo:belly') == 'p2' ? 2 : (q.property('minepreggo:belly') == 'p3' ? 3 : (q.property('minepreggo:belly') == 'p4' ? 4 : (q.property('minepreggo:belly') == 'p5' ? 5 : (q.property('minepreggo:belly') == 'p6' ? 6 : (q.property('minepreggo:belly') == 'p7' ? 7 : (q.property('minepreggo:belly') == 'p8' ? 8 : (q.property('minepreggo:belly') == 'p9' ? 9 : -1))))))))));",
           "v.bp = v.bp >= 0 ? v.bp : (v.phase >= 0 ? v.phase : (q.variant > 0 ? q.variant - 1 : (v.pregnant_pose ? 5 : -1)));",
           "v.phase = v.bp;",
+          "v.ninset = (v.bp == 4 ? 4.69 : (v.bp == 5 ? 3.29 : (v.bp == 6 ? 3.97 : (v.bp == 7 ? 3.55 : (v.bp == 8 ? 6.0 : (v.bp == 9 ? 7.93 : 0.0))))));",
           "v.k_front_kick_x = (v.bp == 3 ? 0.70 : (v.bp == 4 ? 1.60 : (v.bp == 5 ? 0.50 : (v.bp == 6 ? 1.10 : (v.bp == 7 ? 1.40 : (v.bp == 8 ? 1.80 : (v.bp == 9 ? 2.30 : 0.0)))))));",
           "v.k_front_kick_y = (v.bp == 3 ? 2.01 : (v.bp == 4 ? 2.17 : (v.bp == 5 ? 2.32 : (v.bp == 6 ? 3.49 : (v.bp == 7 ? 1.90 : (v.bp == 8 ? 3.80 : (v.bp == 9 ? 4.41 : 0.0)))))));",
           "v.k_front_kick_z = (v.bp == 3 ? 2.79 : (v.bp == 4 ? 4.89 : (v.bp == 5 ? 3.39 : (v.bp == 6 ? 4.22 : (v.bp == 7 ? 4.31 : (v.bp == 8 ? 6.66 : (v.bp == 9 ? 8.45 : 0.0)))))));",
@@ -90,7 +91,7 @@
           "v.savage = q.property('minepreggo:savage');",
           "v.aggressive = q.has_target;",
           "v.kl = 1.0 + v.kick;",
-          "v.belly_growth = (v.phase <= 2 ? 1.0 : (v.phase <= 4 ? 0.9 : (v.phase == 5 ? 0.8 : (v.phase <= 7 ? 0.7 : 0.6)))) * q.property('minepreggo:growth');",
+          "v.belly_growth = (v.phase <= 2 ? 1.0 : (v.phase <= 4 ? 0.9 : (v.phase == 5 ? 0.8 : (v.phase <= 7 ? 0.7 : 0.6)))) * (v.pose == 'birth' ? 1.0 - v.push : q.property('minepreggo:growth'));",
           "v.carrying = q.is_carrying_block;",
           "v.shake_x = v.aggressive ? math.random(-0.32, 0.32) : 0.0;",
           "v.shake_z = v.aggressive ? math.random(-0.32, 0.32) : 0.0;",
@@ -291,6 +292,7 @@
           "variable.kicking = 0.0;",
           "variable.kl = 0.0;",
           "variable.kr_f = 0.0;",
+          "variable.ninset = 0.0;",
           "variable.phase = 0.0;",
           "variable.pose = 0.0;",
           "variable.pregnant_pose = 0.0;",
@@ -386,7 +388,21 @@
         "scene_sit_pose_p7": "animation.minepreggo.ender_woman.scene_sit_p7",
         "scene_sit_pose_p8": "animation.minepreggo.ender_woman.scene_sit_p8",
         "scene_sit_pose_p9": "animation.minepreggo.ender_woman.scene_sit_p9",
-        "crowning": "animation.minepreggo.crowning_free"
+        "crowning": "animation.minepreggo.crowning.ender_woman",
+        "birth_p4": "animation.minepreggo.ender_woman.birth",
+        "birth_p5": "animation.minepreggo.ender_woman.birth",
+        "birth_p6": "animation.minepreggo.ender_woman.birth",
+        "birth_p7": "animation.minepreggo.ender_woman.birth",
+        "birth_p8": "animation.minepreggo.ender_woman.birth",
+        "birth_p9": "animation.minepreggo.ender_woman.birth",
+        "postbirth_p4": "animation.minepreggo.ender_woman.postbirth",
+        "postbirth_p5": "animation.minepreggo.ender_woman.postbirth",
+        "postbirth_p6": "animation.minepreggo.ender_woman.postbirth",
+        "postbirth_p7": "animation.minepreggo.ender_woman.postbirth",
+        "postbirth_p8": "animation.minepreggo.ender_woman.postbirth",
+        "postbirth_p9": "animation.minepreggo.ender_woman.postbirth",
+        "birth_flair": "animation.minepreggo.ender_woman.birth_flair",
+        "labor_flair": "animation.minepreggo.no_pose"
       },
       "render_controllers": [
         {
@@ -445,7 +461,14 @@
       "spawn_egg": {
         "texture": "minepreggo_monster_ender_woman_spawn_egg"
       },
-      "enable_attachables": true
+      "enable_attachables": true,
+      "sound_effects": {
+        "mp_portal": "mob.endermen.portal",
+        "mp_idle": "mob.endermen.idle"
+      },
+      "particle_effects": {
+        "mp_portal": "minecraft:basic_portal_particle"
+      }
     }
   }
 }

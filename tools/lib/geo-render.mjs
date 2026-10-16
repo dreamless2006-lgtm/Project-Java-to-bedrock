@@ -10,6 +10,7 @@
 // carry their own pivot and rotation (format 1.12.0+); per-face UVs and box UVs are sampled from
 // the textures with nearest-neighbour lookup, lit by one directional light plus ambient.
 import { rotateBedrock } from './bedrock-math.mjs';
+import { evalMolang } from './molang-lite.mjs';
 import { blank } from './png.mjs';
 
 /** @typedef {import('./png.mjs').Image} Image */
@@ -247,22 +248,75 @@ export function renderParts(parts, pose, camera, options = {}) {
 }
 
 /**
+ * The time an animation is at after `time` seconds of playing: a looping animation with a length
+ * starts over, one that holds its last frame stops there, any other runs on.
+ * @param {{ loop?: boolean | string, animation_length?: number }} animation
+ * @param {number} time
+ */
+export function animationTime(animation, time) {
+  const length = num(animation.animation_length);
+  if (length <= 0) return time;
+  if (animation.loop === true) return ((time % length) + length) % length;
+  if (animation.loop === 'hold_on_last_frame') return Math.min(time, length);
+  return time;
+}
+
+/**
+ * Reads Molang for poseAt: a function of the expression and the animation's time, or the
+ * variables and queries to read it against (tools/lib/molang-lite.mjs, with q.anim_time set).
+ * @typedef {((expr: string, time: number) => number) | import('./molang-lite.mjs').MolangEnv} Evaluate
+ */
+
+/**
  * The pose of a keyframed Bedrock animation at `time` seconds: numeric keyframes interpolated
  * linearly (pre/post frames honoured), Molang strings taken as 0 (or 1 for scale).
- * @param {{ bones?: Record<string, any> }} animation
+ * With `evaluate`, Molang strings are evaluated instead (and a single number or string as a
+ * keyframe's value counts for all three axes, as in the game); with `wrap`, the time first goes
+ * through animationTime (a loop starts over). Without options it behaves as it always has.
+ * @param {{ bones?: Record<string, any>, loop?: boolean | string, animation_length?: number }} animation
  * @param {number} time
+ * @param {{ evaluate?: Evaluate, wrap?: boolean }} [options]
  * @returns {Record<string, BonePose>}
  */
-export function poseAt(animation, time) {
+export function poseAt(animation, time, { evaluate, wrap = false } = {}) {
+  if (wrap) time = animationTime(animation, time);
   /** @type {Record<string, BonePose>} */
   const pose = {};
+  /** @type {((expr: string) => number) | undefined} */
+  let molang;
+  if (typeof evaluate === 'function') molang = (expr) => evaluate(expr, time);
+  else if (evaluate) {
+    // her own queries, seen through an object that only adds the animation's time
+    const q = Object.create(evaluate.q ?? null);
+    q.anim_time = time;
+    const env = { ...evaluate, q };
+    molang = (expr) => evalMolang(expr, env);
+  }
+  /** One axis: a number, or a Molang string (evaluated, or the fallback without an evaluator). */
+  const scalar = (/** @type {unknown} */ v, /** @type {number} */ fallback) => {
+    if (typeof v === 'number') return Number.isFinite(v) ? v : fallback;
+    if (typeof v === 'string' && molang) {
+      const r = molang(v);
+      return Number.isFinite(r) ? r : fallback;
+    }
+    return fallback;
+  };
+  const triple = (/** @type {unknown} */ v, /** @type {number} */ fallback) => {
+    if (!molang) return vec3(v, fallback);
+    if (Array.isArray(v)) return [0, 1, 2].map((k) => scalar(v[k], fallback));
+    const s = scalar(v, fallback);
+    return [s, s, s];
+  };
   const sample = (/** @type {unknown} */ channel, /** @type {number} */ fallback) => {
     if (channel === undefined) return undefined;
-    if (Array.isArray(channel)) return vec3(channel, fallback);
-    if (typeof channel === 'number' || typeof channel === 'string') return [num(channel, fallback), num(channel, fallback), num(channel, fallback)];
+    if (Array.isArray(channel)) return triple(channel, fallback);
+    if (typeof channel === 'number' || typeof channel === 'string') {
+      const s = scalar(channel, fallback);
+      return [s, s, s];
+    }
     const frames = Object.entries(/** @type {Record<string, any>} */ (channel)).map(([t, v]) => ({ t: Number(t), v })).sort((a, b) => a.t - b.t);
     if (!frames.length) return undefined;
-    const value = (/** @type {any} */ v, /** @type {'pre' | 'post'} */ side) => vec3(Array.isArray(v) ? v : v?.[side] ?? v?.post ?? v?.pre, fallback);
+    const value = (/** @type {any} */ v, /** @type {'pre' | 'post'} */ side) => triple(Array.isArray(v) || (molang && typeof v !== 'object') ? v : v?.[side] ?? v?.post ?? v?.pre, fallback);
     if (time <= frames[0].t) return value(frames[0].v, 'post');
     for (let i = 0; i < frames.length - 1; i++) {
       const a = frames[i], b = frames[i + 1];

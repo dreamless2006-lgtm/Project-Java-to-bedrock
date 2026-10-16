@@ -78,7 +78,7 @@
           "v.savage = q.property('minepreggo:savage');",
           "v.aggressive = q.has_target;",
           "v.kl = 1.0 + v.kick;",
-          "v.belly_growth = (v.phase <= 2 ? 1.0 : (v.phase <= 4 ? 0.9 : (v.phase == 5 ? 0.8 : (v.phase <= 7 ? 0.7 : 0.6)))) * q.property('minepreggo:growth');",
+          "v.belly_growth = (v.phase <= 2 ? 1.0 : (v.phase <= 4 ? 0.9 : (v.phase == 5 ? 0.8 : (v.phase <= 7 ? 0.7 : 0.6)))) * (v.pose == 'birth' ? 1.0 - v.push : q.property('minepreggo:growth'));",
           "v.jdt = math.clamp(q.delta_time, 0.0, 0.1);",
           "v.jf = v.jdt / 0.05;",
           "v.jvy = q.position_delta(1) / 0.05;",
@@ -285,7 +285,7 @@
         "back_pain": "animation.minepreggo.zombie_girl.back_pain",
         "water_breaking": "animation.minepreggo.zombie_girl.water_breaking",
         "prebirth": "animation.minepreggo.zombie_girl.miscarriage",
-        "birth": "animation.minepreggo.zombie_girl.birth",
+        "birth": "animation.minepreggo.zombie_girl.birth_standing",
         "postbirth": "animation.minepreggo.zombie_girl.postbirth",
         "miscarriage": "animation.minepreggo.zombie_girl.miscarriage",
         "belly_low": "animation.minepreggo.belly.low_belly_inflation",
@@ -350,7 +350,21 @@
         "scene_sit_pose_p7": "animation.minepreggo.zombie_girl.scene_sit_p7",
         "scene_sit_pose_p8": "animation.minepreggo.zombie_girl.scene_sit_p8",
         "scene_sit_pose_p9": "animation.minepreggo.zombie_girl.scene_sit_p9",
-        "crowning": "animation.minepreggo.crowning"
+        "crowning": "animation.minepreggo.crowning.zombie_girl",
+        "birth_p4": "animation.minepreggo.zombie_girl.birth_standing_p4",
+        "birth_p5": "animation.minepreggo.zombie_girl.birth_standing_p5",
+        "birth_p6": "animation.minepreggo.zombie_girl.birth_standing_p6",
+        "birth_p7": "animation.minepreggo.zombie_girl.birth_standing_p7",
+        "birth_p8": "animation.minepreggo.zombie_girl.birth_standing_p8",
+        "birth_p9": "animation.minepreggo.zombie_girl.birth_standing_p9",
+        "postbirth_p4": "animation.minepreggo.zombie_girl.postbirth",
+        "postbirth_p5": "animation.minepreggo.zombie_girl.postbirth",
+        "postbirth_p6": "animation.minepreggo.zombie_girl.postbirth",
+        "postbirth_p7": "animation.minepreggo.zombie_girl.postbirth",
+        "postbirth_p8": "animation.minepreggo.zombie_girl.postbirth",
+        "postbirth_p9": "animation.minepreggo.zombie_girl.postbirth",
+        "birth_flair": "animation.minepreggo.zombie_girl.birth_flair",
+        "labor_flair": "animation.minepreggo.no_pose"
       },
       "render_controllers": [
         {
@@ -393,7 +407,10 @@
       "spawn_egg": {
         "texture": "minepreggo_hostile_zombie_girl_spawn_egg"
       },
-      "enable_attachables": true
+      "enable_attachables": true,
+      "sound_effects": {
+        "mp_groan": "mob.zombie.say"
+      }
     }
   }
 }

@@ -26,7 +26,8 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
   drinking it; the action bar counts the seconds down. Stronger potions (II–VI) mean more babies
   and a later birth. All the mod's other potions are ported too (see **Potions** below).
 - **Crouch** to see the pregnancy status on the action bar.
-- **Crouch and look down** to rub your belly when the belly-rub need shows up (from P3).
+- **Crouch and look down** to rub your belly when the belly-rub need shows up (from P3), or use
+  "Rub my belly" in the guide book (Settings can turn the gesture off, see **Actions & Stuff**).
 - **Use a glass bottle** while lactating to fill it.
 - Eat the food you crave; spicy food is risky late in the pregnancy.
 - During birth, **tap sneak quickly** to push. Each baby needs four bursts of quick taps.
@@ -52,7 +53,7 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
 A world keeps the pack versions it was created with, and Bedrock keeps older imports next to the
 new one. After importing a newer `.mcaddon`, open the world's settings and, under **Behavior
 Packs** *and* **Resource Packs**, remove Minepreggo from the active packs and add it again. The
-join message shows both versions (`[Minepreggo 0.6.2, resources 0.6.2]`); while the resources
+join message shows both versions (`[Minepreggo 0.7.0, resources 0.7.0]`); while the resources
 version lags behind, the models, bellies and animations are the old ones, whatever the scripts do.
 Old versions can be deleted in Settings → Storage.
 
@@ -121,7 +122,8 @@ their belly back.
    only a female character gets the chest, belly and jiggle physics. You can also run
    `/scriptevent minepreggo:gender female`.
 2. Check the self-check line in chat after joining: all four parts must be green. "player visuals ✘"
-   means another pack also overrides the player entity.
+   means another pack also overrides the player entity (Actions & Stuff does: see **Actions &
+   Stuff** below for what shows then).
 3. Both packs must be active on the world (the behavior pack pulls the resource pack in). If the
    game says a pack failed to load, your game is older than 1.26.30 or another copy of an older
    Minepreggo version is still installed: remove it in Settings → Storage and import again.
@@ -246,6 +248,8 @@ npm run check    # type-checks scripts, validates JSON against Mojang's schemas 
 npm test         # unit tests, model conversion checks, pregnancy simulations (players and mobs) and a
                  # smoke test that loads the whole script entry point against the mocked game API
 npm run build    # writes dist/minepreggo-<version>.mcaddon
+npm run standin  # optional: dist/minepreggo-standin-player.mcpack, a plain player model to test
+                 # what Actions & Stuff players see (see **Actions & Stuff**)
 ```
 
 Open the `.mcaddon` on a device with Minecraft installed (double-click on Windows, "open with
@@ -273,7 +277,7 @@ packs/behavior/   behavior pack: items, blocks, entities, spawn rules, recipes, 
                   scripts (pregnancy/ for players, mobs/ for the preggo mobs)
 packs/resource/   resource pack: client entities, render and animation controllers, texture atlases,
                   block geometry, sound definitions, language list
-tools/            import-jar.mjs, validate.mjs, build.mjs, lib/ (Java model converter),
+tools/            import-jar.mjs, validate.mjs, build.mjs, gen/ (generators), lib/ (Java model converter),
                   bedrock-schemas/ (Mojang's JSON schemas), lang/ (strings the port adds), tests/
 docs/             porting plan and known differences
 vendor/           your local copy of the mod jar, and vendor/jenny/ the Jenny add-ons (git-ignored)
@@ -308,10 +312,55 @@ whole baby slides out just before it is born: the mod's own fetus models for the
 mod's females (navel births come out of the belly), a small baby in her skin tone for the Jenny
 girls (tools/lib/crowning.mjs; `node tools/render-crowning.mjs` renders every mother).
 
-Actions & Stuff replaces the player model, so on a game running it this pack's player body does
-not show (no two resource packs can share the player model). The guide book's Settings page has
-two opt-in switches for it: "My game runs Actions & Stuff" plays the pregnant players' poses on
-that game through the Script API (and moves the belly rub into the book, since crouching and
-looking down is its sit gesture), and "Show my belly to Actions & Stuff players" puts a pregnant
-player's belly in her off-hand, drawn on her body by any player model and hidden where this
-pack's own player model draws it already.
+### Actions & Stuff (and other player-model packs)
+
+Actions & Stuff replaces the player model, and no two resource packs can share it, so on a game
+running it this pack's pregnant body does not show. A server cannot tell which packs a player's
+game runs, so what crosses over works without anyone saying so:
+
+- **Poses, automatically.** Every player within 128 blocks of a pregnant player gets her labor
+  (water breaking, pre-birth, birth, post-birth, miscarriage), back pain, belly rubbing and, from
+  P4, her heavy walk, on whatever player model their game draws. They are copies of this pack's
+  own poses that switch themselves off where this pack's model draws her already and in first
+  person, so nothing doubles up and nobody needs a setting. A player who comes near mid-pose gets
+  it at once, and she sees her own pose in F5.
+- **Her belly, if she agrees.** The belly travels as an item in her off-hand, which every player
+  model draws on her body. When she first shows (P2) a popup asks her once: "Show it" locks the
+  belly in her off-hand for the rest of the pregnancy (kept on death), "Not now" leaves her
+  off-hand alone. It grows with the phases, kicks, tightens in contractions, plays the belly-rub
+  need, crowns the baby between her legs (or out of the belly for an ender baby) and hides after
+  the birth. It is invisible wherever this pack's model draws her belly already, to her in first
+  person, and while she is invisible or asleep. Players who turned it on in 0.6.0 keep it.
+- **Skin tone.** The belly cannot use her skin, so it comes in six tones (Alex, the default, then
+  Light, Medium, Tan, Brown and Dark); she picks the closest.
+- **The belly-rub gesture.** Crouching and looking down rubs her belly; on Actions & Stuff the
+  same gesture sits her down, so it can be turned off. "Rub my belly" in the guide book always works.
+
+The guide book's **Settings** page holds the three choices (show my belly, its skin tone, the
+crouch-and-look-down rub), and every player gets a one-time hint about them after joining.
+
+**Pack order** decides what each player sees on their own game. With Actions & Stuff above
+Minepreggo (Resources), players are drawn with Actions & Stuff's model plus the poses and the
+off-hand belly. With Minepreggo above Actions & Stuff, players are drawn with this pack's full
+pregnant model (labor body and crowning included) but without Actions & Stuff's player animations.
+
+**Check it:** with Actions & Stuff on and while pregnant (P2 or later, belly turned on), press F5:
+you should see your belly. If you don't, Minepreggo is above Actions & Stuff in your resource
+packs, or the belly is off in Settings.
+
+**Testing without Actions & Stuff** (a paid, encrypted Marketplace pack; nothing of it is used
+here): `npm run standin` writes `dist/minepreggo-standin-player.mcpack`, a development resource
+pack ("Minepreggo test: other player model") with a plain player model, built from this pack's own
+player entity with every Minepreggo part taken out. Import it and put it **above** Minepreggo
+(Resources) in the world's resource packs, where Actions & Stuff would sit: the game then draws
+players the way an Actions & Stuff player sees them.
+
+**What does not cross over:**
+
+- The labor body: this pack's model swaps to a spread-leg body for labor; on another model only
+  the poses play.
+- A custom skin on the belly: she gets the closest of the six tones.
+- Jiggle (the belly, chest and butt bounce): not on the off-hand belly yet.
+- The chest of a female who is not pregnant: it would mean holding an item in the off-hand all the
+  time, so it is not offered.
+- The slime baby crowns solid (alpha-tested) rather than see-through.

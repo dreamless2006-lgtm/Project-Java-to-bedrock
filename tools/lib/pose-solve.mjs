@@ -248,16 +248,19 @@ const r3 = (/** @type {number[]} */ v) => v.map((x) => Math.round(x * 1000) / 10
  * `step` seconds between them), solved at each, with smooth (Catmull-Rom) keyframes.
  * @param {Source} source
  * @param {Target} target
- * @param {{ length: number, loop?: boolean | string, times?: number[], step?: number, override?: boolean, additive?: boolean, passThrough?: Record<string, any> }} options
- *   additive: channels relative to her neutral stance (played on top of her own animations); passThrough: source channels copied as they are (belly, boobs)
+ * @param {{ length: number, loop?: boolean | string, times?: number[], step?: number, override?: boolean, additive?: boolean, passThrough?: Record<string, any>, lerp?: 'catmullrom' | 'linear' }} options
+ *   additive: channels relative to her neutral stance (played on top of her own animations); passThrough: source channels copied as they are (belly, boobs);
+ *   lerp: 'linear' writes plain [x, y, z] keyframes the game joins with straight lines, so a pose
+ *   authored as steps a tenth of a second apart moves in jerks instead of being smoothed out
  */
-export function solveAnimation(source, target, { length, loop = true, times = [], step = 0.25, override = true, additive = false, passThrough = {} }) {
+export function solveAnimation(source, target, { length, loop = true, times = [], step = 0.25, override = true, additive = false, passThrough = {}, lerp = 'catmullrom' }) {
   const grid = new Set(times.map((t) => Math.round(t * 1000) / 1000));
   if (length > 0) for (let t = 0; t <= length + 1e-6; t += step) grid.add(Math.round(Math.min(t, length) * 1000) / 1000);
   grid.add(0);
   const sorted = [...grid].filter((t) => t >= 0 && t <= Math.max(length, 0)).sort((a, b) => a - b);
   /** @type {Record<string, { rotation?: Record<string, any>, position?: Record<string, any> }>} */
   const bones = {};
+  const linear = lerp === 'linear';
   /** @type {Record<string, number[]>} */
   const last = {};
   for (const t of sorted) {
@@ -274,7 +277,7 @@ export function solveAnimation(source, target, { length, loop = true, times = []
           last[key] = value;
         }
         const frames = ((bones[name] ??= {})[channel] ??= {});
-        frames[String(t)] = { post: r3(value), lerp_mode: 'catmullrom' };
+        frames[String(t)] = linear ? r3(value) : { post: r3(value), lerp_mode: 'catmullrom' };
       }
     }
   }
@@ -283,7 +286,7 @@ export function solveAnimation(source, target, { length, loop = true, times = []
     for (const channel of /** @type {const} */ (['rotation', 'position'])) {
       const frames = channels[channel];
       if (!frames) continue;
-      const values = Object.values(frames).map((f) => f.post);
+      const values = /** @type {number[][]} */ (Object.values(frames).map((f) => (Array.isArray(f) ? f : f.post)));
       const constant = values.every((v) => v.every((x, k) => Math.abs(x - values[0][k]) < 1e-3));
       if (constant) {
         if (additive && values[0].every((x) => Math.abs(x) < 1e-3)) delete channels[channel];

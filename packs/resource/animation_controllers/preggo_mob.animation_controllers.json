@@ -157,7 +157,8 @@
         },
         "water_breaking": {
           "animations": [
-            "water_breaking"
+            "water_breaking",
+            "labor_flair"
           ],
           "transitions": [
             {
@@ -168,7 +169,8 @@
         },
         "prebirth": {
           "animations": [
-            "prebirth"
+            "prebirth",
+            "labor_flair"
           ],
           "transitions": [
             {
@@ -179,8 +181,29 @@
         },
         "birth": {
           "animations": [
-            "birth",
-            "crowning"
+            {
+              "birth": "v.bp < 4"
+            },
+            {
+              "birth_p4": "v.bp == 4"
+            },
+            {
+              "birth_p5": "v.bp == 5"
+            },
+            {
+              "birth_p6": "v.bp == 6"
+            },
+            {
+              "birth_p7": "v.bp == 7"
+            },
+            {
+              "birth_p8": "v.bp == 8"
+            },
+            {
+              "birth_p9": "v.bp == 9"
+            },
+            "crowning",
+            "birth_flair"
           ],
           "transitions": [
             {
@@ -191,7 +214,27 @@
         },
         "postbirth": {
           "animations": [
-            "postbirth"
+            {
+              "postbirth": "v.bp < 4"
+            },
+            {
+              "postbirth_p4": "v.bp == 4"
+            },
+            {
+              "postbirth_p5": "v.bp == 5"
+            },
+            {
+              "postbirth_p6": "v.bp == 6"
+            },
+            {
+              "postbirth_p7": "v.bp == 7"
+            },
+            {
+              "postbirth_p8": "v.bp == 8"
+            },
+            {
+              "postbirth_p9": "v.bp == 9"
+            }
           ],
           "transitions": [
             {

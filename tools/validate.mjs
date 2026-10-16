@@ -530,6 +530,80 @@ if (existsSync(join(RP, 'entity', PORT))) {
   }
 }
 
+// --- Actions & Stuff: compat poses and attachables ---
+// What players whose game runs another player model (Actions & Stuff) see of a pregnant player:
+// the compat copies of her poses that player/compat.js plays on them (written next to the jar's
+// labor poses by tools/gen/compat-poses.mjs, git-ignored), and the belly held in her off-hand,
+// whose attachables (tools/gen/belly-items.mjs) draw the geometry and atlases tools/import-jar.mjs
+// writes. An attachable is not a client entity, so the client entity checks above never see it:
+// its q.property reads go through c.owning_entity->, the player holding it, and are checked here
+// against the player's properties instead.
+{
+  const { COMPAT_FILE, COMPAT_SOURCES, VANILLA_BONES, compatId } = await import('./lib/compat-poses.mjs');
+  const compatFile = join(RP, COMPAT_FILE);
+  if (convertedImported) {
+    const compat = existsSync(compatFile) ? readJson(compatFile)?.animations ?? {} : undefined;
+    if (!compat) fail(compatFile, 'missing: run `node tools/gen/compat-poses.mjs` (part of `npm run import`)');
+    for (const { name } of compat ? COMPAT_SOURCES : []) {
+      const id = compatId(name);
+      const animation = compat?.[id];
+      if (!animation) { fail(compatFile, `${id} is missing (player/compat.js plays it)`); continue; }
+      // Without both gates the copy doubles the pose on our own model or swings her first-person arms.
+      const weight = String(animation.blend_weight ?? '');
+      if (!/\bv(?:ariable)?\.mp_native\b/.test(weight) || !/\bv(?:ariable)?\.is_first_person\b/.test(weight)) fail(compatFile, `${id}: blend_weight must read v.mp_native and v.is_first_person`);
+      const bones = Object.keys(animation.bones ?? {});
+      if (!bones.length) fail(compatFile, `${id} moves no bone`);
+      for (const bone of bones) if (!VANILLA_BONES.includes(bone)) fail(compatFile, `${id}: "${bone}" is not a vanilla humanoid bone (the attachable draws ours)`);
+    }
+  }
+
+  /** @type {Map<string, any>} geometry id -> definition, from the folder the importer writes them to */
+  const attachableGeometry = new Map();
+  for (const file of walk(join(RP, 'models/entity', NS, 'attachable'), '.json')) {
+    for (const geo of readJson(file)?.['minecraft:geometry'] ?? []) attachableGeometry.set(geo.description?.identifier, geo);
+  }
+  const playerProperties = entities.get('minecraft:player')?.entity.description?.properties ?? {};
+  for (const file of walk(join(RP, 'attachables'), '.json')) {
+    if (!/^belly_.*\.json$/.test(file.split(sep).pop() ?? '')) continue;
+    const description = readJson(file)?.['minecraft:attachable']?.description;
+    if (!description) { fail(file, 'missing "minecraft:attachable"'); continue; }
+    if (!defined.has(description.identifier)) fail(file, `no behavior pack item ${description.identifier}`);
+    for (const geo of Object.values(description.geometry ?? {})) {
+      if (!imported) continue;
+      const def = attachableGeometry.get(geo);
+      if (!def) { fail(file, `geometry "${geo}" not found in models/entity/${NS}/attachable`); continue; }
+      const body = def.bones?.find((/** @type {any} */ b) => b.name === 'mp_body');
+      if (String(body?.binding ?? '').replace(/\s/g, '') !== "'body'") fail(file, `geometry "${geo}" needs an mp_body bone bound to 'body'`);
+    }
+    for (const path of Object.values(description.textures ?? {})) {
+      if (imported && path.includes(`/${NS}/`) && !existsSync(join(RP, `${path}.png`))) fail(file, `texture ${path}.png does not exist`);
+    }
+    const shortNames = description.animations ?? {};
+    for (const [name, id] of Object.entries(shortNames)) {
+      const generated = id.startsWith(`animation.${NS}.`) && !convertedImported;
+      if (!rpIds.has(id) && !generated) fail(file, `animation "${name}" refers to unknown ${id}`);
+    }
+    for (const ref of animationRefs(description.scripts?.animate)) if (!shortNames[ref]) fail(file, `animate uses undefined "${ref}"`);
+    const read = new Set([...JSON.stringify(description.scripts ?? {}).matchAll(/c(?:ontext)?\.owning_entity\s*->\s*q(?:uery)?\.property\(\s*'([^']+)'\s*\)/g)].map((m) => m[1]));
+    for (const name of read) {
+      if (!playerProperties[name]) fail(file, `reads undefined player property "${name}"`);
+      else if (!playerProperties[name].client_sync) fail(file, `player property "${name}" is read by the client but not client_sync`);
+    }
+  }
+
+  // The baby that crowns from the belly: every species root the animation scales must exist, the
+  // navel ones on every belly big enough for a navel birth (P4 and up).
+  const babyFile = join(RP, 'animations/belly_attachable.animation.json');
+  const baby = existsSync(babyFile) ? readJson(babyFile)?.animations?.[`animation.${NS}.belly_attachable.baby`] : undefined;
+  if (imported && baby && attachableGeometry.size) {
+    const phases = [...attachableGeometry].map(([id, geo]) => ({ id, phase: Number(/_p(\d+)$/.exec(id)?.[1] ?? -1), bones: new Set((geo.bones ?? []).map((/** @type {any} */ b) => b.name)) }));
+    for (const bone of Object.keys(baby.bones ?? {})) {
+      if (!phases.some((g) => g.bones.has(bone))) fail(babyFile, `belly_attachable.baby: bone "${bone}" is in no attachable geometry`);
+      if (bone.startsWith('n_')) for (const g of phases) if (g.phase >= 4 && !g.bones.has(bone)) fail(babyFile, `belly_attachable.baby: navel bone "${bone}" is missing from ${g.id}`);
+    }
+  }
+}
+
 // --- trades ------------------------------------------------------------------------------
 for (const file of walk(join(BP, 'trading'), '.json')) {
   const doc = readJson(file);

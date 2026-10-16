@@ -143,6 +143,37 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   when hers is small). The client falls back to `q.variant` and to the pose when the phase
   property is unknown, and the mob system rewrites the phase property every tick (records from
   versions that only set it through entity events, wild mobs that only kept the variant).
+- ✅ **Actions & Stuff without settings: poses for everyone, a belly that moves (0.7.0).** A server
+  cannot tell which resource packs a client runs, so 0.6.0's two opt-in switches never reached the
+  players who needed them. *Poses.* `tools/gen/compat-poses.mjs` (run by `npm run import`) writes
+  `animation.minepreggo.as.*`, a copy of each of the 22 player poses (labor, back pain, belly
+  rubbing P0–P9, heavy walk P4–P9) with only the vanilla humanoid bones, keyframes verbatim, gated
+  as a whole by `blend_weight` `(1.0 - v.mp_native) * (1.0 - v.is_first_person)`: zero on our own
+  model (whose public `variable.mp_native` is 1) and in first person, one on any other model. Our
+  poses are additive and the labor poses use catmull-rom keyframes, which the game refuses to mix
+  with Molang, so this animation-level gate is the only one that keeps our model from getting the
+  pose twice. `player/compat.js` plays them to every player within 128 blocks (3D, same dimension,
+  the mother included) on two controllers (pose, heavy walk), at once to newcomers and again only
+  in step with each loop: 0.6.0 re-sent every 5 s, which restarted the 9-second birth pose before
+  it ever finished. *Belly.* One off-hand item per phase and skin tone (50 items:
+  `minepreggo:belly_p<P>[_t<T>]`); each attachable draws the predefined body of its phase (belly,
+  kick cubes, chest, hips) on bones bound to her body and legs, with every belly animation of our
+  own model driven by her properties read through `c.owning_entity->` (inflation, growth, kicks
+  I–III, contractions, pushes, the belly-rub need, the post-birth hide) and the mod's fetus models
+  crowning between her legs or from the navel. Tone atlases (Alex plus five recoloured skin tones,
+  clothing pixels untouched) and geometry are written by `tools/import-jar.mjs`. Eased values are
+  written to look right whether or not attachable variables persist between frames. She is asked
+  once, in a popup at P2 (never during labor); the guide book's Settings has the belly, its tone
+  and the crouch-and-look-down rub (on by default; 0.6.0's "My game runs Actions & Stuff" turns it
+  off on migration). *Testing.* `npm run standin` packs a plain player model built from our own
+  entity with every Minepreggo part removed (`dist/minepreggo-standin-player.mcpack`); placed
+  above Minepreggo (Resources) it sits where Actions & Stuff does. `tools/validate.mjs` checks the
+  22 copies (gates, vanilla bones only), every belly attachable (item, geometry with `mp_body`
+  bound to `'body'`, atlas, animations, the player properties it reads) and the crowning bones.
+  Untested in game: whether `c.owning_entity->q.property` works (without it the belly still shows
+  at the right size and tone, unmoving, as in 0.6.0), and whether Actions & Stuff keeps the vanilla
+  bone names. Not carried over: the labor body swap, custom-skin bellies (closest tone), jiggle
+  on the off-hand belly, the chest of non-pregnant females, a translucent slime baby.
 - ✅ **Crowning in every birth, the kobold's eggs, Actions & Stuff (0.6.0).** *Crowning.* The mod
   draws its fetus model during a birth (FetusLayer: scaled 0.875, head first, slid out by the
   push), which the port had not carried over. `tools/lib/crowning.mjs` builds a crowning geometry
@@ -484,6 +515,40 @@ removed systems. (Custom mob effects are emulated since phase 2.)
 
 - `Items.f_42533_` (farmer trades at levels 2–4: 10 emeralds → 5, 15 → 10, 17 → 20) is an
   obfuscated SRG field; it needs a 1.20.1 SRG→Mojang mapping lookup before it can be ported.
+
+## In-game checklist for Actions & Stuff (0.7.0)
+
+Two players: M (pregnant) and V (viewer). Use Actions & Stuff if you own it, otherwise the stand-in
+(`npm run standin`, placed **above** Minepreggo (Resources)); do one run without either.
+
+Without Actions & Stuff or the stand-in (nothing may break):
+1. M at P7 with the belly on: nobody, M included, sees a second belly or anything in M's off-hand.
+2. M's labor, birth and post-birth look as in 0.6.2: no doubled body turn, no flicker every few
+   seconds, the birth plays its full 9-second loop.
+3. M in first person: no belly item in view, arms not moved by the poses.
+
+With Actions & Stuff or the stand-in on V:
+4. With the stand-in on M too, M sees herself un-pregnant in F5 until she says yes (the stand-in
+   is above our pack).
+5. At P2 the popup shows once: "Show it" locks the belly in the off-hand, "Not now" is not asked
+   again for that phase.
+6. V sees M's belly on her body at the right size, following her walk; it grows with
+   `/scriptevent minepreggo:debug belly 3`..`9` and hides when M drinks invisibility.
+7. Each skin tone in Settings recolours the belly and leaves the clothing pixels alone.
+8. `/scriptevent minepreggo:debug kick`: V sees kicks I–III push out of the belly. This is the
+   test for `c.owning_entity->q.property`; if kicks never show, that read does not work.
+9. A contraction or prebirth ripples the belly; the belly-rub need plays its belly animation.
+10. `/scriptevent minepreggo:debug birth`: V sees water breaking, prebirth, the birth on her back
+    looping its full length, the baby crowning further with each sneak-push in its species' skin,
+    and post-birth hiding the belly; an ender baby comes out of the belly front.
+11. V leaves beyond 128 blocks and comes back mid-pose, or joins mid-labor: the pose shows at once.
+12. M on the stand-in, F5: she sees her pose and belly; in first person her arms are unaffected.
+13. P4+ walking: V sees the heavier gait.
+14. M crouches and looks down: she rubs and V sees it. With the gesture off in Settings crouching
+    no longer rubs; "Rub my belly" in the guide book still does.
+15. Belly off in Settings: the off-hand empties. A shield in the off-hand: the "empty your
+    off-hand" hint, at most once a minute.
+16. The content log is clean after loading the world.
 
 ## In-game checklist for phase 3
 

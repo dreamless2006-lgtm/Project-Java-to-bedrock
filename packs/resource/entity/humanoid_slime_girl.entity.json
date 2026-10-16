@@ -188,7 +188,7 @@
           "v.savage = q.property('minepreggo:savage');",
           "v.aggressive = q.has_target;",
           "v.kl = 1.0 + v.kick;",
-          "v.belly_growth = (v.phase <= 2 ? 1.0 : (v.phase <= 4 ? 0.9 : (v.phase == 5 ? 0.8 : (v.phase <= 7 ? 0.7 : 0.6)))) * q.property('minepreggo:growth');",
+          "v.belly_growth = (v.phase <= 2 ? 1.0 : (v.phase <= 4 ? 0.9 : (v.phase == 5 ? 0.8 : (v.phase <= 7 ? 0.7 : 0.6)))) * (v.pose == 'birth' ? 1.0 - v.push : q.property('minepreggo:growth'));",
           "v.squish_target = (q.is_on_ground && !v.was_on_ground) ? -0.5 : ((!q.is_on_ground && v.was_on_ground) ? 1.0 : v.squish_target);",
           "v.was_on_ground = q.is_on_ground;",
           "v.squish = v.squish + (v.squish_target - v.squish) * (1.0 - math.pow(0.5, 20.0 * q.delta_time));",
@@ -295,8 +295,8 @@
         "back_pain": "animation.minepreggo.humanoid_slime_girl.back_pain",
         "water_breaking": "animation.minepreggo.humanoid_slime_girl.water_breaking",
         "prebirth": "animation.minepreggo.humanoid_slime_girl.prebirth",
-        "birth": "animation.minepreggo.humanoid_slime_girl.birth",
-        "postbirth": "animation.minepreggo.humanoid_slime_girl.postbirth",
+        "birth": "animation.minepreggo.humanoid_slime_girl.birth_melting",
+        "postbirth": "animation.minepreggo.humanoid_slime_girl.postbirth_puddle",
         "miscarriage": "animation.minepreggo.humanoid_slime_girl.miscarriage",
         "belly_low": "animation.minepreggo.belly.low_belly_inflation",
         "belly_medium": "animation.minepreggo.belly.medium_belly_inflation",
@@ -361,10 +361,26 @@
         "scene_sit_pose_p7": "animation.minepreggo.humanoid_slime_girl.scene_sit_p7",
         "scene_sit_pose_p8": "animation.minepreggo.humanoid_slime_girl.scene_sit_p8",
         "scene_sit_pose_p9": "animation.minepreggo.humanoid_slime_girl.scene_sit_p9",
-        "crowning": "animation.minepreggo.crowning"
+        "crowning": "animation.minepreggo.crowning.humanoid_slime_girl",
+        "birth_p4": "animation.minepreggo.humanoid_slime_girl.birth_melting_p4",
+        "birth_p5": "animation.minepreggo.humanoid_slime_girl.birth_melting_p5",
+        "birth_p6": "animation.minepreggo.humanoid_slime_girl.birth_melting_p6",
+        "birth_p7": "animation.minepreggo.humanoid_slime_girl.birth_melting_p7",
+        "birth_p8": "animation.minepreggo.humanoid_slime_girl.birth_melting_p8",
+        "birth_p9": "animation.minepreggo.humanoid_slime_girl.birth_melting_p9",
+        "postbirth_p4": "animation.minepreggo.humanoid_slime_girl.postbirth_puddle_p4",
+        "postbirth_p5": "animation.minepreggo.humanoid_slime_girl.postbirth_puddle_p5",
+        "postbirth_p6": "animation.minepreggo.humanoid_slime_girl.postbirth_puddle_p6",
+        "postbirth_p7": "animation.minepreggo.humanoid_slime_girl.postbirth_puddle_p7",
+        "postbirth_p8": "animation.minepreggo.humanoid_slime_girl.postbirth_puddle_p8",
+        "postbirth_p9": "animation.minepreggo.humanoid_slime_girl.postbirth_puddle_p9",
+        "birth_flair": "animation.minepreggo.humanoid_slime_girl.birth_flair",
+        "labor_flair": "animation.minepreggo.humanoid_slime_girl.labor_flair"
       },
       "sound_effects": {
-        "slime_squish": "mob.slime.big"
+        "slime_squish": "mob.slime.big",
+        "mp_squish": "mob.slime.squish",
+        "mp_small": "mob.slime.small"
       },
       "render_controllers": [
         {
@@ -407,7 +423,10 @@
       "spawn_egg": {
         "texture": "minepreggo_humanoid_slime_girl_spawn_egg"
       },
-      "enable_attachables": true
+      "enable_attachables": true,
+      "particle_effects": {
+        "mp_bubble": "minecraft:cauldron_bubble_particle"
+      }
     }
   }
 }

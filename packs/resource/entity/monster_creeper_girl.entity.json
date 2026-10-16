@@ -50,6 +50,7 @@
           "v.bp = (q.property('minepreggo:belly') == 'p0' ? 0 : (q.property('minepreggo:belly') == 'p1' ? 1 : (q.property('minepreggo:belly') == 'p2' ? 2 : (q.property('minepreggo:belly') == 'p3' ? 3 : (q.property('minepreggo:belly') == 'p4' ? 4 : (q.property('minepreggo:belly') == 'p5' ? 5 : (q.property('minepreggo:belly') == 'p6' ? 6 : (q.property('minepreggo:belly') == 'p7' ? 7 : (q.property('minepreggo:belly') == 'p8' ? 8 : (q.property('minepreggo:belly') == 'p9' ? 9 : -1))))))))));",
           "v.bp = v.bp >= 0 ? v.bp : (v.phase >= 0 ? v.phase : (q.variant > 0 ? q.variant - 1 : (v.pregnant_pose ? 5 : -1)));",
           "v.phase = v.bp;",
+          "v.ninset = (v.bp == 4 ? 3.38 : (v.bp == 5 ? 3.38 : (v.bp == 6 ? 2.38 : (v.bp == 7 ? 2.08 : (v.bp == 8 ? 6.58 : (v.bp == 9 ? 8.25 : 0.0))))));",
           "v.k_front_kick_x = (v.bp == 3 ? 0.45 : (v.bp == 4 ? 0.35 : (v.bp == 5 ? 0.45 : (v.bp == 6 ? 0.70 : (v.bp == 7 ? 1.70 : (v.bp == 8 ? 1.40 : (v.bp == 9 ? 1.40 : 0.0)))))));",
           "v.k_front_kick_y = (v.bp == 3 ? 0.75 : (v.bp == 4 ? 1.05 : (v.bp == 5 ? 1.08 : (v.bp == 6 ? 1.63 : (v.bp == 7 ? 2.19 : (v.bp == 8 ? 1.79 : (v.bp == 9 ? 1.79 : 0.0)))))));",
           "v.k_front_kick_z = (v.bp == 3 ? 1.88 : (v.bp == 4 ? 3.48 : (v.bp == 5 ? 3.48 : (v.bp == 6 ? 2.58 : (v.bp == 7 ? 2.88 : (v.bp == 8 ? 7.38 : (v.bp == 9 ? 9.58 : 0.0)))))));",
@@ -84,7 +85,7 @@
           "v.savage = q.property('minepreggo:savage');",
           "v.aggressive = q.has_target;",
           "v.kl = 1.0 + v.kick;",
-          "v.belly_growth = (v.phase <= 2 ? 1.0 : (v.phase <= 4 ? 0.9 : (v.phase == 5 ? 0.8 : (v.phase <= 7 ? 0.7 : 0.6)))) * q.property('minepreggo:growth');",
+          "v.belly_growth = (v.phase <= 2 ? 1.0 : (v.phase <= 4 ? 0.9 : (v.phase == 5 ? 0.8 : (v.phase <= 7 ? 0.7 : 0.6)))) * (v.pose == 'birth' ? 1.0 - v.push : q.property('minepreggo:growth'));",
           "v.fuse_ticks = v.phase <= 2 ? 30 : (v.phase <= 5 ? 38 : (v.phase <= 7 ? 46 : 62));",
           "v.swell_raw = q.fuse_time >= 0 ? math.clamp(v.fuse_ticks - q.fuse_time + q.frame_alpha - 1.0, 0.0, 30.0) / 28.0 : 0.0;",
           "v.swell = math.clamp(v.swell_raw, 0.0, 1.0);",
@@ -93,6 +94,10 @@
           "v.scale_xz = (0.9375 + v.swell * 0.399) * v.wobble;",
           "v.scale_y = (0.9375 + v.swell * 0.099) / v.wobble;",
           "v.flash = (v.swell_raw > 0.0 && math.mod(math.floor(q.life_time * 20.0), 6.0) != 0.0) ? math.clamp(v.swell_raw, 0.5, 1.0) * 0.75 : 0.0;",
+          "v.bt = v.pose == 'birth' ? v.bt + q.delta_time : 0.0;",
+          "v.bph = math.mod(v.bt, 9.0417);",
+          "v.bflash = ((v.bph >= 0.6 && v.bph < 1.2) || (v.bph >= 1.7 && v.bph < 2.3) || (v.bph >= 3.9 && v.bph < 4.5) || (v.bph >= 5.4 && v.bph < 6.0)) && math.mod(math.floor(v.bt * 14.0), 2.0) == 0.0 ? 0.7 : 0.0;",
+          "v.flash = math.max(v.flash, v.bflash);",
           "v.jdt = math.clamp(q.delta_time, 0.0, 0.1);",
           "v.jf = v.jdt / 0.05;",
           "v.jvy = q.position_delta(1) / 0.05;",
@@ -185,7 +190,10 @@
         "initialize": [
           "variable.aggressive = 0.0;",
           "variable.belly_growth = 0.0;",
+          "variable.bflash = 0.0;",
           "variable.bp = 0.0;",
+          "variable.bph = 0.0;",
+          "variable.bt = 0.0;",
           "variable.contracting = 0.0;",
           "variable.crown = 0.0;",
           "variable.crown_scale = 0.0;",
@@ -281,6 +289,7 @@
           "variable.kicking = 0.0;",
           "variable.kl = 0.0;",
           "variable.kr_f = 0.0;",
+          "variable.ninset = 0.0;",
           "variable.phase = 0.0;",
           "variable.pose = 0.0;",
           "variable.pregnant_pose = 0.0;",
@@ -376,7 +385,21 @@
         "scene_sit_pose_p7": "animation.minepreggo.no_pose",
         "scene_sit_pose_p8": "animation.minepreggo.no_pose",
         "scene_sit_pose_p9": "animation.minepreggo.no_pose",
-        "crowning": "animation.minepreggo.crowning_free"
+        "crowning": "animation.minepreggo.crowning.monster_creeper_girl",
+        "birth_p4": "animation.minepreggo.monster_creeper_girl.birth",
+        "birth_p5": "animation.minepreggo.monster_creeper_girl.birth",
+        "birth_p6": "animation.minepreggo.monster_creeper_girl.birth",
+        "birth_p7": "animation.minepreggo.monster_creeper_girl.birth",
+        "birth_p8": "animation.minepreggo.monster_creeper_girl.birth",
+        "birth_p9": "animation.minepreggo.monster_creeper_girl.birth",
+        "postbirth_p4": "animation.minepreggo.monster_creeper_girl.postbirth",
+        "postbirth_p5": "animation.minepreggo.monster_creeper_girl.postbirth",
+        "postbirth_p6": "animation.minepreggo.monster_creeper_girl.postbirth",
+        "postbirth_p7": "animation.minepreggo.monster_creeper_girl.postbirth",
+        "postbirth_p8": "animation.minepreggo.monster_creeper_girl.postbirth",
+        "postbirth_p9": "animation.minepreggo.monster_creeper_girl.postbirth",
+        "birth_flair": "animation.minepreggo.monster_creeper_girl.birth_flair",
+        "labor_flair": "animation.minepreggo.no_pose"
       },
       "render_controllers": [
         {
@@ -466,6 +489,9 @@
       ],
       "spawn_egg": {
         "texture": "minepreggo_hostile_monster_creeper_girl_spawn_egg"
+      },
+      "sound_effects": {
+        "mp_hiss": "random.fuse"
       }
     }
   }

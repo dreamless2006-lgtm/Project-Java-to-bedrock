@@ -18,6 +18,7 @@ import { mergeBellies } from './lib/belly-merge.mjs';
 import { clampKicks } from './lib/kick-clamp.mjs';
 import { FAMILY_CROWNING, FETUS_MODELS, PLAYER_BABIES, chainOf, crowningGeometry, fetusBones, openingOf } from './lib/crowning.mjs';
 import { decodePng, encodePng } from './lib/png.mjs';
+import { NAVEL_SPECIES, TONES, atlas, attachableGeometry, descendants, fetusSlot, navelOpening, offsetUv, recolor, skinBase } from './lib/belly-attachable.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const RP = join(ROOT, 'packs/resource');
@@ -219,20 +220,54 @@ for (const [family, spec] of Object.entries(FAMILY_CROWNING)) {
 }
 
 // The belly a pregnant player can hold in her off-hand for players whose game runs Actions & Stuff
-// (player/compat.js): the mod's predefined body of each size (belly, chest and hips) under bones
-// bound to her own body and legs, so it follows whatever animates her (attachables/belly_pN.json).
-for (let p = 0; p <= 9; p++) {
-  const g = readModel(`player_body_predefined_p${p}`);
-  const BOUND = { body: 'mp_body', rightLeg: 'mp_right_leg', leftLeg: 'mp_left_leg' };
-  const rename = (/** @type {string | undefined} */ name) => (name && name in BOUND ? BOUND[/** @type {keyof typeof BOUND} */ (name)] : name);
-  const bones = g.bones.map((/** @type {any} */ b) => ({
-    ...b,
-    name: rename(b.name),
-    ...(b.parent ? { parent: rename(b.parent) } : {}),
-    ...(b.name in BOUND ? { binding: `'${b.name}'` } : {}),
-  }));
-  const doc = { format_version: '1.12.0', 'minecraft:geometry': [{ ...g, description: { ...g.description, identifier: `geometry.${MOD_ID}.belly_attachable_p${p}` }, bones }] };
-  writeFile(join(modelOut, 'attachable', `belly_p${p}.geo.json`), JSON.stringify(doc, null, 2) + '\n');
+// (player/compat.js, tools/lib/belly-attachable.mjs): the mod's predefined body of each size (belly,
+// chest and hips) under bones bound to her own body and legs, so it follows whatever animates her,
+// with every baby species at the crotch and, from P4, the humanoid ones at the navel, for the
+// crowning (attachables/belly_pN[_tT].json pick the species by scale). One render controller draws
+// it, so its texture is an atlas per phase and skin tone: the belly on the left, the fetuses right.
+{
+  const labor = JSON.parse(readFileSync(join(RP, 'models/entity/player_labor.geo.json'), 'utf8'))['minecraft:geometry'][0];
+  // the crotch of a flat humanoid; her body pivot there is [0, 24, 0], the same as mp_body's
+  const crotchOpening = openingOf(labor, 'crotch').opening;
+  /**
+   * Each species' fetus placed head first at an opening (as the native model's crowning places it)
+   * and moved onto its slot of the atlas.
+   * @param {{ name: string, parent?: string, pivot: number[], rotation?: number[] }[]} chain
+   * @param {{ opening: number[], mount?: number[] }} at
+   * @param {number} count the first `count` species of PLAYER_BABIES
+   */
+  const babiesAt = (chain, at, count) => PLAYER_BABIES.slice(0, count).map(([species, model], i) => {
+    const placed = crowningGeometry({ id: 'tmp', chain, ...at, baby: fetuses[model].bones })['minecraft:geometry'][0].bones;
+    return { species, i, bones: offsetUv(descendants(placed, 'crowning_baby'), fetusSlot(i).uv) };
+  });
+  const toMp = (/** @type {string | undefined} */ name) => (name === 'body' ? 'mp_body' : name);
+  let geometryCount = 0;
+  for (let p = 0; p <= 9; p++) {
+    const body = readModel(`player_body_predefined_p${p}`);
+    const crotch = { opening: crotchOpening, babies: babiesAt([{ name: 'mp_body', pivot: [0, 24, 0] }], { opening: crotchOpening }, PLAYER_BABIES.length) };
+    let navel;
+    if (p >= 4) {
+      // the front kick's height, on the belly's skin (the kick cube itself rests inside the belly)
+      const at = navelOpening(body);
+      const chain = chainOf(body, ['body', 'belly']).map((b) => ({ ...b, name: /** @type {string} */ (toMp(b.name)), ...(b.parent ? { parent: toMp(b.parent) } : {}) }));
+      navel = { ...at, babies: babiesAt(chain, at, NAVEL_SPECIES.length) };
+    }
+    const doc = attachableGeometry({ id: `geometry.${MOD_ID}.belly_attachable_p${p}`, body, crotch, navel });
+    writeFile(join(modelOut, 'attachable', `belly_p${p}.geo.json`), JSON.stringify(doc, null, 2) + '\n');
+    geometryCount++;
+  }
+  const decode = (/** @type {string} */ path) => decodePng(new Uint8Array(readFileSync(join(textureOut, `${path}.png`))));
+  const fetusTextures = PLAYER_BABIES.map(([, , texture]) => decode(`entity/fetus/${texture}`));
+  let atlasCount = 0;
+  for (let p = 0; p <= 9; p++) {
+    const belly = decode(`entity/player/predefined/alex/alex_p${p}_extra`);
+    const base = skinBase(belly);
+    TONES.forEach((tone, t) => {
+      writeFile(join(textureOut, 'attachable', `belly_p${p}_t${t}.png`), encodePng(atlas(recolor(belly, tone, base), fetusTextures)));
+      atlasCount++;
+    });
+  }
+  console.log(`belly attachable: ${geometryCount} geometries, ${atlasCount} atlases`);
 }
 
 // One model per family with every phase's belly (tools/lib/belly-merge.mjs): the belly no longer

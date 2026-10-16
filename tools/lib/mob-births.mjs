@@ -12,10 +12,11 @@
 // by tools/gen-birth-poses.mjs into the git-ignored animations/minepreggo/ folder; the pure-Molang
 // animations built here (crowning, flair) go into the committed animations/births.animation.json,
 // written by tools/gen-belly-render.mjs together with the entity wiring below.
-import { BIRTH_LINE, crowningFor, effectsAt, exitMount, flashLines, navelInsetLine, pulse, tremble, vec, windowKeys } from './birth-rhythm.mjs';
+import { BIRTH_LINE, crowningFor, effectsAt, exitMount, flashLines, mergeEffects, navelInsetLine, pulse, timeKey, tremble, vec, windowKeys } from './birth-rhythm.mjs';
 import { MOD, PHASES } from './belly-render.mjs';
-import { openingOf } from './crowning.mjs';
-import { animationSource, keyTimes, rigOf, solveAnimation } from './pose-solve.mjs';
+import { BODY_DEPTH, FETUS_SCALE, HEAD_DEPTH, openingOf } from './crowning.mjs';
+import { cubeFaces, poseAt } from './geo-render.mjs';
+import { animationSource, apply, keyTimes, matFromEuler, rigOf, solveAnimation } from './pose-solve.mjs';
 import { LEGS, NEUTRAL_RIG, flatRig } from './scene-poses.mjs';
 
 /** @typedef {import('./birth-rhythm.mjs').Rhythm} Rhythm */
@@ -28,6 +29,8 @@ import { LEGS, NEUTRAL_RIG, flatRig } from './scene-poses.mjs';
  * @property {string} [pose] the name of her solved birth (animation.minepreggo.<family>.<pose>[_pN]); none: the mod's birth
  * @property {AuthoredAnimation} [authored] her birth on NEUTRAL_RIG (world orientations, solved absolutely)
  * @property {'linear'} [lerp] how the solved keyframes ease (linear: the zombie's stepped jerks)
+ * @property {boolean} [bellyUp] her forward bend is cut down per belly size until her belly clears the floor
+ * @property {number} [hang] her belly hangs from her bent trunk: turned back by this share of her forward bend
  * @property {string} [postPose] the name of her solved postbirth; none: the mod's
  * @property {AuthoredAnimation} [postAuthored]
  * @property {number[]} [exitWant] the way the baby comes out, in world space (her front is -z)
@@ -44,36 +47,8 @@ export const MOB_FAMILIES = /** @type {const} */ (['zombie_girl', 'humanoid_cree
 
 const round = (/** @type {number} */ v) => Math.round(v * 1000) / 1000;
 const lerp = (/** @type {number[]} */ a, /** @type {number[]} */ b, /** @type {number} */ f) => a.map((v, k) => round(v + (b[k] - v) * f));
-
-/**
- * A keyframe map of one number channel from [time, value] pairs or another map, sampled linearly
- * at any time (the authored poses are read linearly by the solver too).
- * @param {number | Keys | [number, number][]} axis @param {number} t
- */
-function sampleAxis(axis, t) {
-  if (typeof axis === 'number') return axis;
-  const frames = (Array.isArray(axis) ? axis : Object.entries(axis).map(([k, v]) => [Number(k), Number(v)])).slice().sort((a, b) => a[0] - b[0]);
-  if (t <= frames[0][0]) return frames[0][1];
-  for (let i = 0; i < frames.length - 1; i++) {
-    const [ta, va] = frames[i], [tb, vb] = frames[i + 1];
-    if (t <= tb) return tb === ta ? vb : va + ((vb - va) * (t - ta)) / (tb - ta);
-  }
-  return frames[frames.length - 1][1];
-}
-const timesOf = (/** @type {number | Keys | [number, number][]} */ axis) => (typeof axis === 'number' ? [] : Array.isArray(axis) ? axis.map(([t]) => t) : Object.keys(axis).map(Number));
-
-/**
- * Authored per-axis numbers (each a constant, a keyframe map or [time, value] pairs) as one
- * keyframe map of [x, y, z]: the union of their times, every axis sampled linearly at each.
- * @param {number | Keys | [number, number][]} x @param {number | Keys | [number, number][]} y @param {number | Keys | [number, number][]} z
- */
-function track(x, y, z) {
-  const times = [...new Set([0, ...timesOf(x), ...timesOf(y), ...timesOf(z)].map(round))].sort((a, b) => a - b);
-  /** @type {Keys} */
-  const out = {};
-  for (const t of times) out[String(t)] = [x, y, z].map((axis) => round(sampleAxis(axis, t)));
-  return out;
-}
+/** [time, value] pairs as a keyframe map. */
+const keys = (/** @type {[number, any][]} */ pairs) => Object.fromEntries(pairs.map(([t, v]) => [timeKey(t), v]));
 
 /**
  * The zombie girl's first half-loop repeated 4 s later (her two pushes are the same jerks).
@@ -92,9 +67,6 @@ function jerks(rest, push, start, end) {
   return f.map(([t, k]) => /** @type {[number, number[]]} */ ([round(t), lerp(rest, push, k)]));
 }
 
-/** Per-axis pairs out of [time, vector] pairs. */
-const axes = (/** @type {[number, number[]][]} */ frames) => [0, 1, 2].map((k) => frames.map(([t, v]) => /** @type {[number, number]} */ ([t, v[k]])));
-
 // ---- zombie_girl: a stiff standing birth ----------------------------------------------------------
 const ZOMBIE_RHYTHM = /** @type {Rhythm} */ ({ length: 8, pushes: [[0.6, 3.4], [4.6, 7.4]], gates: [[3.6, 4.4]] });
 const ZOMBIE_ARM_REST = [-80, 0, 6];
@@ -105,23 +77,26 @@ const zombieArm = (/** @type {number} */ side) => {
   const push = ZOMBIE_ARM_PUSH.map((v, k) => (k === 2 ? v * side : v));
   /** @type {[number, number[]][]} */
   const frames = [[0, rest], ...jerks(rest, push, 0.6, 3.4), ...jerks(rest, push, 4.6, 7.4), [8, rest]];
-  const [x, y, z] = axes(frames);
-  return track(x, y, z);
+  return keys(frames);
 };
-/** Her pelvis sinks a little as she bears down (locked knees: the legs only brace wider). */
-const ZOMBIE_PELVIS = twice([[0, -0.3], [0.6, -0.3], [0.9, -0.55], [1.0, -0.55], [1.3, -0.8], [3.4, -0.8], [3.8, -0.3], [4.0, -0.3]]);
-const zombieLeg = (/** @type {number} */ side) => ({ rotation: [4, 0, 20 * side], position: track(0, ZOMBIE_PELVIS, 0) });
+/**
+ * Her pelvis dips a little as she bears down. Her knees are locked (one-piece legs braced 20
+ * degrees apart reach 11.9 below the hip), so it dips no more than keeps her feet within half a
+ * pixel of the floor, and her belly a little further off it.
+ */
+const ZOMBIE_PELVIS = twice([[0, -0.1], [0.6, -0.1], [0.9, -0.3], [1.0, -0.3], [1.3, -0.5], [3.4, -0.5], [3.8, -0.1], [4.0, -0.1]]);
+const zombieLeg = (/** @type {number} */ side) => ({ rotation: [4, 0, 20 * side], position: vec(0, keys(ZOMBIE_PELVIS), 0) });
 const ZOMBIE_BIRTH = /** @type {AuthoredAnimation} */ ({
   loop: true,
   animation_length: 8,
   bones: {
     // bent forward at the hips in stepped jerks (each pair of equal keys 0.1 s apart is a hold)
-    body: { rotation: track(twice([[0, 40], [0.4, 40], [0.6, 38], [0.9, 45], [1.0, 45], [1.3, 50], [1.4, 50], [2.2, 52], [3.0, 54], [3.4, 52], [3.8, 41], [4.0, 40]]), 0, 0) },
+    body: { rotation: vec(keys(twice([[0, 40], [0.4, 40], [0.6, 38], [0.9, 45], [1.0, 45], [1.3, 50], [1.4, 50], [2.2, 52], [3.0, 54], [3.4, 52], [3.8, 41], [4.0, 40]])), 0, 0) },
     // staring ahead at rest, hanging during a push, jerked up as each push ends; a twitch aside mid-push
     head: {
-      rotation: track(
-        twice([[0, 5], [0.6, 5], [0.7, 22], [0.8, 22], [0.9, 40], [3.3, 40], [3.4, 0], [3.6, 5], [4.0, 5]]),
-        [[0, 0], [1.7, 0], [1.8, 6], [2.0, 6], [2.1, 0], [5.7, 0], [5.8, -6], [6.0, -6], [6.1, 0], [8, 0]],
+      rotation: vec(
+        keys(twice([[0, 5], [0.6, 5], [0.7, 22], [0.8, 22], [0.9, 40], [3.3, 40], [3.4, 0], [3.6, 5], [4.0, 5]])),
+        keys([[0, 0], [1.7, 0], [1.8, 6], [2.0, 6], [2.1, 0], [5.7, 0], [5.8, -6], [6.0, -6], [6.1, 0], [8, 0]]),
         0
       ),
     },
@@ -134,16 +109,19 @@ const ZOMBIE_BIRTH = /** @type {AuthoredAnimation} */ ({
 
 // ---- humanoid_slime_girl: melting into a squat-puddle ---------------------------------------------
 const HSLIME_RHYTHM = /** @type {Rhythm} */ ({ length: 5, pushes: [[0.4, 1.9], [2.9, 4.4]] });
-const hslimeLeg = (/** @type {number} */ side) => ({ rotation: [-25, 0, 72 * side], position: track(0, windowKeys(HSLIME_RHYTHM, -9.6, -8.6), 0) });
-const hslimeArm = (/** @type {number} */ side) => ({ rotation: track(windowKeys(HSLIME_RHYTHM, -35, -50), windowKeys(HSLIME_RHYTHM, -30 * side, -18 * side), 0) });
+// Her hips sink nearly to the floor in each push (3.4 px up: the baby, sliding out forward and low,
+// just reaches the floor); legs splayed out flat enough that they rest on it.
+const hslimeLeg = (/** @type {number} */ side) => ({ rotation: [-25, 0, 80 * side], position: vec(0, windowKeys(HSLIME_RHYTHM, -8.6, -7.8), 0) });
+const hslimeArm = (/** @type {number} */ side) => ({ rotation: vec(windowKeys(HSLIME_RHYTHM, -35, -50), windowKeys(HSLIME_RHYTHM, -30 * side, -18 * side), 0) });
 const HSLIME_BIRTH = /** @type {AuthoredAnimation} */ ({
   loop: true,
   animation_length: 5,
   bones: {
-    // leaning over her belly in the pushes, swaying side to side like jelly
-    body: { rotation: track(windowKeys(HSLIME_RHYTHM, 22, 10), 0, [[0, -5], [1.25, 5], [2.5, -5], [3.75, 5], [5, -5]]) },
+    // reclined as she melts (her belly, hanging below her hips, would sink into the floor were she
+    // to lean over it), curling up a little in the pushes, swaying side to side like jelly
+    body: { rotation: vec(windowKeys(HSLIME_RHYTHM, -6, -14), 0, keys([[0, -5], [1.25, 5], [2.5, -5], [3.75, 5], [5, -5]])) },
     // looking down at her belly, thrown back at each push's peak
-    head: { rotation: track([[0, 15], [0.8, 15], [1.2, -28], [1.7, 15], [3.3, 15], [3.7, -28], [4.2, 15], [5, 15]], 0, 0) },
+    head: { rotation: vec(keys([[0, 15], [0.8, 15], [1.2, -28], [1.7, 15], [3.3, 15], [3.7, -28], [4.2, 15], [5, 15]]), 0, 0) },
     // cupping under her belly, hugging its sides in the pushes
     right_arm: hslimeArm(1),
     left_arm: hslimeArm(-1),
@@ -152,17 +130,17 @@ const HSLIME_BIRTH = /** @type {AuthoredAnimation} */ ({
     left_leg: hslimeLeg(-1),
   },
 });
-/** After the last baby: slumped forward in her puddle, arms limp, breathing. */
+/** After the last baby (her belly is hidden then): slumped forward in her puddle, arms limp, breathing. */
 const HSLIME_POSTBIRTH = /** @type {AuthoredAnimation} */ ({
   loop: true,
   animation_length: 4,
   bones: {
-    body: { rotation: track([[0, 33], [2, 37], [4, 33]], 0, 0) },
+    body: { rotation: vec(keys([[0, 33], [2, 37], [4, 33]]), 0, 0) },
     head: { rotation: [40, 0, 0] },
     right_arm: { rotation: [-10, 0, 20] },
     left_arm: { rotation: [-10, 0, -20] },
-    right_leg: { rotation: [-25, 0, 72], position: [0, -10, 0] },
-    left_leg: { rotation: [-25, 0, -72], position: [0, -10, 0] },
+    right_leg: { rotation: [-25, 0, 80], position: [0, -9, 0] },
+    left_leg: { rotation: [-25, 0, -80], position: [0, -9, 0] },
   },
 });
 
@@ -173,6 +151,8 @@ export const MOB_BIRTHS = /** @type {Record<typeof MOB_FAMILIES[number], MobBirt
     pose: 'birth_standing',
     authored: ZOMBIE_BIRTH,
     lerp: 'linear',
+    bellyUp: true,
+    hang: 0.9,
     exitWant: [0, -0.97, 0.24],
     exitAt: 2.0,
     sounds: { mp_groan: 'mob.zombie.say' },
@@ -218,26 +198,11 @@ export const MOB_BIRTHS = /** @type {Record<typeof MOB_FAMILIES[number], MobBirt
   },
 });
 
-/**
- * One sound or particle timeline out of several (times, effect) lists; two effects at the same
- * moment are kept 0.01 s apart (a timeline has one effect per time).
- * @param {[number[], string][]} lists
- */
-function timeline(lists) {
-  /** @type {Record<string, { effect: string }>} */
-  const out = {};
-  for (const [times, effect] of lists) {
-    for (const [key, value] of Object.entries(effectsAt(times, effect))) {
-      let t = Number(key);
-      while (String(round(t)) in out) t += 0.01;
-      out[String(round(t))] = value;
-    }
-  }
-  return Object.fromEntries(Object.entries(out).sort((a, b) => Number(a[0]) - Number(b[0])));
-}
+/** One sound or particle timeline out of several (times, effect) lists. */
+const timeline = (/** @type {[number[], string][]} */ lists) => mergeEffects(...lists.map(([times, effect]) => effectsAt(times, effect)));
 
 /** A position channel [0, y, 0] or a scale channel from per-time numbers (linear keyframes). */
-const yKeys = (/** @type {[number, number][]} */ frames) => Object.fromEntries(frames.map(([t, y]) => [String(round(t)), [0, round(y), 0]]));
+const yKeys = (/** @type {[number, number][]} */ frames) => keys(frames.map(([t, y]) => [t, [0, round(y), 0]]));
 
 /**
  * Her flair: additive channels on top of her birth pose, in step with her rhythm.
@@ -269,11 +234,11 @@ function birthFlair(family, bones) {
     /** @type {Keys} */
     const scale = { '0.0': [1, 1, 1] };
     for (const s of starts) {
-      scale[String(round(s - 0.1))] = [1, 1, 1];
-      scale[String(round(s))] = [`1.0 + 0.12 * ${S}`, `1.0 - 0.18 * ${S}`, `1.0 + 0.12 * ${S}`];
-      scale[String(round(s + 1.2))] = [1, 1, 1];
+      scale[timeKey((s - 0.1))] = [1, 1, 1];
+      scale[timeKey((s))] = [`1.0 + 0.12 * ${S}`, `1.0 - 0.18 * ${S}`, `1.0 + 0.12 * ${S}`];
+      scale[timeKey((s + 1.2))] = [1, 1, 1];
     }
-    scale[String(L)] = [1, 1, 1];
+    scale[timeKey(L)] = [1, 1, 1];
     channels = {
       body: { scale: Object.fromEntries(Object.entries(scale).sort((a, b) => Number(a[0]) - Number(b[0]))) },
       head: { rotation: [0, 0, `6.0 * ${S}`] },
@@ -297,18 +262,18 @@ function birthFlair(family, bones) {
     let wide = 1;
     for (const s of starts) {
       hop.push([s, 0], [s + 0.25, 2.0], [s + 0.5, -1.0], [s + 0.8, 0]);
-      land[String(round(s + 0.25))] = [1, 1, 1];
-      land[String(round(s + 0.5))] = [1.15, 0.8, 1.15];
-      land[String(round(s + 0.8))] = [1, 1, 1];
+      land[timeKey((s + 0.25))] = [1, 1, 1];
+      land[timeKey((s + 0.5))] = [1.15, 0.8, 1.15];
+      land[timeKey((s + 0.8))] = [1, 1, 1];
       // the jelly base spreads like a puddle, a little more with every push
-      spread[String(round(s + 0.25))] = [round(wide), 1, round(wide)];
+      spread[timeKey((s + 0.25))] = [round(wide), 1, round(wide)];
       wide = Math.min(1.5, wide + 0.12);
-      spread[String(round(s + 0.5))] = [round(wide), 1, round(wide)];
+      spread[timeKey((s + 0.5))] = [round(wide), 1, round(wide)];
     }
     hop.push([L, 0]);
-    land[String(L)] = [1, 1, 1];
-    spread[String(round(L - 0.4))] = [round(wide), 1, round(wide)];
-    spread[String(L)] = [1, 1, 1];
+    land[timeKey(L)] = [1, 1, 1];
+    spread[timeKey((L - 0.4))] = [round(wide), 1, round(wide)];
+    spread[timeKey(L)] = [1, 1, 1];
     const position = yKeys(hop);
     for (const root of ['leg', 'body', 'head', 'right_arm', 'left_arm']) channels[root] = { position };
     channels.leg = { ...channels.leg, scale: land };
@@ -409,7 +374,7 @@ export function mobBirthEntity(family, d, { models }) {
     const at = pre.findIndex((line) => line.startsWith('v.phase = v.bp'));
     if (at < 0) throw new Error(`${family}: no v.phase = v.bp line`);
     const byPhase = Object.fromEntries(PHASES.filter((p) => p >= 4).map((p) => [p, models(p)]));
-    pre.splice(at + 1, 0, navelInsetLine(byPhase, (/** @type {any} */ geometry) => openingOf(geometry, 'navel').opening));
+    pre.splice(at + 1, 0, navelInsetLine(byPhase));
   }
   const belly = pre.findIndex((line) => BELLY_LINE.test(line));
   if (belly < 0) throw new Error(`${family}: no v.belly_growth line`);
@@ -438,27 +403,116 @@ export function mobBirthEntity(family, d, { models }) {
 }
 
 /**
+ * Her belly at its biggest during a birth: birth_push, the kick layers and the mod's inflation
+ * stretch it together up to this much (measured on the P4 to P9 models in the previews), so a pose
+ * can be checked to keep it off the floor.
+ */
+export const BIRTH_STRETCH = [1.5, 1.35, 1.9];
+/** How far above the floor her belly stays at the least. */
+const BELLY_CLEARANCE = 0.5;
+
+/**
+ * How low her belly reaches under a pose, stretched as far as a birth stretches it (the kick bumps
+ * and the slime girl's babies inside it left out: they come and go).
+ * @param {{ bones: any[] }} geometry @param {Record<string, import('./geo-render.mjs').BonePose>} pose
+ */
+export function bellyLow(geometry, pose) {
+  const byName = new Map(geometry.bones.map((b) => [b.name, b]));
+  const inBelly = (/** @type {any} */ bone) => {
+    for (let b = bone; b; b = b.parent ? byName.get(b.parent) : undefined) {
+      if (/kick|baby/i.test(b.name)) return false;
+      if (b.name === 'belly') return true;
+    }
+    return false;
+  };
+  const belly = { bones: geometry.bones.map((b) => (inBelly(b) ? b : { ...b, cubes: [] })) };
+  const faces = cubeFaces(belly, { ...pose, belly: { ...(pose.belly ?? {}), scale: BIRTH_STRETCH } });
+  return faces.length ? Math.min(...faces.flatMap((f) => f.corners.map((c) => c[1]))) : Infinity;
+}
+
+/** The authored birth with her forward bend (body X) scaled by f: 1 as written, 0 upright. */
+function bentBy(/** @type {AuthoredAnimation} */ anim, /** @type {number} */ f) {
+  const rotation = anim.bones.body.rotation;
+  const scaled = Array.isArray(rotation)
+    ? [round(rotation[0] * f), rotation[1], rotation[2]]
+    : Object.fromEntries(Object.entries(rotation).map(([t, v]) => [t, [round(v[0] * f), v[1], v[2]]]));
+  return { ...anim, bones: { ...anim.bones, body: { ...anim.bones.body, rotation: scaled } } };
+}
+
+/**
  * Her solved birth (and postbirth) on one of her per-size models: the authored poses taken as
  * world orientations (her rest pose cancelled), and the way out as a constant rotation of the
  * crowning mount (her crowning geometry's mount is turned nowhere, so it is not doubled).
+ * A birth bent forward over her belly (`bellyUp`) bends less on a bigger belly, as far as keeps the
+ * belly off the floor: on the P8 and P9 models she stands almost upright.
  * @param {typeof MOB_FAMILIES[number]} family
  * @param {{ bones: any[], description?: any }} geometry
- * @returns {{ animations: Record<string, any>, clearance: number, mount?: number[] }}
+ * @returns {{ animations: Record<string, any>, clearance: number, mount?: number[], bend: number, bellyLow: number, turn?: number }}
  */
 export function mobBirthPoses(family, geometry) {
   const spec = MOB_BIRTHS[family];
   /** @type {Record<string, any>} */
   const animations = {};
-  if (!spec.authored || !spec.pose) return { animations, clearance: Infinity };
+  if (!spec.authored || !spec.pose) return { animations, clearance: Infinity, bend: 1, bellyLow: Infinity };
   const parts = flatRig(geometry);
   const target = { rig: rigOf(geometry), neutral: {}, map: parts.map, pelvis: parts.pelvis, trunk: parts.trunk, scale: parts.scale, absolute: true };
   const solve = (/** @type {AuthoredAnimation} */ anim, /** @type {'linear' | undefined} */ ease) =>
     solveAnimation(animationSource(NEUTRAL_RIG, anim, { pelvis: LEGS, trunk: 'body' }), target, { length: anim.animation_length, loop: true, times: keyTimes(anim), step: 0.2, ...(ease ? { lerp: ease } : {}) });
-  const birth = solve(spec.authored, spec.lerp);
+  const lowest = (/** @type {any} */ anim) => Math.min(...keyTimes(anim).map((t) => bellyLow(geometry, poseAt(anim, t))));
+  /** her birth bent by f, her belly hanging from her bent trunk (turned back by `hang` of the bend) */
+  const build = (/** @type {number} */ f) => {
+    const authored = f < 1 ? bentBy(spec.authored, f) : spec.authored;
+    const solved = solve(authored, spec.lerp);
+    if (spec.hang) {
+      const x = authored.bones.body.rotation;
+      solved.bones.belly = { rotation: Array.isArray(x) ? [round(-spec.hang * x[0]), 0, 0] : Object.fromEntries(Object.entries(x).map(([t, v]) => [t, [round(-spec.hang * v[0]), 0, 0]])) };
+    }
+    return solved;
+  };
+  let bend = 1;
+  let birth = build(1);
+  if (spec.bellyUp && lowest(birth) < BELLY_CLEARANCE) {
+    // the deepest bend that keeps her belly up, to a twentieth
+    let lo = 0, hi = 1;
+    for (let i = 0; i < 5; i++) {
+      const f = (lo + hi) / 2;
+      if (lowest(build(f)) >= BELLY_CLEARANCE) lo = f;
+      else hi = f;
+    }
+    bend = Math.floor(lo * 20) / 20;
+    birth = build(bend);
+  }
   const { opening } = openingOf(geometry, 'crotch');
   const { mount, clearance } = exitMount(geometry, birth, 'body', opening, /** @type {number[]} */ (spec.exitWant), /** @type {number} */ (spec.exitAt));
-  birth.bones.crowning = { rotation: mount };
+  const low = lowest(birth);
+  // The baby still inside her lies along the mount, behind its head: turned straight out to the
+  // exit from the start, it would stick out of her back (the zombie bent over, the slime's forward
+  // exit). So it starts along her trunk and turns to the exit as it comes out, like the curve of
+  // the birth canal, fully turned by the depth where the part still inside stays inside her.
+  const turn = turnDepth(geometry, opening, mount);
+  birth.bones.crowning = { rotation: turn > 0 ? mount.map((v) => (v === 0 ? 0 : `${v} * math.clamp(v.crown / ${turn.toFixed(1)}, 0.0, 1.0)`)) : mount };
   animations[spec.pose] = birth;
   if (spec.postAuthored && spec.postPose) animations[spec.postPose] = solve(spec.postAuthored, undefined);
-  return { animations, clearance, mount };
+  return { animations, clearance, mount, bend, bellyLow: low, turn };
+}
+
+/**
+ * How deep the baby has to be out before its mount may be fully turned to the exit, so that the
+ * part still inside her never sticks out of her more than a quarter pixel: the mount turns in step
+ * with the depth, and the inside part leaves her trunk where it crosses the back of her torso.
+ * 0 when the exit is (nearly) along her trunk anyway.
+ * @param {{ bones: any[] }} geometry @param {number[]} opening @param {number[]} mount
+ */
+export function turnDepth(geometry, opening, mount) {
+  const body = geometry.bones.find((b) => b.name === 'body');
+  const back = Math.max(...(body?.cubes ?? []).map((/** @type {any} */ c) => c.origin[2] + c.size[2])) - opening[2];
+  const tilt = Math.acos(Math.max(-1, Math.min(1, -apply(matFromEuler(mount), [0, -1, 0])[1])));
+  if (!(tilt > 3 * (Math.PI / 180)) || !(back > 0)) return 0;
+  const full = HEAD_DEPTH + BODY_DEPTH;
+  const fits = (/** @type {number} */ turn) => {
+    for (let d = 0; d <= full; d += 0.25) if ((full - d) * FETUS_SCALE * Math.sin(tilt * Math.min(1, d / turn)) - back > 0.25) return false;
+    return true;
+  };
+  for (let turn = 1; turn < full; turn += 0.5) if (fits(turn)) return turn;
+  return full;
 }

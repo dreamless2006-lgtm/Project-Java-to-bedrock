@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { writeEntityJson } from './lib/entity-json.mjs';
 import { BELLY_ANIMATIONS, BELLY_PROPERTY, MINEPREGGO_PROPERTIES, MOD, PHASES, POSES, bellyController, bellyIndex, contractionWaveAnimation, NO_POSE, initializers, kickPulseAnimations, kickRoomLines, kickStateLines, playerKickStateLines } from './lib/belly-render.mjs';
 import { BABY_PROPERTY, FAMILY_CROWNING, PLAYER_BABIES, crowningAnimations, crowningLines } from './lib/crowning.mjs';
+import { mobBirthAnimations, mobBirthPainStates, mobBirthEntity } from './lib/mob-births.mjs';
 
 const ROOT = new URL('../', import.meta.url).pathname;
 const RP = join(ROOT, 'packs/resource');
@@ -30,6 +31,8 @@ const BELLY_ANIMATE = /^(belly_low|belly_medium|belly_high|belly_growth|fetal_p\
 
 const read = (/** @type {string} */ file) => JSON.parse(readFileSync(file, 'utf8'));
 const write = (/** @type {string} */ file, /** @type {unknown} */ doc) => writeFileSync(file, JSON.stringify(doc, null, 2) + '\n');
+/** One of our families' per-size models (the mod's own, from npm run import). */
+const readModel = (/** @type {string} */ family, /** @type {number} */ p) => read(join(RP, 'models/entity', MOD, `${family}_p${p}.geo.json`))['minecraft:geometry'][0];
 
 /** Fields the game (1.26.30) rejects in a behavior entity: the zombie's alert_same_type, the old leash distances. */
 function rejectedFields(/** @type {any} */ entity) {
@@ -68,10 +71,12 @@ write(join(RP, 'animation_controllers/belly.animation_controllers.json'), {
     const into = pain.states.default.transitions;
     if (!into.some((/** @type {Record<string, string>} */ t) => pose in t)) into.push({ [pose]: `v.pose == '${pose}'` });
   }
-  // the baby crowns during the birth, in step with her birth pose (both start with the state)
-  pain.states.birth.animations = ['birth', 'crowning'];
+  // her birth pose for her belly size, with the crowning and flair in step (all start with the state)
+  mobBirthPainStates(pain);
   write(file, doc);
 }
+// each family's crowning in step with her own pushes, and her flair (tools/lib/mob-births.mjs)
+write(join(RP, 'animations/births.animation.json'), { format_version: '1.8.0', animations: mobBirthAnimations({ models: readModel }) });
 
 // ---- each family ---------------------------------------------------------------------------------
 for (const [family, texture] of Object.entries(FAMILIES)) {
@@ -148,6 +153,8 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
     'v.phase = v.bp;',
     ...kickRoomLines('v.bp', (p) => read(join(RP, 'models/entity', MOD, `${family}_p${p}.geo.json`))['minecraft:geometry'][0]));
   d.scripts.pre_animation = pre;
+  // her own birth: pose keys, crowning, flair, flash and navel lines, the belly shrinking, her effects
+  mobBirthEntity(/** @type {any} */ (family), d, { models: (p) => readModel(family, p) });
 
   // The belly animations move into the controller.
   const navel = 'navel_birth' in d.animations;
@@ -158,8 +165,6 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
     d.animations.navel_birth = `animation.${MOD}.navel_birth${birth?.bones?.front_kick ? '_light' : ''}`;
   }
   d.animations.belly_controller = `controller.animation.${MOD}.${navel ? 'belly_navel' : 'belly'}`;
-  // the mod's birth on her back closes her legs for a moment, and the baby draws back in then
-  d.animations.crowning = `animation.${MOD}.${crown.opening === 'crotch' ? 'crowning' : 'crowning_free'}`;
   for (const [name, id] of Object.entries(BELLY_ANIMATIONS)) d.animations[name] ??= id;
   // Her scene poses (tools/gen-scene-poses.mjs solves them onto her rig); a monster body (four
   // legs, a jelly) keeps her own stance in a scene.

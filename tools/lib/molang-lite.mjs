@@ -13,7 +13,8 @@
 /** @typedef {Record<string, any>} MolangScope */
 /**
  * Where a Molang expression reads and writes: v (variable.), q (query.: a value, or a function
- * called with the evaluated arguments), t (temp.), c (context.).
+ * called with the evaluated arguments), t (temp.), c (context.). Keys are lower case, because
+ * names in an expression are read in lower case (string arguments are left as they are).
  * @typedef {{ v?: MolangScope, q?: MolangScope, t?: MolangScope, c?: MolangScope }} MolangEnv
  */
 
@@ -353,6 +354,14 @@ class Parser {
           if (!this.isOp(')')) this.take(',');
         }
         this.take(')');
+      }
+      if (this.isOp('[')) {
+        // a render controller's array lookup (Array.skins[q.variant]): the entry's own name
+        this.at++;
+        const index = this.expression();
+        this.take(']');
+        const path = t.value;
+        return (env) => `${path}[${Math.max(0, Math.floor(toNumber(index(env))))}]`;
       }
       return this.name(t.value, args);
     }
