@@ -658,6 +658,45 @@ if (langKeys) {
   }
 }
 
+// --- births: the sounds and particles animations play ---------------------------------------
+// An animation's sound_effects / particle_effects keyframes name effects that each client entity
+// maps to a sound event or a particle id; an unmapped name or an unknown id is a content-log error
+// in game. Every animation an entity maps is checked against its maps, and the ids of our own
+// entries (the mp_ ones of tools/lib/mob-births.mjs and tools/lib/girl-births.mjs) must be one of
+// our sound events, the Jenny port's, or a vanilla one checked in tools/lib/vanilla-ids.mjs.
+{
+  const { VANILLA_SOUNDS, VANILLA_PARTICLES } = await import('./lib/vanilla-ids.mjs');
+  const effectAnimations = new Map();
+  for (const file of walkAll(join(RP, 'animations'), '.json')) {
+    for (const [id, def] of Object.entries(readJson(file)?.animations ?? {})) if (def?.sound_effects || def?.particle_effects) effectAnimations.set(id, def);
+  }
+  const soundEvents = new Set(Object.keys(soundDefs));
+  const jennySounds = join(RP, 'sounds', 'jenny_port', 'sound_definitions.json');
+  if (existsSync(jennySounds)) Object.keys(readJson(jennySounds)?.sound_definitions ?? {}).forEach((e) => soundEvents.add(e));
+  /** Effect names of a timeline ({ time: { effect } | [{ effect }] }). */
+  const effectNames = (/** @type {any} */ timeline) => Object.values(timeline ?? {}).flatMap((k) => [k].flat()).map((k) => k?.effect).filter(Boolean);
+  for (const file of walkAll(join(RP, 'entity'), '.json')) {
+    const description = readJson(file)?.['minecraft:client_entity']?.description;
+    if (!description) continue;
+    const sounds = description.sound_effects ?? {};
+    const particles = description.particle_effects ?? {};
+    for (const [short, id] of Object.entries(description.animations ?? {})) {
+      const def = effectAnimations.get(id);
+      if (!def) continue;
+      for (const name of effectNames(def.sound_effects)) if (!sounds[name]) fail(file, `animation "${short}" plays sound effect "${name}", which this entity does not map`);
+      for (const name of effectNames(def.particle_effects)) if (!particles[name]) fail(file, `animation "${short}" plays particle effect "${name}", which this entity does not map`);
+    }
+    for (const [name, entry] of Object.entries(sounds)) {
+      const event = typeof entry === 'string' ? entry : entry?.effect;
+      if (name.startsWith('mp_') && imported && !soundEvents.has(event) && !VANILLA_SOUNDS.has(event)) fail(file, `sound effect ${name}: "${event}" is neither one of the pack's sound events nor a checked vanilla one`);
+    }
+    for (const [name, entry] of Object.entries(particles)) {
+      const effect = typeof entry === 'string' ? entry : entry?.effect;
+      if (name.startsWith('mp_') && !VANILLA_PARTICLES.has(effect)) fail(file, `particle effect ${name}: "${effect}" is not a checked vanilla particle (tools/lib/vanilla-ids.mjs)`);
+    }
+  }
+}
+
 if (!imported || !langKeys) console.warn('note: texture and lang checks skipped - run `npm run import` to enable them');
 if (errors.length) {
   console.error(errors.join('\n'));

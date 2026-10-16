@@ -1354,7 +1354,8 @@ test('the merged Jenny Mod Java Port: patched entities, bellies under every body
   const poseController = controllers[client.animations.mp_pose_controller];
   assert.deepEqual(poseController.states.default.transitions.find((/** @type {any} */ t) => 'birth' in t), { birth: "v.jp_normal && v.pose == 'birth'" });
   assert.ok(client.scripts.pre_animation.includes('v.jp_normal = q.skin_id == 0;'));
-  assert.deepEqual(client.scripts.animate.slice(-3), ['mp_pose_controller', 'newborn', 'belly_controller']);
+  // (the shared newborn slide drives her scene births; her own birth pose brings its own crowning)
+  assert.deepEqual(client.scripts.animate.slice(-3), ['mp_pose_controller', { newborn: "!(v.jp_normal && v.pose == 'birth')" }, 'belly_controller']);
   // Her own interactions are hers as the port wrote them (our pregnancy menu answers sneak-use with an empty hand from a script).
   const interact = jenny.components['minecraft:interact'].interactions[0].on_interact;
   assert.ok(!JSON.stringify(interact.filters ?? {}).includes('"test":"is_sneaking","subject":"other","value":false'));

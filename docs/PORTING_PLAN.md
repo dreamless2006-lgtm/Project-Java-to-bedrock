@@ -143,6 +143,21 @@ side of `world/effect`, in `packs/behavior/scripts/pregnancy/`.
   when hers is small). The client falls back to `q.variant` and to the pose when the phase
   property is unknown, and the mob system rewrites the phase property every tick (records from
   versions that only set it through entity events, wild mobs that only kept the variant).
+- ✅ **A birth of her own for each of the sixteen pregnant mobs (0.7.0).** Eight births looked like
+  another's (the zombie, humanoid creeper and humanoid slime girls shared one body motion; the ten
+  Jenny girls one template). `tools/lib/birth-rhythm.mjs` gives each mother a rhythm (loop length,
+  push windows, legs-closed gates) and builds from it her own crowning slide, her flair and her
+  effect timelines; `tools/lib/mob-births.mjs` keeps the mod's distinct births (humanoid creeper,
+  monster creeper, monster slime, ender woman) with a species touch (fuse flash and hiss, hop and
+  puddle, levitation and portal sparks, the navel crown moved out to the belly surface) and solves
+  new ones for the zombie girl (standing, braced, stepped jerks) and the humanoid slime girl
+  (melting into a splayed puddle-squat) per belly size (`tools/gen-birth-poses.mjs`, in
+  `npm run import`); `tools/lib/girl-births.mjs` gives every Jenny girl her own posture, exit and
+  touch, solved onto her rig and fitted to the floor (`tools/lib/scene-poses.mjs`,
+  `tools/import-jenny.mjs`). Every belly shrinks as the babies come out. Sounds and particles come
+  only from our sound events, the Jenny port's, or vanilla ids checked in `tools/lib/vanilla-ids.mjs`,
+  and `tools/validate.mjs` checks every effect an animation plays is mapped.
+  `node tools/render-births.mjs` renders and measures all sixteen.
 - ✅ **Actions & Stuff without settings: poses for everyone, a belly that moves (0.7.0).** A server
   cannot tell which resource packs a client runs, so 0.6.0's two opt-in switches never reached the
   players who needed them. *Poses.* `tools/gen/compat-poses.mjs` (run by `npm run import`) writes

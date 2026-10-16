@@ -23,9 +23,7 @@ import { strFromU8, unzipSync } from 'fflate';
 import { BABY_LOOKS, babyIcon } from './lib/baby-icon.mjs';
 import { SHELL_KICK_GROW, addNewborn, babyScale, fitBelly, measureBody, smoothBelly } from './lib/belly-fit.mjs';
 import { EGG_DEPTH, FETUS_SCALE, crowningLines } from './lib/crowning.mjs';
-import { eulerFromMat } from './lib/bedrock-math.mjs';
-import { poseAt, poseBones } from './lib/geo-render.mjs';
-import { rotationFromTo } from './lib/pose-solve.mjs';
+import { GIRL_BIRTHS, girlBirthExit, girlEffects } from './lib/girl-births.mjs';
 import { BELLY_ANIMATIONS, FAMILY_TAG, MINEPREGGO_PROPERTIES, MOD, PHASES, bellyPreAnimation, initializers, kickRoomLines, phaseEvents } from './lib/belly-render.mjs';
 import { bellyTexture, hairTone, skinTone } from './lib/belly-skin.mjs';
 import { girlPoseAnimations } from './lib/scene-poses.mjs';
@@ -50,25 +48,11 @@ const BABY_HEADER = '## Minepreggo babies (tools/import-jenny.mjs)';
 const NORMAL = /** @type {Record<string, string>} */ ({ 'jhelliedev:ellie': "!q.property('jhelliedev:stage_hidden')" });
 const normalOf = (/** @type {string} */ id) => NORMAL[id] ?? 'q.skin_id == 0';
 /**
- * The crowning mount's rotation that brings the way out (the mount's -y) level in her birth pose,
- * when her hip points it more than about 20 degrees up or down; undefined when it is level already.
- * @param {any} geometry her body @param {any} birth her birth animation @param {number[]} opening
+ * During a birth her belly goes on from its prebirth size and shrinks as each baby comes out
+ * (v.push is the birth progress), instead of growing with the progress and snapping back.
  */
-function levelExit(geometry, birth, opening) {
-  const hip = poseBones(geometry, poseAt(birth, 0.5)).get('hip');
-  if (!hip) return undefined;
-  const origin = hip(opening);
-  const turn = (/** @type {number[]} */ v) => hip(opening.map((x, k) => x + v[k])).map((x, k) => x - origin[k]);
-  const out = turn([0, -1, 0]);
-  const flat = Math.hypot(out[0], out[2]);
-  if (flat < 0.2 || Math.abs(out[1]) < 0.35) return undefined;
-  const want = [out[0] / flat, 0, out[2] / flat];
-  // the level direction in the hip's own frame (its columns are where its axes point)
-  const axes = [turn([1, 0, 0]), turn([0, 1, 0]), turn([0, 0, 1])];
-  const local = axes.map((axis) => axis[0] * want[0] + axis[1] * want[1] + axis[2] * want[2]);
-  return eulerFromMat(rotationFromTo([0, -1, 0], local)).map((v) => Math.round(v * 1000) / 1000);
-}
-
+const birthBelly = (/** @type {string} */ line) =>
+  line.replace(/^(v\.belly_growth = .*) \* q\.property\('minepreggo:growth'\);$/, "$1 * (v.pose == 'birth' ? 1.0 - v.push : q.property('minepreggo:growth'));");
 /** The girls who lay eggs instead of giving birth: the egg's shell and speckles. */
 const OVIPAROUS = /** @type {Record<string, { shell: number[], spots: number[] }>} */ ({ 'jhkobold:kobold': { shell: [255, 236, 177], spots: [96, 170, 152] } });
 
@@ -149,14 +133,16 @@ const creeper = (() => {
 
 /**
  * A girl's pose controller: one state per pose, entered while the pose property says so and she is
- * in her everyday state, cross-faded in and out.
+ * in her everyday state, cross-faded in and out. `alongside` names what plays beside a pose in its
+ * state (her birth's flair and crowning start with the birth pose, so they keep its rhythm).
  * @param {string[]} poses
+ * @param {Record<string, string[]>} [alongside]
  */
-function poseController(poses) {
+function poseController(poses, alongside = {}) {
   /** @type {Record<string, unknown>} */
   const states = { default: { transitions: poses.map((pose) => ({ [pose]: `v.jp_normal && v.pose == '${pose}'` })) } };
   for (const pose of poses) {
-    states[pose] = { animations: [`mp_pose_${pose}`], transitions: [{ default: `!v.jp_normal || !(v.pose == '${pose}')` }], blend_transition: 0.45 };
+    states[pose] = { animations: [`mp_pose_${pose}`, ...(alongside[pose] ?? [])], transitions: [{ default: `!v.jp_normal || !(v.pose == '${pose}')` }], blend_transition: 0.45 };
   }
   return { initial_state: 'default', states };
 }
@@ -351,16 +337,21 @@ if (portBP && portRP) {
         const geometryKey = ['default', 'normal', 'dressed'].find((k) => d.geometry?.[k]);
         const mainGeometry = geometryKey ? geometries.get(d.geometry[geometryKey]) : undefined;
         const idle = d.animations?.idle ? portAnimations[d.animations.idle] : undefined;
-        const poses = girl && mainGeometry ? girlPoseAnimations({ geometry: mainGeometry, idle, sourceGeometry: creeper.geometry, sourceAnimations: creeper.animations, prefix: `animation.${MOD}.jp_${slug(id)}` }) : undefined;
-        // The baby comes out level between her knees in her birth pose (a tilted hip turns the way out).
-        const mount = poses?.birth && mainGeometry ? levelExit(mainGeometry, poses.birth.animation, sets[0].body.opening) : undefined;
+        const poses = girl && mainGeometry ? girlPoseAnimations({ id, geometry: mainGeometry, idle, sourceGeometry: creeper.geometry, sourceAnimations: creeper.animations, prefix: `animation.${MOD}.jp_${slug(id)}` }) : undefined;
+        // Her own birth (tools/lib/girl-births.mjs): the baby (or egg) comes out along her way out, a
+        // rotation of the crowning mount in her birth pose, as far as her floor allows. The belly
+        // geometries keep an unturned mount, so her own scenes (the Kobold's laying) are untouched.
+        const spec = GIRL_BIRTHS[id];
+        const crownScale = FETUS_SCALE * babyScale(sets[0].body);
+        const exit = spec && poses?.birth && mainGeometry ? girlBirthExit({ spec, geometry: mainGeometry, animation: poses.birth.animation, body: sets[0].body, scale: crownScale, egg: !!egg }) : undefined;
+        if (exit && poses) poses.birth.animation.bones.crowning = { rotation: exit.rotation };
         /** @type {any[]} the first set's geometries, whose kick room the clamped kicks use */
         const firstSet = [];
         sets.forEach((set, n) => {
           const visibility = set.visibilities.includes('true') ? undefined : set.visibilities.join(' || ');
           for (const p of PHASES) {
             const geometryId = `geometry.${MOD}.jp_${slug(id)}_${n}_belly_p${p}`;
-            const belly = addNewborn(smoothBelly(fitBelly(playerBodies[p], geometryId, set.body), set.body), set.body, { egg: !!egg, mount });
+            const belly = addNewborn(smoothBelly(fitBelly(playerBodies[p], geometryId, set.body), set.body), set.body, { egg: !!egg, mount: undefined });
             writeFile(join(RP, 'models/entity', PORT, MOD, `${slug(id)}_${n}_belly_p${p}.geo.json`), JSON.stringify(belly, null, 2) + '\n');
             if (n === 0) firstSet.push(belly['minecraft:geometry'][0]);
             d.geometry[`minepreggo_belly_${n}_p${p}`] = geometryId;
@@ -375,25 +366,45 @@ if (portBP && portRP) {
         const pre = (d.scripts.pre_animation ?? []).filter((/** @type {string} */ l) => !/^v\.(bp|phase|pose|pregnant_pose|push|kick|kicking|kl|belly_growth|k_[a-z_]+|kr_f|kick_grow)\s*=/.test(l));
         // Girls and the stages that play their scenes: the belly, the kicks, the contractions, the newborn.
         // (Her kicks are patches of a smooth skin: they swell less as they push than the mod's cubes.)
-        pre.push(...bellyPreAnimation(), ...kickRoomLines('v.bp', (p) => firstSet[p]), `v.kick_grow = ${SHELL_KICK_GROW};`);
-        // Her baby (or egg) crowns between her legs with each push of the birth (tools/lib/crowning.mjs).
-        pre.push(...crowningLines({ when: "v.pose == 'birth'", scale: FETUS_SCALE * babyScale(sets[0].body), ...(egg ? EGG_DEPTH : {}) }));
+        pre.push(...bellyPreAnimation().map(birthBelly), ...kickRoomLines('v.bp', (p) => firstSet[p]), `v.kick_grow = ${SHELL_KICK_GROW};`);
+        // Her baby (or egg) crowns between her legs with each push of the birth (tools/lib/crowning.mjs);
+        // in her own birth it comes as far as her way out allows before it reaches the floor.
+        pre.push(...crowningLines({ when: "v.pose == 'birth'", scale: crownScale, ...(egg ? EGG_DEPTH : {}), ...(exit ? { head: exit.head, rest: exit.rest } : {}) }));
         d.animations = { ...(d.animations ?? {}), ...BELLY_ANIMATIONS, newborn: `animation.${MOD}.crowning_free`, belly_controller: `controller.animation.${MOD}.belly` };
-        const animate = (d.scripts.animate ?? []).filter((/** @type {unknown} */ a) => a !== 'belly_controller' && a !== 'newborn' && a !== 'mp_pose_controller');
+        const animate = (d.scripts.animate ?? []).filter((/** @type {unknown} */ a) => a !== 'belly_controller' && a !== 'mp_pose_controller' && !(a === 'newborn' || (a && typeof a === 'object' && 'newborn' in a)));
+        /** her birth pose plays her own crowning: the shared one only plays outside it (the Kobold's laying in her own scene) */
+        let newborn = /** @type {string | Record<string, string>} */ ('newborn');
         if (girl) {
           if (poses) {
-            const file = { format_version: '1.8.0', animations: Object.fromEntries(Object.values(poses).map(({ id: animationId, animation }) => [animationId, animation])) };
-            writeFile(join(RP, 'animations', PORT, MOD, `${slug(id)}_poses.animation.json`), JSON.stringify(file) + '\n');
+            /** @type {{ flair: { id: string, animation: any }, crowning: { id: string, animation: any } } | undefined} her birth's flair and crowning, beside the pose */
+            const extras = poses.birthExtras;
+            const animations = Object.fromEntries(Object.values(poses).map(({ id: animationId, animation }) => [animationId, animation]));
+            if (extras) for (const { id: animationId, animation } of [extras.flair, extras.crowning]) animations[animationId] = animation;
+            writeFile(join(RP, 'animations', PORT, MOD, `${slug(id)}_poses.animation.json`), JSON.stringify({ format_version: '1.8.0', animations }) + '\n');
             for (const [pose, { id: animationId }] of Object.entries(poses)) d.animations[`mp_pose_${pose}`] = animationId;
+            if (extras) {
+              d.animations.mp_birth_flair = extras.flair.id;
+              d.animations.mp_birth_crowning = extras.crowning.id;
+              newborn = { newborn: "!(v.jp_normal && v.pose == 'birth')" };
+            }
+            if (spec) {
+              // her birth's sounds and particles, merged into her own maps (ours carry the mp_ prefix)
+              for (const [key, ours] of Object.entries(girlEffects(spec))) {
+                const merged = Object.fromEntries(Object.entries(d[key] ?? {}).filter(([name]) => !name.startsWith('mp_')));
+                Object.assign(merged, ours);
+                if (Object.keys(merged).length) d[key] = merged;
+                else delete d[key];
+              }
+            }
             const controllerId = `controller.animation.${MOD}.jp_${slug(id)}.pose`;
-            poseControllers[controllerId] = poseController(Object.keys(poses));
+            poseControllers[controllerId] = poseController(Object.keys(poses), extras ? { birth: ['mp_birth_flair', 'mp_birth_crowning'] } : {});
             d.animations.mp_pose_controller = controllerId;
             pre.push(`v.jp_normal = ${normalOf(id)};`);
             animate.push('mp_pose_controller');
             counts.poses += Object.keys(poses).length;
           }
         }
-        d.scripts.animate = [...animate, 'newborn', 'belly_controller'];
+        d.scripts.animate = [...animate, newborn, 'belly_controller'];
         d.scripts.pre_animation = pre;
         d.scripts.initialize = initializers(pre, d.scripts.initialize ?? []);
       }

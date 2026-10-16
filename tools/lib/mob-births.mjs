@@ -1,9 +1,11 @@
-// The births of our six Minepreggo mobs, each her own (docs: the births spec, section 4):
+// The births of our six Minepreggo mobs, each her own:
 //
-//   * zombie_girl stands stiff with her legs braced wide and bends forward at the hips in jerks,
-//     her zombie reach dropping onto her thighs at each push (new, solved onto her rig);
-//   * humanoid_slime_girl melts down into a splayed squat-puddle, squashing and wobbling (new,
-//     solved onto her rig; her old birth was the creeper girl's, byte for byte);
+//   * zombie_girl stands stiff with her legs braced wide and bends forward at the hips in jerks
+//     (as far as her belly lets her), her zombie reach dropping onto her thighs at each push (new,
+//     solved onto her rig);
+//   * humanoid_slime_girl melts down into a low, reclined squat with her legs splayed out flat,
+//     squashing and wobbling (new, solved onto her rig; her old birth was the creeper girl's, byte
+//     for byte);
 //   * humanoid_creeper_girl, monster_creeper_girl, monster_slime_girl and ender_woman keep the mod's
 //     own birth and get a species touch on top (fuse flash, hops, levitation) as additive flair.
 //
@@ -12,7 +14,7 @@
 // by tools/gen-birth-poses.mjs into the git-ignored animations/minepreggo/ folder; the pure-Molang
 // animations built here (crowning, flair) go into the committed animations/births.animation.json,
 // written by tools/gen-belly-render.mjs together with the entity wiring below.
-import { BIRTH_LINE, crowningFor, effectsAt, exitMount, flashLines, mergeEffects, navelInsetLine, pulse, timeKey, tremble, vec, windowKeys } from './birth-rhythm.mjs';
+import { BIRTH_LINE, crowningFor, effectsAt, exitMount, flashLines, mergeEffects, navelInsetLine, num, pulse, timeKey, tremble, vec, windowKeys } from './birth-rhythm.mjs';
 import { MOD, PHASES } from './belly-render.mjs';
 import { BODY_DEPTH, FETUS_SCALE, HEAD_DEPTH, openingOf } from './crowning.mjs';
 import { cubeFaces, poseAt } from './geo-render.mjs';
@@ -38,6 +40,7 @@ import { LEGS, NEUTRAL_RIG, flatRig } from './scene-poses.mjs';
  * @property {{ windows: [number, number][], hz: number, level: number }} [flash] the creeper's white flash at the push peaks
  * @property {string} [inset] the navel births: how far the crown moves out to the belly surface (Molang)
  * @property {string} [bob] the crowning's own bob (Molang, added to the slide)
+ * @property {Record<number, number>} [crownScale] a smaller baby on these belly sizes (else crowningLines' scale)
  * @property {Record<string, string>} sounds short name -> sound event, merged into her sound_effects
  * @property {Record<string, string>} particles short name -> particle id, merged into her particle_effects
  */
@@ -109,9 +112,10 @@ const ZOMBIE_BIRTH = /** @type {AuthoredAnimation} */ ({
 
 // ---- humanoid_slime_girl: melting into a squat-puddle ---------------------------------------------
 const HSLIME_RHYTHM = /** @type {Rhythm} */ ({ length: 5, pushes: [[0.4, 1.9], [2.9, 4.4]] });
-// Her hips sink nearly to the floor in each push (3.4 px up: the baby, sliding out forward and low,
-// just reaches the floor); legs splayed out flat enough that they rest on it.
-const hslimeLeg = (/** @type {number} */ side) => ({ rotation: [-25, 0, 80 * side], position: vec(0, windowKeys(HSLIME_RHYTHM, -8.6, -7.8), 0) });
+// Her hips sink low in each push, legs splayed out to the sides resting on the floor. Not lower than
+// 5.4 px: her belly hangs about 3 px below her hips at P7 and stretches in the birth, and would sink
+// into the floor.
+const hslimeLeg = (/** @type {number} */ side) => ({ rotation: [-25, 0, 72 * side], position: vec(0, windowKeys(HSLIME_RHYTHM, -6.6, -5.8), 0) });
 const hslimeArm = (/** @type {number} */ side) => ({ rotation: vec(windowKeys(HSLIME_RHYTHM, -35, -50), windowKeys(HSLIME_RHYTHM, -30 * side, -18 * side), 0) });
 const HSLIME_BIRTH = /** @type {AuthoredAnimation} */ ({
   loop: true,
@@ -139,8 +143,8 @@ const HSLIME_POSTBIRTH = /** @type {AuthoredAnimation} */ ({
     head: { rotation: [40, 0, 0] },
     right_arm: { rotation: [-10, 0, 20] },
     left_arm: { rotation: [-10, 0, -20] },
-    right_leg: { rotation: [-25, 0, 80], position: [0, -9, 0] },
-    left_leg: { rotation: [-25, 0, -80], position: [0, -9, 0] },
+    right_leg: { rotation: [-25, 0, 72], position: [0, -7, 0] },
+    left_leg: { rotation: [-25, 0, -72], position: [0, -7, 0] },
   },
 });
 
@@ -193,6 +197,8 @@ export const MOB_BIRTHS = /** @type {Record<typeof MOB_FAMILIES[number], MobBirt
   ender_woman: {
     rhythm: { length: 9, pushes: [[0.5, 2.5], [6.4, 8.25]] },
     inset: 'v.ninset * (1.0 - 0.3 * v.push)',
+    // her long baby, lying in a small belly, would stick out of her back at P4 and P5
+    crownScale: { 4: 0.65, 5: 0.72 },
     sounds: { mp_portal: 'mob.endermen.portal', mp_idle: 'mob.endermen.idle' },
     particles: { mp_portal: 'minecraft:basic_portal_particle' },
   },
@@ -201,7 +207,7 @@ export const MOB_BIRTHS = /** @type {Record<typeof MOB_FAMILIES[number], MobBirt
 /** One sound or particle timeline out of several (times, effect) lists. */
 const timeline = (/** @type {[number[], string][]} */ lists) => mergeEffects(...lists.map(([times, effect]) => effectsAt(times, effect)));
 
-/** A position channel [0, y, 0] or a scale channel from per-time numbers (linear keyframes). */
+/** A position channel [0, y, 0] from [time, y] pairs (linear keyframes). */
 const yKeys = (/** @type {[number, number][]} */ frames) => keys(frames.map(([t, y]) => [t, [0, round(y), 0]]));
 
 /**
@@ -229,19 +235,24 @@ function birthFlair(family, bones) {
     channels = { body: { scale: vec(pulse(flash, 0.06, 1), pulse(flash, -0.03, 1), pulse(flash, 0.06, 1)) } };
     sound_effects = timeline([[[0.5, 7.25], 'mp_hiss'], [[1.0], 'mp_push']]);
   } else if (family === 'humanoid_slime_girl') {
-    // squash and stretch: a wobble that starts strong at each push and dies out over 1.2 s
+    // squash and stretch: a wobble that starts strong at each push and dies out over 1.2 s. Her
+    // body scales about its top (the neck), so it also sinks by what its 12 px shrink, and her head
+    // and arms with it: her hips (and the baby at her opening) stay where they are.
     const S = 'math.sin(q.anim_time * 720.0)';
-    /** @type {Keys} */
-    const scale = { '0.0': [1, 1, 1] };
+    /** @type {[number, any, any][]} time, scale, sink */
+    const frames = [[0, [1, 1, 1], [0, 0, 0]]];
     for (const s of starts) {
-      scale[timeKey((s - 0.1))] = [1, 1, 1];
-      scale[timeKey((s))] = [`1.0 + 0.12 * ${S}`, `1.0 - 0.18 * ${S}`, `1.0 + 0.12 * ${S}`];
-      scale[timeKey((s + 1.2))] = [1, 1, 1];
+      frames.push([s - 0.1, [1, 1, 1], [0, 0, 0]]);
+      frames.push([s, [`1.0 + 0.12 * ${S}`, `1.0 - 0.18 * ${S}`, `1.0 + 0.12 * ${S}`], [0, `-2.16 * ${S}`, 0]]);
+      frames.push([s + 1.2, [1, 1, 1], [0, 0, 0]]);
     }
-    scale[timeKey(L)] = [1, 1, 1];
+    frames.push([L, [1, 1, 1], [0, 0, 0]]);
+    const sink = keys(frames.map(([t, , p]) => [t, p]));
     channels = {
-      body: { scale: Object.fromEntries(Object.entries(scale).sort((a, b) => Number(a[0]) - Number(b[0]))) },
-      head: { rotation: [0, 0, `6.0 * ${S}`] },
+      body: { scale: keys(frames.map(([t, sc]) => [t, sc])), position: sink },
+      head: { rotation: [0, 0, `6.0 * ${S}`], position: sink },
+      right_arm: { position: sink },
+      left_arm: { position: sink },
       ...hairSway(1),
     };
     sound_effects = timeline([[[0.4, 2.9], 'mp_squish'], [[1.2, 3.7], 'mp_small']]);
@@ -262,17 +273,17 @@ function birthFlair(family, bones) {
     let wide = 1;
     for (const s of starts) {
       hop.push([s, 0], [s + 0.25, 2.0], [s + 0.5, -1.0], [s + 0.8, 0]);
-      land[timeKey((s + 0.25))] = [1, 1, 1];
-      land[timeKey((s + 0.5))] = [1.15, 0.8, 1.15];
-      land[timeKey((s + 0.8))] = [1, 1, 1];
+      land[timeKey(s + 0.25)] = [1, 1, 1];
+      land[timeKey(s + 0.5)] = [1.15, 0.8, 1.15];
+      land[timeKey(s + 0.8)] = [1, 1, 1];
       // the jelly base spreads like a puddle, a little more with every push
-      spread[timeKey((s + 0.25))] = [round(wide), 1, round(wide)];
+      spread[timeKey(s + 0.25)] = [round(wide), 1, round(wide)];
       wide = Math.min(1.5, wide + 0.12);
-      spread[timeKey((s + 0.5))] = [round(wide), 1, round(wide)];
+      spread[timeKey(s + 0.5)] = [round(wide), 1, round(wide)];
     }
     hop.push([L, 0]);
     land[timeKey(L)] = [1, 1, 1];
-    spread[timeKey((L - 0.4))] = [round(wide), 1, round(wide)];
+    spread[timeKey(L - 0.4)] = [round(wide), 1, round(wide)];
     spread[timeKey(L)] = [1, 1, 1];
     const position = yKeys(hop);
     for (const root of ['leg', 'body', 'head', 'right_arm', 'left_arm']) channels[root] = { position };
@@ -376,6 +387,13 @@ export function mobBirthEntity(family, d, { models }) {
     const byPhase = Object.fromEntries(PHASES.filter((p) => p >= 4).map((p) => [p, models(p)]));
     pre.splice(at + 1, 0, navelInsetLine(byPhase));
   }
+  if (spec.crownScale) {
+    const at = pre.findIndex((line) => /^v\.crown_scale = [\d.]+;$/.test(line));
+    if (at < 0 || pre.findIndex((line) => line.startsWith('v.bp =')) > at) throw new Error(`${family}: no v.crown_scale line after v.bp`);
+    const fallback = pre[at].slice('v.crown_scale = '.length, -1);
+    const expr = Object.entries(spec.crownScale).reduceRight((rest, [p, scale]) => `(v.bp == ${p} ? ${num(scale)} : ${rest})`, fallback);
+    pre[at] = `v.crown_scale = ${expr};`;
+  }
   const belly = pre.findIndex((line) => BELLY_LINE.test(line));
   if (belly < 0) throw new Error(`${family}: no v.belly_growth line`);
   pre[belly] = pre[belly].replace(BELLY_LINE, "v.belly_growth = $1 * (v.pose == 'birth' ? 1.0 - v.push : q.property('minepreggo:growth'));");
@@ -453,7 +471,9 @@ export function mobBirthPoses(family, geometry) {
   const spec = MOB_BIRTHS[family];
   /** @type {Record<string, any>} */
   const animations = {};
-  if (!spec.authored || !spec.pose) return { animations, clearance: Infinity, bend: 1, bellyLow: Infinity };
+  const written = spec.authored;
+  if (!written || !spec.pose) return { animations, clearance: Infinity, bend: 1, bellyLow: Infinity };
+  const hang = spec.hang ?? 0;
   const parts = flatRig(geometry);
   const target = { rig: rigOf(geometry), neutral: {}, map: parts.map, pelvis: parts.pelvis, trunk: parts.trunk, scale: parts.scale, absolute: true };
   const solve = (/** @type {AuthoredAnimation} */ anim, /** @type {'linear' | undefined} */ ease) =>
@@ -461,11 +481,11 @@ export function mobBirthPoses(family, geometry) {
   const lowest = (/** @type {any} */ anim) => Math.min(...keyTimes(anim).map((t) => bellyLow(geometry, poseAt(anim, t))));
   /** her birth bent by f, her belly hanging from her bent trunk (turned back by `hang` of the bend) */
   const build = (/** @type {number} */ f) => {
-    const authored = f < 1 ? bentBy(spec.authored, f) : spec.authored;
+    const authored = f < 1 ? bentBy(written, f) : written;
     const solved = solve(authored, spec.lerp);
-    if (spec.hang) {
+    if (hang) {
       const x = authored.bones.body.rotation;
-      solved.bones.belly = { rotation: Array.isArray(x) ? [round(-spec.hang * x[0]), 0, 0] : Object.fromEntries(Object.entries(x).map(([t, v]) => [t, [round(-spec.hang * v[0]), 0, 0]])) };
+      solved.bones.belly = { rotation: Array.isArray(x) ? [round(-hang * x[0]), 0, 0] : Object.fromEntries(Object.entries(x).map(([t, v]) => [t, [round(-hang * v[0]), 0, 0]])) };
     }
     return solved;
   };

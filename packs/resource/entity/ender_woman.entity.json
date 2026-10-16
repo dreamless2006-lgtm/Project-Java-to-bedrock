@@ -74,7 +74,7 @@
           "v.k_bottom_kick_z = (v.bp == 3 ? 0.00 : (v.bp == 4 ? 0.00 : (v.bp == 5 ? 0.00 : (v.bp == 6 ? 5.22 : (v.bp == 7 ? 3.31 : (v.bp == 8 ? 5.66 : (v.bp == 9 ? 7.45 : 0.0)))))));",
           "v.kr_f = v.k_front_kick_z;",
           "v.push = v.pose == 'birth' ? q.property('minepreggo:growth') : 0.0;",
-          "v.crown_scale = 0.875;",
+          "v.crown_scale = (v.bp == 4 ? 0.65 : (v.bp == 5 ? 0.72 : 0.875));",
           "v.strain = -1.0;",
           "v.crowning = (v.pose == 'birth') && v.push > 0.0;",
           "v.crown_x = math.clamp((v.push - 0.15) / 0.65, 0.0, 1.0);",

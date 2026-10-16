@@ -615,12 +615,21 @@ test('crowning: the baby being born reaches the player model, and every mother h
   const RP = new URL('../../packs/resource/', import.meta.url).pathname;
   const json = (/** @type {string} */ f) => JSON.parse(readFileSync(join(RP, f), 'utf8'));
   const pain = json('animation_controllers/preggo_mob.animation_controllers.json').animation_controllers['controller.animation.minepreggo.preggo_mob.pain'];
-  assert.deepEqual(pain.states.birth.animations, ['birth', 'crowning'], 'the crowning starts with her birth pose');
+  // her birth pose (one per belly size: each phase model's rest pose is cancelled), then her own
+  // crowning and her species' touch, all starting together so the pushes line up with the slide
+  const phased = ['birth', ...[4, 5, 6, 7, 8, 9].map((p) => `birth_p${p}`)];
+  assert.deepEqual(pain.states.birth.animations.slice(0, 7).map((/** @type {any} */ a) => Object.keys(a)[0]), phased);
+  assert.deepEqual(pain.states.birth.animations.slice(7), ['crowning', 'birth_flair'], 'the crowning starts with her birth pose');
   const animations = json('animations/preggo_mob.animation.json').animations;
+  // the player's crowning keeps the mod's rhythm (its legs-closed gate at 1.65 s)
   assert.ok(animations['animation.minepreggo.crowning'].bones.crowning_slide.position['1.65'], 'drawn back while her legs close');
+  const births = json('animations/births.animation.json').animations;
   for (const [family, spec] of Object.entries(FAMILY_CROWNING)) {
     const d = json(`entity/${family}.entity.json`)['minecraft:client_entity'].description;
-    assert.equal(d.animations.crowning, `animation.minepreggo.${spec.opening === 'crotch' ? 'crowning' : 'crowning_free'}`, family);
+    // each mother crowns in her own rhythm, as long as her own birth loop
+    assert.equal(d.animations.crowning, `animation.minepreggo.crowning.${family}`, family);
+    assert.ok(births[d.animations.crowning]?.animation_length > 0, `${family}: her crowning has her birth's length`);
+    assert.ok(births[`animation.minepreggo.${family}.birth_flair`], `${family}: her birth flair`);
     assert.ok(d.scripts.pre_animation.includes("v.crowning = (v.pose == 'birth') && v.push > 0.0;"), family);
     const rcs = d.render_controllers.filter((/** @type {any} */ rc) => typeof rc === 'object' && Object.keys(rc)[0].includes('_crowning'));
     assert.equal(rcs.length, spec.opening === 'navel' ? 6 : 1, family);

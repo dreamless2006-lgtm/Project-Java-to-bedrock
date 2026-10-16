@@ -312,6 +312,27 @@ whole baby slides out just before it is born: the mod's own fetus models for the
 mod's females (navel births come out of the belly), a small baby in her skin tone for the Jenny
 girls (tools/lib/crowning.mjs; `node tools/render-crowning.mjs` renders every mother).
 
+### A birth of her own
+
+Each of the sixteen pregnant mobs gives birth in her own way, with her own push rhythm, the baby
+crowning in step with it and ending on the floor, and a touch of her kind:
+
+- **The mod's females:** the zombie girl stands stiff with her legs braced and bends forward in
+  jerks, groaning; the humanoid creeper girl keeps the mod's birth on her back and flashes white
+  and hisses at each push; the humanoid slime girl melts into a splayed puddle-squat, wobbling and
+  squishing; the monster creeper girl lies on her side with a fuse flicker before each kick; the
+  monster slime girl hops on each push as her jelly spreads; the ender woman floats a little with
+  portal sparks, her baby coming out of her navel.
+- **The Jenny girls:** Jenny propped back with her knees up, Bia bouncing in a deep squat, Slime
+  kneeling and swaying, Luna on her forearms and knees, Galath half-kneeling with her wings beating,
+  Allie floating with her smoke tail coiling, Manglelie on her side holding her top leg, the Bee
+  hovering with her wings buzzing, the Kobold crouched with her tail high laying her egg, Ellie in
+  a standing horse stance.
+
+Every belly gets smaller as each baby comes out. The machinery is tools/lib/birth-rhythm.mjs, with
+the mobs' births in tools/lib/mob-births.mjs (poses solved by tools/gen-birth-poses.mjs) and the
+girls' in tools/lib/girl-births.mjs; `node tools/render-births.mjs all` renders and measures them.
+
 ### Actions & Stuff (and other player-model packs)
 
 Actions & Stuff replaces the player model, and no two resource packs can share it, so on a game
