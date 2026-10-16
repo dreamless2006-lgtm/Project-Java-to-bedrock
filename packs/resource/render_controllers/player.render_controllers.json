@@ -1,0 +1,476 @@
+{
+  "format_version": "1.10.0",
+  "render_controllers": {
+    "controller.render.minepreggo.player_skin": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex"
+      ],
+      "part_visibility": [
+        {
+          "*": true
+        },
+        {
+          "helmet": "variable.helmet_layer_visible"
+        },
+        {
+          "leftLegging": "variable.leg_layer_visible"
+        },
+        {
+          "rightLegging": "variable.leg_layer_visible"
+        },
+        {
+          "leftBoot": "variable.boot_layer_visible"
+        },
+        {
+          "rightBoot": "variable.boot_layer_visible"
+        },
+        {
+          "leftSock": "variable.boot_layer_visible && variable.leg_layer_visible"
+        },
+        {
+          "rightSock": "variable.boot_layer_visible && variable.leg_layer_visible"
+        },
+        {
+          "bodyArmor": "variable.chest_layer_visible"
+        },
+        {
+          "leftArmArmor": "variable.chest_layer_visible"
+        },
+        {
+          "rightArmArmor": "variable.chest_layer_visible"
+        },
+        {
+          "belt": "variable.chest_layer_visible && variable.leg_layer_visible"
+        }
+      ]
+    },
+    "controller.render.minepreggo.player_boobs": {
+      "geometry": "Geometry.minepreggo_boobs_custom",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_labor": {
+      "geometry": "Geometry.minepreggo_labor",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "variable.mp_predefined ? Texture.minepreggo_alex : Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_boobs_predefined": {
+      "geometry": "Geometry.minepreggo_boobs_predefined",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom_p0": {
+      "geometry": "Geometry.minepreggo_body_custom_p0",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined_p0": {
+      "geometry": "Geometry.minepreggo_body_predefined_p0",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_p0_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom_p1": {
+      "geometry": "Geometry.minepreggo_body_custom_p1",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined_p1": {
+      "geometry": "Geometry.minepreggo_body_predefined_p1",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_p1_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom_p2": {
+      "geometry": "Geometry.minepreggo_body_custom_p2",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined_p2": {
+      "geometry": "Geometry.minepreggo_body_predefined_p2",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_p2_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom_p3": {
+      "geometry": "Geometry.minepreggo_body_custom_p3",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined_p3": {
+      "geometry": "Geometry.minepreggo_body_predefined_p3",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_p3_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom_p4": {
+      "geometry": "Geometry.minepreggo_body_custom_p4",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined_p4": {
+      "geometry": "Geometry.minepreggo_body_predefined_p4",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_p4_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom_p5": {
+      "geometry": "Geometry.minepreggo_body_custom_p5",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined_p5": {
+      "geometry": "Geometry.minepreggo_body_predefined_p5",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_p5_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom_p6": {
+      "geometry": "Geometry.minepreggo_body_custom_p6",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined_p6": {
+      "geometry": "Geometry.minepreggo_body_predefined_p6",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_p6_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom_p7": {
+      "geometry": "Geometry.minepreggo_body_custom_p7",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined_p7": {
+      "geometry": "Geometry.minepreggo_body_predefined_p7",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_p7_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom_p8": {
+      "geometry": "Geometry.minepreggo_body_custom_p8",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined_p8": {
+      "geometry": "Geometry.minepreggo_body_predefined_p8",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_p8_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_custom_p9": {
+      "geometry": "Geometry.minepreggo_body_custom_p9",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.player_belly_predefined_p9": {
+      "geometry": "Geometry.minepreggo_body_predefined_p9",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_alex_p9_extra"
+      ]
+    },
+    "controller.render.minepreggo.player_crowning_humanoid": {
+      "arrays": {
+        "textures": {
+          "Array.fetus": [
+            "Texture.minepreggo_fetus_human",
+            "Texture.minepreggo_fetus_zombie",
+            "Texture.minepreggo_fetus_creeper",
+            "Texture.minepreggo_fetus_ender"
+          ]
+        }
+      },
+      "geometry": "Geometry.minepreggo_crowning_humanoid",
+      "materials": [
+        {
+          "*": "Material.minepreggo_crowning"
+        }
+      ],
+      "textures": [
+        "Array.fetus[variable.mp_baby - 1]"
+      ]
+    },
+    "controller.render.minepreggo.player_crowning_humanoid_slime": {
+      "geometry": "Geometry.minepreggo_crowning_humanoid_slime",
+      "materials": [
+        {
+          "*": "Material.minepreggo_crowning_blend"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_fetus_slime"
+      ]
+    },
+    "controller.render.minepreggo.player_crowning_villager": {
+      "geometry": "Geometry.minepreggo_crowning_villager",
+      "materials": [
+        {
+          "*": "Material.minepreggo_crowning"
+        }
+      ],
+      "textures": [
+        "Texture.minepreggo_fetus_villager"
+      ]
+    },
+    "controller.render.minepreggo.player_crowning_navel_p4": {
+      "arrays": {
+        "textures": {
+          "Array.fetus": [
+            "Texture.minepreggo_fetus_human",
+            "Texture.minepreggo_fetus_zombie",
+            "Texture.minepreggo_fetus_creeper",
+            "Texture.minepreggo_fetus_ender"
+          ]
+        }
+      },
+      "geometry": "Geometry.minepreggo_crowning_navel_p4",
+      "materials": [
+        {
+          "*": "Material.minepreggo_crowning"
+        }
+      ],
+      "textures": [
+        "Array.fetus[variable.mp_baby - 1]"
+      ]
+    },
+    "controller.render.minepreggo.player_crowning_navel_p5": {
+      "arrays": {
+        "textures": {
+          "Array.fetus": [
+            "Texture.minepreggo_fetus_human",
+            "Texture.minepreggo_fetus_zombie",
+            "Texture.minepreggo_fetus_creeper",
+            "Texture.minepreggo_fetus_ender"
+          ]
+        }
+      },
+      "geometry": "Geometry.minepreggo_crowning_navel_p5",
+      "materials": [
+        {
+          "*": "Material.minepreggo_crowning"
+        }
+      ],
+      "textures": [
+        "Array.fetus[variable.mp_baby - 1]"
+      ]
+    },
+    "controller.render.minepreggo.player_crowning_navel_p6": {
+      "arrays": {
+        "textures": {
+          "Array.fetus": [
+            "Texture.minepreggo_fetus_human",
+            "Texture.minepreggo_fetus_zombie",
+            "Texture.minepreggo_fetus_creeper",
+            "Texture.minepreggo_fetus_ender"
+          ]
+        }
+      },
+      "geometry": "Geometry.minepreggo_crowning_navel_p6",
+      "materials": [
+        {
+          "*": "Material.minepreggo_crowning"
+        }
+      ],
+      "textures": [
+        "Array.fetus[variable.mp_baby - 1]"
+      ]
+    },
+    "controller.render.minepreggo.player_crowning_navel_p7": {
+      "arrays": {
+        "textures": {
+          "Array.fetus": [
+            "Texture.minepreggo_fetus_human",
+            "Texture.minepreggo_fetus_zombie",
+            "Texture.minepreggo_fetus_creeper",
+            "Texture.minepreggo_fetus_ender"
+          ]
+        }
+      },
+      "geometry": "Geometry.minepreggo_crowning_navel_p7",
+      "materials": [
+        {
+          "*": "Material.minepreggo_crowning"
+        }
+      ],
+      "textures": [
+        "Array.fetus[variable.mp_baby - 1]"
+      ]
+    },
+    "controller.render.minepreggo.player_crowning_navel_p8": {
+      "arrays": {
+        "textures": {
+          "Array.fetus": [
+            "Texture.minepreggo_fetus_human",
+            "Texture.minepreggo_fetus_zombie",
+            "Texture.minepreggo_fetus_creeper",
+            "Texture.minepreggo_fetus_ender"
+          ]
+        }
+      },
+      "geometry": "Geometry.minepreggo_crowning_navel_p8",
+      "materials": [
+        {
+          "*": "Material.minepreggo_crowning"
+        }
+      ],
+      "textures": [
+        "Array.fetus[variable.mp_baby - 1]"
+      ]
+    },
+    "controller.render.minepreggo.player_crowning_navel_p9": {
+      "arrays": {
+        "textures": {
+          "Array.fetus": [
+            "Texture.minepreggo_fetus_human",
+            "Texture.minepreggo_fetus_zombie",
+            "Texture.minepreggo_fetus_creeper",
+            "Texture.minepreggo_fetus_ender"
+          ]
+        }
+      },
+      "geometry": "Geometry.minepreggo_crowning_navel_p9",
+      "materials": [
+        {
+          "*": "Material.minepreggo_crowning"
+        }
+      ],
+      "textures": [
+        "Array.fetus[variable.mp_baby - 1]"
+      ]
+    }
+  }
+}

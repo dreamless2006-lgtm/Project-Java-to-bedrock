@@ -1,0 +1,30 @@
+{
+  "format_version": "1.26.30",
+  "minecraft:item": {
+    "description": {
+      "identifier": "minepreggo:eternal_pregnancy_potion",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "minepreggo_eternal_pregnancy_potion",
+      "minecraft:display_name": {
+        "value": "item.minepreggo.eternal_pregnancy_potion"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:food": {
+        "nutrition": 0,
+        "saturation_modifier": 0,
+        "can_always_eat": true,
+        "using_converts_to": "minecraft:glass_bottle"
+      },
+      "minecraft:use_modifiers": {
+        "use_duration": 1.6,
+        "movement_modifier": 0.35
+      },
+      "minecraft:use_animation": "drink",
+      "minepreggo:eternal_pregnancy": {}
+    }
+  }
+}

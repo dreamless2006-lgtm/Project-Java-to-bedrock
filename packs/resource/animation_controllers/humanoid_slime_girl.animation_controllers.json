@@ -1,0 +1,36 @@
+{
+  "format_version": "1.10.0",
+  "animation_controllers": {
+    "controller.animation.minepreggo.humanoid_slime_girl.squish": {
+      "initial_state": "ground",
+      "states": {
+        "ground": {
+          "transitions": [
+            {
+              "air": "!q.is_on_ground"
+            }
+          ]
+        },
+        "air": {
+          "transitions": [
+            {
+              "landed": "q.is_on_ground"
+            }
+          ]
+        },
+        "landed": {
+          "sound_effects": [
+            {
+              "effect": "slime_squish"
+            }
+          ],
+          "transitions": [
+            {
+              "ground": "true"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "minepreggo:hot_chicken"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "item": "minepreggo:hot_sauce"
+      },
+      {
+        "item": "minecraft:cooked_chicken"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "minepreggo:hot_sauce"
+      }
+    ],
+    "result": {
+      "item": "minepreggo:hot_chicken"
+    }
+  }
+}

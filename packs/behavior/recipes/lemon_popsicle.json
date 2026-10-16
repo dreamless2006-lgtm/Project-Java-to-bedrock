@@ -1,0 +1,36 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "minepreggo:lemon_popsicle"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "aaa",
+      " b ",
+      " c "
+    ],
+    "key": {
+      "a": {
+        "item": "minepreggo:lemon"
+      },
+      "b": {
+        "item": "minecraft:ice"
+      },
+      "c": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minepreggo:lemon"
+      }
+    ],
+    "result": {
+      "item": "minepreggo:lemon_ice_popsicles",
+      "count": 6
+    }
+  }
+}

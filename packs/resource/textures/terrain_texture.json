@@ -1,0 +1,44 @@
+{
+  "resource_pack_name": "minepreggo",
+  "texture_name": "atlas.terrain",
+  "padding": 8,
+  "num_mip_levels": 4,
+  "texture_data": {
+    "minepreggo_chili_peppers_stage0": {
+      "textures": "textures/minepreggo/block/chili_peppers_stage0"
+    },
+    "minepreggo_chili_peppers_stage1": {
+      "textures": "textures/minepreggo/block/chili_peppers_stage1"
+    },
+    "minepreggo_chili_peppers_stage2": {
+      "textures": "textures/minepreggo/block/chili_peppers_stage2"
+    },
+    "minepreggo_chili_peppers_stage3": {
+      "textures": "textures/minepreggo/block/chili_peppers_stage3"
+    },
+    "minepreggo_cucumbers_stage0": {
+      "textures": "textures/minepreggo/block/cucumbers_stage0"
+    },
+    "minepreggo_cucumbers_stage1": {
+      "textures": "textures/minepreggo/block/cucumbers_stage1"
+    },
+    "minepreggo_cucumbers_stage2": {
+      "textures": "textures/minepreggo/block/cucumbers_stage2"
+    },
+    "minepreggo_cucumbers_stage3": {
+      "textures": "textures/minepreggo/block/cucumbers_stage3"
+    },
+    "minepreggo_jenny_bed": {
+      "textures": "textures/minepreggo/block/jenny_bed"
+    },
+    "minepreggo_kobold_egg_c0": {
+      "textures": "textures/port/kobold_egg_c0"
+    },
+    "minepreggo_kobold_egg_c1": {
+      "textures": "textures/port/kobold_egg_c1"
+    },
+    "minepreggo_kobold_egg_c2": {
+      "textures": "textures/port/kobold_egg_c2"
+    }
+  }
+}

@@ -1,0 +1,635 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.minepreggo.player.birth": {
+      "loop": true,
+      "bones": {
+        "body": {
+          "rotation": [
+            "((-90.0)) - this",
+            "((-1.0 + (1.0 - (-1.0)) * (math.sin((q.anim_time * 20 * 0.065 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            0
+          ],
+          "position": [
+            "0 - this",
+            "-22.0 - this",
+            "-8.0 - this"
+          ]
+        },
+        "head": {
+          "relative_to": {
+            "rotation": "entity"
+          },
+          "rotation": [
+            "((-90.0) + (-7.5)) - this",
+            0,
+            "((-7.5 + (7.5 - (-7.5)) * (math.sin((q.anim_time * 20 * 0.075 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        },
+        "rightArm": {
+          "rotation": [
+            "0.0 - this",
+            "-((-2.5 + (-5.0 - (-2.5)) * (math.sin((q.anim_time * 20 * 0.075 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((25.0 + (35.0 - (25.0)) * (math.sin((q.anim_time * 20 * 0.075 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ],
+          "position": [
+            "0.0 - this",
+            "2.0 - this",
+            "0.0 - this"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            "0.0 - this",
+            "-((2.5 + (5.0 - (2.5)) * (math.sin((q.anim_time * 20 * 0.075 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-25.0 + (-35.0 - (-25.0)) * (math.sin((q.anim_time * 20 * 0.075 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ],
+          "position": [
+            "0.0 - this",
+            "2.0 - this",
+            "0.0 - this"
+          ]
+        },
+        "rightLeg": {
+          "rotation": [
+            "((-90.0)) - this",
+            "((30.0 + (40.0 - (30.0)) * (math.sin((q.anim_time * 20 * 0.065 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-2.5 + (-5.0 - (-2.5)) * (math.sin((q.anim_time * 20 * 0.065 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ],
+          "position": [
+            "0.0 - this",
+            "-10.0 - this",
+            "-20.0 - this"
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            "((-90.0)) - this",
+            "((-30.0 + (-40.0 - (-30.0)) * (math.sin((q.anim_time * 20 * 0.065 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((2.5 + (5.0 - (2.5)) * (math.sin((q.anim_time * 20 * 0.065 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ],
+          "position": [
+            "0.0 - this",
+            "-10.0 - this",
+            "-20.0 - this"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.postbirth": {
+      "loop": true,
+      "bones": {
+        "body": {
+          "rotation": [
+            "((-90.0)) - this",
+            "((-1.0 + (1.0 - (-1.0)) * (math.sin((q.anim_time * 20 * 0.065 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            0
+          ],
+          "position": [
+            "0 - this",
+            "-22.0 - this",
+            "-8.0 - this"
+          ]
+        },
+        "head": {
+          "relative_to": {
+            "rotation": "entity"
+          },
+          "rotation": [
+            "((-90.0) + (-7.5)) - this",
+            0,
+            "((-7.5 + (7.5 - (-7.5)) * (math.sin((q.anim_time * 20 * 0.075 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        },
+        "rightArm": {
+          "rotation": [
+            "0.0 - this",
+            "-((-2.5 + (-5.0 - (-2.5)) * (math.sin((q.anim_time * 20 * 0.075 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((25.0 + (35.0 - (25.0)) * (math.sin((q.anim_time * 20 * 0.075 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ],
+          "position": [
+            "0.0 - this",
+            "2.0 - this",
+            "0.0 - this"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            "0.0 - this",
+            "-((2.5 + (5.0 - (2.5)) * (math.sin((q.anim_time * 20 * 0.075 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-25.0 + (-35.0 - (-25.0)) * (math.sin((q.anim_time * 20 * 0.075 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ],
+          "position": [
+            "0.0 - this",
+            "2.0 - this",
+            "0.0 - this"
+          ]
+        },
+        "rightLeg": {
+          "rotation": [
+            "((-90.0)) - this",
+            "((10.0 + (20.0 - (10.0)) * (math.sin((q.anim_time * 20 * 0.065 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-2.5 + (-5.0 - (-2.5)) * (math.sin((q.anim_time * 20 * 0.065 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ],
+          "position": [
+            "0.0 - this",
+            "-10.0 - this",
+            "-20.0 - this"
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            "((-90.0)) - this",
+            "((-10.0 + (-20.0 - (-10.0)) * (math.sin((q.anim_time * 20 * 0.065 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((2.5 + (5.0 - (2.5)) * (math.sin((q.anim_time * 20 * 0.065 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ],
+          "position": [
+            "0.0 - this",
+            "-10.0 - this",
+            "-20.0 - this"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.miscarriage": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            0,
+            "((15.0 + (17.5 - (15.0)) * (math.sin((q.anim_time * 20 * 0.092 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((17.5 + (20.0 - (17.5)) * (math.sin((q.anim_time * 20 * 0.092 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            0,
+            "((-15.0 + (-17.5 - (-15.0)) * (math.sin((q.anim_time * 20 * 0.092 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-17.5 + (-20.0 - (-17.5)) * (math.sin((q.anim_time * 20 * 0.092 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        },
+        "rightLeg": {
+          "rotation": [
+            0,
+            "((30.0 + (32.5 - (30.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((15.0 + (17.5 - (15.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            0,
+            "((-30.0 + (-32.5 - (-30.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-15.0 + (-17.5 - (-15.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.water_breaking": {
+      "loop": true,
+      "bones": {
+        "body": {
+          "rotation": [
+            "((15.0 + (16.5 - (15.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5))",
+            0,
+            0
+          ],
+          "position": [
+            "0 - this",
+            "0 - this",
+            "-3.0 - this"
+          ]
+        },
+        "rightArm": {
+          "rotation": [
+            0,
+            "((15.0 + (17.5 - (15.0)) * (math.sin((q.anim_time * 20 * 0.092 + 0.0) * 57.2958) + 1.0) * 0.5))",
+            "((17.5 + (20.0 - (17.5)) * (math.sin((q.anim_time * 20 * 0.092 + 0.0) * 57.2958) + 1.0) * 0.5))"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            0,
+            "((-15.0 + (-17.5 - (-15.0)) * (math.sin((q.anim_time * 20 * 0.092 + 0.0) * 57.2958) + 1.0) * 0.5))",
+            "((-17.5 + (-20.0 - (-17.5)) * (math.sin((q.anim_time * 20 * 0.092 + 0.0) * 57.2958) + 1.0) * 0.5))"
+          ]
+        },
+        "rightLeg": {
+          "rotation": [
+            0,
+            "((10.0 + (12.5 - (10.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5))",
+            "((5.0 + (6.5 - (5.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5))"
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            0,
+            "((-10.0 + (-12.5 - (-10.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5))",
+            "((-5.0 + (-6.5 - (-5.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5))"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.prebirth": {
+      "loop": true,
+      "bones": {
+        "body": {
+          "rotation": [
+            "((15.0 + (16.5 - (15.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            0,
+            0
+          ],
+          "position": [
+            "0 - this",
+            "0 - this",
+            "-3.0 - this"
+          ]
+        },
+        "head": {
+          "relative_to": {
+            "rotation": "entity"
+          },
+          "rotation": [
+            "((-27.5 + (29.0 - (-27.5)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            0,
+            0
+          ]
+        },
+        "rightArm": {
+          "rotation": [
+            0,
+            "((15.0 + (17.5 - (15.0)) * (math.sin((q.anim_time * 20 * 0.02 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((17.5 + (20.0 - (17.5)) * (math.sin((q.anim_time * 20 * 0.02 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            0,
+            "((-15.0 + (-17.5 - (-15.0)) * (math.sin((q.anim_time * 20 * 0.02 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-17.5 + (-20.0 - (-17.5)) * (math.sin((q.anim_time * 20 * 0.02 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        },
+        "rightLeg": {
+          "rotation": [
+            0,
+            "((30.0 + (32.5 - (30.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((15.0 + (17.5 - (15.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            0,
+            "((-30.0 + (-32.5 - (-30.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-15.0 + (-17.5 - (-15.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.belly_rubbing_p0": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            "((-28.936 + (-31.2482 - (-28.936)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((12.8595 + (13.8965 - (12.8595)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-16.643 + (-29.4254 - (-16.643)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.belly_rubbing_p1": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            "((-30.936 + (-33.2482 - (-30.936)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((12.8595 + (13.8965 - (12.8595)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-18.643 + (-31.4254 - (-18.643)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.belly_rubbing_p2": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            "((-40.6041 + (-50.89 - (-40.6041)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-9.5874 + (0.7699 - (-9.5874)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-0.2054 + (-6.0902 - (-0.2054)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            "((-50.9562 + (-40.1742 - (-50.9562)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((9.1256 + (0.1333 - (9.1256)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-0.6035 + (5.8908 - (-0.6035)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.belly_rubbing_p3": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            "((-39.6041 + (-60.89 - (-39.6041)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-9.5874 + (0.7699 - (-9.5874)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((9.2054 + (0.5902 - (9.2054)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            "((-60.9562 + (-45.1742 - (-60.9562)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((9.1256 + (2.1333 - (9.1256)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-14.6035 + (-3.8908 - (-14.6035)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.belly_rubbing_p4": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            "((-39.6041 + (-60.89 - (-39.6041)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-9.5874 + (0.7699 - (-9.5874)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((12.5054 + (5.5902 - (12.5054)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            "((-60.9562 + (-45.1742 - (-60.9562)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((9.1256 + (2.1333 - (9.1256)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-17.6035 + (-7.8908 - (-17.6035)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.belly_rubbing_p5": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            "((-40.1427 + (-60.7642 - (-40.1427)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-6.3807 + (5.1363 - (-6.3807)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((16.3743 + (7.4398 - (16.3743)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            "((-61.2504 + (-45.1963 - (-61.2504)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((4.7474 + (-1.4147 - (4.7474)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-20.0369 + (-11.4144 - (-20.0369)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.belly_rubbing_p6": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            "((-40.1427 + (-60.7642 - (-40.1427)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-6.3807 + (5.1363 - (-6.3807)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((21.3743 + (12.4398 - (21.3743)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            "((-61.2504 + (-45.1963 - (-61.2504)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((4.7474 + (-1.4147 - (4.7474)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-25.0369 + (-17.4144 - (-25.0369)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.belly_rubbing_p7": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            "((-40.4606 + (-60.4489 - (-40.4606)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-3.1454 + (9.4933 - (-3.1454)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((29.2003 + (9.9134 - (29.2003)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            "((-61.3575 + (-44.9997 - (-61.3575)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((0.3609 + (-4.9574 - (0.3609)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-27.4395 + (-15.9488 - (-27.4395)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.belly_rubbing_p8": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            "((-40.4606 + (-60.4489 - (-40.4606)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-3.1454 + (9.4933 - (-3.1454)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((33.2003 + (13.9134 - (33.2003)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            "((-61.3575 + (-44.9997 - (-61.3575)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((0.3609 + (-4.9574 - (0.3609)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-32.4395 + (-20.9488 - (-32.4395)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.belly_rubbing_p9": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            "((-40.4606 + (-60.4489 - (-40.4606)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-3.1454 + (9.4933 - (-3.1454)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((33.2003 + (13.9134 - (33.2003)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            "((-61.3575 + (-44.9997 - (-61.3575)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((0.3609 + (-4.9574 - (0.3609)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this",
+            "((-32.4395 + (-20.9488 - (-32.4395)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5)) - this"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.walking_heavy_p4": {
+      "loop": true,
+      "bones": {
+        "rightLeg": {
+          "rotation": [
+            0,
+            "(-6.0)",
+            "(6.0)"
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            0,
+            "(6.0)",
+            "(-6.0)"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.walking_heavy_p5": {
+      "loop": true,
+      "bones": {
+        "rightLeg": {
+          "rotation": [
+            0,
+            "(-6.427)",
+            "(6.427)"
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            0,
+            "(6.427)",
+            "(-6.427)"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.walking_heavy_p6": {
+      "loop": true,
+      "bones": {
+        "rightLeg": {
+          "rotation": [
+            0,
+            "(-7.427)",
+            "(7.427)"
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            0,
+            "(7.427)",
+            "(-7.427)"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.walking_heavy_p7": {
+      "loop": true,
+      "bones": {
+        "rightLeg": {
+          "rotation": [
+            0,
+            "(-7.854)",
+            "(7.854)"
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            0,
+            "(7.854)",
+            "(-7.854)"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.walking_heavy_p8": {
+      "loop": true,
+      "bones": {
+        "rightLeg": {
+          "rotation": [
+            0,
+            "(-8.281)",
+            "(8.281)"
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            0,
+            "(8.281)",
+            "(-8.281)"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.walking_heavy_p9": {
+      "loop": true,
+      "bones": {
+        "rightLeg": {
+          "rotation": [
+            0,
+            "(-8.854)",
+            "(8.854)"
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            0,
+            "(8.854)",
+            "(-8.854)"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.back_pain": {
+      "loop": true,
+      "bones": {
+        "body": {
+          "rotation": [
+            "((-10.0 + (-11.5 - (-10.0)) * (math.sin((q.anim_time * 20 * 0.085 + 0.0) * 57.2958) + 1.0) * 0.5))",
+            0,
+            0
+          ],
+          "position": [
+            "0 - this",
+            "0 - this",
+            "2.0 - this"
+          ]
+        },
+        "rightArm": {
+          "rotation": [
+            "(-6.0)",
+            0,
+            0
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            "(25.0) - this",
+            "(-40.0) - this",
+            "(14.701) - this"
+          ]
+        },
+        "rightLeg": {
+          "rotation": [
+            "(6.0)",
+            0,
+            "(6.0)"
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            "(6.0)",
+            0,
+            "(-6.0)"
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.belly_hidden": {
+      "loop": true,
+      "bones": {
+        "belly": {
+          "scale": [
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    }
+  }
+}
