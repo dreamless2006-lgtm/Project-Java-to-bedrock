@@ -82,6 +82,26 @@ function mapChannel(channel, map) {
   return channel;
 }
 
+/**
+ * The game precomputes catmull-rom curves, so it refuses them on keyframes holding Molang (and drops
+ * the animation): a channel with expressions in it is eased linearly instead.
+ * @param {unknown} channel
+ */
+export function linearWhereExpressions(channel) {
+  if (!channel || typeof channel !== 'object' || Array.isArray(channel)) return channel;
+  const frames = Object.values(channel);
+  const holdsExpression = vectors(channel).some((vector) => vector.some((v) => typeof v === 'string'));
+  if (!holdsExpression || !frames.some((frame) => frame && typeof frame === 'object' && /** @type {any} */ (frame).lerp_mode === 'catmullrom')) return channel;
+  /** @type {Record<string, unknown>} */
+  const out = {};
+  for (const [time, frame] of Object.entries(channel)) {
+    if (!frame || typeof frame !== 'object' || Array.isArray(frame) || /** @type {any} */ (frame).lerp_mode !== 'catmullrom') { out[time] = frame; continue; }
+    const { lerp_mode: _, ...rest } = /** @type {any} */ (frame);
+    out[time] = 'pre' in rest ? rest : rest.post;
+  }
+  return out;
+}
+
 /** Returns a copy of a Bedrock animation whose kick bones bulge out of the belly of any size, and never float off it. */
 export function clampKicks(/** @type {any} */ animation) {
   if (!animation?.bones) return animation;
@@ -90,7 +110,7 @@ export function clampKicks(/** @type {any} */ animation) {
     const channels = bones[bone];
     if (!channels) continue;
     const peaks = peakTravel(channels.position);
-    bones[bone] = { ...channels, ...(channels.position ? { position: mapChannel(channels.position, (v) => scaleVector(bone, v, peaks)) } : {}), ...(channels.scale ? { scale: mapChannel(channels.scale, capVector) } : {}) };
+    bones[bone] = { ...channels, ...(channels.position ? { position: linearWhereExpressions(mapChannel(channels.position, (v) => scaleVector(bone, v, peaks))) } : {}), ...(channels.scale ? { scale: mapChannel(channels.scale, capVector) } : {}) };
   }
   return { ...animation, bones };
 }

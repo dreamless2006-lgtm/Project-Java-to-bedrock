@@ -127,8 +127,12 @@ export function kickPulseAnimations() {
  * scene) the belly firms up in slow waves of six seconds: it lifts, rounds forward and narrows a
  * little, then eases off. Expression-only; at v.cw = 0 it changes nothing.
  */
-/** No pose at all: the scene pose of a body that keeps its own stance in a scene (the monsters). */
-export const NO_POSE = { [`animation.${MOD}.no_pose`]: { loop: true, bones: {} } };
+/**
+ * No pose at all: the scene pose of a body that keeps its own stance in a scene (the monsters). The
+ * game refuses an animation without a bone (and with it every animation of its file), so it turns
+ * the body by nothing.
+ */
+export const NO_POSE = { [`animation.${MOD}.no_pose`]: { loop: true, bones: { body: { rotation: [0, 0, 0] } } } };
 
 export function contractionWaveAnimation() {
   const w = '(v.cw * (0.5 - 0.5 * math.cos(q.life_time * 60.0)))';

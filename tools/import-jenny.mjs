@@ -197,6 +197,12 @@ if (portBP && portRP) {
     } else if (dir === 'entities') {
       const doc = parse(rewrite(strFromU8(data)));
       entityDocs.set(doc['minecraft:entity'].description.identifier, { file: join(BP, 'entities', PORT, rest), doc });
+    } else if (dir === 'recipes' && file.endsWith('.json')) {
+      // The game refuses a 1.20+ recipe without unlock data (one of the port's has none): always unlocked.
+      const doc = parse(rewrite(strFromU8(data)));
+      for (const [key, recipe] of Object.entries(doc)) if (key.startsWith('minecraft:recipe_') && recipe && typeof recipe === 'object' && !recipe.unlock) recipe.unlock = [{ context: 'AlwaysUnlocked' }];
+      writeFile(join(BP, dir, PORT, rest), JSON.stringify(doc, null, 2) + '\n');
+      counts.files++;
     } else if (['items', 'recipes', 'loot_tables', 'spawn_rules'].includes(dir)) {
       writeFile(join(BP, dir, PORT, rest), file.endsWith('.json') ? rewrite(strFromU8(data)) : data);
       counts.files++;

@@ -1047,6 +1047,13 @@ test('no kick cube can leave the belly: every kick keyframe is clamped to the me
   // Half-way keyframes keep the kick's own curve; a jitter (under half a unit) is only clamped.
   const curve = clampKicks({ bones: { front_kick: { position: { '0.0': [0, 0, 0], '0.5': [0, 0, -2], '1.0': [0, 0, -4] } } } });
   assert.deepEqual(curve.bones.front_kick.position['0.5'], [0, 0, '(-(v.k_front_kick_z + 1.50) * 0.5000)']);
+  // The game precomputes catmull-rom curves and refuses them on Molang keyframes (dropping the whole
+  // animation), so a clamped channel eases linearly; a channel left constant keeps its curve.
+  const eased = clampKicks({ bones: { front_kick: { position: { '0.0': { post: [0, 0, 0], lerp_mode: 'catmullrom' }, '0.5': { post: [0, 0, -2], lerp_mode: 'catmullrom' }, '1.0': { pre: [0, 0, -4], post: [0, 0, -4], lerp_mode: 'catmullrom' } } }, belly: { position: { '0.0': { post: [0, 0, 0], lerp_mode: 'catmullrom' } } } } });
+  assert.deepEqual(eased.bones.front_kick.position['0.0'], [0, 0, 0]);
+  assert.deepEqual(eased.bones.front_kick.position['0.5'], [0, 0, '(-(v.k_front_kick_z + 1.50) * 0.5000)']);
+  assert.deepEqual(eased.bones.front_kick.position['1.0'], { pre: [0, 0, '(-(v.k_front_kick_z + 1.50) * 1.0000)'], post: [0, 0, '(-(v.k_front_kick_z + 1.50) * 1.0000)'] });
+  assert.equal(eased.bones.belly.position['0.0'].lerp_mode, 'catmullrom');
   const jitter = clampKicks({ bones: { top_kick: { position: [0.2, 0, -0.3] } } });
   assert.deepEqual(jitter.bones.top_kick.position, ['math.clamp(0.2, -(v.k_top_kick_x + 1.25), (v.k_top_kick_x + 1.25))', 0, 'math.max(-(v.k_top_kick_z + 1.50), -0.3)']);
   // The room is measured from the belly's box, cubes rotated as the game rotates them.

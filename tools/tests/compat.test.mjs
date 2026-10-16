@@ -100,7 +100,8 @@ test('on an Actions & Stuff game the belly rub comes from the guide book, and th
 
 test('the native player model marks itself, and each belly item has an attachable that hides there and in first person', () => {
   const player = json('packs/resource/entity/player.entity.json')['minecraft:client_entity'].description;
-  assert.equal(player.variables['variable.mp_native'], 'public');
+  assert.equal(player.scripts.variables['variable.mp_native'], 'public');
+  assert.equal(player.variables, undefined, 'public variables belong under scripts');
   assert.ok(player.scripts.initialize.includes('variable.mp_native = 1.0;'));
   for (let p = 0; p <= 9; p++) {
     const item = json(`packs/behavior/items/belly/belly_p${p}.json`)['minecraft:item'];

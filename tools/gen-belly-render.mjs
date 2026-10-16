@@ -289,7 +289,9 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
   for (const p of PHASES.filter((n) => n >= 4)) d.render_controllers.push({ [`controller.render.${MOD}.player_crowning_navel_p${p}`]: `${seen} && variable.mp_navel && variable.mp_bp == ${p} && ${isHumanoid}` });
   // Attachables can tell this player model from another pack's (Actions & Stuff): the off-hand belly
   // of player/compat.js hides itself where this model draws her belly already.
-  d.variables = { ...(d.variables ?? {}), 'variable.mp_native': 'public' };
+  // (public variables are declared under scripts; the game refuses a description.variables)
+  delete d.variables;
+  d.scripts.variables = { ...(d.scripts.variables ?? {}), 'variable.mp_native': 'public' };
   // (each run used to add one more copy of the spear line; one is enough)
   d.scripts.initialize = [...new Set(initializers(pre, [...(d.scripts.initialize ?? []).filter((/** @type {string} */ l) => !l.startsWith('variable.mp_native =')), 'variable.melee_spear_equipped = 0.0;'])), 'variable.mp_native = 1.0;'];
   write(file, doc);

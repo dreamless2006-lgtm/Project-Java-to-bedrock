@@ -431,6 +431,40 @@ for (const file of walk(join(RP, 'entity'), '.json')) {
   if (egg) checkTexture(file, itemTextures, egg, 'spawn egg');
 }
 
+// --- what the game refuses outright ------------------------------------------------------------
+// Each of these drops more than the line at fault (a whole animation file, a client entity's
+// variables), and none fails a JSON schema, so they are checked over every animation and client
+// entity, the merged Jenny port's included.
+const CLIENT_DESCRIPTION_KEYS = new Set(['identifier', 'min_engine_version', 'materials', 'textures', 'geometry', 'scripts', 'animations',
+  'animation_controllers', 'render_controllers', 'particle_effects', 'particle_emitters', 'sound_effects', 'spawn_egg', 'enable_attachables',
+  'hide_armor', 'held_item_ignores_lighting', 'locators', 'queryable_geometry']);
+const holdsMolang = (/** @type {unknown} */ frame) => {
+  const vectors = Array.isArray(frame) ? [frame] : frame && typeof frame === 'object' ? [/** @type {any} */ (frame).pre, /** @type {any} */ (frame).post] : [frame];
+  return vectors.some((v) => typeof v === 'string' || (Array.isArray(v) && v.some((c) => typeof c === 'string')));
+};
+for (const file of walkAll(join(RP, 'animations'), '.json')) {
+  for (const [id, animation] of Object.entries(readJson(file)?.animations ?? {})) {
+    // an empty bones object fails the file's schema check, and the game then loads none of its animations
+    if (animation?.bones && !Object.keys(animation.bones).length) fail(file, `${id}: "bones" is empty (the game then refuses every animation of this file)`);
+    for (const [bone, channels] of Object.entries(animation?.bones ?? {})) {
+      for (const [channel, frames] of Object.entries(channels ?? {})) {
+        if (!frames || typeof frames !== 'object' || Array.isArray(frames)) continue;
+        const values = Object.values(frames);
+        if (values.some((f) => /** @type {any} */ (f)?.lerp_mode === 'catmullrom') && values.some(holdsMolang)) fail(file, `${id}: ${bone}.${channel} mixes catmull-rom keyframes with Molang (the game refuses the animation)`);
+      }
+    }
+  }
+}
+for (const file of walkAll(join(RP, 'entity'), '.json')) {
+  const description = readJson(file)?.['minecraft:client_entity']?.description;
+  for (const key of Object.keys(description ?? {})) if (!CLIENT_DESCRIPTION_KEYS.has(key)) fail(file, `description.${key} is not valid in a client entity${key === 'variables' ? ' (public variables go under scripts.variables)' : ''}`);
+}
+// the merged Jenny port's recipes too: a 1.20+ recipe without unlock data is refused
+for (const file of walkAll(join(BP, 'recipes', 'jenny_port'), '.json')) {
+  const recipe = Object.entries(readJson(file) ?? {}).find(([k]) => k.startsWith('minecraft:recipe_'))?.[1];
+  if (recipe && (!Array.isArray(recipe.unlock) || !recipe.unlock.length)) fail(file, 'recipes need unlock data (the game refuses the recipe without it)');
+}
+
 // --- the Jenny port: what tools/import-jenny.mjs adds to its girls ------------------------------
 // The port's own definitions are the game's to check; ours (minepreggo properties, belly and pose
 // animations, controllers, the babies) are checked here like the rest of the pack.
