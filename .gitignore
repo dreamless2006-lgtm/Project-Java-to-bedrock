@@ -20,3 +20,6 @@ packs/resource/jenny_port/
 packs/resource/ui/
 packs/resource/pack_icon.png
 packs/behavior/pack_icon.png
+# Expandable Goblins (vendor/goblins/, merged by tools/import-goblins.mjs)
+packs/behavior/**/goblins_port/
+packs/resource/**/goblins_port/

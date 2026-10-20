@@ -13,7 +13,7 @@ function* files(dir) {
   for (const name of readdirSync(dir)) {
     const path = join(dir, name);
     if (statSync(path).isDirectory()) {
-      if (name !== 'jenny_port') yield* files(path);
+      if (name !== 'jenny_port' && name !== 'goblins_port') yield* files(path);
     }
     else if (name.endsWith('.json')) yield path;
   }

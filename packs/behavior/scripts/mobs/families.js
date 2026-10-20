@@ -185,6 +185,17 @@ export const PORT_GIRL_FAMILIES = Object.fromEntries(
     /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: `minepreggo:baby_${id.split(':')[1]}`, ...(EGGS[id] ? { eggItem: EGGS[id] } : {}) }),
   ])
 );
+/**
+ * The girls of Expandable Goblins (merged by tools/import-goblins.mjs): tamed with sweet things by
+ * their own entity, pregnant through our potions and the Jenny Bed; their bellies are their own.
+ * @type {Record<string, Family>}
+ */
+export const GOBLIN_FAMILIES = Object.fromEntries(
+  ['expandable_goblins:goblin_girl', 'expandable_goblins:imp_girl', 'expandable_goblins:bloatberry_girl'].map((id) => [
+    id,
+    /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: 'minepreggo:baby_human' }),
+  ])
+);
 /** What each birth of hers yields: her eggs if she lays them, else her baby. */
 export const birthItemOf = (/** @type {Family} */ family) => family.eggItem ?? family.babyItem;
 export const COURTING_TICKS = 60;
@@ -248,6 +259,7 @@ export const FAMILIES = {
     milkItem: 'minepreggo:slime_breast_milk_bottle',
   },
   ...PORT_GIRL_FAMILIES,
+  ...GOBLIN_FAMILIES,
 };
 
 /** Tamed mobs: fullness points per meal are capped like Java's DataHungry (0-30, eats below 20). */

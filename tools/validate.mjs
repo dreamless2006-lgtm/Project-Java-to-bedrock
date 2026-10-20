@@ -26,7 +26,7 @@ const fail = (file, msg) => errors.push(`${relative(ROOT, file).split(sep).join(
 
 // The Jenny Mod Java Port's files (merged by tools/import-jenny.mjs under jenny_port/ and ui/) are
 // another add-on's, in its own formats: the game validates them, this does not.
-const IMPORTED_DIRS = new Set(['jenny_port', 'ui']);
+const IMPORTED_DIRS = new Set(['jenny_port', 'goblins_port', 'ui']);
 function* walk(dir, ext) {
   if (!existsSync(dir)) return;
   for (const entry of readdirSync(dir)) {
