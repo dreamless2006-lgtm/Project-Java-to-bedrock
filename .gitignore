@@ -23,3 +23,6 @@ packs/behavior/pack_icon.png
 # Expandable Goblins (vendor/goblins/, merged by tools/import-goblins.mjs)
 packs/behavior/**/goblins_port/
 packs/resource/**/goblins_port/
+# Minecraft Comes Alive (vendor/mca/, merged by tools/import-mca.mjs)
+packs/behavior/**/mca_port/
+packs/resource/**/mca_port/

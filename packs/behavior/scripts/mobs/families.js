@@ -196,6 +196,14 @@ export const GOBLIN_FAMILIES = Object.fromEntries(
     /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: 'minepreggo:baby_human' }),
   ])
 );
+/**
+ * Minecraft Comes Alive's women (merged by tools/import-mca.mjs): villagers of a trade, tamed with
+ * flowers or cake by their own entity, pregnant through our potions and the Jenny Bed.
+ * @type {Record<string, Family>}
+ */
+export const MCA_FAMILIES = {
+  'mca:villager_woman': { species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: 'minepreggo:baby_human' },
+};
 /** What each birth of hers yields: her eggs if she lays them, else her baby. */
 export const birthItemOf = (/** @type {Family} */ family) => family.eggItem ?? family.babyItem;
 export const COURTING_TICKS = 60;
@@ -260,6 +268,7 @@ export const FAMILIES = {
   },
   ...PORT_GIRL_FAMILIES,
   ...GOBLIN_FAMILIES,
+  ...MCA_FAMILIES,
 };
 
 /** Tamed mobs: fullness points per meal are capped like Java's DataHungry (0-30, eats below 20). */

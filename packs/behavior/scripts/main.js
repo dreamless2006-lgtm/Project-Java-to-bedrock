@@ -19,6 +19,7 @@ import './mobs/commands.js';
 import './jenny/port.js';
 import './jenny/scenes.js';
 import './jenny/bed.js';
+import './mca/villagers.js';
 import './jenny/belly_scenes.js';
 import './jenny/kobold_eggs.js';
 import './player/compat.js';
