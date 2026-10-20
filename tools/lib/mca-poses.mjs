@@ -7,38 +7,44 @@
 // position), so for them she is drawn, like the player in labor, with the player's flat labor model
 // (geometry.minepreggo.player_labor: the same parts and skin layout, all top-level). The poses the
 // player has no animation for are made here for that flat model:
-//   * morning sickness, sitting down with the babies kicking, and riding: the mod's own animations
-//     of the humanoid creeper girl (a flat humanoid of the vanilla proportions), her limbs renamed;
-//   * a contraction (and the incapacitation of a wild pregnant mob), the two scene poses and
-//     sitting down when she is told to: the poses authored in tools/lib/scene-poses.mjs, solved
-//     onto the flat model as the Jenny port's girls and our own females get them. On the floor a
-//     big belly would go through it (on all fours on the Jenny Bed above all), so in those her
-//     belly turns up along her trunk as far as each size needs (bellyLift), as the Jenny girls'
-//     bellies lie forward along their trunks in their births on all fours.
-import { AUTHORED, AUTHORED_LABOR, LEGS, NEUTRAL_RIG } from './scene-poses.mjs';
+//   * morning sickness, a contraction (and the incapacitation of a wild pregnant mob), sitting down
+//     with the babies kicking, and riding: the mod's own animations of the humanoid creeper girl
+//     (a flat humanoid of the vanilla proportions), her limbs renamed, as our own females play them;
+//   * the two scene poses and sitting down when she is told to: the poses authored in
+//     tools/lib/scene-poses.mjs, solved onto the flat model as the Jenny port's girls and our own
+//     females get them. On the floor a big belly would go through it (on all fours on the Jenny Bed
+//     above all), so in those her belly turns up along her trunk as far as each size needs
+//     (bellyLift), as the Jenny girls' bellies lie forward along their trunks in their births on
+//     all fours.
+// Her birth and the rest after it are the player's, with her head kept out of the floor.
+import { AUTHORED, LEGS, NEUTRAL_RIG } from './scene-poses.mjs';
 import { cubeFaces, poseAt } from './geo-render.mjs';
 import { animationSource, keyTimes, rigOf, solveAnimation } from './pose-solve.mjs';
+import { headOffFloor } from './labor-floor.mjs';
 
 /** The flat model's limbs by the names the mod's rigs and the authored poses give them. */
 export const LIMB_NAMES = /** @type {Record<string, string>} */ ({ right_arm: 'rightArm', left_arm: 'leftArm', right_leg: 'rightLeg', left_leg: 'leftLeg' });
 
 /** Her poses taken from the humanoid creeper girl's own animations (pose -> her animation's short name). */
-export const CREEPER_POSES = { morning_sickness: 'morning_sickness', kicking_sit: 'kicking_sit', riding: 'riding' };
+export const CREEPER_POSES = { morning_sickness: 'morning_sickness', contraction: 'contraction', kicking_sit: 'kicking_sit', riding: 'riding' };
 
 /**
  * Her poses solved from the authored ones; `sit` is the belly scenes' sitting back on her hands
  * with her head left free, so she looks about as she sits (vanilla's look-at plays on top of it).
- * `planted`: her pelvis stays where it is (the authored contraction lowers it to bend the knees
- * of the Jenny girls' rigs; her legs are one piece, so it would sink her feet into the floor).
- * `floor`: a pose on the floor, whose belly is lifted off it (bellyLift) down to this height: on
- * all fours barely into the bed under her, sitting resting on the floor and her thighs.
+ * `floor`: how low the belly may reach in this pose on the floor, lifted off it (bellyLift) down to
+ * this height: on all fours barely into the bed under her, sitting resting on the floor and her thighs.
  */
-export const SOLVED_POSES = /** @type {Record<string, { authored: any, step: number, headFree?: boolean, planted?: boolean, floor?: number }>} */ ({
-  contraction: { authored: AUTHORED_LABOR.contraction, step: 0.2, planted: true },
+export const SOLVED_POSES = /** @type {Record<string, { authored: any, step: number, headFree?: boolean, floor?: number }>} */ ({
   scene: { authored: AUTHORED.scene, step: 0.13, floor: -1 },
   scene_sit: { authored: AUTHORED.scene_sit, step: 0.13, floor: -1.5 },
   sit: { authored: AUTHORED.scene_sit, step: 0.13, headFree: true, floor: -1.5 },
 });
+
+/** The player's labor animations of hers that lie on the floor, kept off it (headOffFloor). */
+export const LYING_LABOR = ['birth', 'postbirth'];
+
+/** The flat model's six parts, each placed by its own position. */
+const PARTS = ['body', 'head', 'rightArm', 'leftArm', 'rightLeg', 'leftLeg'];
 
 /** How much the belly controller may still grow her belly (belly_growth at full growth, the inflation's breath). */
 const GROWN = (/** @type {number} */ phase) => {
@@ -92,16 +98,37 @@ export function renameLimbs(animation) {
 }
 
 /**
- * Every pose animation of hers made here, by pose: the creeper girl's renamed and the authored
- * ones solved onto the flat model.
+ * The creeper girl's riding, seated the game's way. In Java a rider sits at the vehicle's own height
+ * and the mod lowered her half a block into the seat; the game seats every rider already, so she
+ * keeps her limbs' turns but not that drop, and sinks into boats and minecarts only as far as
+ * vanilla's humanoids do (v.riding_y_offset, as the zombie's riding.body) - all of her, since her
+ * parts are placed each by its own position.
+ * @param {{ bones: Record<string, any> }} animation
+ */
+export function seatedRiding(animation) {
+  /** @type {Record<string, any>} */
+  const bones = {};
+  for (const [bone, channels] of Object.entries(animation.bones)) {
+    const { position: _drop, ...rest } = channels;
+    if (Object.keys(rest).length) bones[bone] = rest;
+  }
+  for (const part of PARTS) bones[part] = { ...(bones[part] ?? {}), position: [0, 'v.riding_y_offset', 0] };
+  return { ...animation, bones };
+}
+
+/**
+ * Every pose animation of hers made here, by pose: the creeper girl's renamed, the authored ones
+ * solved onto the flat model (their bellies out of the floor) and the player's lying labor with
+ * her head out of it.
  * @param {object} options
  * @param {{ bones: any[] }} options.flat the player's flat labor model
  * @param {{ bones: any[] }} options.creeperGeometry the humanoid creeper girl's model
  * @param {Record<string, any>} options.creeperAnimations her animations by short name (morning_sickness, ...)
+ * @param {Record<string, any>} options.laborAnimations the player's labor animations by pose (birth, postbirth)
  * @param {{ bones: any[] }[]} options.bodies her belly body of each size (0..9), for the floor poses
  * @returns {Record<string, any>}
  */
-export function mcaPoseAnimations({ flat, creeperGeometry, creeperAnimations, bodies }) {
+export function mcaPoseAnimations({ flat, creeperGeometry, creeperAnimations, laborAnimations, bodies }) {
   const pivotOf = (/** @type {{ bones: any[] }} */ g, /** @type {string} */ name) => g.bones.find((b) => b.name === name)?.pivot;
   // the creeper girl's animations move her parts about their pivots and place them by position, so
   // they carry over unchanged only onto parts at the same pivots
@@ -114,15 +141,15 @@ export function mcaPoseAnimations({ flat, creeperGeometry, creeperAnimations, bo
   for (const [pose, source] of Object.entries(CREEPER_POSES)) {
     const animation = creeperAnimations[source];
     if (!animation) throw new Error(`MCA: the humanoid creeper girl has no ${source} animation`);
-    out[pose] = renameLimbs(animation);
+    out[pose] = pose === 'riding' ? seatedRiding(renameLimbs(animation)) : renameLimbs(animation);
   }
   const rig = rigOf(flat);
   const target = {
     rig, neutral: {}, map: { body: 'body', head: 'head', ...LIMB_NAMES }, pelvis: LEGS.map((n) => LIMB_NAMES[n]), trunk: 'body',
     scale: (Number(pivotOf(flat, 'rightLeg')?.[1] ?? 12) + Number(pivotOf(flat, 'leftLeg')?.[1] ?? 12)) / 24, absolute: true,
   };
-  for (const [pose, { authored, step, headFree, planted, floor }] of Object.entries(SOLVED_POSES)) {
-    const solved = solveAnimation(animationSource(NEUTRAL_RIG, authored, { pelvis: LEGS, trunk: 'body' }), planted ? { ...target, scale: 0 } : target, { length: authored.animation_length, loop: true, times: keyTimes(authored), step });
+  for (const [pose, { authored, step, headFree, floor }] of Object.entries(SOLVED_POSES)) {
+    const solved = solveAnimation(animationSource(NEUTRAL_RIG, authored, { pelvis: LEGS, trunk: 'body' }), target, { length: authored.animation_length, loop: true, times: keyTimes(authored), step });
     const lift = floor !== undefined ? bellyLift(solved, bodies, floor) : undefined;
     if (lift) solved.bones.belly = { rotation: lift.rotation };
     if (headFree) {
@@ -132,6 +159,11 @@ export function mcaPoseAnimations({ flat, creeperGeometry, creeperAnimations, bo
       delete solved.override_previous_animation;
     }
     out[pose] = solved;
+  }
+  for (const pose of LYING_LABOR) {
+    const animation = laborAnimations[pose];
+    if (!animation) throw new Error(`MCA: the player has no labor_${pose} animation`);
+    out[pose] = headOffFloor(animation, flat);
   }
   return out;
 }

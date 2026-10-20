@@ -66,3 +66,33 @@ test('in first person her chest and belly stay where they are on her as the came
     }
   }
 });
+
+test('the player: her heavy walk swings her arms too, and her labor poses play alone and never in first person', () => {
+  const player = read('animations/player.animation.json').animations;
+  for (let p = 4; p <= 9; p++) {
+    const bones = player[`animation.minepreggo.player.walking_heavy_p${p}`].bones;
+    for (const arm of ['rightArm', 'leftArm']) assert.ok(bones[arm]?.rotation?.[2], `P${p} ${arm} swings`);
+  }
+  assert.equal(player['animation.minepreggo.player.labor_override'].override_previous_animation, true);
+  const d = read('entity/player.entity.json')['minecraft:client_entity'].description;
+  const names = d.scripts.animate.map((/** @type {any} */ a) => (typeof a === 'string' ? a : Object.keys(a)[0]));
+  assert.equal(names.indexOf('minepreggo_labor_override') + 1, names.indexOf('minepreggo_labor_water_breaking'), 'the rest pose comes right before the labor poses');
+  for (const a of d.scripts.animate) {
+    const name = typeof a === 'string' ? a : Object.keys(a)[0];
+    if (/^minepreggo_(labor_|crowning)/.test(name)) assert.match(a[name], /^!variable\.is_first_person && /, name);
+  }
+});
+
+test('her chest and belly layers hang from vanilla root > waist, so they follow her sneaking, swimming and crawling (once imported)', (t) => {
+  const models = join(RP, 'models/entity/minepreggo');
+  if (!existsSync(join(models, 'player_body_custom_p9.geo.json'))) return t.skip('run npm run import first');
+  for (const name of ['player_boobs_custom', 'player_boobs_predefined', ...[0, 5, 9].flatMap((p) => [`player_body_custom_p${p}`, `player_body_predefined_p${p}`])]) {
+    const bones = read(`models/entity/minepreggo/${name}.geo.json`)['minecraft:geometry'][0].bones;
+    const parent = (/** @type {string} */ bone) => bones.find((/** @type {any} */ b) => b.name === bone)?.parent;
+    assert.equal(parent('root'), undefined, name);
+    assert.equal(parent('waist'), 'root', name);
+    assert.equal(parent('body'), 'waist', name);
+    for (const leg of ['rightLeg', 'leftLeg']) if (bones.some((/** @type {any} */ b) => b.name === leg)) assert.equal(parent(leg), 'root', `${name} ${leg}`);
+    assert.deepEqual(bones.filter((/** @type {any} */ b) => !b.parent).map((/** @type {any} */ b) => b.name), ['root'], name);
+  }
+});

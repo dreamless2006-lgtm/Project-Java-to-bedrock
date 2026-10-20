@@ -247,12 +247,31 @@ world.afterEvents.playerInteractWithEntity.subscribe(({ player, target, beforeIt
   const p = record.pregnancy;
   if (!p || chestItem(record.player)) return;
   playSound(record.player, 'minepreggo.belly_touch', 0.6);
+  slapBelly(record.player, player);
   if (p.phase >= 3 && p.bellyRubs >= 1) {
     p.bellyRubs = clampLevel(p.bellyRubs - 1);
     refreshSymptoms(record);
     for (let i = 0; i < 3; i++) particle(record.player, 'minecraft:heart_particle', 0.6);
   }
 });
+
+/**
+ * Her belly gives under the hand that pats it (the mod's BellyAnimation slaps): the right, left or
+ * middle of it by where the other player stands, seen from her. Only her belly bone moves.
+ * @param {import('@minecraft/server').Player} target @param {import('@minecraft/server').Player} toucher
+ */
+function slapBelly(target, toucher) {
+  const yaw = (target.getRotation().y * Math.PI) / 180;
+  const dx = toucher.location.x - target.location.x, dz = toucher.location.z - target.location.z;
+  // her right, in the world: facing (-sin yaw, cos yaw), right of it (-cos yaw, -sin yaw)
+  const right = (-Math.cos(yaw) * dx - Math.sin(yaw) * dz) / (Math.hypot(dx, dz) || 1);
+  const side = right > 0.35 ? 'right' : right < -0.35 ? 'left' : 'center';
+  try {
+    target.playAnimation(`animation.minepreggo.belly.${side}_handed_slap`, { blendOutTime: 0.1, stopExpression: 'q.any_animation_finished' });
+  } catch {
+    // (a game whose player model has no belly bone just pats)
+  }
+}
 
 // Getting hurt can harm the pregnancy (PlayerEventHandler.onHurt + PregnancyDamageHelper).
 world.afterEvents.entityHurt.subscribe(

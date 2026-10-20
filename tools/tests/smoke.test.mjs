@@ -1343,13 +1343,59 @@ test('the merged Jenny Mod Java Port: patched entities, bellies under every body
   assert.ok(kobold.bones.some((/** @type {any} */ b) => b.name === 'fetus_egg') && !kobold.bones.some((/** @type {any} */ b) => b.name === 'fetus_head'));
   // Her poses: the mod's labor and the scene poses, solved onto her rig, in a controller that only plays in her everyday state.
   const poses = json(join(RP, 'animations/jenny_port/minepreggo/jenny_poses.animation.json')).animations;
-  for (const pose of ['contraction', 'incapacitated', 'kicking_sit', 'morning_sickness', 'prebirth', 'birth', 'postbirth', 'miscarriage', 'back_pain', 'water_breaking', 'scene', 'scene_sit']) {
+  const { POSES } = await import('../lib/belly-render.mjs');
+  for (const pose of POSES.filter((p) => p !== 'none')) {
     const id = `animation.minepreggo.jp_jenny.${pose}`;
     assert.ok(poses[id], pose);
     assert.equal(client.animations[`mp_pose_${pose}`], id);
     const additive = pose === 'back_pain' || pose === 'water_breaking';
     assert.equal(!!poses[id].override_previous_animation, !additive, `${pose}: ${additive ? 'adds to her walk' : 'replaces her own animations on its bones'}`);
   }
+  // The two she walks in replace only her head and arms (her own walk keeps her legs, hips and
+  // tail going), their hands on her belly of each size: Molang picked by v.bp on plain keyframes.
+  for (const pose of ['fetal_movement', 'belly_rubs']) {
+    const bones = poses[`animation.minepreggo.jp_jenny.${pose}`].bones;
+    assert.ok(bones.armR && bones.lowerArmR && bones.armL && bones.lowerArmL && bones.head, `${pose} poses her arms and head`);
+    for (const bone of ['body', 'upperBody', 'hip', 'legR', 'legL', 'shinR', 'shinL']) assert.ok(!bones[bone], `${pose} leaves her ${bone} to her walk`);
+    const frames = Object.values(bones.armR.rotation);
+    assert.ok(frames.every((f) => Array.isArray(f)) && frames.some((f) => f.some((/** @type {unknown} */ v) => typeof v === 'string' && v.includes('v.bp <= 3'))), `${pose}: her reach follows her belly size`);
+  }
+  // No pose of hers puts a hand (or forearm) through her belly, at any size, as full as the belly
+  // controller swells it in that pose (the babies' kicks, a contraction): the two she walks in rest
+  // her hands partway into the kicks' swell, so they keep out of her calm belly.
+  const { BREATH, TOUCH_POSES, bellySwells, handsInside } = await import('../lib/jenny-poses.mjs');
+  const { SPREAD } = await import('../lib/scene-poses.mjs');
+  const { rigOf } = await import('../lib/pose-solve.mjs');
+  const { poseAt: sample, mergePoses } = await import('../lib/geo-render.mjs');
+  const swells = bellySwells({ ...json(join(RP, 'animations/minepreggo/belly.animation.json')).animations, ...json(join(RP, 'animations/preggo_mob.animation.json')).animations });
+  // the kicks swell her belly well beyond her breath, a contraction tightens it forward, her rubs leave it be
+  for (const p of [5, 9]) {
+    assert.ok(swells('fetal_movement', p).scale[2] > 1.25 && swells('prebirth', p).scale[2] > 1.25, `P${p}: the kicks swell her belly`);
+    assert.ok(swells('contraction', p).scale[2] > BREATH.scale[2] && swells('contraction', p).position[2] < 0, `P${p}: a contraction tightens it forward`);
+    const rubs = swells('belly_rubs', p);
+    assert.ok(rubs.scale.every((v, k) => Math.abs(v - BREATH.scale[k]) < 0.01) && rubs.position.every((v) => v === 0), `P${p}: rubbing it, only her breath (${JSON.stringify(rubs)})`);
+  }
+  const models = join(RP, 'models/entity/jenny_port');
+  const body = readdirSync(models).filter((f) => f.endsWith('.json')).flatMap((f) => json(join(models, f))['minecraft:geometry'] ?? []).find((/** @type {any} */ g) => g.description.identifier === client.geometry.default);
+  const bellies = Object.fromEntries([5, 7, 9].map((p) => [p, json(join(models, `minepreggo/jenny_0_belly_p${p}.geo.json`))['minecraft:geometry'][0]]));
+  const idle = json(join(RP, 'animations/jenny_port/jenny.animation.json')).animations[client.animations.idle];
+  assert.ok(body && idle, 'her body and her idle');
+  for (const pose of POSES.filter((p) => p !== 'none')) {
+    let animation = poses[`animation.minepreggo.jp_jenny.${pose}`];
+    // an additive pose rides on her idle
+    if (!animation.override_previous_animation) animation = { ...animation, bones: mergePoses([sample(idle, 0), sample(animation, 0)]) };
+    const walking = pose in TOUCH_POSES;
+    const hits = handsInside({ geometry: body, rig: rigOf(body), animation, bellies, swell: walking ? undefined : (p) => swells(pose, p) });
+    assert.ok(hits <= (walking ? 0 : SPREAD.allow), `${pose}: her hands stay out of her belly (${hits} moments in it)`);
+  }
+  // The Bee flies without a walk of her own: she leans into her flight as she moves, under her poses.
+  const bee = json(join(RP, 'entity/jenny_port/bee.json'))['minecraft:client_entity'].description;
+  assert.ok(!bee.animations.walk && bee.animations.mp_flight === 'animation.minepreggo.jp_bee.flight');
+  const beeAnimate = bee.scripts.animate.map((/** @type {any} */ a) => (typeof a === 'string' ? a : Object.keys(a)[0]));
+  assert.ok(beeAnimate.indexOf('mp_flight') >= 0 && beeAnimate.indexOf('mp_flight') < beeAnimate.indexOf('mp_pose_controller'));
+  const flight = json(join(RP, 'animations/jenny_port/minepreggo/walk_jiggle.animation.json')).animations['animation.minepreggo.jp_bee.flight'];
+  assert.ok(!flight.override_previous_animation && flight.bones.body && flight.bones.wing, 'additive, on her body and wings');
+  assert.match(JSON.stringify(flight), /q\.modified_move_speed/, 'nothing while she hangs still');
   assert.ok(poses['animation.minepreggo.jp_jenny.birth'].bones.upperBody.rotation, 'she lies back for the birth');
   assert.deepEqual(poses['animation.minepreggo.jp_jenny.birth'].bones.closedL.position, [0, 0, -1], 'eyes squeezed shut');
   const controllers = json(join(RP, 'animation_controllers/jenny_port/minepreggo_poses.animation_controllers.json')).animation_controllers;

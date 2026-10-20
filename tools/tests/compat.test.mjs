@@ -225,9 +225,15 @@ test('the heavy walk has a track of its own from P4, and a failing playAnimation
   assert.equal(call?.options.controller, 'minepreggo_walk');
   assert.match(call?.options.stopExpression, /v\.mp_native/);
   assert.equal(deliver(any(mother), 'pose', any([mother, viewer])), false, 'no pose meanwhile');
+  // as in Java, the heavy walk goes on through back pain (an additive of its own); belly rubbing and labor stop it
   mother.setProperty('minepreggo:pose', 'back_pain');
-  assert.equal(walkOf(any(mother)), undefined, 'a pose takes over');
+  assert.equal(walkOf(any(mother))?.animation, 'animation.minepreggo.as.walking_heavy_p5', 'she walks heavily with back pain');
   assert.equal(poseOf(any(mother))?.animation, 'animation.minepreggo.as.back_pain');
+  for (const pose of ['rubbing', 'water_breaking', 'prebirth', 'birth', 'postbirth', 'miscarriage']) {
+    mother.setProperty('minepreggo:pose', pose);
+    assert.equal(walkOf(any(mother)), undefined, `${pose} takes over`);
+  }
+  assert.match(String(call?.options.stopExpression), /q\.property\('minepreggo:pose'\) == 'rubbing'/);
   mother.setProperty('minepreggo:pose', 'none');
   mother.setProperty('minepreggo:phase', 3);
   assert.equal(walkOf(any(mother)), undefined);

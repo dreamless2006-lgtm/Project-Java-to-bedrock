@@ -164,7 +164,8 @@
           "v.jbelly_ry = v.phase >= 0 ? v.jbr * 57.2958 : 0.0;",
           "v.jtv = (v.jtv + (-v.jtp * 0.15 - v.jvy * 0.1 - 0.02 * (v.jtv > 0 ? 1.0 : (v.jtv < 0 ? -1.0 : 0.0))) * v.jf) * math.pow(0.85, v.jf);",
           "v.jtp = math.clamp(v.jtp + v.jtv * 0.05 * v.jf, -1.0, 1.0);",
-          "v.jbutt_y = v.phase >= 3 ? -v.jtp : 0.0;"
+          "v.jbutt_y = v.phase >= 3 ? -v.jtp : 0.0;",
+          "v.riding_y_offset = 1.0 + (q.is_riding_any_entity_of_type('minecraft:minecart', 'minecraft:boat', 'minecraft:chest_boat') ? -3.0 : 0.0);"
         ],
         "scaleX": "v.scale_xz",
         "scaleY": "v.scale_y",
@@ -175,10 +176,10 @@
           },
           "loop_controller",
           {
-            "walk": "v.aggressive ? 0.0 : math.min(q.modified_move_speed * 4.5, 1.0)"
+            "walk": "q.is_riding ? 0.0 : (v.aggressive ? 0.0 : math.min(q.modified_move_speed * 4.5, 1.0))"
           },
           {
-            "aggression": "v.aggressive ? math.min(q.modified_move_speed * 4.5, 1.0) : 0.0"
+            "aggression": "q.is_riding ? 0.0 : (v.aggressive ? math.min(q.modified_move_speed * 4.5, 1.0) : 0.0)"
           },
           "attack_controller",
           "pain_controller",
@@ -300,6 +301,7 @@
           "variable.pose = 0.0;",
           "variable.pregnant_pose = 0.0;",
           "variable.push = 0.0;",
+          "variable.riding_y_offset = 0.0;",
           "variable.savage = 0.0;",
           "variable.scale_xz = 0.0;",
           "variable.scale_y = 0.0;",

@@ -15,7 +15,8 @@ import { fileURLToPath } from 'node:url';
 import { unzipSync, strFromU8 } from 'fflate';
 import { createModelRunner, toBedrockAnimation, toBedrockGeometry } from './lib/java-models.mjs';
 import { mergeBellies } from './lib/belly-merge.mjs';
-import { clampKicks } from './lib/kick-clamp.mjs';
+import { clampKicks, linearWhereExpressions } from './lib/kick-clamp.mjs';
+import { headOffFloor } from './lib/labor-floor.mjs';
 import { FAMILY_CROWNING, FETUS_MODELS, PLAYER_BABIES, chainOf, crowningGeometry, fetusBones, openingOf } from './lib/crowning.mjs';
 import { decodePng, encodePng } from './lib/png.mjs';
 import { NAVEL_SPECIES, TONES, atlas, attachableGeometry, descendants, fetusSlot, navelOpening, offsetUv, recolor, skinBase } from './lib/belly-attachable.mjs';
@@ -169,6 +170,13 @@ const models = createModelRunner(files, 'dev/dixmk/minepreggo/');
 for (const [id, javaClass, method] of PLAYER_MODELS) {
   const layer = models.layer(PLAYER_PACKAGE + javaClass, method);
   const geometry = toBedrockGeometry(layer, `geometry.${MOD_ID}.${id}`, PLAYER_OPTIONS);
+  // Vanilla's player model hangs her body from waist > root and her legs from root
+  // (geometry.humanoid.custom), and its sneaking, swimming, crawling, sleeping and riding animations
+  // turn the root: the layers get the same two bones, so they go along instead of staying where she
+  // would stand.
+  const bones = geometry['minecraft:geometry'][0].bones;
+  for (const bone of bones) if (!bone.parent) bone.parent = bone.name === 'body' ? 'waist' : 'root';
+  bones.unshift({ name: 'root', pivot: [0, 0, 0] }, { name: 'waist', parent: 'root', pivot: [0, 12, 0] });
   writeFile(join(modelOut, `${id}.geo.json`), JSON.stringify(geometry, null, 2) + '\n');
 }
 for (const [id, javaClass, method] of MODELS) {
@@ -216,7 +224,7 @@ for (const [family, spec] of Object.entries(FAMILY_CROWNING)) {
 {
   const labor = JSON.parse(readFileSync(join(RP, 'models/entity/player_labor.geo.json'), 'utf8'))['minecraft:geometry'][0];
   for (const kind of new Set(PLAYER_BABIES.map(([, model]) => model))) writeCrowning(`player_crowning_${kind}`, labor, ['body'], 'crotch', kind);
-  for (let p = 4; p <= 9; p++) writeCrowning(`player_crowning_navel_p${p}`, readModel(`player_body_custom_p${p}`), ['body', 'belly'], 'navel', 'humanoid');
+  for (let p = 4; p <= 9; p++) writeCrowning(`player_crowning_navel_p${p}`, readModel(`player_body_custom_p${p}`), ['root', 'waist', 'body', 'belly'], 'navel', 'humanoid');
 }
 
 // The belly a pregnant player can hold in her off-hand for players whose game runs Actions & Stuff
@@ -372,6 +380,27 @@ const ANIMATIONS = {
   MonsterSlimeGirlAnimations: 'monster_slime_girl',
   BellyAnimation: 'belly',
 };
+/**
+ * Java lowers a seated female 8 units (her legs 9) to fit its own seat height, where Bedrock's seat
+ * already places a rider at the vehicle: she sits at vanilla's humanoid offset instead
+ * (variable.riding_y_offset, written by tools/gen-belly-render.mjs as the vanilla zombie's: 1 unit
+ * up, 2 down in a boat or minecart), each part still where the mod sets it against the others.
+ * @param {any} animation
+ */
+function seatRider(animation) {
+  const drop = 8;
+  const lift = (/** @type {unknown} */ v) => (Array.isArray(v) && typeof v[1] === 'number' ? [v[0], `${(v[1] + drop).toFixed(1)} + v.riding_y_offset`, v[2]] : v);
+  for (const channels of Object.values(animation.bones ?? {})) {
+    const position = /** @type {any} */ (channels).position;
+    if (!position) continue;
+    /** @type {unknown} */
+    let out;
+    if (Array.isArray(position)) out = lift(position);
+    else out = Object.fromEntries(Object.entries(position).map(([t, f]) => [t, Array.isArray(f) ? lift(f) : f && typeof f === 'object' ? { ...f, ...('pre' in f ? { pre: lift(f.pre) } : {}), ...('post' in f ? { post: lift(f.post) } : {}) } : f]));
+    /** @type {any} */ (channels).position = linearWhereExpressions(out);
+  }
+}
+
 const animationOut = join(RP, 'animations', MOD_ID);
 rmSync(animationOut, { recursive: true, force: true });
 let animationCount = 0;
@@ -388,6 +417,7 @@ for (const [javaClass, id] of Object.entries(ANIMATIONS)) {
     // Java copies the head's pose onto the hat after animating (hat.copyFrom(head)), overwriting
     // any hat keyframes; the converted hat is a child of the head, so it follows on its own.
     delete bedrock.bones.hat;
+    if (field === 'RIDING') seatRider(bedrock);
     animations[`animation.${MOD_ID}.${id}.${field.toLowerCase()}`] = clampKicks(bedrock);
     animationCount++;
   }
@@ -407,6 +437,14 @@ for (const pose of ['water_breaking', 'prebirth', 'birth', 'postbirth', 'miscarr
   for (const [bone, channels] of Object.entries(source.bones)) bones[PLAYER_BONES[bone] ?? bone] = channels;
   laborAnimations[`animation.${MOD_ID}.player.labor_${pose}`] = { ...source, bones };
   animationCount++;
+}
+// lying on her back for the birth and after it, her head stays out of the floor (tools/lib/labor-floor.mjs)
+{
+  const flat = JSON.parse(readFileSync(join(RP, 'models/entity/player_labor.geo.json'), 'utf8'))['minecraft:geometry'][0];
+  for (const pose of ['birth', 'postbirth']) {
+    const id = `animation.${MOD_ID}.player.labor_${pose}`;
+    if (laborAnimations[id]) laborAnimations[id] = headOffFloor(laborAnimations[id], flat);
+  }
 }
 writeFile(join(animationOut, 'player_labor.animation.json'), JSON.stringify({ format_version: '1.8.0', animations: laborAnimations }, null, 2) + '\n');
 

@@ -11,6 +11,7 @@ import { BELLY_ANIMATIONS, BELLY_PROPERTY, MINEPREGGO_PROPERTIES, MOD, PHASES, P
 import { BABY_PROPERTY, FAMILY_CROWNING, PLAYER_BABIES, crowningAnimations, crowningLines } from './lib/crowning.mjs';
 import { mobBirthAnimations, mobBirthPainStates, mobBirthEntity } from './lib/mob-births.mjs';
 import { MINEPREGGO_JIGGLE_BONES, walkJiggleAnimation } from './lib/walk-jiggle.mjs';
+import { HEAVY_WALK_POSE_GATE, LABOR_OVERRIDE_ID, LABOR_OVERRIDE_WHEN, THIRD_PERSON, laborOverrideAnimation, withHeavyWalkArms } from './lib/ours-verify-player-poses.mjs';
 
 const ROOT = new URL('../', import.meta.url).pathname;
 const RP = join(ROOT, 'packs/resource');
@@ -157,11 +158,13 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
   ];
 
   // pre_animation: the belly size from the enum property, else the phase, the variant, or a pregnancy pose.
-  const pre = d.scripts.pre_animation.filter((/** @type {string} */ line) => !line.startsWith('v.bp =') && !line.startsWith('v.phase = v.phase >= 0 ?') && !line.startsWith('v.phase = v.bp') && !line.startsWith('v.kr_f =') && !line.startsWith('v.k_') && !/^v\.(kicking|kick_shown|scene|contracting|kick_w|cw|kick_grow|kp_\w+) =/.test(line) && !line.startsWith("v.kick = v.pose == 'incapacitated'") && !line.startsWith("v.kick = (v.pose == 'incapacitated'"));
+  const pre = d.scripts.pre_animation.filter((/** @type {string} */ line) => !line.startsWith('v.bp =') && !line.startsWith('v.phase = v.phase >= 0 ?') && !line.startsWith('v.phase = v.bp') && !line.startsWith('v.kr_f =') && !line.startsWith('v.k_') && !/^v\.(kicking|kick_shown|scene|contracting|kick_w|cw|kick_grow|kp_\w+|riding_y_offset) =/.test(line) && !line.startsWith("v.kick = v.pose == 'incapacitated'") && !line.startsWith("v.kick = (v.pose == 'incapacitated'"));
   // The kick and contraction state with eased weights, right after the kick strength is read.
   const kickAt = pre.findIndex((/** @type {string} */ line) => line.startsWith("v.kick = q.property('minepreggo:kick')"));
   if (kickAt < 0) throw new Error(`${family}: no kick line`);
   pre.splice(kickAt + 1, 0, ...kickStateLines());
+  // where her riding animation seats her (tools/import-jar.mjs seatRider): the vanilla zombie's offset
+  if (Object.values(d.animations).some((id) => /\.riding$/.test(String(id)))) pre.push("v.riding_y_offset = 1.0 + (q.is_riding_any_entity_of_type('minecraft:minecart', 'minecraft:boat', 'minecraft:chest_boat') ? -3.0 : 0.0);");
   const at = pre.findIndex((/** @type {string} */ line) => line.startsWith('v.pregnant_pose ='));
   if (at < 0) throw new Error(`${family}: no v.pregnant_pose line`);
   for (let i = pre.length - 1; i >= 0; i--) if (CROWNING_LINE.test(pre[i])) pre.splice(i, 1);
@@ -187,18 +190,40 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
   }
   d.animations.belly_controller = `controller.animation.${MOD}.${navel ? 'belly_navel' : 'belly'}`;
   for (const [name, id] of Object.entries(BELLY_ANIMATIONS)) d.animations[name] ??= id;
-  // Her scene poses (tools/gen-scene-poses.mjs solves them onto her rig); a monster body (four
-  // legs, a jelly) keeps her own stance in a scene.
+  // Her scene poses (tools/gen-scene-poses.mjs solves them onto her rig, one per belly size); a
+  // monster body (four legs, a jelly) has one of her own for every size (tools/lib/ours-monster-scenes.mjs).
   const monster = family.startsWith('monster_');
   for (const pose of ['scene', 'scene_sit']) {
-    for (const suffix of ['', ...PHASES.map((p) => `_p${p}`)]) d.animations[`${pose}_pose${suffix}`] = monster ? `animation.${MOD}.no_pose` : `animation.${MOD}.${family}.${pose}${suffix}`;
+    for (const suffix of ['', ...PHASES.map((p) => `_p${p}`)]) d.animations[`${pose}_pose${suffix}`] = `animation.${MOD}.${family}.${pose}${monster ? '' : suffix}`;
   }
   const animate = d.scripts.animate.filter((/** @type {string | Record<string, string>} */ a) => !(typeof a === 'object' && BELLY_ANIMATE.test(Object.keys(a)[0])) && a !== 'belly_controller');
   const pain = animate.indexOf('pain_controller');
   animate.splice(pain < 0 ? animate.length : pain + 1, 0, 'belly_controller');
   d.animations.walk_jiggle = `animation.${MOD}.walk_jiggle`;
   if (!animate.includes('walk_jiggle')) animate.push('walk_jiggle');
+  // The mod's monster slime idles (or waits) on the ground whatever her mood: her models never play
+  // MonsterSlimeGirlAnimations.AGGRESSION. Played whenever she had a target, its walk-driven arms
+  // stood frozen between her hops (she only moves in the air); weighted by her walk like every
+  // other family's aggression, it gives way to her idle there.
+  if (family === 'monster_slime_girl') {
+    for (const [i, entry] of animate.entries()) {
+      if (typeof entry !== 'object') continue;
+      const [name] = Object.keys(entry);
+      if (name === 'loop_controller') animate[i] = { loop_controller: '(v.hop ?? 0) == 0' };
+      if (name === 'aggression') animate[i] = { aggression: '(v.hop ?? 0) == 0 && v.aggressive ? math.min(q.modified_move_speed * 4.0, 1.0) : 0.0' };
+    }
+  }
+  // Her walk rests while she rides: the mod's riding pose only adds to her legs, so a mount's
+  // movement must not swing them on top of it (vanilla's riding.legs cancels its walk with "- this").
+  for (const [i, entry] of animate.entries()) {
+    if (typeof entry !== 'object') continue;
+    const [name, weight] = Object.entries(entry)[0];
+    if (/q\.modified_move_speed/.test(weight) && !weight.startsWith('q.is_riding ? 0.0 : ')) animate[i] = { [name]: `q.is_riding ? 0.0 : (${weight})` };
+  }
   d.scripts.animate = animate;
+  // (the mod's zombie animator plays her miscarriage for the pre-birth too, a slip beside every
+  // other family; her own pre-birth, the babies kicking under her hands, is the one meant for it)
+  if (family === 'zombie_girl') d.animations.prebirth = `animation.${MOD}.zombie_girl.prebirth`;
   for (const name of ['belly_low', 'belly_medium', 'belly_high', 'belly_growth', 'fetal_push', 'birth_push', 'belly_hidden', 'kick_i', 'kick_ii', 'kick_iii', 'contraction_wave', ...PHASES.filter((p) => p >= 3).flatMap((p) => [`fetal_p${p}_i`, `fetal_p${p}_ii`, `fetal_p${p}_iii`])]) {
     if (!d.animations[name]) throw new Error(`${family}: the belly controller needs animation "${name}"`);
   }
@@ -314,6 +339,32 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
   setEntry('minepreggo_first_person_view', 'variable.is_first_person && variable.mp_female');
   // (her chest shows in first person on the same terms as her belly)
   for (const entry of d.render_controllers) if (typeof entry === 'object') for (const key of Object.keys(entry)) entry[key] = entry[key].replace('variable.player_x_rotation > 15.0', 'variable.player_x_rotation > 0.0');
+  // The mod's own player poses (tools/lib/ours-verify-player-poses.mjs): her heavy walk swings her
+  // arms out too, the labor poses that override the vanilla ones start from her rest pose (so the
+  // sneak she pushes with does not fold them), and every labor pose shows from outside only.
+  {
+    const posesFile = join(RP, 'animations/player.animation.json');
+    const poses = read(posesFile);
+    for (const p of PHASES.filter((n) => n >= 4)) {
+      const id = `animation.${MOD}.player.walking_heavy_p${p}`;
+      if (!poses.animations[id]) throw new Error(`player: no ${id}`);
+      poses.animations[id] = withHeavyWalkArms(poses.animations[id], p);
+    }
+    poses.animations[LABOR_OVERRIDE_ID] = laborOverrideAnimation();
+    write(posesFile, poses);
+    const isLabor = (/** @type {string | Record<string, string>} */ a) => typeof a === 'object' && /^minepreggo_labor_(?!override$)/.test(Object.keys(a)[0]);
+    const animate = d.scripts.animate.filter((/** @type {string | Record<string, string>} */ a) => !(typeof a === 'object' && 'minepreggo_labor_override' in a));
+    for (const [i, entry] of animate.entries()) {
+      if (!isLabor(entry)) continue;
+      const [name, weight] = Object.entries(entry)[0];
+      if (!weight.startsWith(`${THIRD_PERSON} && `)) animate[i] = { [name]: `${THIRD_PERSON} && ${weight}` };
+    }
+    const firstLabor = animate.findIndex(isLabor);
+    if (firstLabor < 0) throw new Error('player: no labor entries');
+    animate.splice(firstLabor, 0, { minepreggo_labor_override: LABOR_OVERRIDE_WHEN });
+    d.animations.minepreggo_labor_override = LABOR_OVERRIDE_ID;
+    d.scripts.animate = animate;
+  }
   for (const key of Object.keys(d.geometry)) if (/^minepreggo_crowning/.test(key)) delete d.geometry[key];
   for (const key of Object.keys(d.textures)) if (/^minepreggo_fetus_/.test(key)) delete d.textures[key];
   const crownKinds = [...new Set(PLAYER_BABIES.map(([, model]) => model))];
@@ -345,6 +396,17 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
   d.scripts.variables = { ...(d.scripts.variables ?? {}), 'variable.mp_native': 'public' };
   // (each run used to add one more copy of the spear line; one is enough)
   d.scripts.initialize = [...new Set(initializers(pre, [...(d.scripts.initialize ?? []).filter((/** @type {string} */ l) => !l.startsWith('variable.mp_native =')), 'variable.melee_spear_equipped = 0.0;'])), 'variable.mp_native = 1.0;'];
+  // (her heavy walk rests while she rides, like the mobs' walks: it would spread her legs off the
+  // saddle; and it goes on through her pains and symptoms as the mod's does, all but her belly
+  // rubbing and her labor)
+  for (const [i, entry] of d.scripts.animate.entries()) {
+    if (typeof entry !== 'object') continue;
+    const [name, weight] = Object.entries(entry)[0];
+    if (!/^minepreggo_player_walking_heavy_p\d$/.test(name)) continue;
+    let gated = weight.replace("variable.mp_pose == 'none'", HEAVY_WALK_POSE_GATE);
+    if (!gated.includes('!query.is_riding')) gated = `${gated} && !query.is_riding`;
+    d.scripts.animate[i] = { [name]: gated };
+  }
   write(file, doc);
 
   const rcFile = join(RP, 'render_controllers/player.render_controllers.json');

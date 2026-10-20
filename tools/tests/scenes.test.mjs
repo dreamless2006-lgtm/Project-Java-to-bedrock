@@ -302,7 +302,7 @@ test('babies are cuddled when used, and every baby item is one (not the duplicat
   assert.equal(cuddle(/** @type {any} */ (player), 'minepreggo:baby_zombie'), false, 'one cuddle a second');
 });
 
-test('every generated pose: each Jenny girl has her labor and scene poses and a baby, every humanoid family her scene poses, monsters keep their stance', async () => {
+test('every generated pose: each Jenny girl has her labor and scene poses and a baby, every family her scene poses (the monsters one of their own)', async () => {
   const { existsSync, readFileSync } = await import('node:fs');
   const { join } = await import('node:path');
   const RP = new URL('../../packs/resource/', import.meta.url).pathname;
@@ -321,7 +321,14 @@ test('every generated pose: each Jenny girl has her labor and scene poses and a 
   for (const family of ['zombie_girl', 'humanoid_creeper_girl', 'ender_woman', 'humanoid_slime_girl', 'monster_creeper_girl', 'monster_slime_girl']) {
     const d = json(join(RP, 'entity', `${family}.entity.json`))['minecraft:client_entity'].description;
     if (family.startsWith('monster_')) {
-      assert.equal(d.animations.scene_pose, 'animation.minepreggo.no_pose', `${family} keeps her stance (no second copy of her idle)`);
+      // a monster body has one pose of her own for every belly size (relative to her rest, like the mod's)
+      for (const pose of ['scene', 'scene_sit']) {
+        for (const suffix of ['', ...Array.from({ length: 10 }, (_, p) => `_p${p}`)]) assert.equal(d.animations[`${pose}_pose${suffix}`], `animation.minepreggo.${family}.${pose}`, `${family} ${pose}${suffix}`);
+        if (!scenePoses) continue;
+        const animation = scenePoses[`animation.minepreggo.${family}.${pose}`];
+        assert.ok(animation?.override_previous_animation && animation.bones.body && animation.bones.head, `${family} ${pose} replaces her idle on her body and head`);
+        if (pose === 'scene') assert.equal(animation.animation_length, 0.52, 'rocking to the beat of the player animation');
+      }
       continue;
     }
     assert.equal(d.animations.scene_pose, `animation.minepreggo.${family}.scene`);
@@ -343,7 +350,7 @@ test('every generated pose: each Jenny girl has her labor and scene poses and a 
     if (!existsSync(client)) return; // the Jenny add-ons are not imported
     const d = json(client)['minecraft:client_entity'].description;
     const poses = json(join(RP, `animations/jenny_port/minepreggo/${slug}_poses.animation.json`)).animations;
-    for (const pose of ['contraction', 'prebirth', 'birth', 'postbirth', 'scene', 'scene_sit']) {
+    for (const pose of ['contraction', 'prebirth', 'birth', 'postbirth', 'scene', 'scene_sit', 'fetal_movement', 'belly_rubs']) {
       const animation = poses[`animation.minepreggo.jp_${slug}.${pose}`];
       assert.ok(animation, `${slug} ${pose}`);
       assert.equal(d.animations[`mp_pose_${pose}`], `animation.minepreggo.jp_${slug}.${pose}`);

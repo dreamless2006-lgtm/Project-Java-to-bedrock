@@ -9,10 +9,13 @@
 //   * two scene poses authored here for every female, ours and the port's: on all fours on the
 //     Jenny Bed (rocking to the scene's 0.52 s beat), and sitting back on her hands for the belly
 //     scenes. They are written as world orientations on a neutral humanoid and solved absolutely,
-//     so a girl's own stance does not bend them.
+//     so a girl's own stance does not bend them;
+//   * the two she keeps walking in, feeling the babies move and rubbing her belly, her hands
+//     reaching her own belly of each size (tools/lib/jenny-poses.mjs).
 import { crowningFor, windowKeys as windowKeysOf } from './birth-rhythm.mjs';
 import { GIRL_BIRTHS, bendsAt, girlFlair, inTrunk, restTime } from './girl-births.mjs';
 import { cubeFaces, poseAt, poseBones } from './geo-render.mjs';
+import { TOUCH_POSES, handsInside, touchPoses } from './jenny-poses.mjs';
 import { animationSource, keyTimes, limbDirections, rigOf, solveAnimation, solveAt } from './pose-solve.mjs';
 
 /** A neutral flat humanoid (Minecraft's own proportions, no rest rotations): the authored poses' rig. */
@@ -134,6 +137,8 @@ const FACES = /** @type {Record<string, { eyes?: 'closed' | 'open', mouth?: stri
   miscarriage: { eyes: 'closed' },
   scene: { eyes: 'open', mouth: 'wideSmugSmile2', blush: true },
   scene_sit: { eyes: 'open', mouth: 'wideSmugSmile2', blush: true },
+  fetal_movement: { eyes: 'open', mouth: 'suprisedPikatchu' },
+  belly_rubs: { eyes: 'closed', mouth: 'wideSmugSmile2', blush: true },
 });
 
 /**
@@ -341,6 +346,36 @@ function bellyHang(authored, solved, hang) {
   return values.every((v) => v === values[0]) ? frames[String(keyTimes(solved)[0])] : frames;
 }
 
+/**
+ * An authored pose with her arms swung out to her sides by `degrees` (about the world's front-back
+ * axis, after their own orientation), so her hands come round a belly they would go through.
+ * @template {{ bones: Record<string, any> }} T @param {T} anim @param {number} degrees @returns {T}
+ */
+export function spreadArms(anim, degrees) {
+  if (!degrees) return anim;
+  const turn = (/** @type {any} */ v, /** @type {number} */ by) => (Array.isArray(v) ? [v[0], v[1], Number(v[2]) + by] : v);
+  /** @type {Record<string, any>} */
+  const bones = { ...anim.bones };
+  for (const [arm, side] of /** @type {[string, number][]} */ ([['right_arm', 1], ['left_arm', -1]])) {
+    const rotation = bones[arm]?.rotation;
+    if (!rotation) continue;
+    const by = side * degrees;
+    bones[arm] = {
+      ...bones[arm],
+      rotation: Array.isArray(rotation)
+        ? turn(rotation, by)
+        : Object.fromEntries(Object.entries(rotation).map(([t, frame]) => [t, Array.isArray(frame) ? turn(frame, by) : { ...frame, post: turn(frame.post, by) }])),
+    };
+  }
+  return { ...anim, bones };
+}
+
+/**
+ * How far her arms may swing out to keep her hands out of her belly, in what steps (degrees), and
+ * how many of the moments handsInside measures may still graze it (a hand laid on the fullest belly).
+ */
+export const SPREAD = { most: 40, step: 5, allow: 2 };
+
 /** How far her prebirth leans from the shared crouch toward the rest frame of her own birth. */
 export const PREBIRTH_BLEND = 0.4;
 
@@ -407,7 +442,9 @@ export function relaxed(spec) {
 /**
  * Every pose animation of one Jenny girl, solved onto her rig: the mod's labor animations from her
  * idle stance, the authored scene poses, her own birth and relaxed postbirth (tools/lib/girl-births.mjs,
- * when her id has one), her face and flavour on top.
+ * when her id has one), her face and flavour on top; and, given her bellies, the two she walks in
+ * (tools/lib/jenny-poses.mjs: head and arms only, with her face but no flavour, so her own
+ * animations keep moving her tail and wings).
  *
  * The result also carries `birthExtras` (not enumerable, so it is never taken for a pose): her
  * birth's flair and crowning animations, which play beside the birth pose and start with it.
@@ -418,9 +455,12 @@ export function relaxed(spec) {
  * @param {{ bones: any[] }} options.sourceGeometry the humanoid creeper girl's geometry
  * @param {Record<string, any>} options.sourceAnimations the creeper girl's animations by short name (contraction, birth, ...)
  * @param {string} options.prefix animation ids start with this (animation.minepreggo.jp_<slug>)
+ * @param {Record<number, { bones: any[] }>} [options.bellies] her fitted belly of each size (the walking poses' hands rest on them)
+ * @param {(pose: string, phase: number) => import('./jenny-poses.mjs').Swell} [options.swells] how the belly controller swells her
+ *   belly in each pose (jenny-poses bellySwells): her hands keep out of it at its fullest, and rest partway into it in the walking poses
  * @returns {Record<string, any> | undefined} animation id -> animation, keyed by pose in `pose`
  */
-export function girlPoseAnimations({ id, geometry, idle, sourceGeometry, sourceAnimations, prefix }) {
+export function girlPoseAnimations({ id, geometry, idle, sourceGeometry, sourceAnimations, prefix, bellies, swells }) {
   const parts = jennyRig(geometry);
   if (!parts) return undefined;
   const rig = rigOf(geometry);
@@ -444,8 +484,10 @@ export function girlPoseAnimations({ id, geometry, idle, sourceGeometry, sourceA
   const finish = (/** @type {any} */ animation, /** @type {string} */ pose, /** @type {Record<string, any>} */ own = {}) => {
     for (const [bone, channels] of Object.entries(own)) if (names.has(bone)) animation.bones[bone] = { ...(animation.bones[bone] ?? {}), ...channels };
     for (const [alias, of] of aliases) if (animation.bones[of]) animation.bones[alias] = { ...animation.bones[of] };
-    // her face holds its expression; tails, wings and ears move on their own clock
+    // her face holds its expression; tails, wings and ears move on their own clock (in a pose she
+    // walks in, by her own animations)
     for (const [bone, channels] of Object.entries(extraFor(pose))) animation.bones[bone] = { ...(animation.bones[bone] ?? {}), ...channels };
+    if (pose in TOUCH_POSES) return animation;
     for (const [bone, channels] of Object.entries(flavourChannels(geometry, pose))) if (!own[bone]) animation.bones[bone] = { ...(animation.bones[bone] ?? {}), ...channels };
     return animation;
   };
@@ -466,6 +508,23 @@ export function girlPoseAnimations({ id, geometry, idle, sourceGeometry, sourceA
     return out;
   };
   const target = (/** @type {Record<string, number[]>} */ bends) => ({ rig, neutral, limbs: parts.limbs, map: parts.map, pelvis: parts.pelvis, mover: parts.mover, scale: parts.scale, absolute: true, straighten: parts.straighten, bends });
+  /**
+   * An authored pose built with her arms swung out (spreadArms) by the least that keeps her hands
+   * out of her belly at every size, as full as the pose swells it: a crouch bent over a big belly
+   * would otherwise hang them through it, and the babies' kicks push it into hands that only clear
+   * it at rest. A spread that does not clear it only takes her hands off it, so then (and without
+   * her bellies) the pose stays as it was written.
+   */
+  const clearOfBelly = (/** @type {string} */ pose, /** @type {(degrees: number) => any} */ build) => {
+    const written = build(0);
+    if (!bellies) return written;
+    const swell = swells ? (/** @type {number} */ p) => swells(pose, p) : undefined;
+    for (let degrees = 0; degrees <= SPREAD.most; degrees += SPREAD.step) {
+      const animation = degrees ? build(degrees) : written;
+      if (handsInside({ geometry, rig, animation, bellies, swell }) <= SPREAD.allow) return animation;
+    }
+    return written;
+  };
   /** An authored pose on NEUTRAL_RIG solved onto her rig as world orientations. */
   const solveAuthored = (/** @type {any} */ anim, /** @type {number} */ step) =>
     solveAnimation(animationSource(NEUTRAL_RIG, anim, { pelvis: LEGS, trunk: 'body' }), target(bendsOf(anim.bends)), { length: anim.animation_length, loop: true, times: keyTimes(anim), step });
@@ -473,7 +532,7 @@ export function girlPoseAnimations({ id, geometry, idle, sourceGeometry, sourceA
     // her own birth and postbirth (and her prebirth leaning toward it) replace the shared ones below
     if (spec && (pose === 'birth' || pose === 'postbirth' || (pose === 'prebirth' && (spec.prebirthBlend ?? PREBIRTH_BLEND) > 0))) continue;
     if (authored) {
-      out[pose] = finish(solveAuthored(/** @type {any} */ (AUTHORED_LABOR)[authored], 0.2), pose);
+      out[pose] = finish(clearOfBelly(pose, (degrees) => solveAuthored(spreadArms(/** @type {any} */ (AUTHORED_LABOR)[authored], degrees), 0.2)), pose);
       continue;
     }
     let anim = source ? sourceAnimations[source] : undefined;
@@ -504,22 +563,27 @@ export function girlPoseAnimations({ id, geometry, idle, sourceGeometry, sourceA
     // (the bone her legs and trunk hang from), not only her upper body above the hips.
     const map = spec.wholeBody ? { ...parts.map, body: parts.mover } : parts.map;
     const birthTarget = (/** @type {Record<string, number[]>} */ bends) => ({ ...target(bends), map });
-    const source = animationSource(NEUTRAL_RIG, spec.authored, { pelvis: LEGS, trunk: 'body' });
     const restBends = bendsOf(bendsAt(spec.authored.bends, 'rest'));
-    const birth = solveAnimation(source, birthTarget(restBends), { length: rhythm.length, loop: true, times: keyTimes(spec.authored), step: 0.2 });
     // A bend that changes in the pushes (the Bee draws her knees up, Allie straightens her arms):
     // a knee or elbow is bent in its own frame, so its channel is the same at every moment of the
     // pose and only follows the push windows.
     const pushBends = bendsOf(bendsAt(spec.authored.bends, 'push'));
-    for (const [bone, bend] of Object.entries(pushBends)) {
-      if (restBends[bone] && bend.every((v, k) => v === restBends[bone][k])) continue;
-      const channel = (/** @type {Record<string, number[]>} */ bends) => solveAt(source, birthTarget(bends), 0)[bone].rotation.map((/** @type {any} */ v) => Math.round(Number(v) * 1000) / 1000);
-      (birth.bones[bone] ??= {}).rotation = windowKeysOf(rhythm, channel(pushBends), channel(restBends));
-    }
     const ground = groundBones(geometry);
     const floor = spec.floor ?? 'rest';
-    fitToFloor(birth, geometry, ground, parts.mover, floor, restTime(rhythm));
-    if (spec.bellyHang) birth.bones.belly = { rotation: bellyHang(spec.authored, birth, spec.bellyHang) };
+    // her arms swung out of her belly as the pushes and kicks swell it (the Kobold's hands reach the
+    // ground in front of her), then her feet (or hands) set on the floor
+    const birth = clearOfBelly('birth', (degrees) => {
+      const source = animationSource(NEUTRAL_RIG, spreadArms(spec.authored, degrees), { pelvis: LEGS, trunk: 'body' });
+      const solved = solveAnimation(source, birthTarget(restBends), { length: rhythm.length, loop: true, times: keyTimes(spec.authored), step: 0.2 });
+      for (const [bone, bend] of Object.entries(pushBends)) {
+        if (restBends[bone] && bend.every((v, k) => v === restBends[bone][k])) continue;
+        const channel = (/** @type {Record<string, number[]>} */ bends) => solveAt(source, birthTarget(bends), 0)[bone].rotation.map((/** @type {any} */ v) => Math.round(Number(v) * 1000) / 1000);
+        (solved.bones[bone] ??= {}).rotation = windowKeysOf(rhythm, channel(pushBends), channel(restBends));
+      }
+      fitToFloor(solved, geometry, ground, parts.mover, floor, restTime(rhythm));
+      if (spec.bellyHang) solved.bones.belly = { rotation: bellyHang(spec.authored, solved, spec.bellyHang) };
+      return solved;
+    });
     const ctx = { rhythm, names };
     out.birth = finish(birth, 'birth', spec.extras?.(ctx) ?? {});
     const post = relaxed(spec);
@@ -529,10 +593,13 @@ export function girlPoseAnimations({ id, geometry, idle, sourceGeometry, sourceA
     out.postbirth = finish(postbirth, 'postbirth', spec.extras?.({ ...ctx, post: true }) ?? {});
     const blend = spec.prebirthBlend ?? PREBIRTH_BLEND;
     if (blend > 0) {
-      const pre = towardBirth(AUTHORED_LABOR.prebirth, spec, blend);
-      const prebirth = solveAnimation(animationSource(NEUTRAL_RIG, pre, { pelvis: LEGS, trunk: 'body' }), target(bendsOf(pre.bends)), { length: pre.animation_length, loop: true, times: keyTimes(pre), step: 0.2 });
-      fitToFloor(prebirth, geometry, ground, parts.mover, floor === 'none' ? 'none' : 'rest', 0);
-      if (spec.bellyHang) prebirth.bones.belly = { rotation: bellyHang(pre, prebirth, spec.bellyHang) };
+      const prebirth = clearOfBelly('prebirth', (degrees) => {
+        const pre = spreadArms(towardBirth(AUTHORED_LABOR.prebirth, spec, blend), degrees);
+        const solved = solveAnimation(animationSource(NEUTRAL_RIG, pre, { pelvis: LEGS, trunk: 'body' }), target(bendsOf(pre.bends)), { length: pre.animation_length, loop: true, times: keyTimes(pre), step: 0.2 });
+        fitToFloor(solved, geometry, ground, parts.mover, floor === 'none' ? 'none' : 'rest', 0);
+        if (spec.bellyHang) solved.bones.belly = { rotation: bellyHang(pre, solved, spec.bellyHang) };
+        return solved;
+      });
       out.prebirth = finish(prebirth, 'prebirth');
     }
     birthExtras = {
@@ -548,6 +615,7 @@ export function girlPoseAnimations({ id, geometry, idle, sourceGeometry, sourceA
     );
     out[pose] = finish(solved, pose);
   }
+  if (bellies) for (const [pose, animation] of Object.entries(touchPoses({ geometry, rig, neutral, bellies, swell: swells }))) out[pose] = finish(animation, pose);
   const result = Object.fromEntries(Object.entries(out).map(([pose, animation]) => [pose, { id: `${prefix}.${pose}`, animation }]));
   if (birthExtras) Object.defineProperty(result, 'birthExtras', { value: birthExtras, enumerable: false });
   return result;

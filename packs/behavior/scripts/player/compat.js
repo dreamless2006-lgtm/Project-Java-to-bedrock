@@ -232,12 +232,20 @@ export function poseOf(/** @type {Player} */ player) {
   return entry ? { animation: AS + entry[0], stop: `q.property('minepreggo:pose') != '${pose}' || v.mp_native`, loop: entry[1] } : undefined;
 }
 
-/** The heavy walk from P4 while she holds no other pose (it only shows while she walks). @returns {Pose | undefined} */
+/**
+ * The poses the heavy walk stops for: belly rubbing and her labor. Through the others (morning
+ * sickness, fetal movement, a contraction, back pain) she keeps walking heavily, as in Java, where
+ * the heavy walk is an additive animation of its own (and on our own player model).
+ */
+const STOPS_HEAVY_WALK = ['rubbing', 'water_breaking', 'prebirth', 'birth', 'postbirth', 'miscarriage'];
+
+/** The heavy walk from P4 (it only shows while she walks). @returns {Pose | undefined} */
 export function walkOf(/** @type {Player} */ player) {
   const pose = String(property(player, 'pose', 'none'));
   const phase = Number(property(player, 'phase', -1));
-  if (pose !== 'none' || phase < 4 || phase > 9) return undefined;
-  return { animation: `${AS}walking_heavy_p${phase}`, stop: `q.property('minepreggo:phase') != ${phase} || q.property('minepreggo:pose') != 'none' || v.mp_native`, loop: 100 };
+  if (STOPS_HEAVY_WALK.includes(pose) || phase < 4 || phase > 9) return undefined;
+  const stops = STOPS_HEAVY_WALK.map((p) => `q.property('minepreggo:pose') == '${p}'`).join(' || ');
+  return { animation: `${AS}walking_heavy_p${phase}`, stop: `q.property('minepreggo:phase') != ${phase} || ${stops} || v.mp_native`, loop: 100 };
 }
 
 /** @type {Map<string, Map<Track, { animation: string, at: number, seen: Set<string> }>>} mother id -> what each track last played, when, and to whom */

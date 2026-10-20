@@ -23,6 +23,7 @@ import { fileURLToPath } from 'node:url';
 import { strFromU8, unzipSync } from 'fflate';
 import { crowningLines } from './lib/crowning.mjs';
 import { stringifyEntity } from './lib/entity-json.mjs';
+import { poseAt } from './lib/geo-render.mjs';
 import { FAMILY_TAG, MINEPREGGO_PROPERTIES, MOD, POSES, bellyPreAnimation, initializers, phaseEvents } from './lib/belly-render.mjs';
 import { GOBLIN_RIGS, goblinCrowning, goblinPoseAnimations, ownPose } from './lib/goblins-poses.mjs';
 import { walkJiggleAnimation } from './lib/walk-jiggle.mjs';
@@ -115,6 +116,14 @@ const GOBLIN_MOVES = {
 };
 /** Her arms and head in her own belly idle: she holds her belly while the babies move, walking or not. */
 const GOBLIN_BELLY_HOLD = ['arm1', 'bone3', 'arm2', 'bone4', 'neck'];
+/**
+ * Those and her face when her belly is rubbed (her eyes close, her ears twitch), on whatever the rest
+ * of her does: standing, sitting when told to stay, or resting on the ground at her fullest. (All of
+ * it would stand her legs up under the lowered, tilted root of her sitting and resting idles, which
+ * it does not move, through the floor; and its chest is one size, where her idles fill it out as she
+ * grows.)
+ */
+const GOBLIN_BELLY_RUB = [...GOBLIN_BELLY_HOLD, 'ear', 'ear2', 'eye', 'eye2', 'pupil', 'pupil2', 'eyelash', 'eyelash2', 'eyelash3', 'eyelash4'];
 
 /** @type {Girl[]} */
 const GIRLS = [
@@ -123,7 +132,7 @@ const GIRLS = [
     skins: ['goblin0', 'goblin1', 'goblin2', 'goblin3', 'goblin4'],
     layers: { hair: ['hair0', 'hair1', 'hair2', 'hair3', 'hair4', 'hair5', 'hair6', 'hair7', 'hair8', 'hair9', 'hair10', 'hair11'], eyes: ['eye0', 'eye1', 'eye2', 'eye3', 'eye4', 'eye5'], cloth: ['cloth0', 'cloth1', 'cloth2', 'cloth3'] },
     belly: ['belly1', 'belly2', 'belly3'], rig: 'goblin', sizes: GOBLIN_SIZES, moves: GOBLIN_MOVES, death: 'idle2', stride: 0.06, lookAt: true,
-    own: { fetal_movement: { animation: 'idle_belly', bones: GOBLIN_BELLY_HOLD }, belly_rubs: { animation: 'idle_belly' }, kicking_sit: { sizes: 'sit' } },
+    own: { fetal_movement: { animation: 'idle_belly', bones: GOBLIN_BELLY_HOLD }, belly_rubs: { animation: 'idle_belly', bones: GOBLIN_BELLY_RUB }, kicking_sit: { sizes: 'sit' } },
     hidden: ['bottle'], jiggle: { chest: ['tits'], breasts: ['tit6', 'tit5'], belly: ['belly1'] }, jiggleStrength: 0.8, size: [0.6, 1.4],
     biomes: ['forest', 'plains', 'taiga'], treats: ['minecraft:sweet_berries', 'minecraft:glow_berries', 'minecraft:cake'],
   },
@@ -132,7 +141,7 @@ const GIRLS = [
     skins: ['imp0', 'imp1', 'imp2', 'imp3', 'imp4', 'imp5', 'imp6', 'imp7', 'imp8'],
     layers: { hair: ['imphair1', 'imphair2', 'imphair3', 'imphair4', 'imphair5', 'imphair6', 'imphair7', 'imphair8', 'imphair9', 'imphair10', 'imphair11', 'imphair12'], eyes: ['eye0', 'eye1', 'eye2', 'eye3', 'eye4', 'eye5'], cloth: ['cloth1_imp', 'cloth3_imp', 'cloth4_imp', 'cloth5_imp'] },
     belly: ['belly1', 'belly2', 'belly3'], rig: 'goblin', sizes: GOBLIN_SIZES, moves: GOBLIN_MOVES, death: 'idle2', stride: 0.06, lookAt: true,
-    own: { fetal_movement: { animation: 'idle_belly', bones: GOBLIN_BELLY_HOLD }, belly_rubs: { animation: 'idle_belly' }, kicking_sit: { sizes: 'sit' } },
+    own: { fetal_movement: { animation: 'idle_belly', bones: GOBLIN_BELLY_HOLD }, belly_rubs: { animation: 'idle_belly', bones: GOBLIN_BELLY_RUB }, kicking_sit: { sizes: 'sit' } },
     hidden: ['bottle'], jiggle: { chest: ['tits'], breasts: ['tit6', 'tit5'], belly: ['belly1'] }, jiggleStrength: 0.8, size: [0.6, 1.4],
     biomes: ['nether_wastes', 'crimson_forest', 'soulsand_valley'], treats: ['minecraft:sweet_berries', 'minecraft:glow_berries', 'minecraft:cake'],
   },
@@ -143,7 +152,8 @@ const GIRLS = [
     // the mod's sizes 0, 1 and 2+: a small belly (to P1), a big one (P2-P5), and so big she sits to rest (P6-P9)
     belly: ['belly', 'belly2'], rig: 'berry', sizes: ['v.bp < 2', 'v.bp <= 5', 'true'],
     moves: { idle: ['idle1', 'idle2', 'sit3'], walk: ['walk1', 'walk2', 'walk2'], sit: ['sit1', 'sit2', 'sit3'], grow: [null, 'transit', 'transit1'] },
-    stride: 0.12, lookAt: false,
+    // (her short legs swing only 20 degrees: quick little steps, so her feet keep to the ground)
+    stride: 0.2, lookAt: false,
     // her own animations hold no belly: the belly hold, her arms and head only while the babies move (so she walks on)
     own: { fetal_movement: { solved: 'belly_hold', bones: ['leftlarm', 'rightarm', 'neck'] }, belly_rubs: { solved: 'belly_hold' }, kicking_sit: { sizes: 'sit' } },
     hidden: [], jiggle: { chest: ['tit3'], belly: ['belly'] }, jiggleStrength: 0.6, size: [0.35, 0.65],
@@ -253,6 +263,16 @@ function laborAnimation(/** @type {string[]} */ bones) {
 const birthBelly = (/** @type {string} */ line) =>
   line.replace(/^(v\.belly_growth = .*) \* q\.property\('minepreggo:growth'\);$/, "$1 * (v.pose == 'birth' ? 1.0 - v.push : q.property('minepreggo:growth'));");
 
+/**
+ * Whether an idle of hers rests on the ground: her root lowered or tilted back at its start (the
+ * mod's fullest idle, and the Bloatberry girl's sitting one).
+ * @param {any} animation @param {string} root
+ */
+function restsOnGround(animation, root) {
+  const at = animation ? poseAt(animation, 0, { evaluate: { v: {}, q: {} } })[root] : undefined;
+  return Math.abs(Number(at?.rotation?.[0] ?? 0)) >= 20 || Number(at?.position?.[1] ?? 0) <= -0.5;
+}
+
 /** Molang: which of her sizes she is (0 smallest), from the size conditions. */
 function sizeExpression(/** @type {string[]} */ sizes) {
   let expr = String(sizes.length - 1);
@@ -334,8 +354,11 @@ for (const girl of GIRLS) {
   animations[animId('mp_kicks')] = kickAnimation(girl.belly);
   animations[animId('mp_contraction')] = contractionAnimation(girl.belly);
   animations[animId('mp_push')] = laborAnimation(girl.belly);
-  // her chest and belly bounce as she walks (tools/lib/walk-jiggle.mjs), a little less on a smaller body
-  animations[animId('mp_walk_jiggle')] = walkJiggleAnimation(girl.jiggle, { strength: girl.jiggleStrength });
+  // her chest and belly bounce as she walks (tools/lib/walk-jiggle.mjs), a little less on a smaller
+  // body, once a step of her own walk (two steps a loop, its time running at her stride per unit walked)
+  const walkLength = Number(animations[animId(girl.moves.walk[0])]?.animation_length ?? 0);
+  if (!(walkLength > 0)) throw new Error(`${slug}: her walk ${girl.moves.walk[0]} has no length`);
+  animations[animId('mp_walk_jiggle')] = walkJiggleAnimation(girl.jiggle, { strength: girl.jiggleStrength, step: (720 * girl.stride) / walkLength });
   if (girl.hidden.length) animations[animId('mp_hidden')] = { loop: true, bones: Object.fromEntries(girl.hidden.map((b) => [b, { scale: 0 }])) };
 
   // ---- her pregnancy and scene poses: her own where she has them, the rest solved onto her rig ----
@@ -371,9 +394,12 @@ for (const girl of GIRLS) {
   const move = (/** @type {string} */ name) => `m_${name}`;
   /** @type {Record<string, string>} */
   const moveAnimations = {};
-  for (const names of Object.values(girl.moves)) for (const name of names) if (name) moveAnimations[move(name)] = animId(name);
+  // (her growth plays as its own one-shot copies, grow_<name>, below)
+  for (const [kind, names] of Object.entries(girl.moves)) if (kind !== 'grow') for (const name of names) if (name) moveAnimations[move(name)] = animId(name);
   if (girl.death) moveAnimations[move(girl.death)] = animId(girl.death);
   const sizes = girl.sizes.map((_, i) => i);
+  // the sizes whose idle rests on the ground (her fullest, the Bloatberry girl's sitting one)
+  const resting = sizes.filter((i) => restsOnGround(animations[animId(girl.moves.idle[i] ?? '')], parts.mover));
   const eats = !!girl.moves.eat;
   const dies = girl.death ? [{ death: '!q.is_alive' }] : [];
   // she eats her treat (tamed, fed by her owner), standing or sitting, then hiccups when standing
@@ -382,7 +408,8 @@ for (const girl of GIRLS) {
   /** @type {Record<string, any>} */
   const states = {
     idle: { animations: bySize(girl.moves.idle, move), transitions: [...dies, ...eatStanding, { sit: 'q.is_sitting || q.is_riding' }, { walk: 'q.modified_move_speed > 0.1' }], blend_transition: 0.25 },
-    // her walk weighs in with her speed over her idle, so she eases into it and out of it
+    // her walk weighs in with her speed over her idle, so she eases into it and out of it (but for
+    // an idle on the ground: walking slowly would sink her legs through the floor, so v.walk_w is 1)
     walk: { animations: [...bySize(girl.moves.idle, move, '(1.0 - v.walk_w)'), ...bySize(girl.moves.walk, move, 'v.walk_w')], transitions: [...dies, ...eatStanding, { sit: 'q.is_sitting || q.is_riding' }, { idle: 'q.modified_move_speed < 0.05' }], blend_transition: 0.25 },
     sit: { animations: bySize(girl.moves.sit, move), transitions: [...dies, ...eatSitting, { idle: '!q.is_sitting && !q.is_riding' }], blend_transition: 0.3 },
   };
@@ -416,6 +443,7 @@ for (const girl of GIRLS) {
           ...(j === i + 1 && girl.moves.grow[j] ? [{ [`growing_${j}`]: `v.size == ${j} && q.life_time > 3.0` }] : []),
           { [`size_${j}`]: `v.size == ${j}` },
         ]),
+        blend_transition: 0.3,
       };
       if (girl.moves.grow[i]) grow[`growing_${i}`] = { animations: [move(`grow_${girl.moves.grow[i]}`)], transitions: [{ [`size_${i}`]: 'q.all_animations_finished || !(v.pose == \'none\')' }], blend_transition: 0.3 };
     }
@@ -427,9 +455,10 @@ for (const girl of GIRLS) {
     controllers[controllerId('grow')] = { initial_state: 'size_0', states: grow };
     controllerNames.grow_controller = controllerId('grow');
   }
-  // one state per pose, cross-faded in and out
+  // one state per pose, cross-faded in and out (a state's blend_transition is how it fades out to
+  // the next: the default state's fades each pose in)
   /** @type {Record<string, any>} */
-  const poseController = { default: { transitions: Object.keys(poseStates).map((pose) => ({ [pose]: `v.pose == '${pose}'` })) } };
+  const poseController = { default: { transitions: Object.keys(poseStates).map((pose) => ({ [pose]: `v.pose == '${pose}'` })), blend_transition: 0.4 } };
   for (const [pose, list] of Object.entries(poseStates)) poseController[pose] = { animations: list, transitions: [{ default: `!(v.pose == '${pose}')` }], blend_transition: 0.4 };
   controllers[controllerId('pose')] = { initial_state: 'default', states: poseController };
   controllerNames.pose_controller = controllerId('pose');
@@ -469,7 +498,7 @@ for (const girl of GIRLS) {
   const pre = [
     ...bellyPreAnimation().map(birthBelly),
     `v.size = ${sizeExpression(girl.sizes)};`,
-    'v.walk_w = math.clamp(q.modified_move_speed * 4.0, 0.0, 1.0);',
+    `v.walk_w = ${resting.length ? `${resting.map((i) => `v.size == ${i}`).join(' || ')} ? 1.0 : ` : ''}math.clamp(q.modified_move_speed * 4.0, 0.0, 1.0);`,
     ...(eats ? [`v.eating = q.property('${NS}:eating');`] : []),
     ...crowningLines({ when: "v.pose == 'birth'", scale: crown.scale }),
   ];

@@ -18,15 +18,17 @@ const STRIDE = 38.17;
 /**
  * The walk-jiggle animation for one rig.
  * @param {JiggleBones} bones
- * @param {{ owner?: boolean, strength?: number }} [options] owner: the walk of the owning entity, read
- *   into variables by OWNER_WALK_LINES (an attachable); strength: scales every amount
+ * @param {{ owner?: boolean, strength?: number, step?: number }} [options] owner: the walk of the owning
+ *   entity, read into variables by OWNER_WALK_LINES (an attachable); strength: scales every amount;
+ *   step: degrees of the bounce per unit walked, one bounce a step (vanilla's 2 x STRIDE, for a rig
+ *   whose own walk takes longer or shorter steps); the side sway takes half of it
  */
-export function walkJiggleAnimation(bones, { owner = false, strength = 1 } = {}) {
+export function walkJiggleAnimation(bones, { owner = false, strength = 1, step: perUnit = 2 * STRIDE } = {}) {
   const moving = `math.min(1.0, ${owner ? 'v.owner_move_speed' : 'q.modified_move_speed'} * 2.5)`;
   const d = owner ? 'v.owner_distance_moved' : 'q.modified_distance_moved';
   // the bounce lags the step by a few degrees, so the soft parts follow the body
-  const step = (/** @type {number} */ lag) => `math.sin(${d} * ${(2 * STRIDE).toFixed(2)} - ${lag.toFixed(1)})`;
-  const side = (/** @type {number} */ lag) => `math.sin(${d} * ${STRIDE.toFixed(2)} - ${lag.toFixed(1)})`;
+  const step = (/** @type {number} */ lag) => `math.sin(${d} * ${perUnit.toFixed(2)} - ${lag.toFixed(1)})`;
+  const side = (/** @type {number} */ lag) => `math.sin(${d} * ${(perUnit / 2).toFixed(2)} - ${lag.toFixed(1)})`;
   const k = (/** @type {number} */ amount) => (amount * strength).toFixed(2);
   /** @type {Record<string, any>} */
   const out = {};

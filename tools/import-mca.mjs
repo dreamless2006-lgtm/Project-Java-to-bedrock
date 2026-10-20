@@ -5,10 +5,10 @@
 // from MCA's names. She is drawn like this pack's female player with a custom skin: the vanilla
 // humanoid model, the mod's chest, and in pregnancy the mod's belly of each phase mapped onto her
 // own skin pixels, so her belly is her skin and her clothes; the babies kick it and contractions
-// tighten it. She walks, sits, rides and looks about with vanilla's humanoid animations, walks
-// heavily late in pregnancy and has every pregnancy pose (tools/lib/mca-poses.mjs: the player's
-// own poses, and the mod's and the authored ones on the player's flat labor model), the baby
-// crowning at her birth as at the player's. She joins the mob system (mobs/families.js MCA_FAMILIES).
+// tighten it. She walks and looks about with vanilla's humanoid animations, walks heavily late in
+// pregnancy, sits when told to and rides seated, and has every pregnancy pose (tools/lib/mca-poses.mjs:
+// the player's own poses, and the mod's and the authored ones on the player's flat labor model), the
+// baby crowning at her birth as at the player's. She joins the mob system (mobs/families.js MCA_FAMILIES).
 // Adults only: MCA's child skins and child mechanics are never read.
 // Output goes under git-ignored mca_port/ folders. Run as part of `npm run import`, after
 // tools/import-jar.mjs (her poses and crowning read the mod's converted models and animations).
@@ -20,7 +20,7 @@ import { strFromU8, unzipSync } from 'fflate';
 import { stringifyEntity } from './lib/entity-json.mjs';
 import { BELLY_ANIMATIONS, FAMILY_TAG, MINEPREGGO_PROPERTIES, PHASES, bellyPreAnimation, initializers, kickRoomLines, phaseEvents } from './lib/belly-render.mjs';
 import { crowningLines } from './lib/crowning.mjs';
-import { mcaPoseAnimations } from './lib/mca-poses.mjs';
+import { LYING_LABOR, mcaPoseAnimations } from './lib/mca-poses.mjs';
 import { blank, decodePng, encodePng } from './lib/png.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -142,23 +142,30 @@ const renderControllers = {
 };
 writeJson(join(RP, 'render_controllers', PORT, 'mca.render_controllers.json'), { format_version: '1.8.0', render_controllers: renderControllers });
 
-// her poses made from the mod's humanoid creeper girl and the authored ones (tools/lib/mca-poses.mjs)
-const creeperFile = 'animations/minepreggo/humanoid_creeper_girl.animation.json';
-if (!existsSync(join(RP, creeperFile))) throw new Error(`MCA: ${creeperFile} is missing (run tools/import-jar.mjs first)`);
-const creeperPrefix = 'animation.minepreggo.humanoid_creeper_girl.';
-const creeperAnimations = Object.fromEntries(Object.entries(JSON.parse(readFileSync(join(RP, creeperFile), 'utf8')).animations).map(([id, a]) => [id.slice(creeperPrefix.length), a]));
-const own = mcaPoseAnimations({ flat, creeperGeometry: model('humanoid_creeper_girl'), creeperAnimations, bodies });
+// her poses made from the mod's humanoid creeper girl, the authored ones and the player's labor (tools/lib/mca-poses.mjs)
+const readAnimations = (/** @type {string} */ file, /** @type {string} */ prefix) => {
+  if (!existsSync(join(RP, file))) throw new Error(`MCA: ${file} is missing (run tools/import-jar.mjs first)`);
+  const all = Object.entries(JSON.parse(readFileSync(join(RP, file), 'utf8')).animations);
+  return Object.fromEntries(all.filter(([id]) => id.startsWith(prefix)).map(([id, a]) => [id.slice(prefix.length), a]));
+};
+const creeperAnimations = readAnimations('animations/minepreggo/humanoid_creeper_girl.animation.json', 'animation.minepreggo.humanoid_creeper_girl.');
+const laborAnimations = readAnimations('animations/minepreggo/player_labor.animation.json', 'animation.minepreggo.player.labor_');
+const own = mcaPoseAnimations({ flat, creeperGeometry: model('humanoid_creeper_girl'), creeperAnimations, laborAnimations, bodies });
 const ownId = (/** @type {string} */ pose) => `animation.minepreggo.mca.${pose}`;
 writeJson(join(RP, 'animations', PORT, 'villager_woman.animation.json'), { format_version: '1.8.0', animations: Object.fromEntries(Object.entries(own).map(([pose, a]) => [ownId(pose), a])) });
 
 /** The pregnancy poses written for the mod's flat models: she is drawn with the flat body in them. */
 const FLAT_POSES = ['morning_sickness', 'kicking_sit', 'contraction', 'incapacitated', 'water_breaking', 'prebirth', 'birth', 'postbirth', 'miscarriage', 'scene', 'scene_sit'];
+/** The player's labor poses she plays as they are (the lying ones are hers: LYING_LABOR). */
+const STANDING_LABOR = ['water_breaking', 'prebirth', 'miscarriage'];
 const anyPose = (/** @type {string[]} */ poses) => poses.map((p) => `v.pose == '${p}'`).join(' || ');
 const HEAVY = PHASES.filter((p) => p >= 4);
 const pre = [
   ...bellyPreAnimation(), ...kickRoomLines('v.bp', (p) => bodies[p]),
   // vanilla's walk swings her arms and legs by this (as the zombie's pre_animation sets it)
   'v.tcos0 = math.cos(q.modified_distance_moved * 38.17) * q.modified_move_speed / v.gliding_speed_value * 57.3;',
+  // and seated in a vehicle she sinks into boats and minecarts as far as the zombie does
+  "v.riding_y_offset = 1.0 + (q.is_riding_any_entity_of_type('minecraft:minecart', 'minecraft:boat', 'minecraft:chest_boat') ? -3.0 : 0.0);",
   // in a pose of the mod's, sitting or riding she is drawn flat; she walks only in the poses she can walk in
   `v.posed = ${anyPose(FLAT_POSES)};`,
   'v.flat = v.posed || q.is_sitting || q.is_riding;',
@@ -177,15 +184,16 @@ const animations = {
   // her chest, belly and butt bounce as she walks: the bones of this pack's player bodies
   walk_jiggle: 'animation.minepreggo.walk_jiggle',
   // the player's own poses (the same humanoid bones): on the humanoid her back pain, her hands
-  // rubbing her belly and the heavy walk late in pregnancy; on the flat body her labor
+  // rubbing her belly and the heavy walk late in pregnancy; on the flat body her labor (her birth
+  // and the rest after it are hers, the player's with her head out of the floor)
   back_pain: 'animation.minepreggo.player.back_pain',
   ...Object.fromEntries(PHASES.map((p) => [`belly_rubbing_p${p}`, `animation.minepreggo.player.belly_rubbing_p${p}`])),
   ...Object.fromEntries(HEAVY.map((p) => [`walking_heavy_p${p}`, `animation.minepreggo.player.walking_heavy_p${p}`])),
   belly_rubs_i: 'animation.minepreggo.belly.belly_rubs_needs_i', belly_rubs_ii: 'animation.minepreggo.belly.belly_rubs_needs_ii', belly_rubs_iii: 'animation.minepreggo.belly.belly_rubs_needs_iii',
-  ...Object.fromEntries(['water_breaking', 'prebirth', 'birth', 'postbirth', 'miscarriage'].map((p) => [`labor_${p}`, `animation.minepreggo.player.labor_${p}`])),
+  ...Object.fromEntries(STANDING_LABOR.map((p) => [`labor_${p}`, `animation.minepreggo.player.labor_${p}`])),
   // the baby's head at her opening, in the rhythm of the mod's birth on her back
   crowning: 'animation.minepreggo.crowning',
-  // the rest of her poses, sitting down and riding (tools/lib/mca-poses.mjs)
+  // the rest of her poses, sitting down, riding and lying in labor (tools/lib/mca-poses.mjs)
   ...Object.fromEntries(Object.keys(own).map((pose) => [`pose_${pose}`, ownId(pose)])),
 };
 const animate = [
@@ -197,7 +205,8 @@ const animate = [
   { pose_morning_sickness: "v.pose == 'morning_sickness'" }, { pose_kicking_sit: "v.pose == 'kicking_sit'" },
   { pose_contraction: "v.pose == 'contraction' || v.pose == 'incapacitated'" },
   { back_pain: "!v.flat && v.pose == 'back_pain'" },
-  ...['water_breaking', 'prebirth', 'birth', 'postbirth', 'miscarriage'].map((p) => ({ [`labor_${p}`]: `v.pose == '${p}'` })),
+  ...STANDING_LABOR.map((p) => ({ [`labor_${p}`]: `v.pose == '${p}'` })),
+  ...LYING_LABOR.map((p) => ({ [`pose_${p}`]: `v.pose == '${p}'` })),
   { crowning: "v.pose == 'birth'" },
   // she wants her belly rubbed: it stirs under her hands
   { belly_rubs_i: "v.pose == 'belly_rubs' && v.phase <= 2" }, { belly_rubs_ii: "v.pose == 'belly_rubs' && v.phase >= 3 && v.phase <= 6" }, { belly_rubs_iii: "v.pose == 'belly_rubs' && v.phase >= 7" },
@@ -221,8 +230,9 @@ writeJson(join(RP, 'entity', PORT, 'villager_woman.entity.json'), {
       geometry,
       animations,
       scripts: {
-        // vanilla's walk divides by the gliding speed, which the game sets only for players
-        initialize: initializers(pre, ['variable.gliding_speed_value = 1.0;']),
+        // vanilla's walk divides by the gliding speed and its swimming head reads the swim amount,
+        // which the game sets only for players
+        initialize: initializers(pre, ['variable.gliding_speed_value = 1.0;', 'variable.swim_amount = 0.0;']),
         pre_animation: pre,
         animate,
       },
@@ -276,6 +286,8 @@ const groups = {
   [`${PORT}:tamed`]: {
     'minecraft:is_tamed': {},
     'minecraft:sittable': {},
+    // told to sit, she stays sitting (without it she would follow and stroll in her sitting pose)
+    'minecraft:behavior.stay_while_sitting': { priority: 1 },
     'minecraft:behavior.follow_owner': { priority: 5, speed_multiplier: 1.0, start_distance: 8, stop_distance: 2 },
     'minecraft:behavior.random_stroll': { priority: 8, speed_multiplier: 0.5 },
   },

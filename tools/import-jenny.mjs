@@ -26,6 +26,7 @@ import { EGG_DEPTH, FETUS_SCALE, crowningLines } from './lib/crowning.mjs';
 import { GIRL_BIRTHS, girlBirthExit, girlEffects } from './lib/girl-births.mjs';
 import { BELLY_ANIMATIONS, FAMILY_TAG, MINEPREGGO_PROPERTIES, MOD, PHASES, bellyPreAnimation, initializers, kickRoomLines, phaseEvents } from './lib/belly-render.mjs';
 import { bellyTexture, hairTone, skinTone } from './lib/belly-skin.mjs';
+import { bellySwells, flightAnimation } from './lib/jenny-poses.mjs';
 import { girlPoseAnimations } from './lib/scene-poses.mjs';
 import { stringifyEntity } from './lib/entity-json.mjs';
 import { dropStructureEntities, parseNbt, renameStrings, writeNbt } from './lib/nbt.mjs';
@@ -130,6 +131,15 @@ const creeper = (() => {
   const prefix = `animation.${MOD}.humanoid_creeper_girl.`;
   const animations = Object.fromEntries(Object.entries(parse(readFileSync(animationFile, 'utf8')).animations).map(([k, v]) => [k.startsWith(prefix) ? k.slice(prefix.length) : k, v]));
   return { geometry: parse(readFileSync(geometryFile, 'utf8'))['minecraft:geometry'][0], animations };
+})();
+/**
+ * How the shared belly controller swells a belly in each pose (the babies' kicks, a contraction),
+ * from the belly animations every female plays: the girls' hands keep out of it (tools/lib/jenny-poses.mjs).
+ */
+const swells = (() => {
+  const files = [join(RP, 'animations', MOD, 'belly.animation.json'), join(RP, 'animations/preggo_mob.animation.json')];
+  for (const file of files) if (!existsSync(file)) throw new Error(`${file} is missing: run tools/import-jar.mjs first`);
+  return bellySwells(Object.assign({}, ...files.map((file) => parse(readFileSync(file, 'utf8')).animations)));
 })();
 
 /**
@@ -298,8 +308,8 @@ if (portBP && portRP) {
   const bellyControllers = {};
   /** @type {Record<string, unknown>} */
   const poseControllers = {};
-  /** @type {Record<string, any>} each girl's walk jiggle, on the bones of her rig */
-  const walkJiggles = {};
+  /** @type {Record<string, any>} each girl's walk jiggle, on the bones of her rig (and the flight of a girl who flies) */
+  const walks = {};
   for (const { file, doc } of clientDocs) {
     const d = doc['minecraft:client_entity'].description;
     const id = d.identifier;
@@ -336,11 +346,20 @@ if (portBP && portRP) {
         const egg = OVIPAROUS[id];
         writeFile(join(RP, `${skin}.png`), encodePng(bellyTexture(toneOf(id), undefined, egg)));
         d.textures.minepreggo_belly = skin;
-        // Her pregnancy and scene poses, solved onto her rig from her own idle stance (tools/lib/scene-poses.mjs).
+        // Her bellies: one per size for each body she renders, fitted to it (tools/lib/belly-fit.mjs).
+        const bellyDocs = sets.map((set, n) =>
+          PHASES.map((p) => addNewborn(smoothBelly(fitBelly(playerBodies[p], `geometry.${MOD}.jp_${slug(id)}_${n}_belly_p${p}`, set.body), set.body), set.body, { egg: !!egg, mount: undefined }))
+        );
+        // Her pregnancy and scene poses, solved onto her rig from her own idle stance (tools/lib/scene-poses.mjs);
+        // the hands of the poses she walks in rest on the bellies of her everyday body, and every
+        // pose keeps them out of those bellies as full as the pose's kicks and contractions swell them.
         const geometryKey = ['default', 'normal', 'dressed'].find((k) => d.geometry?.[k]);
         const mainGeometry = geometryKey ? geometries.get(d.geometry[geometryKey]) : undefined;
         const idle = d.animations?.idle ? portAnimations[d.animations.idle] : undefined;
-        const poses = girl && mainGeometry ? girlPoseAnimations({ id, geometry: mainGeometry, idle, sourceGeometry: creeper.geometry, sourceAnimations: creeper.animations, prefix: `animation.${MOD}.jp_${slug(id)}` }) : undefined;
+        const mainSignature = mainGeometry ? JSON.stringify(measureBody(mainGeometry)) : undefined;
+        const mainBellies = bellyDocs[Math.max(0, sets.findIndex((set) => set.signature === mainSignature))];
+        const bellies = Object.fromEntries(PHASES.map((p) => [p, mainBellies[p]['minecraft:geometry'][0]]));
+        const poses = girl && mainGeometry ? girlPoseAnimations({ id, geometry: mainGeometry, idle, sourceGeometry: creeper.geometry, sourceAnimations: creeper.animations, prefix: `animation.${MOD}.jp_${slug(id)}`, bellies, swells }) : undefined;
         // Her own birth (tools/lib/girl-births.mjs): the baby (or egg) comes out along her way out, a
         // rotation of the crowning mount in her birth pose, as far as her floor allows. The belly
         // geometries keep an unturned mount, so her own scenes (the Kobold's laying) are untouched.
@@ -354,7 +373,7 @@ if (portBP && portRP) {
           const visibility = set.visibilities.includes('true') ? undefined : set.visibilities.join(' || ');
           for (const p of PHASES) {
             const geometryId = `geometry.${MOD}.jp_${slug(id)}_${n}_belly_p${p}`;
-            const belly = addNewborn(smoothBelly(fitBelly(playerBodies[p], geometryId, set.body), set.body), set.body, { egg: !!egg, mount: undefined });
+            const belly = bellyDocs[n][p];
             writeFile(join(RP, 'models/entity', PORT, MOD, `${slug(id)}_${n}_belly_p${p}.geo.json`), JSON.stringify(belly, null, 2) + '\n');
             if (n === 0) firstSet.push(belly['minecraft:geometry'][0]);
             d.geometry[`minepreggo_belly_${n}_p${p}`] = geometryId;
@@ -412,10 +431,19 @@ if (portBP && portRP) {
           const has = new Set(['belly', ...mainGeometry.bones.map((/** @type {any} */ b) => b.name)]);
           const bones = Object.fromEntries(Object.entries(JENNY_JIGGLE_BONES).map(([part, names]) => [part, names.every((/** @type {string} */ n) => has.has(n)) ? names : []]));
           const jiggleId = `animation.${MOD}.jp_${slug(id)}.walk_jiggle`;
-          walkJiggles[jiggleId] = walkJiggleAnimation(bones);
+          walks[jiggleId] = walkJiggleAnimation(bones);
           d.animations.mp_walk_jiggle = jiggleId;
           const poseAt = animate.indexOf('mp_pose_controller');
           if (!animate.includes('mp_walk_jiggle')) animate.splice(poseAt < 0 ? animate.length : poseAt, 0, 'mp_walk_jiggle');
+          // A girl who flies and has no walk of her own (the Bee hovers in her idle) leans into her
+          // flight as she moves (tools/lib/jenny-poses.mjs), in her everyday state, under her poses.
+          const components = entityDocs.get(id)?.doc['minecraft:entity']?.components ?? {};
+          if (!d.animations.walk && ('minecraft:can_fly' in components || 'minecraft:navigation.fly' in components)) {
+            const flightId = `animation.${MOD}.jp_${slug(id)}.flight`;
+            walks[flightId] = flightAnimation(has);
+            d.animations.mp_flight = flightId;
+            animate.splice(animate.indexOf('mp_walk_jiggle'), 0, { mp_flight: normalOf(id) });
+          }
         }
         d.scripts.animate = [...animate, newborn, 'belly_controller'];
         d.scripts.pre_animation = pre;
@@ -425,7 +453,7 @@ if (portBP && portRP) {
     writeFile(file, JSON.stringify(doc, null, 2) + '\n');
   }
   writeFile(join(RP, 'render_controllers', PORT, 'minepreggo_bellies.render_controllers.json'), JSON.stringify({ format_version: '1.10.0', render_controllers: bellyControllers }, null, 2) + '\n');
-  writeFile(join(RP, 'animations', PORT, MOD, 'walk_jiggle.animation.json'), JSON.stringify({ format_version: '1.8.0', animations: walkJiggles }, null, 2) + '\n');
+  writeFile(join(RP, 'animations', PORT, MOD, 'walk_jiggle.animation.json'), JSON.stringify({ format_version: '1.8.0', animations: walks }, null, 2) + '\n');
   writeFile(join(RP, 'animation_controllers', PORT, 'minepreggo_poses.animation_controllers.json'), JSON.stringify({ format_version: '1.10.0', animation_controllers: poseControllers }, null, 2) + '\n');
 
   // Each girl's baby: an item with an icon in her colours (her skin, her hair, her kind's trait).

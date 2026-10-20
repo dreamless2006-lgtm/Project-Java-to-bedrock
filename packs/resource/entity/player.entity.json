@@ -493,46 +493,49 @@
             "minepreggo_player_belly_rubbing_p9": "!variable.is_first_person && variable.mp_female && variable.mp_pose == 'rubbing' && variable.mp_phase == 9"
           },
           {
-            "minepreggo_player_walking_heavy_p4": "!variable.is_first_person && variable.mp_female && variable.mp_phase == 4 && variable.mp_pose == 'none' && query.modified_move_speed > 0.05 && query.is_on_ground"
+            "minepreggo_player_walking_heavy_p4": "!variable.is_first_person && variable.mp_female && variable.mp_phase == 4 && !variable.mp_labor && !(variable.mp_pose == 'rubbing') && query.modified_move_speed > 0.05 && query.is_on_ground && !query.is_riding"
           },
           {
-            "minepreggo_player_walking_heavy_p5": "!variable.is_first_person && variable.mp_female && variable.mp_phase == 5 && variable.mp_pose == 'none' && query.modified_move_speed > 0.05 && query.is_on_ground"
+            "minepreggo_player_walking_heavy_p5": "!variable.is_first_person && variable.mp_female && variable.mp_phase == 5 && !variable.mp_labor && !(variable.mp_pose == 'rubbing') && query.modified_move_speed > 0.05 && query.is_on_ground && !query.is_riding"
           },
           {
-            "minepreggo_player_walking_heavy_p6": "!variable.is_first_person && variable.mp_female && variable.mp_phase == 6 && variable.mp_pose == 'none' && query.modified_move_speed > 0.05 && query.is_on_ground"
+            "minepreggo_player_walking_heavy_p6": "!variable.is_first_person && variable.mp_female && variable.mp_phase == 6 && !variable.mp_labor && !(variable.mp_pose == 'rubbing') && query.modified_move_speed > 0.05 && query.is_on_ground && !query.is_riding"
           },
           {
-            "minepreggo_player_walking_heavy_p7": "!variable.is_first_person && variable.mp_female && variable.mp_phase == 7 && variable.mp_pose == 'none' && query.modified_move_speed > 0.05 && query.is_on_ground"
+            "minepreggo_player_walking_heavy_p7": "!variable.is_first_person && variable.mp_female && variable.mp_phase == 7 && !variable.mp_labor && !(variable.mp_pose == 'rubbing') && query.modified_move_speed > 0.05 && query.is_on_ground && !query.is_riding"
           },
           {
-            "minepreggo_player_walking_heavy_p8": "!variable.is_first_person && variable.mp_female && variable.mp_phase == 8 && variable.mp_pose == 'none' && query.modified_move_speed > 0.05 && query.is_on_ground"
+            "minepreggo_player_walking_heavy_p8": "!variable.is_first_person && variable.mp_female && variable.mp_phase == 8 && !variable.mp_labor && !(variable.mp_pose == 'rubbing') && query.modified_move_speed > 0.05 && query.is_on_ground && !query.is_riding"
           },
           {
-            "minepreggo_player_walking_heavy_p9": "!variable.is_first_person && variable.mp_female && variable.mp_phase == 9 && variable.mp_pose == 'none' && query.modified_move_speed > 0.05 && query.is_on_ground"
+            "minepreggo_player_walking_heavy_p9": "!variable.is_first_person && variable.mp_female && variable.mp_phase == 9 && !variable.mp_labor && !(variable.mp_pose == 'rubbing') && query.modified_move_speed > 0.05 && query.is_on_ground && !query.is_riding"
           },
           {
             "minepreggo_belly_hidden": "variable.mp_pose == 'postbirth'"
           },
           {
-            "minepreggo_labor_water_breaking": "variable.mp_labor && variable.mp_pose == 'water_breaking'"
+            "minepreggo_labor_override": "!variable.is_first_person && !query.is_sleeping && variable.mp_labor && (variable.mp_pose == 'prebirth' || variable.mp_pose == 'birth' || variable.mp_pose == 'postbirth' || variable.mp_pose == 'miscarriage')"
           },
           {
-            "minepreggo_labor_prebirth": "variable.mp_labor && variable.mp_pose == 'prebirth'"
+            "minepreggo_labor_water_breaking": "!variable.is_first_person && variable.mp_labor && variable.mp_pose == 'water_breaking'"
           },
           {
-            "minepreggo_labor_birth": "variable.mp_labor && variable.mp_pose == 'birth'"
+            "minepreggo_labor_prebirth": "!variable.is_first_person && variable.mp_labor && variable.mp_pose == 'prebirth'"
           },
           {
-            "minepreggo_crowning": "variable.mp_labor && variable.mp_pose == 'birth' && !variable.mp_navel"
+            "minepreggo_labor_birth": "!variable.is_first_person && variable.mp_labor && variable.mp_pose == 'birth'"
           },
           {
-            "minepreggo_crowning_navel": "variable.mp_labor && variable.mp_pose == 'birth' && variable.mp_navel"
+            "minepreggo_crowning": "!variable.is_first_person && variable.mp_labor && variable.mp_pose == 'birth' && !variable.mp_navel"
           },
           {
-            "minepreggo_labor_postbirth": "variable.mp_labor && variable.mp_pose == 'postbirth'"
+            "minepreggo_crowning_navel": "!variable.is_first_person && variable.mp_labor && variable.mp_pose == 'birth' && variable.mp_navel"
           },
           {
-            "minepreggo_labor_miscarriage": "variable.mp_labor && variable.mp_pose == 'miscarriage'"
+            "minepreggo_labor_postbirth": "!variable.is_first_person && variable.mp_labor && variable.mp_pose == 'postbirth'"
+          },
+          {
+            "minepreggo_labor_miscarriage": "!variable.is_first_person && variable.mp_labor && variable.mp_pose == 'miscarriage'"
           },
           {
             "minepreggo_navel_prebirth": "variable.mp_pregnant && variable.mp_navel && variable.mp_pose == 'prebirth'"
@@ -712,7 +715,8 @@
         "minepreggo_crowning": "animation.minepreggo.crowning",
         "minepreggo_crowning_navel": "animation.minepreggo.crowning_free",
         "minepreggo_walk_jiggle": "animation.minepreggo.walk_jiggle",
-        "minepreggo_first_person_view": "animation.minepreggo.player.first_person_view"
+        "minepreggo_first_person_view": "animation.minepreggo.player.first_person_view",
+        "minepreggo_labor_override": "animation.minepreggo.player.labor_override"
       },
       "render_controllers": [
         {

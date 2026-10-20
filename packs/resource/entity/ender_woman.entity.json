@@ -179,13 +179,13 @@
             "carrying": "v.carrying"
           },
           {
-            "walk": "(v.aggressive || v.carrying) ? 0.0 : math.min(q.modified_move_speed * 4.0, 1.0)"
+            "walk": "q.is_riding ? 0.0 : ((v.aggressive || v.carrying) ? 0.0 : math.min(q.modified_move_speed * 4.0, 1.0))"
           },
           {
-            "aggression": "(v.aggressive && !v.carrying) ? math.min(q.modified_move_speed * 4.0, 1.0) : 0.0"
+            "aggression": "q.is_riding ? 0.0 : ((v.aggressive && !v.carrying) ? math.min(q.modified_move_speed * 4.0, 1.0) : 0.0)"
           },
           {
-            "walk_carrying": "v.carrying ? math.min(q.modified_move_speed * 4.0, 1.0) : 0.0"
+            "walk_carrying": "q.is_riding ? 0.0 : (v.carrying ? math.min(q.modified_move_speed * 4.0, 1.0) : 0.0)"
           },
           {
             "attack_controller": "!v.carrying"
