@@ -11,10 +11,14 @@ import { rotateAbout } from './bedrock-math.mjs';
 
 export const KICK_BONES = ['front_kick', 'left_kick', 'right_kick', 'top_kick', 'bottom_kick'];
 /** How far a kick shows beyond the skin at its peak, in model units: forward, sideways and up/down. */
-export const BULGE = { z: 1.5, x: 1.25, y: 1.25 };
+export const BULGE = { z: 1.0, x: 0.9, y: 0.9 };
 const MAX_SCALE = 1.25;
-/** How far a skin-patch kick on a smooth shell bulges out at a clamped kick's peak, and slides along the skin. */
-export const SHELL_KICK = { travel: 1.15, lateral: 0.2 };
+/**
+ * A skin-patch kick on a smooth shell (tools/lib/belly-fit.mjs): how far it travels at a clamped kick's
+ * peak, and slides along the skin. The patch rests KICK_REST (0.25) under the skin, so its room is that
+ * rest: the babies' movements then rise their own bulge above the skin, the same as on any belly.
+ */
+export const SHELL_KICK = { travel: 1.25, lateral: 0.2 };
 /** A channel whose peak travel is below this (model units) is a jitter, kept inside but not stretched. */
 export const MIN_TRAVEL = 0.5;
 

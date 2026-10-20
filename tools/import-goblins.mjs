@@ -125,27 +125,36 @@ function bellyAnimation(/** @type {string[]} */ bones) {
 }
 
 /**
- * The babies moving her belly: the outermost shown cube swells, sways and lifts on a broad kick of
- * the kick strength, in her own skin, so it reads as the belly moving rather than a block.
+ * The babies moving her belly, in her own skin: the outermost shown cube moves in five ways that
+ * take turns on a 30 s cycle (as the other bellies' kicks do, tools/lib/belly-render.mjs): a kick
+ * (it swells and lifts), a roll (it sways across as the baby turns), a stretch (a push held
+ * forward), hiccups (small rhythmic jolts) and a flutter (quick little stirs). Small amounts, so the
+ * belly moves without stretching out of shape.
  */
 function kickAnimation(/** @type {string[]} */ bones) {
-  const pulse = 'math.pow(math.max(0.0, math.sin(q.life_time * (90.0 + 30.0 * v.kick_shown))), 3.0)';
-  const sway = 'math.sin(q.life_time * 41.0)';
+  const t = 'math.mod(q.life_time, 30.0)';
+  const w = (/** @type {number} */ i) => `math.clamp(math.min(${t} - ${(i * 6).toFixed(1)}, ${((i + 1) * 6).toFixed(1)} - ${t}), 0.0, 1.0)`;
+  const kick = `${w(0)} * math.pow(math.max(0.0, math.sin(q.life_time * (90.0 + 30.0 * v.kick_shown))), 3.0)`;
+  const roll = `${w(1)} * math.sin(q.life_time * 72.0)`;
+  const stretch = `${w(2)} * math.clamp(1.6 * math.sin(q.life_time * 90.0) - 0.5, 0.0, 1.0)`;
+  const hiccups = `${w(3)} * math.pow(math.max(0.0, math.sin(q.life_time * 330.0)), 10.0)`;
+  const flutter = `${w(4)} * math.pow(math.max(0.0, math.sin(q.life_time * 260.0)), 4.0)`;
+  const k = (/** @type {string} */ when, /** @type {string} */ expr, /** @type {string} */ rest) => `${when} ? ${expr} : ${rest}`;
   /** @type {Record<string, any>} */
   const out = {};
-  const outer = bones.length === 3 ? ['v.bp >= 6', bones[2]] : ['v.bp >= 2', bones[1]];
-  out[outer[1]] = {
-    position: [`${outer[0]} ? 0.35 * ${sway} * ${pulse} * v.kick_w : 0.0`, `${outer[0]} ? 0.25 * ${pulse} * v.kick_w : 0.0`, `${outer[0]} ? -0.5 * ${pulse} * v.kick_w : 0.0`],
-    rotation: [0, 0, `${outer[0]} ? 4.0 * ${sway} * ${pulse} * v.kick_w : 0.0`],
-    scale: [`${outer[0]} ? 1.0 + 0.05 * ${pulse} * v.kick_w : 1.0`, 1, `${outer[0]} ? 1.0 + 0.09 * ${pulse} * v.kick_w : 1.0`],
+  /** @param {string} bone @param {string} when */
+  const moves = (bone, when) => {
+    out[bone] = {
+      position: [k(when, `(0.4 * ${roll} + 0.1 * ${flutter}) * v.kick_w`, '0.0'), k(when, `(0.2 * ${kick} + 0.08 * ${hiccups}) * v.kick_w`, '0.0'), k(when, `-(0.45 * ${kick} + 0.35 * ${stretch} + 0.15 * ${hiccups} + 0.12 * ${flutter}) * v.kick_w`, '0.0')],
+      rotation: [0, 0, k(when, `5.0 * ${roll} * v.kick_w`, '0.0')],
+      scale: [k(when, `1.0 + (0.04 * ${kick} + 0.03 * ${stretch}) * v.kick_w`, '1.0'), k(when, `1.0 + (0.02 * ${kick} + 0.05 * ${stretch}) * v.kick_w`, '1.0'), k(when, `1.0 + (0.07 * ${kick} + 0.05 * ${stretch} + 0.03 * ${hiccups}) * v.kick_w`, '1.0')],
+    };
   };
   if (bones.length === 3) {
+    moves(bones[2], 'v.bp >= 6');
     // before the outer cube shows, the middle one moves
-    out[bones[1]] = {
-      position: [`(v.bp >= 3 && v.bp < 6) ? 0.3 * ${sway} * ${pulse} * v.kick_w : 0.0`, 0, `(v.bp >= 3 && v.bp < 6) ? -0.4 * ${pulse} * v.kick_w : 0.0`],
-      scale: [1, 1, `(v.bp >= 3 && v.bp < 6) ? 1.0 + 0.08 * ${pulse} * v.kick_w : 1.0`],
-    };
-  }
+    moves(bones[1], '(v.bp >= 3 && v.bp < 6)');
+  } else moves(bones[1], 'v.bp >= 3');
   return { loop: true, bones: out };
 }
 

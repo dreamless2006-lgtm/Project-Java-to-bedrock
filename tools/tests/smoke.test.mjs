@@ -974,27 +974,28 @@ test('kicks are bulges, not loose cubes: the push layers only move the belly, th
   for (let phase = 3; phase <= 9; phase++) for (const strength of ['ii', 'iii']) assert.ok(mod[`animation.minepreggo.belly.fetal_movement_p${phase}_${strength}`]?.bones?.front_kick, `the mod's P${phase} ${strength} kick moves the front kick`);
 });
 
-test('kicks and contractions are smooth: rolling kick pulses, eased in and out, a contraction wave, on every female, every port girl and the player', () => {
+test('kicks and contractions are smooth: five kinds of fetal movement taking turns, a contraction wave, on every female, every port girl and the player', () => {
   const animations = json(join(RP, 'animations/preggo_mob.animation.json')).animations;
   const expected = { kick_i: ['front_kick', 'right_kick'], kick_ii: ['front_kick', 'left_kick', 'right_kick'], kick_iii: ['front_kick', 'left_kick', 'right_kick', 'top_kick', 'bottom_kick'] };
-  const pulse = '\\* math\\.pow\\(math\\.max\\(0\\.0, math\\.sin\\(q\\.life_time \\* \\d+\\.0 \\+ \\d+\\.0\\)\\), 3\\.0\\)';
   for (const [name, bones] of Object.entries(expected)) {
     const anim = animations[`animation.minepreggo.${name}`];
-    assert.ok(anim?.loop === true && !JSON.stringify(anim.bones).includes('"0.0"'), `${name} stays active with no keyframes to restart: its expressions pulse on the entity's clock`);
+    assert.ok(anim?.loop === true && !JSON.stringify(anim.bones).includes('"0.0"'), `${name} stays active with no keyframes to restart: its expressions move on the entity's clock`);
     assert.deepEqual(Object.keys(anim.bones), bones, name);
     for (const [bone, channels] of Object.entries(anim.bones)) {
       const z = String(channels.position[2]);
-      // Out by the measured room plus a bulge on a broad, smooth bump (a sine cubed): it rises, settles and rests.
-      assert.match(z, new RegExp(`^-\\(v\\.k_${bone}_z \\+ [12]\\.\\d\\d\\) ${pulse}$`), `${name} ${bone}: ${z}`);
-      assert.equal(channels.position[0], 0);
-      // ...drifting a little along the skin as it rolls
-      assert.match(String(channels.position[1]), new RegExp(`^0\\.\\d\\d \\* math\\.sin\\(q\\.life_time \\* \\d+\\.\\d \\+ \\d+\\.0\\) ${pulse}$`), `${name} ${bone} drifts`);
+      // Five movements (kick, roll, stretch, hiccups, flutter) take turns in 6 s windows of a 30 s cycle...
+      assert.equal((z.match(/math\.mod\(q\.life_time \+ \d+\.\d, 30\.0\)/g) ?? []).length, 10, `${name} ${bone}: five windows`);
+      // ...each crossing the cube's measured room to the skin and rising at most its bulge beyond it
+      const bulges = [...z.matchAll(new RegExp(`\\(v\\.k_${bone}_z \\+ (\\d\\.\\d\\d)\\)`, 'g'))].map((m) => Number(m[1]));
+      assert.equal(bulges.length, 5, `${name} ${bone}: ${z.slice(0, 120)}`);
+      assert.ok(bulges.every((b) => b > 0 && b <= 1.0), `${name} ${bone} stays close to the skin: ${bulges.join(', ')}`);
+      assert.ok(z.startsWith('-('), 'only outward');
+      // the roll slides across within the cube's room sideways
+      assert.match(String(channels.position[0]), new RegExp(`^math\\.clamp\\(v\\.k_${bone}_x \\+ 0\\.4, 0\\.15, 1\\.2\\)`), `${name} ${bone} rolls`);
       // (v.kick_grow, 1 unless a body sets it, lets the port girls' skin-patch kicks swell less)
-      assert.match(String(channels.scale[0]), /^1\.0 \+ 0\.\d\d \* \(v\.kick_grow \?\? 1\.0\) \* math\.pow/, `${name} ${bone} grows as it pushes`);
+      assert.match(String(channels.scale[0]), /^1\.0 \+ 0\.[0-2]\d \* \(v\.kick_grow \?\? 1\.0\)/, `${name} ${bone} swells a little as it pushes`);
       assert.equal(channels.scale[2], '1.0', 'never deeper');
     }
-    const bulges = Object.values(anim.bones).map((c) => Number(/\+ (\d\.\d\d)\)/.exec(String(c.position[2]))?.[1]));
-    assert.ok(bulges.every((b) => b >= 1.2 && b <= 2.0), `${name} bulges ${bulges.join(', ')}`);
   }
   // The contraction wave: the belly lifts, rounds forward and narrows in six-second waves while v.cw rises.
   const wave = animations['animation.minepreggo.contraction_wave'];
@@ -1042,21 +1043,21 @@ test('no kick cube can leave the belly: every kick keyframe is clamped to the me
   // The clamp wraps the mod's numbers in Molang that cannot exceed the room plus the bulge.
   const clamped = clampKicks({ bones: { left_kick: { position: { '1.0': { post: [8, 0, -4] } }, scale: { '1.0': { post: [1.6, 1, 1] } } }, belly: { scale: [1, 1, 1] } } });
   // The peak of a kick is its share of the room plus the bulge: it always surfaces, never floats.
-  assert.deepEqual(clamped.bones.left_kick.position['1.0'].post, ['((v.k_left_kick_x + 1.25) * 1.0000)', 0, '(-(v.k_left_kick_z + 1.50) * 1.0000)']);
+  assert.deepEqual(clamped.bones.left_kick.position['1.0'].post, ['((v.k_left_kick_x + 0.90) * 1.0000)', 0, '(-(v.k_left_kick_z + 1.00) * 1.0000)']);
   assert.deepEqual(clamped.bones.left_kick.scale['1.0'].post, [1.25, 1, 1]);
   assert.deepEqual(clamped.bones.belly, { scale: [1, 1, 1] }, 'the belly itself is untouched');
   // Half-way keyframes keep the kick's own curve; a jitter (under half a unit) is only clamped.
   const curve = clampKicks({ bones: { front_kick: { position: { '0.0': [0, 0, 0], '0.5': [0, 0, -2], '1.0': [0, 0, -4] } } } });
-  assert.deepEqual(curve.bones.front_kick.position['0.5'], [0, 0, '(-(v.k_front_kick_z + 1.50) * 0.5000)']);
+  assert.deepEqual(curve.bones.front_kick.position['0.5'], [0, 0, '(-(v.k_front_kick_z + 1.00) * 0.5000)']);
   // The game precomputes catmull-rom curves and refuses them on Molang keyframes (dropping the whole
   // animation), so a clamped channel eases linearly; a channel left constant keeps its curve.
   const eased = clampKicks({ bones: { front_kick: { position: { '0.0': { post: [0, 0, 0], lerp_mode: 'catmullrom' }, '0.5': { post: [0, 0, -2], lerp_mode: 'catmullrom' }, '1.0': { pre: [0, 0, -4], post: [0, 0, -4], lerp_mode: 'catmullrom' } } }, belly: { position: { '0.0': { post: [0, 0, 0], lerp_mode: 'catmullrom' } } } } });
   assert.deepEqual(eased.bones.front_kick.position['0.0'], [0, 0, 0]);
-  assert.deepEqual(eased.bones.front_kick.position['0.5'], [0, 0, '(-(v.k_front_kick_z + 1.50) * 0.5000)']);
-  assert.deepEqual(eased.bones.front_kick.position['1.0'], { pre: [0, 0, '(-(v.k_front_kick_z + 1.50) * 1.0000)'], post: [0, 0, '(-(v.k_front_kick_z + 1.50) * 1.0000)'] });
+  assert.deepEqual(eased.bones.front_kick.position['0.5'], [0, 0, '(-(v.k_front_kick_z + 1.00) * 0.5000)']);
+  assert.deepEqual(eased.bones.front_kick.position['1.0'], { pre: [0, 0, '(-(v.k_front_kick_z + 1.00) * 1.0000)'], post: [0, 0, '(-(v.k_front_kick_z + 1.00) * 1.0000)'] });
   assert.equal(eased.bones.belly.position['0.0'].lerp_mode, 'catmullrom');
   const jitter = clampKicks({ bones: { top_kick: { position: [0.2, 0, -0.3] } } });
-  assert.deepEqual(jitter.bones.top_kick.position, ['math.clamp(0.2, -(v.k_top_kick_x + 1.25), (v.k_top_kick_x + 1.25))', 0, 'math.max(-(v.k_top_kick_z + 1.50), -0.3)']);
+  assert.deepEqual(jitter.bones.top_kick.position, ['math.clamp(0.2, -(v.k_top_kick_x + 0.90), (v.k_top_kick_x + 0.90))', 0, 'math.max(-(v.k_top_kick_z + 1.00), -0.3)']);
   // The room is measured from the belly's box, cubes rotated as the game rotates them.
   const room = kickRoom({ bones: [
     { name: 'belly', pivot: [0, 0, 0] },
