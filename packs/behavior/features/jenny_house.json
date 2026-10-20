@@ -1,0 +1,14 @@
+{
+  "format_version": "1.13.0",
+  "minecraft:structure_template_feature": {
+    "description": {
+      "identifier": "minepreggo:jenny_house"
+    },
+    "structure_name": "minepreggo:jenny_house",
+    "adjustment_radius": 8,
+    "constraints": {
+      "grounded": {}
+    },
+    "facing_direction": "south"
+  }
+}

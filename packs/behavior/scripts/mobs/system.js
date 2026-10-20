@@ -1,0 +1,1091 @@
+// The preggo mob systems of the Java mod, for tamed and wild mobs: PreggoMobSystem (fullness,
+// healing, savage state), PreggoMobPregnancySystemP0-P9 and AbstractPreggoMobPregnancySystem
+// (phases, symptoms, pains, miscarriage, labor and the automatic birth), FemaleFertilitySystem
+// (post-pregnancy recovery and post-partum lactation) and the hostile pregnant data.
+//
+// Java runs these every tick; here every loaded mob is processed once per STEP ticks and all
+// timers advance by STEP, which keeps durations and per-second chances the same.
+// The client sees the state only through the entity properties and events of DESIGN.md
+// (minepreggo:phase / pose / kick / growth / savage).
+
+import { EntityDamageCause, ItemStack, system, world } from '@minecraft/server';
+import { BABIES_BY_FINAL_PHASE, BELLY_RUBS_TICKS, CONFIG, CRAVING_TICKS, MAX_LEVEL, MILKING_TICKS, PHASES, TICKS } from '../pregnancy/data.js';
+import { accelerationDays, advancePhases, babiesFromPotion, clampBabies, createCommonPain, daysByPhase, distributeExtraDays, duplicateBabies as planDuplication, gradualAccelerationSpeed, pregnancyDamage, randomCraving, sigmoid, symptomSeverity } from '../pregnancy/math.js';
+import { clampLevel, newPregnancy } from '../pregnancy/state.js';
+import { COURTERS, COURTING_RANGE, COURTING_TICKS, FAMILIES, FULLNESS, birthItemOf, birthTicks, hungerTicks, postBirthTicks } from './families.js';
+import { MobRecord } from './state.js';
+
+/** @typedef {import('@minecraft/server').Entity} Entity */
+/** @typedef {import('@minecraft/server').Player} Player */
+/** @typedef {import('../pregnancy/state.js').Pregnancy} Pregnancy */
+/** @typedef {import('../pregnancy/state.js').PainInstance} PainInstance */
+/** @typedef {import('../pregnancy/math.js').CommonPain} CommonPain */
+/** @typedef {import('./families.js').Family} Family */
+
+/** Ticks between two updates of a mob. */
+export const STEP = 20;
+export const FAMILY_TAG = 'minepreggo_preggo_mob';
+
+const COMMON_PAINS = new Set(['MORNING_SICKNESS', 'FETAL_MOVEMENT', 'CONTRACTION', 'BACK_PAIN']);
+const LABOR_PAINS = new Set(['WATER_BREAKING', 'PREBIRTH', 'BIRTH', 'POSTBIRTH']);
+/** PregnancyPain.incapacitate: these pains stop the mob (Java blocks all of its goals). */
+const INCAPACITATING = new Set(['MORNING_SICKNESS', 'CONTRACTION', 'MISCARRIAGE', 'BIRTH', 'PREBIRTH', 'POSTBIRTH']);
+
+/** Pains to the minepreggo:pose values the client animates. */
+const POSE_OF_PAIN = {
+  MORNING_SICKNESS: 'morning_sickness',
+  FETAL_MOVEMENT: 'fetal_movement',
+  CONTRACTION: 'contraction',
+  BACK_PAIN: 'back_pain',
+  WATER_BREAKING: 'water_breaking',
+  PREBIRTH: 'prebirth',
+  BIRTH: 'birth',
+  POSTBIRTH: 'postbirth',
+  MISCARRIAGE: 'miscarriage',
+};
+
+/** @type {Map<string, MobRecord>} */
+const records = new Map();
+
+/** @param {Entity} entity */
+export function getRecord(entity) {
+  let record = records.get(entity.id);
+  if (!record || record.entity !== entity) {
+    record = new MobRecord(entity);
+    records.set(entity.id, record);
+  }
+  return record;
+}
+
+export const forgetRecord = (/** @type {string} */ id) => records.delete(id);
+export const familyOf = (/** @type {Entity} */ entity) => FAMILIES[entity.typeId];
+export const isTamed = (/** @type {Entity} */ entity) => entity.getComponent('minecraft:is_tamed') !== undefined;
+const phaseProperty = (/** @type {Entity} */ entity) => /** @type {number} */ (entity.getProperty('minepreggo:phase') ?? -1);
+/** The pregnancy variant the component groups carry (minecraft:variant = phase + 1, 0 when not pregnant). */
+const variantOf = (/** @type {Entity} */ entity) => /** @type {{ value: number } | undefined} */ (/** @type {unknown} */ (entity.getComponent('minecraft:variant')))?.value ?? 0;
+
+/**
+ * The phase as the client must see it. The events set the property too, but in game the client
+ * reads only values written through the script API (the pose property proved that), so every
+ * phase change writes it here as well.
+ */
+function setPhaseProperty(/** @type {Entity} */ entity, /** @type {number} */ phase) {
+  try {
+    entity.setProperty('minepreggo:phase', phase);
+  } catch (error) {
+    console.warn(`[minepreggo] cannot set the phase of ${entity.typeId}: ${error}`);
+  }
+  // The belly the client renders is an enum, written and compared exactly like the pose (the one
+  // property path proven in game): 'none' or 'p0'..'p9'.
+  try {
+    entity.setProperty('minepreggo:belly', bellyValue(phase));
+  } catch (error) {
+    console.warn(`[minepreggo] cannot set the belly of ${entity.typeId}: ${error}`);
+  }
+}
+
+/** The belly enum value for a phase. */
+export const bellyValue = (/** @type {number} */ phase) => (phase < 0 ? 'none' : `p${phase}`);
+const bellyProperty = (/** @type {Entity} */ entity) => /** @type {string} */ (entity.getProperty('minepreggo:belly') ?? 'none');
+
+/** Entity events change component groups (speed, size, variant); a failure must never stop the pregnancy. */
+function fireEvent(/** @type {Entity} */ entity, /** @type {string} */ name) {
+  try {
+    entity.triggerEvent(name);
+  } catch (error) {
+    console.warn(`[minepreggo] event ${name} failed on ${entity.typeId}: ${error}`);
+  }
+}
+
+// --- small helpers ---------------------------------------------------------------------------
+
+/** The mob's name for chat messages: its name tag, or the translated entity name. */
+export const nameOf = (/** @type {Entity} */ entity) =>
+  entity.nameTag ? { text: entity.nameTag } : { translate: `entity.${entity.typeId}.name` };
+
+/** @param {MobRecord} record @returns {Player | undefined} */
+export function ownerOf(record) {
+  const id = record.data.owner;
+  const owner = id ? world.getEntity(id) : undefined;
+  return owner?.typeId === 'minecraft:player' ? /** @type {Player} */ (owner) : undefined;
+}
+
+/** Sends `key` (with the mob's name as %s) to the owner, if she has one online. */
+export function tellOwner(/** @type {MobRecord} */ record, /** @type {string} */ key) {
+  ownerOf(record)?.sendMessage({ translate: key, with: { rawtext: [nameOf(record.entity)] } });
+}
+
+/** @param {Entity} entity @param {string} sound */
+export function playSound(entity, sound, volume = 1) {
+  entity.dimension.playSound(sound, entity.location, { volume, pitch: 0.8 + Math.random() * 0.3 });
+}
+
+/** @param {Entity} entity @param {string} particle */
+export function particles(entity, particle, count = 1, height = 1) {
+  for (let i = 0; i < count; i++) {
+    const { x, y, z } = entity.location;
+    try {
+      entity.dimension.spawnParticle(particle, { x: x + (Math.random() - 0.5) * 0.8, y: y + height + Math.random() * 0.4, z: z + (Math.random() - 0.5) * 0.8 });
+    } catch {
+      // unloaded or invalid position
+    }
+  }
+}
+
+const health = (/** @type {Entity} */ entity) => entity.getComponent('minecraft:health');
+
+/** Pregnancy pain damage. It is tagged so the hurt handler does not count it against the pregnancy. */
+function hurt(/** @type {MobRecord} */ record, amount = 1) {
+  const hp = health(record.entity);
+  if (!hp || hp.currentValue < 1.5) return;
+  record.selfHurtTick = system.currentTick;
+  record.entity.applyDamage(amount, { cause: EntityDamageCause.magic });
+}
+
+/** AbstractPregnancySystem.tryHurt: the hurt that marks every stage of labor. */
+const tryHurt = (/** @type {MobRecord} */ record) => hurt(record, 1);
+
+/** tryHurtByCooldown: every 61 ticks, 10 % chance of 1 damage. */
+function tryHurtByCooldown(/** @type {MobRecord} */ record) {
+  record.data.hurtCooldown += STEP;
+  if (record.data.hurtCooldown < 61) return;
+  record.data.hurtCooldown = 0;
+  if (Math.random() < 0.1) hurt(record, 1);
+}
+
+/** Drops an item at the mob, or slightly in front of her. */
+export function dropItem(/** @type {Entity} */ entity, /** @type {string} */ item, inFront = false) {
+  const { x, y, z } = entity.location;
+  const view = entity.getViewDirection();
+  const at = inFront ? { x: x + view.x * 0.8, y: y + 0.8, z: z + view.z * 0.8 } : { x, y: y + 0.5, z };
+  entity.dimension.spawnItem(stackOf(item), at);
+}
+
+/** An item stack, or a human baby when the item is not in this build (a Jenny girl's baby without the import). */
+function stackOf(/** @type {string} */ item) {
+  try {
+    return new ItemStack(item, 1);
+  } catch {
+    return new ItemStack('minepreggo:baby_human', 1);
+  }
+}
+
+/**
+ * A baby (or an egg) is born: into the arms of the player helping her (jenny/belly_scenes.js), else onto the ground in front of her.
+ * @param {MobRecord} record @param {string} item
+ */
+function deliverBaby(record, item) {
+  const egg = familyOf(record.entity)?.eggItem === item;
+  const { entity } = record;
+  const helper = record.birthHelper ? world.getEntity(record.birthHelper) : undefined;
+  if (helper?.isValid && helper.typeId === 'minecraft:player' && helper.dimension.id === entity.dimension.id) {
+    const d = Math.hypot(helper.location.x - entity.location.x, helper.location.y - entity.location.y, helper.location.z - entity.location.z);
+    if (d <= 8) {
+      const stack = stackOf(item);
+      const leftover = /** @type {any} */ (helper.getComponent('minecraft:inventory'))?.container?.addItem(stack);
+      if (leftover) helper.dimension.spawnItem(leftover, helper.location);
+      /** @type {Player} */ (helper).sendMessage({ translate: egg ? 'minepreggo.egg.caught' : 'minepreggo.birth.caught', with: { rawtext: [nameOf(entity)] } });
+      particles(entity, 'minecraft:heart_particle', 6, 1.0);
+      return;
+    }
+  }
+  dropItem(entity, item, true);
+}
+
+/**
+ * Her belly is rubbed (a touch, or a belly scene): the touch sound from P2, and from P3 a belly-rubs
+ * need eases by `amount` (gone below 8), with hearts.
+ * @param {MobRecord} record @param {number} amount
+ */
+export function rubBelly(record, amount) {
+  const p = record.data.pregnancy;
+  if (!p) return;
+  if (p.phase >= 2) playSound(record.entity, 'minepreggo.belly_touch', 0.7);
+  if (p.phase >= 3 && p.symptoms.BELLY_RUBS !== undefined) {
+    p.bellyRubs = clampLevel(p.bellyRubs - amount);
+    if (p.bellyRubs <= 8) delete p.symptoms.BELLY_RUBS;
+    particles(record.entity, 'minecraft:heart_particle', 3);
+  }
+  record.save();
+}
+
+/**
+ * The player helping her pushes with her (jenny/belly_scenes.js): labor before the birth or the
+ * current baby's birth moves on by `ticks`. Returns whether there was anything to push.
+ * @param {MobRecord} record @param {number} ticks
+ */
+export function assistPush(record, ticks) {
+  const p = record.data.pregnancy;
+  const pain = /** @type {PainInstance | null | undefined} */ (p?.pain);
+  if (!p || !pain) return false;
+  // pushing brings the waters' end and the pre-birth on sooner, and shortens each birth
+  if (pain.type === 'WATER_BREAKING' || pain.type === 'PREBIRTH') {
+    pain.elapsed = Math.min(pain.duration, pain.elapsed + ticks);
+    return true;
+  }
+  const birth = /** @type {{ remaining: number } | null} */ (/** @type {unknown} */ (p.birth));
+  if (pain.type === 'BIRTH' && birth) {
+    birth.remaining = Math.max(1, birth.remaining - ticks);
+    record.sent = { ...record.sent, growth: undefined };
+    return true;
+  }
+  return false;
+}
+
+/** Keeps an incapacitated mob in place and harmless until the next update. */
+function incapacitate(/** @type {Entity} */ entity) {
+  entity.addEffect('slowness', STEP + 10, { amplifier: 255, showParticles: false });
+  entity.addEffect('weakness', STEP + 10, { amplifier: 255, showParticles: false });
+}
+
+const randomInt = (/** @type {number} */ min, /** @type {number} */ max) => min + Math.floor(Math.random() * (max - min + 1));
+
+// --- starting and ending pregnancies -----------------------------------------------------------
+
+/** Babies are the mother's species and creature (Java's litter of a potion pregnancy, simplified). */
+function setWomb(/** @type {Pregnancy} */ p, /** @type {Family} */ family, /** @type {number} */ babies) {
+  p.womb = /** @type {any} */ (Array.from({ length: babies }, () => family.species));
+  p.originalBabies = babies;
+}
+
+/**
+ * PreggoMobHelper.startPregnancy: P0 with `babies` babies. Tamed mobs keep their owner; wild
+ * (untamed) ones stay wild and can still be tamed, like Java's untamed "tamable pregnant" types.
+ * @param {MobRecord} record
+ * @param {number} babies
+ */
+export function startPregnancy(record, babies) {
+  const { data, entity } = record;
+  const family = familyOf(entity);
+  if (!family || data.pregnancy || data.wild || data.post) return false;
+  const p = newPregnancy(babies, 'HUMAN');
+  setWomb(p, family, babies);
+  data.pregnancy = p;
+  data.lactation = null;
+  setPhaseProperty(entity, 0);
+  fireEvent(entity, 'minepreggo:set_phase_0');
+  particles(entity, 'minecraft:heart_particle', 5);
+  tellOwner(record, 'minepreggo.mob.pregnancy.started');
+  record.save();
+  return true;
+}
+
+/** Moves to `phase` (commands and phase advance): days and timer restart like Java's conversion. */
+export function setPhase(/** @type {MobRecord} */ record, /** @type {number} */ phase) {
+  const p = record.data.pregnancy;
+  if (!p || phase < 0 || phase > p.lastPhase) return false;
+  p.phase = phase;
+  p.daysPassed = 0;
+  p.timer = 0;
+  setPhaseProperty(record.entity, phase);
+  fireEvent(record.entity, `minepreggo:set_phase_${phase}`);
+  record.dirty = true;
+  return true;
+}
+
+/** Ends the pregnancy: back to the non-pregnant model, optionally into post-pregnancy recovery. */
+export function endPregnancy(/** @type {MobRecord} */ record, /** @type {'PARTUM' | 'MISCARRIAGE' | null} */ post) {
+  const { data, entity } = record;
+  data.pregnancy = null;
+  data.post = post ? { type: post, timer: 0 } : null;
+  data.lactation = post === 'PARTUM' ? { level: 0, timer: 0, elapsed: 0 } : null;
+  setPhaseProperty(entity, -1);
+  fireEvent(entity, 'minepreggo:set_not_pregnant');
+  record.save();
+}
+
+/**
+ * HostilePregnantPreggoMobDataImpl.init for a mob that spawned pregnant: birth phase, babies and
+ * how likely a hit is to incapacitate her. Her phase never changes.
+ */
+export function initWild(/** @type {MobRecord} */ record, /** @type {number} */ phase) {
+  const lastPhase = randomInt(Math.max(phase, 4), 9);
+  const days = daysByPhase(70, lastPhase);
+  const totalDays = days.slice(0, phase).reduce((a, b) => a + b, 0) + randomInt(0, days[phase] ?? 0);
+  const counts = BABIES_BY_FINAL_PHASE[/** @type {4|5|6|7|8|9} */ (lastPhase)];
+  record.data.wild = {
+    phase,
+    lastPhase,
+    babies: counts[randomInt(0, counts.length - 1)],
+    totalDays,
+    painProbability: sigmoid(0.05, 0.15, 0.1, Math.min(1, totalDays / 70), 0.6),
+    cooldown: 60 + 20 * phase,
+    painTimer: 0,
+    incapacitated: false,
+  };
+  setPhaseProperty(record.entity, phase);
+  fireEvent(record.entity, 'minepreggo:hostile_pregnant_init');
+  record.save();
+}
+
+// --- pains -----------------------------------------------------------------------------------
+
+/** AbstractPreggoMobPregnancySystem.tryToStartCommonPregnancyPain */
+export function startCommonPain(/** @type {MobRecord} */ record, /** @type {CommonPain} */ pain, /** @type {import('../pregnancy/math.js').PainCause} */ cause, /** @type {number} */ baseDuration) {
+  const p = /** @type {Pregnancy} */ (record.data.pregnancy);
+  if (p.pain && !COMMON_PAINS.has(p.pain.type)) return false;
+  const { duration, severity } = createCommonPain(pain, p.phase, p.lastPhase, cause, baseDuration);
+  // From P5, fetal movement can be strong enough to make her sit down (chance 0.04 x phase).
+  const incapacitating = pain === 'FETAL_MOVEMENT' && p.phase >= 5 && Math.random() < 0.04 * p.phase;
+  if (pain === 'FETAL_MOVEMENT' || pain === 'CONTRACTION') playSound(record.entity, 'minepreggo.stomach_growls');
+  if (pain === 'BACK_PAIN') {
+    tellOwner(record, 'chat.minepreggo.preggo_mob.pregnancy.back_pain.message');
+    record.entity.getComponent('minecraft:rideable')?.ejectRiders();
+  }
+  p.pain = /** @type {PainInstance & { incapacitating?: boolean }} */ ({ type: pain, duration, severity, elapsed: 0, incapacitating });
+  record.dirty = true;
+  return true;
+}
+
+/**
+ * Potion of Fetal Movement Inducement used on a pregnant mob (P3+): a fetal movement of the chosen
+ * severity, with Java's chance of it being strong enough to sit her down from P5.
+ * @param {MobRecord} record
+ * @param {number} severity 0-4
+ */
+export function induceFetalMovement(record, severity) {
+  const { wild } = record.data;
+  if (wild) {
+    // A hostile pregnant mob doubles over for her pain cooldown, the kick as strong as the potion.
+    const level = Math.min(4, Math.max(0, Math.round(severity)));
+    wild.incapacitated = true;
+    wild.painTimer = 0;
+    wild.kick = level <= 0 ? 0 : level < 3 ? 1 : 2;
+    playSound(record.entity, 'minepreggo.stomach_growls');
+    syncClient(record);
+    record.save();
+    return true;
+  }
+  const p = record.data.pregnancy;
+  if (!p || p.phase < 3) return false;
+  if (p.pain && !COMMON_PAINS.has(p.pain.type)) return false;
+  const level = Math.min(4, Math.max(0, Math.round(severity)));
+  const duration = Math.round(PHASES[p.phase].fetalMovementTicks * (1 + level * 0.25));
+  const incapacitating = p.phase >= 5 && Math.random() < 0.04 * p.phase;
+  playSound(record.entity, 'minepreggo.stomach_growls');
+  p.pain = /** @type {PainInstance & { incapacitating?: boolean }} */ ({ type: 'FETAL_MOVEMENT', duration, severity: level, elapsed: 0, incapacitating });
+  syncClient(record);
+  record.save();
+  return true;
+}
+
+/** P0/P3/P4 tryInitRandomPregnancyPain (a draw every ~21 ticks in Java, every STEP here). */
+function tryInitRandomPain(/** @type {MobRecord} */ record) {
+  const p = /** @type {Pregnancy} */ (record.data.pregnancy);
+  const config = PHASES[p.phase];
+  if (p.phase >= 4 && p.phase === p.lastPhase && Math.random() < config.contractionProb) {
+    return startCommonPain(record, 'CONTRACTION', 'NATURAL', config.contractionTicks);
+  }
+  if (p.phase >= 3 && Math.random() < config.fetalMovementProb) {
+    return startCommonPain(record, 'FETAL_MOVEMENT', 'NATURAL', config.fetalMovementTicks);
+  }
+  if (Math.random() < config.morningSicknessProb) {
+    return startCommonPain(record, 'MORNING_SICKNESS', 'NATURAL', config.morningSicknessTicks);
+  }
+  return false;
+}
+
+/** PreggoMobPregnancySystemP0.evaluatePregnancyPains */
+function evaluateCommonPain(/** @type {MobRecord} */ record) {
+  const p = /** @type {Pregnancy} */ (record.data.pregnancy);
+  const pain = /** @type {PainInstance} */ (p.pain);
+  if (pain.duration > -1 && pain.elapsed >= pain.duration) {
+    p.pain = null;
+    return;
+  }
+  pain.elapsed += STEP;
+  if (pain.type === 'FETAL_MOVEMENT' || pain.type === 'CONTRACTION') tryHurtByCooldown(record);
+  else if (pain.type === 'BACK_PAIN' && pain.elapsed % 200 < STEP) particles(record.entity, 'minecraft:villager_angry', 3);
+}
+
+/**
+ * AbstractPregnancySystem.onEatSpicyFood for mobs: from P4, spicy food can bring on contractions
+ * (last phase) or fetal movement.
+ */
+export function onEatSpicyFood(/** @type {MobRecord} */ record) {
+  const p = record.data.pregnancy;
+  if (!p || p.phase < 4) return false;
+  if (p.phase === p.lastPhase && Math.random() < 0.2 + p.phase * 0.05) {
+    if (startCommonPain(record, 'CONTRACTION', 'FOOD', TICKS.spicyContraction)) {
+      tryHurt(record);
+      tellOwner(record, 'chat.minepreggo.preggo_mob.pregnancy.message.craving.spicy_food.contraction');
+      return true;
+    }
+  } else if (Math.random() < 0.2 + p.phase * 0.025) {
+    if (startCommonPain(record, 'FETAL_MOVEMENT', 'FOOD', TICKS.spicyFetalMovement)) {
+      tryHurt(record);
+      tellOwner(record, 'chat.minepreggo.preggo_mob.pregnancy.message.craving.spicy_food.fetal_movement');
+      return true;
+    }
+  }
+  return false;
+}
+
+// --- symptoms and needs ------------------------------------------------------------------------
+
+/** P1 craving at 16, P2 milking at 12, P3 belly rubs at 12 (mob thresholds). */
+function tryInitSymptom(/** @type {Pregnancy} */ p) {
+  if (p.phase >= 1 && p.craving >= 16 && p.symptoms.CRAVING === undefined) {
+    p.symptoms.CRAVING = symptomSeverity('CRAVING', p.phase, p.lastPhase);
+    p.cravingType = randomCraving();
+  } else if (p.phase >= 2 && p.milking >= 12 && p.symptoms.MILKING === undefined) {
+    p.symptoms.MILKING = 0;
+  } else if (p.phase >= 3 && p.bellyRubs >= 12 && p.symptoms.BELLY_RUBS === undefined) {
+    p.symptoms.BELLY_RUBS = 0;
+  }
+}
+
+/** evaluateCravingTimer / evaluateMilkingTimer / evaluateBellyRubsTimer */
+function evaluateNeeds(/** @type {MobRecord} */ record) {
+  const p = /** @type {Pregnancy} */ (record.data.pregnancy);
+  /** @param {'craving' | 'milking' | 'bellyRubs'} meter @param {(number | undefined)[]} table */
+  const grow = (meter, table) => {
+    const total = table[p.phase];
+    if (total === undefined || p[meter] >= MAX_LEVEL) return;
+    const timerKey = /** @type {'cravingTimer' | 'milkingTimer' | 'bellyRubsTimer'} */ (`${meter}Timer`);
+    p[timerKey] += STEP;
+    if (p[timerKey] >= total) {
+      p[meter] = clampLevel(p[meter] + 1);
+      p[timerKey] = 0;
+    }
+  };
+  grow('craving', CRAVING_TICKS);
+  grow('milking', MILKING_TICKS);
+  grow('bellyRubs', BELLY_RUBS_TICKS);
+  if (p.milking >= 12 && p.symptoms.MILKING !== undefined && system.currentTick % 300 < STEP) {
+    particles(record.entity, 'minecraft:white_smoke_particle', 3, 1.2);
+  }
+}
+
+/** P1 evaluatePregnancyHealing: pregnancy health comes back slowly. */
+function evaluateHealing(/** @type {MobRecord} */ record) {
+  const p = /** @type {Pregnancy} */ (record.data.pregnancy);
+  if (p.health >= 100) return;
+  p.healthTimer += STEP;
+  if (p.healthTimer <= CONFIG.ticksForPregnancyHealing) return;
+  p.health = Math.min(100, p.health + Math.ceil(CONFIG.pregnancyHealingAmount * (1 - CONFIG.pregnancyHealingReductionPerPhase * p.phase)));
+  p.healthTimer = 0;
+  particles(record.entity, 'minecraft:villager_happy', 5);
+}
+
+// --- miscarriage, labor and birth -------------------------------------------------------------
+
+/** PreggoMobPregnancySystemP1.startMiscarriage (no miscarriage in P0). */
+export function startMiscarriage(/** @type {MobRecord} */ record) {
+  const p = record.data.pregnancy;
+  if (!p || p.phase < 1 || (p.pain && (LABOR_PAINS.has(p.pain.type) || p.pain.type === 'MISCARRIAGE'))) return false;
+  tryHurt(record);
+  p.pain = { type: 'MISCARRIAGE', duration: TICKS.miscarriage, severity: 0, elapsed: 0 };
+  tellOwner(record, 'chat.minepreggo.preggo_mob.miscarriage.message.init');
+  record.entity.getComponent('minecraft:rideable')?.ejectRiders();
+  record.save();
+  return true;
+}
+
+function evaluateMiscarriage(/** @type {MobRecord} */ record) {
+  const p = /** @type {Pregnancy} */ (record.data.pregnancy);
+  const pain = /** @type {PainInstance} */ (p.pain);
+  if (pain.elapsed < pain.duration) {
+    pain.elapsed += STEP;
+    particles(record.entity, 'minecraft:redstone_ore_dust_particle', 3, 0.4);
+    return;
+  }
+  const family = /** @type {Family} */ (familyOf(record.entity));
+  for (let i = 0; i < p.womb.length; i++) dropItem(record.entity, family.deadFetusItem);
+  tellOwner(record, 'chat.minepreggo.preggo_mob.miscarriage.message.post');
+  endPregnancy(record, 'MISCARRIAGE');
+}
+
+/** PreggoMobPregnancySystemP4.breakWater */
+function breakWater(/** @type {MobRecord} */ record) {
+  const p = /** @type {Pregnancy} */ (record.data.pregnancy);
+  tryHurt(record);
+  p.pain = { type: 'WATER_BREAKING', duration: TICKS.waterBreaking, severity: 0, elapsed: 0 };
+  tellOwner(record, 'chat.minepreggo.preggo_mob.birth.message.init');
+  record.save();
+}
+
+/** Starts labor right away (commands): the last phase's days are treated as done. */
+export function forceLabor(/** @type {MobRecord} */ record) {
+  const p = record.data.pregnancy;
+  if (!p || (p.pain && !COMMON_PAINS.has(p.pain.type))) return false;
+  setPhase(record, p.lastPhase);
+  p.daysPassed = p.daysByPhase[p.phase];
+  breakWater(record);
+  return true;
+}
+
+/** Potion of Pregnancy Acceleration on a mob (PregnancyAcceleration.applyEffectTick, mob branch). */
+export function accelerate(/** @type {MobRecord} */ record, /** @type {number} */ amplifier) {
+  const p = record.data.pregnancy;
+  if (!p || (p.pain && (LABOR_PAINS.has(p.pain.type) || p.pain.type === 'MISCARRIAGE'))) return false;
+  const result = advancePhases(p.daysByPhase, p.phase, p.daysPassed, accelerationDays(amplifier, CONFIG.totalPregnancyDays), p.lastPhase);
+  if (result.phase !== p.phase) setPhase(record, result.phase);
+  p.daysPassed = result.daysPassed;
+  if (p.phase === p.lastPhase && p.daysPassed >= p.daysByPhase[p.phase] && p.phase >= 4) breakWater(record);
+  else playSound(record.entity, 'minepreggo.stomach_growls');
+  record.save();
+  return true;
+}
+
+/** Potion of Gradual Pregnancy Acceleration on a mob: faster timer for `duration` ticks. */
+export function accelerateGradually(/** @type {MobRecord} */ record, /** @type {number} */ amplifier, duration = 3600) {
+  const p = record.data.pregnancy;
+  if (!p || (p.pain && (LABOR_PAINS.has(p.pain.type) || p.pain.type === 'MISCARRIAGE'))) return false;
+  p.acceleration = { amplifier, endTime: system.currentTick + duration };
+  record.save();
+  return true;
+}
+
+const inLaborOrMiscarriage = (/** @type {Pregnancy} */ p) => !!p.pain && (LABOR_PAINS.has(p.pain.type) || p.pain.type === 'MISCARRIAGE');
+
+/** Potion of Pregnancy Delay on a pregnant mob (PregnancyDelay, mob branch): 7 % x level more days. Returns the days. */
+export function delayPregnancy(/** @type {MobRecord} */ record, /** @type {number} */ amplifier) {
+  const p = record.data.pregnancy;
+  if (!p || inLaborOrMiscarriage(p)) return 0;
+  const days = accelerationDays(amplifier, CONFIG.totalPregnancyDays);
+  distributeExtraDays(p, days);
+  playSound(record.entity, 'minepreggo.stomach_growls');
+  record.save();
+  return days;
+}
+
+/** Potion of Baby Duplication on a mob (BabyDuplication, mob branches): level + 1 more babies, 10 at most. Returns the babies added. */
+export function duplicateBabies(/** @type {MobRecord} */ record, /** @type {number} */ amplifier) {
+  const { data } = record;
+  if (data.wild) {
+    const before = data.wild.babies;
+    data.wild.babies = clampBabies(before + amplifier + 1);
+    if (data.wild.babies === before) return 0;
+    record.save();
+    return data.wild.babies - before;
+  }
+  const p = data.pregnancy;
+  if (!p || inLaborOrMiscarriage(p)) return 0;
+  const before = p.womb.length;
+  const phase = planDuplication(p, amplifier, CONFIG.totalPregnancyDays);
+  if (phase < 0) return 0;
+  if (phase !== p.phase) setPhase(record, phase);
+  playSound(record.entity, 'minepreggo.stomach_growls');
+  record.save();
+  return p.womb.length - before;
+}
+
+/** Potion of Pregnancy Healing on a mob: pregnancy health 100. */
+export function healPregnancy(/** @type {MobRecord} */ record) {
+  const p = record.data.pregnancy;
+  if (!p) return false;
+  p.health = 100;
+  p.healthTimer = 0;
+  particles(record.entity, 'minecraft:heart_particle', 12);
+  record.save();
+  return true;
+}
+
+/** Potion of Pregnancy Harming on a mob: -30 pregnancy health and a heart; at 0 she miscarries. */
+export function harmPregnancy(/** @type {MobRecord} */ record) {
+  const p = record.data.pregnancy;
+  if (!p || inLaborOrMiscarriage(p)) return false;
+  p.health = Math.max(0, p.health - 30);
+  hurt(record, 1);
+  playSound(record.entity, 'minepreggo.pregnancy_pain');
+  if (p.health <= 0) startMiscarriage(record);
+  else record.save();
+  return true;
+}
+
+/** PreggoMobPregnancySystemP4.evaluateWaterBreaking / evaluateBirth: automatic, no pushing. */
+function evaluateLabor(/** @type {MobRecord} */ record) {
+  const { entity } = record;
+  const p = /** @type {Pregnancy} */ (record.data.pregnancy);
+  const pain = /** @type {PainInstance} */ (p.pain);
+  const family = /** @type {Family} */ (familyOf(entity));
+  const expired = pain.duration > -1 && pain.elapsed >= pain.duration;
+
+  switch (pain.type) {
+    case 'WATER_BREAKING':
+      if (!expired) {
+        pain.elapsed += STEP;
+        particles(entity, 'minecraft:water_drip_particle', 3, 0.4);
+        return;
+      }
+      // startLabor
+      tryHurt(record);
+      p.pain = { type: 'PREBIRTH', duration: PHASES[p.phase].preBirthTicks, severity: 0, elapsed: 0 };
+      tellOwner(record, 'chat.minepreggo.preggo_mob.birth.message.warning');
+      entity.getComponent('minecraft:rideable')?.ejectRiders();
+      record.save();
+      return;
+    case 'PREBIRTH':
+      if (record.laying) return; // her egg-laying scene keeps the time (jenny/kobold_eggs.js)
+      if (!expired) {
+        pain.elapsed += STEP;
+        particles(entity, 'minecraft:water_drip_particle', 3, 0.4);
+        return;
+      }
+      tryHurt(record);
+      enterBirth(record);
+      return;
+    case 'BIRTH': {
+      const birth = /** @type {{ remaining: number, babiesBorn: number } | null} */ (/** @type {unknown} */ (p.birth));
+      if (!birth) {
+        p.pain = { type: 'POSTBIRTH', duration: p.postBirthTicks || 200, severity: 0, elapsed: 0 };
+        record.save();
+        return;
+      }
+      if (record.laying) return;
+      birth.remaining -= STEP;
+      if (birth.remaining > 0) {
+        particles(entity, 'minecraft:redstone_ore_dust_particle', 2, 0.4);
+        return;
+      }
+      tryHurt(record);
+      deliverNext(record);
+      return;
+    }
+    case 'POSTBIRTH':
+      if (!expired) {
+        pain.elapsed += STEP;
+        return;
+      }
+      tellOwner(record, 'chat.minepreggo.preggo_mob.birth.message.post');
+      endPregnancy(record, 'PARTUM');
+  }
+}
+
+// --- per-update logic --------------------------------------------------------------------------
+
+/**
+ * The pre-birth is over: the first baby (or egg) is on its way out.
+ * @param {MobRecord} record
+ */
+export function enterBirth(record) {
+  const p = /** @type {Pregnancy} */ (record.data.pregnancy);
+  const family = /** @type {Family} */ (familyOf(record.entity));
+  p.postBirthTicks = p.womb.length * postBirthTicks(family);
+  p.originalBabies = p.womb.length;
+  p.womb.shift();
+  p.pain = { type: 'BIRTH', duration: -1, severity: 0, elapsed: 0 };
+  p.birth = /** @type {any} */ ({ remaining: birthTicks(family), babiesBorn: 0 });
+  tellOwner(record, 'chat.minepreggo.preggo_mob.birth.message.pre');
+  record.save();
+}
+
+/**
+ * The baby (or egg) on its way out is born, and the next one starts; returns whether that was the last.
+ * @param {MobRecord} record
+ */
+export function deliverNext(record) {
+  const { entity } = record;
+  const p = /** @type {Pregnancy} */ (record.data.pregnancy);
+  const family = /** @type {Family} */ (familyOf(entity));
+  const birth = /** @type {{ remaining: number, babiesBorn: number }} */ (/** @type {unknown} */ (p.birth));
+  deliverBaby(record, birthItemOf(family));
+  particles(entity, 'minecraft:redstone_ore_dust_particle', 10, 0.4);
+  playSound(entity, 'minepreggo.splash', 0.3);
+  const next = p.womb.shift();
+  p.birth = next ? /** @type {any} */ ({ remaining: birthTicks(family), babiesBorn: (birth?.babiesBorn ?? 0) + 1 }) : null;
+  record.save();
+  return !next;
+}
+
+/**
+ * Her labor comes on at once (an egg-laying scene: jenny/kobold_eggs.js): at the end of her
+ * pregnancy, in the pre-birth (or still in the birth she is in). False when she has nothing to lay.
+ * @param {MobRecord} record
+ */
+export function startLaying(record) {
+  const p = record.data.pregnancy;
+  if (!p || p.pain?.type === 'MISCARRIAGE' || p.pain?.type === 'POSTBIRTH' || !(p.womb.length > 0 || p.birth)) return false;
+  if (p.pain?.type === 'BIRTH') return true;
+  if (p.phase !== p.lastPhase) setPhase(record, p.lastPhase);
+  p.daysPassed = Math.max(p.daysPassed, p.daysByPhase[p.phase] ?? 0);
+  p.pain = { type: 'PREBIRTH', duration: PHASES[p.phase].preBirthTicks, severity: 0, elapsed: 0 };
+  record.save();
+  return true;
+}
+
+/** Writes what the client shows now, not at the next update (a scene's finer steps). */
+export const refreshClient = (/** @type {MobRecord} */ record) => syncClient(record);
+
+/** One update of a pregnancy (PreggoMobPregnancySystemP0-P9.evaluatePregnancySystem). */
+function tickPregnancy(/** @type {MobRecord} */ record) {
+  const { entity, data } = record;
+  const p = /** @type {Pregnancy} */ (data.pregnancy);
+  record.dirty = true;
+  const atLast = p.phase === p.lastPhase;
+  const daysDone = p.daysPassed >= p.daysByPhase[p.phase];
+
+  if (p.pain?.type === 'MISCARRIAGE') return evaluateMiscarriage(record);
+  if (p.pain && LABOR_PAINS.has(p.pain.type)) return evaluateLabor(record);
+  if (p.phase >= 4 && atLast && daysDone) return breakWater(record);
+
+  if (p.phase >= 4 && record.moving && entity.isOnGround && !entity.getComponent('minecraft:riding')) {
+    // Long walks bring on back pain (monster slime girls bounce: 5x as fast).
+    const { species, creature } = /** @type {Family} */ (familyOf(entity));
+    data.moveTimer += species === 'SLIME' && creature === 'MONSTER' ? STEP * 5 : STEP;
+    if (data.moveTimer > 7200 - 350 * p.phase) {
+      startCommonPain(record, 'BACK_PAIN', 'TIRENESS', PHASES[p.phase].backPainTicks);
+      data.moveTimer = 0;
+    }
+  }
+  if (p.phase >= 1) {
+    tryInitSymptom(p);
+    evaluateNeeds(record);
+    evaluateHealing(record);
+  }
+  if (!p.pain) tryInitRandomPain(record);
+  else evaluateCommonPain(record);
+  if (p.phase >= 3 && Math.random() < 0.01) playSound(entity, 'minepreggo.stomach_growls', 0.2);
+
+  // The clock stops once the birth phase is complete; a gradual acceleration speeds it up.
+  if (!(atLast && daysDone)) {
+    if (p.acceleration && system.currentTick >= p.acceleration.endTime) p.acceleration = null;
+    p.timer += STEP * (p.acceleration ? gradualAccelerationSpeed(p.acceleration.amplifier, CONFIG.ticksPerPregnancyDay) : 1);
+    if (p.timer >= CONFIG.ticksPerPregnancyDay) {
+      p.timer -= CONFIG.ticksPerPregnancyDay;
+      p.daysPassed++;
+    }
+  }
+  if (p.daysPassed >= p.daysByPhase[p.phase] && !atLast) {
+    setPhase(record, p.phase + 1);
+    record.save();
+  }
+}
+
+/** FemaleFertilitySystem: post-pregnancy recovery and post-partum lactation. */
+function tickNotPregnant(/** @type {MobRecord} */ record) {
+  const { data } = record;
+  if (data.post) {
+    data.post.timer += STEP;
+    if (data.post.timer >= CONFIG.ticksOfPostPregnancyPhase) data.post = null;
+    record.dirty = true;
+  }
+  const lactation = data.lactation;
+  if (lactation) {
+    if (lactation.level < MAX_LEVEL) {
+      lactation.timer += STEP;
+      if (lactation.timer >= CONFIG.postBirthLactationCooldown) {
+        lactation.timer = 0;
+        lactation.level = clampLevel(lactation.level + 1);
+      }
+    }
+    lactation.elapsed += STEP;
+    if (lactation.elapsed >= CONFIG.ticksOfPostPartumLactation) data.lactation = null;
+    record.dirty = true;
+  }
+}
+
+/** PreggoMobSystem: hunger, healing and the savage state of a tamed mob. */
+function tickTamed(/** @type {MobRecord} */ record) {
+  const { entity, data } = record;
+  if (data.savage) {
+    if (system.currentTick % 200 < STEP) particles(entity, 'minecraft:villager_angry', 2);
+    return;
+  }
+  if (data.fullness > 0) {
+    data.hungerTimer += STEP * (record.moving ? (entity.isInWater ? 4 : 2) : 1);
+    if (data.hungerTimer >= hungerTicks(/** @type {Family} */ (familyOf(entity)), data.pregnancy ? data.pregnancy.phase : -1)) {
+      data.fullness--;
+      data.hungerTimer = 0;
+      record.dirty = true;
+    }
+  }
+  if (data.fullness <= 0) {
+    becomeSavage(record);
+    return;
+  }
+  // Heals 1 HP per second while well fed, at the cost of fullness.
+  const hp = health(entity);
+  if (hp && data.fullness >= FULLNESS.healAbove && hp.currentValue < hp.effectiveMax) {
+    hp.setCurrentValue(Math.min(hp.effectiveMax, hp.currentValue + 1));
+    data.fullness--;
+    record.dirty = true;
+  }
+}
+
+export function becomeSavage(/** @type {MobRecord} */ record) {
+  record.data.savage = true;
+  fireEvent(record.entity, 'minepreggo:become_savage');
+  record.entity.getComponent('minecraft:rideable')?.ejectRiders();
+  tellOwner(record, 'chat.minepreggo.preggo_mob.message.is_savage');
+  record.save();
+}
+
+export function calmDown(/** @type {MobRecord} */ record) {
+  record.data.savage = false;
+  fireEvent(record.entity, 'minepreggo:calm_down');
+  tellOwner(record, 'chat.minepreggo.preggo_mob.message.is_no_longer_savage');
+  record.save();
+}
+
+/** Hostile pregnant mobs: an incapacitation wears off after its cooldown. */
+function tickWild(/** @type {MobRecord} */ record) {
+  const wild = /** @type {import('./state.js').WildPregnancy} */ (record.data.wild);
+  if (!wild.incapacitated) return;
+  wild.painTimer += STEP;
+  if (wild.painTimer > wild.cooldown) {
+    wild.incapacitated = false;
+    wild.painTimer = 0;
+    delete wild.kick;
+  }
+  record.dirty = true;
+}
+
+/** What the client should show: the animation pose, fetal movement intensity and belly growth. */
+function clientState(/** @type {MobRecord} */ record) {
+  const { pregnancy: p, wild } = record.data;
+  if (wild) return { pose: wild.incapacitated ? 'incapacitated' : 'none', kick: wild.incapacitated ? wild.kick ?? 1 : 1, growth: 0 };
+  if (!p) return { pose: 'none', kick: 0, growth: 0 };
+  const pain = /** @type {(PainInstance & { incapacitating?: boolean }) | null} */ (p.pain);
+  let pose = pain ? POSE_OF_PAIN[pain.type] : p.symptoms.BELLY_RUBS !== undefined ? 'belly_rubs' : 'none';
+  if (pain?.type === 'FETAL_MOVEMENT' && pain.incapacitating) pose = 'kicking_sit';
+  // FetalMovement.getAnimation: severity 0 -> I, 1-2 -> II, 3+ -> III; the babies kick hardest on their way out
+  const severity = pain?.type === 'PREBIRTH' || pain?.type === 'BIRTH' ? 4 : pain?.severity ?? 0;
+  const kick = severity <= 0 ? 0 : severity < 3 ? 1 : 2;
+  const days = p.daysByPhase[p.phase] || 1;
+  let growth = Math.min(1, (p.daysPassed + p.timer / CONFIG.ticksPerPregnancyDay) / days);
+  // During birth the growth property carries the current baby's progress (the belly animations push with it).
+  const birth = /** @type {{ remaining: number } | null | undefined} */ (/** @type {unknown} */ (p.birth));
+  if (pain?.type === 'BIRTH' && birth) {
+    const family = familyOf(record.entity);
+    const total = family ? birthTicks(family) : 300;
+    growth = record.laying ? record.laying.progress : Math.min(1, Math.max(0, 1 - birth.remaining / total));
+  }
+  return { pose, kick, growth: Math.round(growth * 100) / 100 };
+}
+
+/** Forces the client state for `ticks` (the debug command), e.g. a strong fetal movement. */
+export function debugPose(/** @type {MobRecord} */ record, /** @type {string} */ pose, /** @type {number} */ kick, ticks = 200, phase = -1) {
+  expectedPhase(record); // an old wild record learns its phase from the real property before it is overwritten
+  record.debugUntil = system.currentTick + ticks;
+  record.entity.setProperty('minepreggo:pose', pose);
+  record.entity.setProperty('minepreggo:kick', kick);
+  // The kicks live in the P3+ bellies and P0-P2 are flat: a small or absent belly becomes a big
+  // one for the duration; syncClient restores the real phase afterwards.
+  if (phase >= 0) setPhaseProperty(record.entity, phase);
+  else if (phaseProperty(record.entity) < 3) setPhaseProperty(record.entity, 7);
+  // The forced phase is persisted with the entity; this flag survives a lost record (chunk unload,
+  // rejoin) so the next tick restores the real phase instead of taking her for a wild pregnant mob.
+  record.entity.setDynamicProperty(FORCED, true);
+  record.sent = {};
+}
+
+/** Dynamic property set while a debug command forces the client state. */
+const FORCED = 'minepreggo:forced';
+
+/** A scene (jenny/scenes.js, jenny/belly_scenes.js) owns her pose while it runs; null gives it and her belly back. */
+export function setScenePose(/** @type {MobRecord} */ record, /** @type {string | null} */ pose) {
+  record.scene = pose ? { ...(record.scene ?? {}), pose } : null;
+  record.sent = {};
+}
+
+/**
+ * What her belly does during a scene (jenny/rhythm.js): a burst of kicks of `kick` strength, a
+ * contraction, calm, or 'none' when the scene is over (her own state shows again).
+ * @param {MobRecord} record @param {'none' | 'calm' | 'kicking' | 'contraction'} state @param {number} [kick]
+ */
+export function setSceneState(record, state, kick = 1) {
+  if (state === 'none' && !record.scene?.pose) record.scene = null;
+  else record.scene = { ...(record.scene ?? {}), state, kick };
+}
+
+/** Ends a forced client state: the real phase comes back at once (the wild-spawn detection reads it). */
+export function clearDebug(/** @type {MobRecord} */ record) {
+  record.debugUntil = 0;
+  record.sent = {};
+  if (record.entity.isValid) {
+    record.entity.setDynamicProperty(FORCED, undefined);
+    syncClient(record); // phase, pose, kick and growth come back at once
+  }
+}
+
+/** The phase the client must render the belly from: the pregnancy's, a wild mob's spawn phase, or -1. */
+function expectedPhase(/** @type {MobRecord} */ record) {
+  const { data, entity } = record;
+  if (data.pregnancy) return data.pregnancy.phase;
+  if (!data.wild) return -1;
+  if (data.wild.phase === undefined) {
+    // Wild data saved before the phase was recorded: the variant (never forced) or the property still carries it.
+    data.wild.phase = variantOf(entity) > 0 ? variantOf(entity) - 1 : Math.max(0, phaseProperty(entity));
+    record.dirty = true;
+  }
+  return data.wild.phase;
+}
+
+function syncClient(/** @type {MobRecord} */ record) {
+  const { entity, sent } = record;
+  if ((record.debugUntil ?? 0) > system.currentTick) return;
+  const state = clientState(record);
+  if (record.scene?.pose) state.pose = record.scene.pose;
+  if (record.scene?.state === 'kicking' && record.scene.kick !== undefined) state.kick = record.scene.kick;
+  const scene = record.scene?.state ?? 'none';
+  // The belly is rendered from this property alone, so it is kept equal to the real phase every
+  // tick: mobs saved by versions that only set it through entity events never had it, and the
+  // debug command overrides it for a while.
+  const phase = expectedPhase(record);
+  if (phaseProperty(entity) !== phase || bellyProperty(entity) !== bellyValue(phase)) setPhaseProperty(entity, phase);
+  if (sent.pose !== state.pose) entity.setProperty('minepreggo:pose', (sent.pose = state.pose));
+  if (sent.kick !== state.kick) entity.setProperty('minepreggo:kick', (sent.kick = state.kick));
+  if (sent.growth !== state.growth) entity.setProperty('minepreggo:growth', (sent.growth = state.growth));
+  if (sent.scene !== scene) {
+    sent.scene = scene;
+    try {
+      entity.setProperty('minepreggo:scene', scene);
+    } catch {
+      // a body saved before this property existed reloads with it; nothing to show until then
+    }
+  }
+}
+
+/** Whether a pain or labor keeps her from moving and fighting right now. */
+export function isIncapacitated(/** @type {MobRecord} */ record) {
+  const { pregnancy: p, wild } = record.data;
+  if (record.scene?.pose) return true;
+  if (wild) return wild.incapacitated;
+  const pain = /** @type {(PainInstance & { incapacitating?: boolean }) | null | undefined} */ (p?.pain);
+  return !!pain && (INCAPACITATING.has(pain.type) || !!pain.incapacitating);
+}
+
+function updateMovement(/** @type {MobRecord} */ record) {
+  const { x, z } = record.entity.location;
+  const last = record.lastPosition;
+  record.moving = last !== undefined && (x - last.x) ** 2 + (z - last.z) ** 2 > 0.01;
+  record.lastPosition = { x, z };
+}
+
+/** A vanilla counterpart (zombie, creeper, enderman, slime) next to her for 3 s gets her pregnant. */
+function tickCourting(/** @type {MobRecord} */ record) {
+  const { entity, data } = record;
+  const family = familyOf(entity);
+  if (!family) return;
+  let near = false;
+  for (const type of COURTERS[family.species] ?? []) {
+    try {
+      if (entity.dimension.getEntities({ type, location: entity.location, maxDistance: COURTING_RANGE }).some((m) => !m.getComponent('minecraft:is_baby'))) {
+        near = true;
+        break;
+      }
+    } catch {
+      // unloaded
+    }
+  }
+  if (!near) {
+    data.courting = 0;
+    return;
+  }
+  data.courting = (data.courting ?? 0) + STEP;
+  if (data.courting % 20 === 0) particles(entity, 'minecraft:heart_particle', 1);
+  if (data.courting < COURTING_TICKS) return;
+  data.courting = 0;
+  data.pending = { endTick: system.currentTick + 300, amplifier: Math.random() < 0.5 ? 0 : 1 };
+  particles(entity, 'minecraft:heart_particle', 6);
+  tellOwner(record, 'minepreggo.mob_courted');
+  record.save();
+}
+
+/** One update of a loaded preggo mob. */
+export function tickMob(/** @type {Entity} */ entity) {
+  const record = getRecord(entity);
+  const { data } = record;
+  const family = familyOf(entity);
+  if (!family) return record;
+  updateMovement(record);
+  // A debug window that ended, or one whose record was lost meanwhile (the flag outlived it).
+  if (record.debugUntil ? record.debugUntil <= system.currentTick : entity.getDynamicProperty(FORCED)) clearDebug(record);
+
+  // A mob that spawned pregnant (natural spawn) gets her hostile pregnancy data once. Her spawn
+  // event added a phase component group, whose variant is phase + 1. (Not while the debug command
+  // forces a phase on her.)
+  if (!data.pregnancy && !data.wild && !data.post && (record.debugUntil ?? 0) <= system.currentTick) {
+    // Another add-on's girl uses her variant for her own looks: only the property can mean a phase.
+    const spawnedPhase = phaseProperty(entity) >= 0 ? phaseProperty(entity) : family.external ? -1 : variantOf(entity) - 1;
+    if (spawnedPhase >= 0) initWild(record, spawnedPhase);
+  }
+
+  if (data.pending && system.currentTick >= data.pending.endTick) {
+    const { amplifier } = data.pending;
+    data.pending = null;
+    record.dirty = true;
+    startPregnancy(record, babiesFromPotion(amplifier));
+  }
+  if (!data.pregnancy && !data.wild && !data.post && !data.pending) tickCourting(record);
+  if (data.wild) tickWild(record);
+  // (The Jenny port's girls flag is_tamed for their own undressed state: no hunger of ours for them.)
+  if (isTamed(entity) && !family.external) tickTamed(record);
+  if (data.pregnancy) tickPregnancy(record);
+  else if (!data.wild) tickNotPregnant(record);
+
+  if (entity.isValid) {
+    if (isIncapacitated(record)) incapacitate(entity);
+    syncClient(record);
+    // Timers are saved every 5 s; state changes save right away.
+    if (record.dirty && system.currentTick % 100 < STEP) record.save();
+  }
+  return record;
+}
+
+// --- damage and death --------------------------------------------------------------------------
+
+/**
+ * A hit on a preggo mob: hostile pregnant ones may be incapacitated (with a stomach growl),
+ * pregnant tamed ones lose pregnancy health (PregnancyDamageHelper, same as players).
+ * @param {Entity} entity
+ * @param {{ damage: number, cause: string }} hit
+ */
+export function onHurt(entity, hit) {
+  const record = getRecord(entity);
+  const { data } = record;
+  if (record.selfHurtTick === system.currentTick) return;
+  if (data.wild && !data.wild.incapacitated && Math.random() < data.wild.painProbability) {
+    data.wild.incapacitated = true;
+    data.wild.painTimer = 0;
+    playSound(entity, 'minepreggo.stomach_growls');
+    record.save();
+    return;
+  }
+  const p = data.pregnancy;
+  if (!p || p.phase < 1 || (p.pain && (LABOR_PAINS.has(p.pain.type) || p.pain.type === 'MISCARRIAGE'))) return;
+  const hp = health(entity);
+  const maxHealth = hp?.effectiveMax ?? 20;
+  const explosion = hit.cause === 'entityExplosion' || hit.cause === 'blockExplosion';
+  const damage = pregnancyDamage(p.phase, p.lastPhase, { explosion, healthBeforeHit: (hp?.currentValue ?? 0) + hit.damage, maxHealth });
+  if (damage <= 0) return;
+  p.health = Math.max(0, p.health - damage);
+  if (p.health <= 0) startMiscarriage(record);
+  else if (p.health < 40) tellOwner(record, 'chat.minepreggo.preggo_mob.miscarriage.message.warning');
+  record.save();
+}
+
+/** Death while pregnant: one dead fetus per baby still inside (Java may spawn baby mobs; not ported). */
+export function onDeath(/** @type {Entity} */ entity) {
+  const record = records.get(entity.id);
+  const family = familyOf(entity);
+  if (!record || !family) return;
+  const count = record.data.pregnancy?.womb.length ?? record.data.wild?.babies ?? 0;
+  for (let i = 0; i < count; i++) dropItem(entity, family.deadFetusItem);
+  if (count > 0) playSound(entity, 'minepreggo.pregnant_preggo_mob_death');
+  records.delete(entity.id);
+}
+
+/**
+ * WorldEventHandler.onSleepFinished: skipping the night moves loaded pregnancies forward, but never
+ * past the end of the current phase.
+ */
+export function onNightSkipped(/** @type {number} */ ticksSkipped) {
+  for (const record of records.values()) {
+    const p = record.data.pregnancy;
+    if (!p || !record.entity.isValid) continue;
+    const total = p.timer + ticksSkipped;
+    const days = Math.min(Math.floor(total / CONFIG.ticksPerPregnancyDay), p.daysByPhase[p.phase] - p.daysPassed);
+    if (days > 0) {
+      p.timer = total % CONFIG.ticksPerPregnancyDay;
+      p.daysPassed = Math.min(p.daysByPhase[p.phase], p.daysPassed + days);
+    } else {
+      p.timer = total;
+    }
+    record.save();
+  }
+}
+
+export { records };

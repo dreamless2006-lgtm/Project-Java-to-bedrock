@@ -1,0 +1,1234 @@
+{
+  "format_version": "1.26.30",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "minepreggo:humanoid_slime_girl",
+      "is_spawnable": true,
+      "is_summonable": true,
+      "properties": {
+        "minepreggo:phase": {
+          "type": "int",
+          "range": [
+            -1,
+            9
+          ],
+          "default": -1,
+          "client_sync": true
+        },
+        "minepreggo:pose": {
+          "type": "enum",
+          "values": [
+            "none",
+            "morning_sickness",
+            "fetal_movement",
+            "kicking_sit",
+            "contraction",
+            "back_pain",
+            "water_breaking",
+            "prebirth",
+            "birth",
+            "postbirth",
+            "miscarriage",
+            "belly_rubs",
+            "incapacitated",
+            "scene",
+            "scene_sit"
+          ],
+          "default": "none",
+          "client_sync": true
+        },
+        "minepreggo:kick": {
+          "type": "int",
+          "range": [
+            0,
+            2
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "minepreggo:growth": {
+          "type": "float",
+          "range": [
+            0.0,
+            1.0
+          ],
+          "default": 0.0,
+          "client_sync": true
+        },
+        "minepreggo:savage": {
+          "type": "bool",
+          "default": false,
+          "client_sync": true
+        },
+        "minepreggo:belly": {
+          "type": "enum",
+          "values": [
+            "none",
+            "p0",
+            "p1",
+            "p2",
+            "p3",
+            "p4",
+            "p5",
+            "p6",
+            "p7",
+            "p8",
+            "p9"
+          ],
+          "default": "none",
+          "client_sync": true
+        },
+        "minepreggo:scene": {
+          "type": "enum",
+          "values": [
+            "none",
+            "calm",
+            "kicking",
+            "contraction"
+          ],
+          "default": "none",
+          "client_sync": true
+        }
+      }
+    },
+    "component_groups": {
+      "minepreggo:hostile": {
+        "minecraft:type_family": {
+          "family": [
+            "humanoid_slime_girl",
+            "slime_girl",
+            "monster",
+            "mob",
+            "minepreggo_preggo_mob"
+          ]
+        },
+        "minecraft:health": {
+          "value": 30,
+          "max": 30
+        },
+        "minecraft:attack": {
+          "damage": 3
+        },
+        "minecraft:despawn": {
+          "despawn_from_distance": {}
+        },
+        "minecraft:behavior.hurt_by_target": {
+          "priority": 2
+        },
+        "minecraft:behavior.nearest_attackable_target": {
+          "priority": 4,
+          "reselect_targets": true,
+          "must_see": true,
+          "within_radius": 35,
+          "entity_types": [
+            {
+              "filters": {
+                "test": "is_family",
+                "subject": "other",
+                "value": "player"
+              },
+              "max_dist": 35
+            }
+          ]
+        },
+        "minecraft:behavior.random_stroll": {
+          "priority": 5,
+          "speed_multiplier": 1
+        },
+        "minecraft:behavior.look_at_player": {
+          "priority": 6,
+          "look_distance": 8
+        },
+        "minecraft:behavior.random_look_around": {
+          "priority": 6
+        },
+        "minecraft:behavior.pickup_items": {
+          "priority": 8,
+          "max_dist": 3,
+          "goal_radius": 2,
+          "speed_multiplier": 1,
+          "pickup_based_on_chance": true,
+          "can_pickup_any_item": true,
+          "excluded_items": [
+            "minecraft:glow_ink_sac",
+            "minecraft:leather_chestplate",
+            "minecraft:leather_leggings",
+            "minecraft:chainmail_chestplate",
+            "minecraft:chainmail_leggings",
+            "minecraft:copper_chestplate",
+            "minecraft:copper_leggings",
+            "minecraft:iron_chestplate",
+            "minecraft:iron_leggings",
+            "minecraft:golden_chestplate",
+            "minecraft:golden_leggings",
+            "minecraft:diamond_chestplate",
+            "minecraft:diamond_leggings",
+            "minecraft:netherite_chestplate",
+            "minecraft:netherite_leggings",
+            "minecraft:elytra"
+          ]
+        }
+      },
+      "minepreggo:tameable": {
+        "minecraft:tameable": {
+          "probability": 0.3333,
+          "tame_items": [
+            "minepreggo:stuffed_mushroom"
+          ],
+          "tame_event": {
+            "event": "minepreggo:on_tame",
+            "target": "self"
+          }
+        }
+      },
+      "minepreggo:tamed": {
+        "minecraft:type_family": {
+          "family": [
+            "humanoid_slime_girl",
+            "slime_girl",
+            "mob",
+            "minepreggo_preggo_mob",
+            "minepreggo_tamed"
+          ]
+        },
+        "minecraft:is_tamed": {},
+        "minecraft:health": {
+          "value": 36,
+          "max": 36
+        },
+        "minecraft:attack": {
+          "damage": 3
+        },
+        "minecraft:movement": {
+          "value": 0.26
+        },
+        "minecraft:sittable": {},
+        "minecraft:leashable": {},
+        "minecraft:behavior.stay_while_sitting": {
+          "priority": 2
+        },
+        "minecraft:behavior.follow_owner": {
+          "priority": 3,
+          "speed_multiplier": 1.2,
+          "start_distance": 6,
+          "stop_distance": 2
+        },
+        "minecraft:behavior.owner_hurt_by_target": {
+          "priority": 1
+        },
+        "minecraft:behavior.owner_hurt_target": {
+          "priority": 2
+        },
+        "minecraft:behavior.hurt_by_target": {
+          "priority": 3
+        },
+        "minecraft:behavior.random_stroll": {
+          "priority": 9,
+          "speed_multiplier": 1
+        },
+        "minecraft:behavior.look_at_player": {
+          "priority": 9,
+          "look_distance": 6
+        }
+      },
+      "minepreggo:savage": {
+        "minecraft:behavior.nearest_attackable_target": {
+          "priority": 7,
+          "reselect_targets": true,
+          "must_see": false,
+          "within_radius": 35,
+          "entity_types": [
+            {
+              "filters": {
+                "test": "is_family",
+                "subject": "other",
+                "value": "player"
+              },
+              "max_dist": 35
+            }
+          ]
+        },
+        "minecraft:behavior.random_look_around": {
+          "priority": 10
+        }
+      },
+      "minepreggo:phase_0": {
+        "minecraft:collision_box": {
+          "width": 0.7,
+          "height": 2.1
+        },
+        "minecraft:movement": {
+          "value": 0.26
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0
+        },
+        "minecraft:variant": {
+          "value": 1
+        }
+      },
+      "minepreggo:phase_1": {
+        "minecraft:collision_box": {
+          "width": 0.7,
+          "height": 2.1
+        },
+        "minecraft:movement": {
+          "value": 0.26
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0
+        },
+        "minecraft:variant": {
+          "value": 2
+        }
+      },
+      "minepreggo:phase_2": {
+        "minecraft:collision_box": {
+          "width": 0.7,
+          "height": 2.1
+        },
+        "minecraft:movement": {
+          "value": 0.255
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0
+        },
+        "minecraft:variant": {
+          "value": 3
+        }
+      },
+      "minepreggo:phase_3": {
+        "minecraft:collision_box": {
+          "width": 0.7,
+          "height": 2.1
+        },
+        "minecraft:movement": {
+          "value": 0.25
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0
+        },
+        "minecraft:variant": {
+          "value": 4
+        }
+      },
+      "minepreggo:phase_4": {
+        "minecraft:collision_box": {
+          "width": 0.75,
+          "height": 2.1
+        },
+        "minecraft:movement": {
+          "value": 0.24
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0.05
+        },
+        "minecraft:variant": {
+          "value": 5
+        }
+      },
+      "minepreggo:phase_5": {
+        "minecraft:collision_box": {
+          "width": 0.8,
+          "height": 2.1
+        },
+        "minecraft:movement": {
+          "value": 0.23
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0.1
+        },
+        "minecraft:variant": {
+          "value": 6
+        }
+      },
+      "minepreggo:phase_6": {
+        "minecraft:collision_box": {
+          "width": 0.825,
+          "height": 2.1
+        },
+        "minecraft:movement": {
+          "value": 0.22
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0.15
+        },
+        "minecraft:variant": {
+          "value": 7
+        }
+      },
+      "minepreggo:phase_7": {
+        "minecraft:collision_box": {
+          "width": 0.875,
+          "height": 2.1
+        },
+        "minecraft:movement": {
+          "value": 0.2
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0.2
+        },
+        "minecraft:variant": {
+          "value": 8
+        }
+      },
+      "minepreggo:phase_8": {
+        "minecraft:collision_box": {
+          "width": 0.925,
+          "height": 2.1
+        },
+        "minecraft:movement": {
+          "value": 0.195
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0.25
+        },
+        "minecraft:variant": {
+          "value": 9
+        }
+      },
+      "minepreggo:phase_9": {
+        "minecraft:collision_box": {
+          "width": 1,
+          "height": 2.1
+        },
+        "minecraft:movement": {
+          "value": 0.19
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0.3
+        },
+        "minecraft:variant": {
+          "value": 10
+        }
+      },
+      "minepreggo:hostile_pregnant_p3": {
+        "minecraft:collision_box": {
+          "width": 0.725,
+          "height": 2.1
+        },
+        "minecraft:movement": {
+          "value": 0.24
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0
+        }
+      },
+      "minepreggo:hostile_pregnant_p5": {
+        "minecraft:collision_box": {
+          "width": 0.8,
+          "height": 2.1
+        },
+        "minecraft:movement": {
+          "value": 0.215
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0.1
+        }
+      },
+      "minepreggo:hostile_pregnant_p7": {
+        "minecraft:collision_box": {
+          "width": 0.875,
+          "height": 2.1
+        },
+        "minecraft:movement": {
+          "value": 0.19
+        },
+        "minecraft:knockback_resistance": {
+          "value": 0.2
+        }
+      },
+      "minepreggo:size_big": {
+        "minecraft:scale": {
+          "value": 1.35
+        },
+        "minecraft:health": {
+          "value": 47,
+          "max": 47
+        },
+        "minecraft:attack": {
+          "damage": 5
+        },
+        "minecraft:knockback_resistance": {
+          "value": 1
+        }
+      },
+      "minepreggo:size_huge": {
+        "minecraft:scale": {
+          "value": 1.65
+        },
+        "minecraft:health": {
+          "value": 58,
+          "max": 58
+        },
+        "minecraft:attack": {
+          "damage": 7
+        },
+        "minecraft:knockback_resistance": {
+          "value": 1
+        }
+      },
+      "minepreggo:size_massive": {
+        "minecraft:scale": {
+          "value": 2
+        },
+        "minecraft:health": {
+          "value": 68,
+          "max": 68
+        },
+        "minecraft:attack": {
+          "damage": 9
+        },
+        "minecraft:knockback_resistance": {
+          "value": 1
+        }
+      },
+      "minepreggo:go_to_bed": {
+        "minecraft:behavior.move_to_block": {
+          "priority": 1,
+          "tick_interval": 1,
+          "start_chance": 1,
+          "search_range": 16,
+          "search_height": 3,
+          "goal_radius": 1.5,
+          "stay_duration": 0,
+          "speed_multiplier": 1.1,
+          "target_selection_method": "nearest",
+          "target_blocks": [
+            "minepreggo:jenny_bed"
+          ],
+          "on_reach": [
+            {
+              "event": "minepreggo:bed_reached",
+              "target": "self"
+            }
+          ]
+        }
+      }
+    },
+    "components": {
+      "minecraft:collision_box": {
+        "width": 0.7,
+        "height": 2.1
+      },
+      "minecraft:movement": {
+        "value": 0.24
+      },
+      "minecraft:health": {
+        "value": 30,
+        "max": 30
+      },
+      "minecraft:attack": {
+        "damage": 3
+      },
+      "minecraft:type_family": {
+        "family": [
+          "humanoid_slime_girl",
+          "slime_girl",
+          "monster",
+          "mob",
+          "minepreggo_preggo_mob"
+        ]
+      },
+      "minecraft:experience_reward": {
+        "on_death": "query.last_hit_by_player ? 10 : 0"
+      },
+      "minecraft:loot": {
+        "table": "loot_tables/entities/humanoid_slime_girl.json"
+      },
+      "minecraft:damage_sensor": {
+        "triggers": {
+          "cause": "fall",
+          "deals_damage": "no"
+        }
+      },
+      "minecraft:breathable": {
+        "total_supply": 15,
+        "suffocate_time": 0
+      },
+      "minecraft:nameable": {},
+      "minecraft:equip_item": {
+        "excluded_items": [
+          {
+            "item": "minecraft:leather_chestplate"
+          },
+          {
+            "item": "minecraft:leather_leggings"
+          },
+          {
+            "item": "minecraft:chainmail_chestplate"
+          },
+          {
+            "item": "minecraft:chainmail_leggings"
+          },
+          {
+            "item": "minecraft:copper_chestplate"
+          },
+          {
+            "item": "minecraft:copper_leggings"
+          },
+          {
+            "item": "minecraft:iron_chestplate"
+          },
+          {
+            "item": "minecraft:iron_leggings"
+          },
+          {
+            "item": "minecraft:golden_chestplate"
+          },
+          {
+            "item": "minecraft:golden_leggings"
+          },
+          {
+            "item": "minecraft:diamond_chestplate"
+          },
+          {
+            "item": "minecraft:diamond_leggings"
+          },
+          {
+            "item": "minecraft:netherite_chestplate"
+          },
+          {
+            "item": "minecraft:netherite_leggings"
+          },
+          {
+            "item": "minecraft:elytra"
+          }
+        ]
+      },
+      "minecraft:can_climb": {},
+      "minecraft:jump.static": {
+        "jump_power": 0.462
+      },
+      "minecraft:movement.basic": {},
+      "minecraft:navigation.walk": {
+        "can_path_over_water": false,
+        "can_pass_doors": true,
+        "can_open_doors": false,
+        "avoid_water": true
+      },
+      "minecraft:physics": {},
+      "minecraft:pushable_by_entity": {},
+      "minecraft:pushable_by_block": {},
+      "minecraft:hurt_on_condition": {
+        "damage_conditions": [
+          {
+            "filters": {
+              "test": "in_lava",
+              "subject": "self"
+            },
+            "cause": "lava",
+            "damage_per_tick": 4
+          }
+        ]
+      },
+      "minecraft:conditional_bandwidth_optimization": {},
+      "minecraft:is_hidden_when_invisible": {},
+      "minecraft:behavior.float": {
+        "priority": 0
+      },
+      "minecraft:behavior.melee_box_attack": {
+        "priority": 4,
+        "speed_multiplier": 1.2,
+        "track_target": true
+      },
+      "minecraft:variant": {
+        "value": 0
+      }
+    },
+    "events": {
+      "minecraft:entity_spawned": {
+        "add": {
+          "component_groups": [
+            "minepreggo:hostile",
+            "minepreggo:tameable"
+          ]
+        }
+      },
+      "minepreggo:spawn_natural": {
+        "randomize": [
+          {
+            "weight": 60,
+            "add": {
+              "component_groups": [
+                "minepreggo:hostile",
+                "minepreggo:tameable"
+              ]
+            }
+          },
+          {
+            "weight": 20,
+            "trigger": "minepreggo:spawn_pregnant_3"
+          },
+          {
+            "weight": 20,
+            "trigger": "minepreggo:spawn_pregnant_5"
+          },
+          {
+            "weight": 20,
+            "trigger": "minepreggo:spawn_pregnant_7"
+          }
+        ]
+      },
+      "minepreggo:spawn_hostile_pregnant_p3": {
+        "add": {
+          "component_groups": [
+            "minepreggo:hostile",
+            "minepreggo:phase_3",
+            "minepreggo:hostile_pregnant_p3"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 3,
+          "minepreggo:belly": "p3"
+        },
+        "remove": {
+          "component_groups": [
+            "minepreggo:tameable"
+          ]
+        }
+      },
+      "minepreggo:spawn_hostile_pregnant_p5": {
+        "add": {
+          "component_groups": [
+            "minepreggo:hostile",
+            "minepreggo:phase_5",
+            "minepreggo:hostile_pregnant_p5"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 5,
+          "minepreggo:belly": "p5"
+        },
+        "remove": {
+          "component_groups": [
+            "minepreggo:tameable"
+          ]
+        }
+      },
+      "minepreggo:spawn_hostile_pregnant_p7": {
+        "add": {
+          "component_groups": [
+            "minepreggo:hostile",
+            "minepreggo:phase_7",
+            "minepreggo:hostile_pregnant_p7"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 7,
+          "minepreggo:belly": "p7"
+        },
+        "remove": {
+          "component_groups": [
+            "minepreggo:tameable"
+          ]
+        }
+      },
+      "minepreggo:on_tame": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:hostile",
+            "minepreggo:tameable",
+            "minepreggo:savage"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:tamed"
+          ]
+        }
+      },
+      "minepreggo:become_savage": {
+        "add": {
+          "component_groups": [
+            "minepreggo:savage"
+          ]
+        },
+        "set_property": {
+          "minepreggo:savage": true
+        }
+      },
+      "minepreggo:calm_down": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:savage"
+          ]
+        },
+        "set_property": {
+          "minepreggo:savage": false
+        }
+      },
+      "minepreggo:set_not_pregnant": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_0",
+            "minepreggo:phase_1",
+            "minepreggo:phase_2",
+            "minepreggo:phase_3",
+            "minepreggo:phase_4",
+            "minepreggo:phase_5",
+            "minepreggo:phase_6",
+            "minepreggo:phase_7",
+            "minepreggo:phase_8",
+            "minepreggo:phase_9",
+            "minepreggo:hostile_pregnant_p3",
+            "minepreggo:hostile_pregnant_p5",
+            "minepreggo:hostile_pregnant_p7"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": -1,
+          "minepreggo:pose": "none",
+          "minepreggo:growth": 0,
+          "minepreggo:belly": "none"
+        }
+      },
+      "minepreggo:set_phase_0": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_1",
+            "minepreggo:phase_2",
+            "minepreggo:phase_3",
+            "minepreggo:phase_4",
+            "minepreggo:phase_5",
+            "minepreggo:phase_6",
+            "minepreggo:phase_7",
+            "minepreggo:phase_8",
+            "minepreggo:phase_9",
+            "minepreggo:hostile_pregnant_p3",
+            "minepreggo:hostile_pregnant_p5",
+            "minepreggo:hostile_pregnant_p7"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:phase_0"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 0,
+          "minepreggo:belly": "p0"
+        }
+      },
+      "minepreggo:set_phase_1": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_0",
+            "minepreggo:phase_2",
+            "minepreggo:phase_3",
+            "minepreggo:phase_4",
+            "minepreggo:phase_5",
+            "minepreggo:phase_6",
+            "minepreggo:phase_7",
+            "minepreggo:phase_8",
+            "minepreggo:phase_9",
+            "minepreggo:hostile_pregnant_p3",
+            "minepreggo:hostile_pregnant_p5",
+            "minepreggo:hostile_pregnant_p7"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:phase_1"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 1,
+          "minepreggo:belly": "p1"
+        }
+      },
+      "minepreggo:set_phase_2": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_0",
+            "minepreggo:phase_1",
+            "minepreggo:phase_3",
+            "minepreggo:phase_4",
+            "minepreggo:phase_5",
+            "minepreggo:phase_6",
+            "minepreggo:phase_7",
+            "minepreggo:phase_8",
+            "minepreggo:phase_9",
+            "minepreggo:hostile_pregnant_p3",
+            "minepreggo:hostile_pregnant_p5",
+            "minepreggo:hostile_pregnant_p7"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:phase_2"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 2,
+          "minepreggo:belly": "p2"
+        }
+      },
+      "minepreggo:set_phase_3": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_0",
+            "minepreggo:phase_1",
+            "minepreggo:phase_2",
+            "minepreggo:phase_4",
+            "minepreggo:phase_5",
+            "minepreggo:phase_6",
+            "minepreggo:phase_7",
+            "minepreggo:phase_8",
+            "minepreggo:phase_9",
+            "minepreggo:hostile_pregnant_p3",
+            "minepreggo:hostile_pregnant_p5",
+            "minepreggo:hostile_pregnant_p7"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:phase_3"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 3,
+          "minepreggo:belly": "p3"
+        }
+      },
+      "minepreggo:set_phase_4": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_0",
+            "minepreggo:phase_1",
+            "minepreggo:phase_2",
+            "minepreggo:phase_3",
+            "minepreggo:phase_5",
+            "minepreggo:phase_6",
+            "minepreggo:phase_7",
+            "minepreggo:phase_8",
+            "minepreggo:phase_9",
+            "minepreggo:hostile_pregnant_p3",
+            "minepreggo:hostile_pregnant_p5",
+            "minepreggo:hostile_pregnant_p7"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:phase_4"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 4,
+          "minepreggo:belly": "p4"
+        }
+      },
+      "minepreggo:set_phase_5": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_0",
+            "minepreggo:phase_1",
+            "minepreggo:phase_2",
+            "minepreggo:phase_3",
+            "minepreggo:phase_4",
+            "minepreggo:phase_6",
+            "minepreggo:phase_7",
+            "minepreggo:phase_8",
+            "minepreggo:phase_9",
+            "minepreggo:hostile_pregnant_p3",
+            "minepreggo:hostile_pregnant_p5",
+            "minepreggo:hostile_pregnant_p7"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:phase_5"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 5,
+          "minepreggo:belly": "p5"
+        }
+      },
+      "minepreggo:set_phase_6": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_0",
+            "minepreggo:phase_1",
+            "minepreggo:phase_2",
+            "minepreggo:phase_3",
+            "minepreggo:phase_4",
+            "minepreggo:phase_5",
+            "minepreggo:phase_7",
+            "minepreggo:phase_8",
+            "minepreggo:phase_9",
+            "minepreggo:hostile_pregnant_p3",
+            "minepreggo:hostile_pregnant_p5",
+            "minepreggo:hostile_pregnant_p7"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:phase_6"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 6,
+          "minepreggo:belly": "p6"
+        }
+      },
+      "minepreggo:set_phase_7": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_0",
+            "minepreggo:phase_1",
+            "minepreggo:phase_2",
+            "minepreggo:phase_3",
+            "minepreggo:phase_4",
+            "minepreggo:phase_5",
+            "minepreggo:phase_6",
+            "minepreggo:phase_8",
+            "minepreggo:phase_9",
+            "minepreggo:hostile_pregnant_p3",
+            "minepreggo:hostile_pregnant_p5",
+            "minepreggo:hostile_pregnant_p7"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:phase_7"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 7,
+          "minepreggo:belly": "p7"
+        }
+      },
+      "minepreggo:set_phase_8": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_0",
+            "minepreggo:phase_1",
+            "minepreggo:phase_2",
+            "minepreggo:phase_3",
+            "minepreggo:phase_4",
+            "minepreggo:phase_5",
+            "minepreggo:phase_6",
+            "minepreggo:phase_7",
+            "minepreggo:phase_9",
+            "minepreggo:hostile_pregnant_p3",
+            "minepreggo:hostile_pregnant_p5",
+            "minepreggo:hostile_pregnant_p7"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:phase_8"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 8,
+          "minepreggo:belly": "p8"
+        }
+      },
+      "minepreggo:set_phase_9": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:phase_0",
+            "minepreggo:phase_1",
+            "minepreggo:phase_2",
+            "minepreggo:phase_3",
+            "minepreggo:phase_4",
+            "minepreggo:phase_5",
+            "minepreggo:phase_6",
+            "minepreggo:phase_7",
+            "minepreggo:phase_8",
+            "minepreggo:hostile_pregnant_p3",
+            "minepreggo:hostile_pregnant_p5",
+            "minepreggo:hostile_pregnant_p7"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:phase_9"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 9,
+          "minepreggo:belly": "p9"
+        }
+      },
+      "minepreggo:hostile_pregnant_init": {
+        "sequence": [
+          {
+            "remove": {
+              "component_groups": [
+                "minepreggo:tameable"
+              ]
+            }
+          },
+          {
+            "filters": {
+              "test": "int_property",
+              "subject": "self",
+              "domain": "minepreggo:phase",
+              "operator": "==",
+              "value": 3
+            },
+            "add": {
+              "component_groups": [
+                "minepreggo:hostile_pregnant_p3"
+              ]
+            }
+          },
+          {
+            "filters": {
+              "test": "int_property",
+              "subject": "self",
+              "domain": "minepreggo:phase",
+              "operator": "==",
+              "value": 5
+            },
+            "add": {
+              "component_groups": [
+                "minepreggo:hostile_pregnant_p5"
+              ]
+            }
+          },
+          {
+            "filters": {
+              "test": "int_property",
+              "subject": "self",
+              "domain": "minepreggo:phase",
+              "operator": "==",
+              "value": 7
+            },
+            "add": {
+              "component_groups": [
+                "minepreggo:hostile_pregnant_p7"
+              ]
+            }
+          }
+        ]
+      },
+      "minepreggo:set_size_normal": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:size_big",
+            "minepreggo:size_huge",
+            "minepreggo:size_massive"
+          ]
+        }
+      },
+      "minepreggo:set_size_big": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:size_huge",
+            "minepreggo:size_massive"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:size_big"
+          ]
+        }
+      },
+      "minepreggo:set_size_huge": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:size_big",
+            "minepreggo:size_massive"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:size_huge"
+          ]
+        }
+      },
+      "minepreggo:set_size_massive": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:size_big",
+            "minepreggo:size_huge"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "minepreggo:size_massive"
+          ]
+        }
+      },
+      "minepreggo:spawn_pregnant_3": {
+        "add": {
+          "component_groups": [
+            "minepreggo:hostile",
+            "minepreggo:phase_3",
+            "minepreggo:hostile_pregnant_p3"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 3,
+          "minepreggo:belly": "p3"
+        },
+        "remove": {
+          "component_groups": [
+            "minepreggo:tameable"
+          ]
+        }
+      },
+      "minepreggo:spawn_pregnant_5": {
+        "add": {
+          "component_groups": [
+            "minepreggo:hostile",
+            "minepreggo:phase_5",
+            "minepreggo:hostile_pregnant_p5"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 5,
+          "minepreggo:belly": "p5"
+        },
+        "remove": {
+          "component_groups": [
+            "minepreggo:tameable"
+          ]
+        }
+      },
+      "minepreggo:spawn_pregnant_7": {
+        "add": {
+          "component_groups": [
+            "minepreggo:hostile",
+            "minepreggo:phase_7",
+            "minepreggo:hostile_pregnant_p7"
+          ]
+        },
+        "set_property": {
+          "minepreggo:phase": 7,
+          "minepreggo:belly": "p7"
+        },
+        "remove": {
+          "component_groups": [
+            "minepreggo:tameable"
+          ]
+        }
+      },
+      "minepreggo:go_to_bed": {
+        "add": {
+          "component_groups": [
+            "minepreggo:go_to_bed"
+          ]
+        }
+      },
+      "minepreggo:bed_reached": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:go_to_bed"
+          ]
+        }
+      },
+      "minepreggo:leave_bed": {
+        "remove": {
+          "component_groups": [
+            "minepreggo:go_to_bed"
+          ]
+        }
+      }
+    }
+  }
+}

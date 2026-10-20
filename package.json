@@ -1,0 +1,25 @@
+{
+  "name": "minepreggo-bedrock",
+  "version": "0.9.3",
+  "private": true,
+  "description": "Bedrock Edition (.mcaddon) port of the Minepreggo Forge mod",
+  "type": "module",
+  "scripts": {
+    "import": "node tools/import-jar.mjs && node tools/gen/compat-poses.mjs && node tools/gen-scene-poses.mjs && node tools/gen-birth-poses.mjs && node tools/import-jenny.mjs && node tools/import-goblins.mjs && node tools/import-mca.mjs",
+    "check": "node tools/gen-ids.mjs && tsc -p jsconfig.json && node tools/validate.mjs",
+    "build": "node tools/build.mjs",
+    "standin": "node tools/gen/standin-pack.mjs",
+    "test": "node --import ./tools/tests/register-mock.mjs --test tools/tests/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@minecraft/server": "2.8.0",
+    "@minecraft/server-ui": "2.0.0",
+    "@minecraft/vanilla-data": "1.26.52",
+    "ajv": "8.20.0",
+    "fflate": "0.8.3",
+    "typescript": "5.9.3"
+  }
+}

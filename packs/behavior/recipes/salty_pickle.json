@@ -1,0 +1,38 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "minepreggo:salty_pickle"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "aaa",
+      "aba",
+      "aaa"
+    ],
+    "key": {
+      "a": {
+        "item": "minepreggo:cucumber"
+      },
+      "b": {
+        "item": "minepreggo:salty_water_bottle"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minepreggo:cucumber"
+      }
+    ],
+    "result": [
+      {
+        "item": "minepreggo:pickle",
+        "count": 8
+      },
+      {
+        "item": "minecraft:glass_bottle"
+      }
+    ]
+  }
+}

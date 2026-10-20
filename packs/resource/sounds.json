@@ -1,0 +1,36 @@
+{
+  "entity_sounds": {
+    "entities": {
+      "minepreggo:humanoid_creeper_girl": {
+        "volume": 1,
+        "pitch": [
+          0.8,
+          1.2
+        ],
+        "events": {
+          "fuse": {
+            "sound": "random.fuse",
+            "volume": 1,
+            "pitch": 0.5
+          }
+        }
+      },
+      "minepreggo:monster_creeper_girl": {
+        "volume": 1,
+        "pitch": [
+          0.8,
+          1.2
+        ],
+        "events": {
+          "hurt": "mob.creeper.say",
+          "death": "mob.creeper.death",
+          "fuse": {
+            "sound": "random.fuse",
+            "volume": 1,
+            "pitch": 0.5
+          }
+        }
+      }
+    }
+  }
+}

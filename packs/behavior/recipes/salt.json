@@ -1,0 +1,33 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "minepreggo:salt"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "w"
+    ],
+    "key": {
+      "w": {
+        "item": "minecraft:water_bucket"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:water_bucket"
+      }
+    ],
+    "result": [
+      {
+        "item": "minepreggo:salt",
+        "count": 32
+      },
+      {
+        "item": "minecraft:bucket"
+      }
+    ]
+  }
+}

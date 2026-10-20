@@ -1,0 +1,243 @@
+{
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "item",
+          "name": "minecraft:gunpowder",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "set_count",
+              "count": {
+                "min": 0,
+                "max": 2
+              }
+            },
+            {
+              "function": "looting_enchant",
+              "count": {
+                "min": 0,
+                "max": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "killed_by_entity",
+          "entity_type": "minecraft:skeleton"
+        }
+      ],
+      "entries": [
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_13",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_cat",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_blocks",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_chirp",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_far",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_mall",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_mellohi",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_stal",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_strad",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_ward",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_11",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_wait",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "killed_by_entity",
+          "entity_type": "minecraft:stray"
+        }
+      ],
+      "entries": [
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_13",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_cat",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_blocks",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_chirp",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_far",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_mall",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_mellohi",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_stal",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_strad",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_ward",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_11",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_wait",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "killed_by_entity",
+          "entity_type": "minecraft:wither_skeleton"
+        }
+      ],
+      "entries": [
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_13",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_cat",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_blocks",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_chirp",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_far",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_mall",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_mellohi",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_stal",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_strad",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_ward",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_11",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "minecraft:music_disc_wait",
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

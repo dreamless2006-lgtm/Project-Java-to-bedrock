@@ -1,0 +1,291 @@
+{
+  "resource_pack_name": "minepreggo",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "minepreggo_activated_gunpowder": {
+      "textures": "textures/minepreggo/item/activated_gunpowder"
+    },
+    "minepreggo_activated_gunpowder_with_chocolate": {
+      "textures": "textures/minepreggo/item/activated_gunpowder_with_chocolate"
+    },
+    "minepreggo_activated_gunpowder_with_hot_sauce": {
+      "textures": "textures/minepreggo/item/activated_gunpowder_with_hot_sauce"
+    },
+    "minepreggo_activated_gunpowder_with_salt": {
+      "textures": "textures/minepreggo/item/activated_gunpowder_with_salt"
+    },
+    "minepreggo_baby_creeper": {
+      "textures": "textures/minepreggo/item/baby_creeper"
+    },
+    "minepreggo_baby_ender": {
+      "textures": "textures/minepreggo/item/baby_ender"
+    },
+    "minepreggo_baby_human": {
+      "textures": "textures/minepreggo/item/baby_human"
+    },
+    "minepreggo_baby_humanoid_creeper": {
+      "textures": "textures/minepreggo/item/baby_humanoid_creeper"
+    },
+    "minepreggo_baby_humanoid_ender": {
+      "textures": "textures/minepreggo/item/baby_humanoid_ender"
+    },
+    "minepreggo_baby_humanoid_slime": {
+      "textures": "textures/minepreggo/item/baby_humanoid_slime"
+    },
+    "minepreggo_baby_slime": {
+      "textures": "textures/minepreggo/item/baby_slime"
+    },
+    "minepreggo_baby_villager": {
+      "textures": "textures/minepreggo/item/baby_villager"
+    },
+    "minepreggo_baby_zombie": {
+      "textures": "textures/minepreggo/item/baby_zombie"
+    },
+    "minepreggo_brain_with_chocolate": {
+      "textures": "textures/minepreggo/item/brain_with_chocolate"
+    },
+    "minepreggo_brain_with_hot_sauce": {
+      "textures": "textures/minepreggo/item/brain_with_hot_sauce"
+    },
+    "minepreggo_brain_with_salt": {
+      "textures": "textures/minepreggo/item/brain_with_salt"
+    },
+    "minepreggo_candy_apple": {
+      "textures": "textures/minepreggo/item/candy_apple"
+    },
+    "minepreggo_chili_pepper": {
+      "textures": "textures/minepreggo/item/chili_pepper"
+    },
+    "minepreggo_chili_poppers": {
+      "textures": "textures/minepreggo/item/chili_poppers"
+    },
+    "minepreggo_chocolate_bar": {
+      "textures": "textures/minepreggo/item/chocolate_bar"
+    },
+    "minepreggo_chorus_fruit_with_chocolate": {
+      "textures": "textures/minepreggo/item/chorus_fruit_with_chocolate"
+    },
+    "minepreggo_chorus_fruit_with_hot_sauce": {
+      "textures": "textures/minepreggo/item/chorus_fruit_with_hot_sauce"
+    },
+    "minepreggo_chorus_fruit_with_salt": {
+      "textures": "textures/minepreggo/item/chorus_fruit_with_salt"
+    },
+    "minepreggo_creeper_breast_milk_bottle": {
+      "textures": "textures/minepreggo/item/creeper_breast_milk_bottle"
+    },
+    "minepreggo_creeper_impregnation_potion": {
+      "textures": "textures/port/creeper_impregnation_potion"
+    },
+    "minepreggo_cucumber": {
+      "textures": "textures/minepreggo/item/cucumber"
+    },
+    "minepreggo_dead_creeper_fetus": {
+      "textures": "textures/minepreggo/item/dead_creeper_fetus"
+    },
+    "minepreggo_dead_ender_fetus": {
+      "textures": "textures/minepreggo/item/dead_ender_fetus"
+    },
+    "minepreggo_dead_human_fetus": {
+      "textures": "textures/minepreggo/item/dead_human_fetus"
+    },
+    "minepreggo_dead_humanoid_creeper_fetus": {
+      "textures": "textures/minepreggo/item/dead_humanoid_creeper_fetus"
+    },
+    "minepreggo_dead_humanoid_ender_fetus": {
+      "textures": "textures/minepreggo/item/dead_humanoid_ender_fetus"
+    },
+    "minepreggo_dead_humanoid_slime_fetus": {
+      "textures": "textures/minepreggo/item/dead_humanoid_slime_fetus"
+    },
+    "minepreggo_dead_slime_fetus": {
+      "textures": "textures/minepreggo/item/dead_slime_fetus"
+    },
+    "minepreggo_dead_villager_fetus": {
+      "textures": "textures/minepreggo/item/dead_villager_fetus"
+    },
+    "minepreggo_dead_zombie_fetus": {
+      "textures": "textures/minepreggo/item/dead_zombie_fetus"
+    },
+    "minepreggo_ender_breast_milk_bottle": {
+      "textures": "textures/minepreggo/item/ender_breast_milk_bottle"
+    },
+    "minepreggo_ender_impregnation_potion": {
+      "textures": "textures/port/ender_impregnation_potion"
+    },
+    "minepreggo_ender_slime_jelly": {
+      "textures": "textures/minepreggo/item/ender_slime_jelly"
+    },
+    "minepreggo_ender_slime_jelly_with_chocolate": {
+      "textures": "textures/minepreggo/item/ender_slime_jelly_with_chocolate"
+    },
+    "minepreggo_ender_slime_jelly_with_hot_sauce": {
+      "textures": "textures/minepreggo/item/ender_slime_jelly_with_hot_sauce"
+    },
+    "minepreggo_ender_slime_jelly_with_salt": {
+      "textures": "textures/minepreggo/item/ender_slime_jelly_with_salt"
+    },
+    "minepreggo_fetal_movement_inducer_potion": {
+      "textures": "textures/port/fetal_movement_inducer_potion"
+    },
+    "minepreggo_french_fries": {
+      "textures": "textures/minepreggo/item/french_fries"
+    },
+    "minepreggo_gradual_pregnancy_acceleration_potion": {
+      "textures": "textures/port/gradual_pregnancy_acceleration_potion"
+    },
+    "minepreggo_guide_book": {
+      "textures": "textures/port/guide_book"
+    },
+    "minepreggo_hostile_humanoid_creeper_girl_spawn_egg": {
+      "textures": "textures/minepreggo/item/hostile_humanoid_creeper_girl_spawn_egg"
+    },
+    "minepreggo_hostile_monster_creeper_girl_spawn_egg": {
+      "textures": "textures/minepreggo/item/hostile_monster_creeper_girl_spawn_egg"
+    },
+    "minepreggo_hostile_zombie_girl_spawn_egg": {
+      "textures": "textures/minepreggo/item/hostile_zombie_girl_spawn_egg"
+    },
+    "minepreggo_hot_chicken": {
+      "textures": "textures/minepreggo/item/spicy_chicken"
+    },
+    "minepreggo_hot_sauce": {
+      "textures": "textures/minepreggo/item/hot_sauce"
+    },
+    "minepreggo_human_breast_milk_bottle": {
+      "textures": "textures/minepreggo/item/human_breast_milk_bottle"
+    },
+    "minepreggo_humanoid_slime_girl_spawn_egg": {
+      "textures": "textures/minepreggo/item/humanoid_slime_girl_spawn_egg"
+    },
+    "minepreggo_illager_brain": {
+      "textures": "textures/minepreggo/item/illager_brain"
+    },
+    "minepreggo_impregnation_potion": {
+      "textures": "textures/port/impregnation_potion"
+    },
+    "minepreggo_lemon": {
+      "textures": "textures/minepreggo/item/lemon"
+    },
+    "minepreggo_lemon_drop": {
+      "textures": "textures/minepreggo/item/lemon_drop"
+    },
+    "minepreggo_lemon_ice_cream": {
+      "textures": "textures/minepreggo/item/lemon_ice_cream"
+    },
+    "minepreggo_lemon_ice_popsicles": {
+      "textures": "textures/minepreggo/item/lemon_ice_popsicles"
+    },
+    "minepreggo_monster_ender_woman_spawn_egg": {
+      "textures": "textures/minepreggo/item/monster_ender_woman_spawn_egg"
+    },
+    "minepreggo_monster_slime_girl_spawn_egg": {
+      "textures": "textures/minepreggo/item/monster_slime_girl_spawn_egg"
+    },
+    "minepreggo_pickle": {
+      "textures": "textures/minepreggo/item/pickle"
+    },
+    "minepreggo_pregnancy_acceleration_potion": {
+      "textures": "textures/port/pregnancy_acceleration_potion"
+    },
+    "minepreggo_refined_chorus_shards": {
+      "textures": "textures/minepreggo/item/refined_chorus_shards"
+    },
+    "minepreggo_rotten_flesh_with_chocolate": {
+      "textures": "textures/minepreggo/item/rotten_flesh_with_chocolate"
+    },
+    "minepreggo_rotten_flesh_with_hot_sauce": {
+      "textures": "textures/minepreggo/item/rotten_flesh_with_hot_sauce"
+    },
+    "minepreggo_rotten_flesh_with_salt": {
+      "textures": "textures/minepreggo/item/rotten_flesh_with_salt"
+    },
+    "minepreggo_salt": {
+      "textures": "textures/minepreggo/item/salt"
+    },
+    "minepreggo_salty_water_bottle": {
+      "textures": "textures/minepreggo/item/salty_water_bottle"
+    },
+    "minepreggo_slime_breast_milk_bottle": {
+      "textures": "textures/minepreggo/item/slime_breast_milk_bottle"
+    },
+    "minepreggo_slime_impregnation_potion": {
+      "textures": "textures/port/slime_impregnation_potion"
+    },
+    "minepreggo_sour_activated_gunpowder": {
+      "textures": "textures/minepreggo/item/sour_activated_gunpowder"
+    },
+    "minepreggo_sour_brain": {
+      "textures": "textures/minepreggo/item/sour_brain"
+    },
+    "minepreggo_sour_chorus_fruit": {
+      "textures": "textures/minepreggo/item/sour_chorus_fruit"
+    },
+    "minepreggo_sour_ender_slime_jelly": {
+      "textures": "textures/minepreggo/item/sour_ender_slime_jelly"
+    },
+    "minepreggo_sour_rotten_flesh": {
+      "textures": "textures/minepreggo/item/sour_rotten_flesh"
+    },
+    "minepreggo_sour_spider_eye": {
+      "textures": "textures/minepreggo/item/sour_spider_eye"
+    },
+    "minepreggo_spider_eye_with_chocolate": {
+      "textures": "textures/minepreggo/item/spider_eye_with_chocolate"
+    },
+    "minepreggo_spider_eye_with_hot_sauce": {
+      "textures": "textures/minepreggo/item/spider_eye_with_hot_sauce"
+    },
+    "minepreggo_spider_eye_with_salt": {
+      "textures": "textures/minepreggo/item/spider_eye_with_salt"
+    },
+    "minepreggo_stuffed_mushroom": {
+      "textures": "textures/minepreggo/item/stuffed_mushroom"
+    },
+    "minepreggo_villager_brain": {
+      "textures": "textures/minepreggo/item/villager_brain"
+    },
+    "minepreggo_villager_impregnation_potion": {
+      "textures": "textures/port/villager_impregnation_potion"
+    },
+    "minepreggo_witch_brain": {
+      "textures": "textures/minepreggo/item/witch_brain"
+    },
+    "minepreggo_zombie_breast_milk_bottle": {
+      "textures": "textures/minepreggo/item/zombie_breast_milk_bottle"
+    },
+    "minepreggo_zombie_impregnation_potion": {
+      "textures": "textures/port/zombie_impregnation_potion"
+    },
+    "minepreggo_pregnancy_delay_potion": {
+      "textures": "textures/port/pregnancy_delay_potion"
+    },
+    "minepreggo_baby_duplication_potion": {
+      "textures": "textures/port/baby_duplication_potion"
+    },
+    "minepreggo_pregnancy_healing_potion": {
+      "textures": "textures/port/pregnancy_healing_potion"
+    },
+    "minepreggo_pregnancy_harming_potion": {
+      "textures": "textures/port/pregnancy_harming_potion"
+    },
+    "minepreggo_pregnancy_resistance_potion": {
+      "textures": "textures/port/pregnancy_resistance_potion"
+    },
+    "minepreggo_zero_gravity_belly_potion": {
+      "textures": "textures/port/zero_gravity_belly_potion"
+    },
+    "minepreggo_metabolism_control_potion": {
+      "textures": "textures/port/metabolism_control_potion"
+    },
+    "minepreggo_eternal_pregnancy_potion": {
+      "textures": "textures/port/eternal_pregnancy_potion"
+    },
+    "minepreggo_kobold_egg": {
+      "textures": "textures/port/kobold_egg"
+    },
+    "minepreggo_belly": {
+      "textures": "textures/port/belly"
+    }
+  }
+}

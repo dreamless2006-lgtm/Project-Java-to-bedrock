@@ -1,0 +1,840 @@
+{
+  "format_version": "1.26.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "minecraft:player",
+      "materials": {
+        "default": "entity_alphatest",
+        "cape": "entity_alphatest",
+        "animated": "player_animated",
+        "spectator": "player_spectator",
+        "minepreggo_crowning": "entity_alphatest",
+        "minepreggo_crowning_blend": "entity_alphablend"
+      },
+      "textures": {
+        "default": "textures/entity/steve",
+        "cape": "textures/entity/cape_invisible",
+        "minepreggo_alex": "textures/minepreggo/entity/player/predefined/alex/alex",
+        "minepreggo_alex_extra": "textures/minepreggo/entity/player/predefined/alex/alex_extra",
+        "minepreggo_alex_p0": "textures/minepreggo/entity/player/predefined/alex/alex_p0",
+        "minepreggo_alex_p0_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p0_extra",
+        "minepreggo_alex_p1": "textures/minepreggo/entity/player/predefined/alex/alex_p1",
+        "minepreggo_alex_p1_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p1_extra",
+        "minepreggo_alex_p2": "textures/minepreggo/entity/player/predefined/alex/alex_p2",
+        "minepreggo_alex_p2_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p2_extra",
+        "minepreggo_alex_p3": "textures/minepreggo/entity/player/predefined/alex/alex_p3",
+        "minepreggo_alex_p3_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p3_extra",
+        "minepreggo_alex_p4": "textures/minepreggo/entity/player/predefined/alex/alex_p4",
+        "minepreggo_alex_p4_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p4_extra",
+        "minepreggo_alex_p5": "textures/minepreggo/entity/player/predefined/alex/alex_p5",
+        "minepreggo_alex_p5_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p5_extra",
+        "minepreggo_alex_p6": "textures/minepreggo/entity/player/predefined/alex/alex_p6",
+        "minepreggo_alex_p6_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p6_extra",
+        "minepreggo_alex_p7": "textures/minepreggo/entity/player/predefined/alex/alex_p7",
+        "minepreggo_alex_p7_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p7_extra",
+        "minepreggo_alex_p8": "textures/minepreggo/entity/player/predefined/alex/alex_p8",
+        "minepreggo_alex_p8_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p8_extra",
+        "minepreggo_alex_p9": "textures/minepreggo/entity/player/predefined/alex/alex_p9",
+        "minepreggo_alex_p9_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p9_extra",
+        "minepreggo_steve": "textures/minepreggo/entity/player/predefined/steve/steve",
+        "minepreggo_steve_extra": "textures/minepreggo/entity/player/predefined/alex/alex_extra",
+        "minepreggo_steve_p0": "textures/minepreggo/entity/player/predefined/alex/alex_p0",
+        "minepreggo_steve_p0_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p0_extra",
+        "minepreggo_steve_p1": "textures/minepreggo/entity/player/predefined/alex/alex_p1",
+        "minepreggo_steve_p1_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p1_extra",
+        "minepreggo_steve_p2": "textures/minepreggo/entity/player/predefined/alex/alex_p2",
+        "minepreggo_steve_p2_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p2_extra",
+        "minepreggo_steve_p3": "textures/minepreggo/entity/player/predefined/alex/alex_p3",
+        "minepreggo_steve_p3_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p3_extra",
+        "minepreggo_steve_p4": "textures/minepreggo/entity/player/predefined/alex/alex_p4",
+        "minepreggo_steve_p4_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p4_extra",
+        "minepreggo_steve_p5": "textures/minepreggo/entity/player/predefined/alex/alex_p5",
+        "minepreggo_steve_p5_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p5_extra",
+        "minepreggo_steve_p6": "textures/minepreggo/entity/player/predefined/alex/alex_p6",
+        "minepreggo_steve_p6_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p6_extra",
+        "minepreggo_steve_p7": "textures/minepreggo/entity/player/predefined/alex/alex_p7",
+        "minepreggo_steve_p7_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p7_extra",
+        "minepreggo_steve_p8": "textures/minepreggo/entity/player/predefined/alex/alex_p8",
+        "minepreggo_steve_p8_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p8_extra",
+        "minepreggo_steve_p9": "textures/minepreggo/entity/player/predefined/alex/alex_p9",
+        "minepreggo_steve_p9_extra": "textures/minepreggo/entity/player/predefined/alex/alex_p9_extra",
+        "minepreggo_fetus_human": "textures/minepreggo/entity/fetus/human_fetus",
+        "minepreggo_fetus_zombie": "textures/minepreggo/entity/fetus/zombie_fetus",
+        "minepreggo_fetus_creeper": "textures/minepreggo/entity/fetus/humanoid_creeper_fetus",
+        "minepreggo_fetus_ender": "textures/minepreggo/entity/fetus/humanoid_ender_fetus",
+        "minepreggo_fetus_slime": "textures/minepreggo/entity/fetus/humanoid_slime_fetus",
+        "minepreggo_fetus_villager": "textures/minepreggo/entity/fetus/villager_fetus"
+      },
+      "geometry": {
+        "default": "geometry.humanoid.custom",
+        "cape": "geometry.cape",
+        "minepreggo_boobs_custom": "geometry.minepreggo.player_boobs_custom",
+        "minepreggo_boobs_predefined": "geometry.minepreggo.player_boobs_predefined",
+        "minepreggo_labor": "geometry.minepreggo.player_labor",
+        "minepreggo_body_custom_p0": "geometry.minepreggo.player_body_custom_p0",
+        "minepreggo_body_predefined_p0": "geometry.minepreggo.player_body_predefined_p0",
+        "minepreggo_body_custom_p1": "geometry.minepreggo.player_body_custom_p1",
+        "minepreggo_body_predefined_p1": "geometry.minepreggo.player_body_predefined_p1",
+        "minepreggo_body_custom_p2": "geometry.minepreggo.player_body_custom_p2",
+        "minepreggo_body_predefined_p2": "geometry.minepreggo.player_body_predefined_p2",
+        "minepreggo_body_custom_p3": "geometry.minepreggo.player_body_custom_p3",
+        "minepreggo_body_predefined_p3": "geometry.minepreggo.player_body_predefined_p3",
+        "minepreggo_body_custom_p4": "geometry.minepreggo.player_body_custom_p4",
+        "minepreggo_body_predefined_p4": "geometry.minepreggo.player_body_predefined_p4",
+        "minepreggo_body_custom_p5": "geometry.minepreggo.player_body_custom_p5",
+        "minepreggo_body_predefined_p5": "geometry.minepreggo.player_body_predefined_p5",
+        "minepreggo_body_custom_p6": "geometry.minepreggo.player_body_custom_p6",
+        "minepreggo_body_predefined_p6": "geometry.minepreggo.player_body_predefined_p6",
+        "minepreggo_body_custom_p7": "geometry.minepreggo.player_body_custom_p7",
+        "minepreggo_body_predefined_p7": "geometry.minepreggo.player_body_predefined_p7",
+        "minepreggo_body_custom_p8": "geometry.minepreggo.player_body_custom_p8",
+        "minepreggo_body_predefined_p8": "geometry.minepreggo.player_body_predefined_p8",
+        "minepreggo_body_custom_p9": "geometry.minepreggo.player_body_custom_p9",
+        "minepreggo_body_predefined_p9": "geometry.minepreggo.player_body_predefined_p9",
+        "minepreggo_crowning_humanoid": "geometry.minepreggo.player_crowning_humanoid",
+        "minepreggo_crowning_humanoid_slime": "geometry.minepreggo.player_crowning_humanoid_slime",
+        "minepreggo_crowning_villager": "geometry.minepreggo.player_crowning_villager",
+        "minepreggo_crowning_navel_p4": "geometry.minepreggo.player_crowning_navel_p4",
+        "minepreggo_crowning_navel_p5": "geometry.minepreggo.player_crowning_navel_p5",
+        "minepreggo_crowning_navel_p6": "geometry.minepreggo.player_crowning_navel_p6",
+        "minepreggo_crowning_navel_p7": "geometry.minepreggo.player_crowning_navel_p7",
+        "minepreggo_crowning_navel_p8": "geometry.minepreggo.player_crowning_navel_p8",
+        "minepreggo_crowning_navel_p9": "geometry.minepreggo.player_crowning_navel_p9"
+      },
+      "scripts": {
+        "scale": "0.9375",
+        "initialize": [
+          "variable.is_holding_right = 0.0;",
+          "variable.is_blinking = 0.0;",
+          "variable.last_blink_time = 0.0;",
+          "variable.melee_spear_equipped = 0.0;",
+          "variable.attack_body_rot_y = 0.0;",
+          "variable.belly_growth = 0.0;",
+          "variable.boot_layer_visible = 0.0;",
+          "variable.chest_layer_visible = 0.0;",
+          "variable.contracting = 0.0;",
+          "variable.crown = 0.0;",
+          "variable.crown_scale = 0.0;",
+          "variable.crown_t = 0.0;",
+          "variable.crown_x = 0.0;",
+          "variable.crowning = 0.0;",
+          "variable.cw = 0.0;",
+          "variable.first_person_rotation_factor = 0.0;",
+          "variable.fp_belly_y = 0.0;",
+          "variable.fp_belly_z = 0.0;",
+          "variable.fp_boobs_y = 0.0;",
+          "variable.fp_boobs_z = 0.0;",
+          "variable.hand_bob = 0.0;",
+          "variable.helmet_layer_visible = 0.0;",
+          "variable.item_use_normalized = 0.0;",
+          "variable.jair = 0.0;",
+          "variable.jany = 0.0;",
+          "variable.javy = 0.0;",
+          "variable.jb_rx = 0.0;",
+          "variable.jb_ry = 0.0;",
+          "variable.jb_y = 0.0;",
+          "variable.jbelly_ry = 0.0;",
+          "variable.jbelly_y = 0.0;",
+          "variable.jbl_rx = 0.0;",
+          "variable.jbl_ry = 0.0;",
+          "variable.jbl_rz = 0.0;",
+          "variable.jbl_y = 0.0;",
+          "variable.jbmi = 0.0;",
+          "variable.jbmm = 0.0;",
+          "variable.jbmr = 0.0;",
+          "variable.jbo = 0.0;",
+          "variable.jbp = 0.0;",
+          "variable.jbpd = 0.0;",
+          "variable.jbr = 0.0;",
+          "variable.jbr_rx = 0.0;",
+          "variable.jbr_ry = 0.0;",
+          "variable.jbr_rz = 0.0;",
+          "variable.jbr_y = 0.0;",
+          "variable.jbrv = 0.0;",
+          "variable.jbutt_y = 0.0;",
+          "variable.jbv = 0.0;",
+          "variable.jdt = 0.0;",
+          "variable.jec = 0.0;",
+          "variable.jet = 0.0;",
+          "variable.jf = 0.0;",
+          "variable.jh = 0.0;",
+          "variable.jk = 0.0;",
+          "variable.jmd = 0.0;",
+          "variable.jmi = 0.0;",
+          "variable.jmm = 0.0;",
+          "variable.jmrx = 0.0;",
+          "variable.jmrz = 0.0;",
+          "variable.jo = 0.0;",
+          "variable.jpd = 0.0;",
+          "variable.jpl = 0.0;",
+          "variable.jpr = 0.0;",
+          "variable.jrxl = 0.0;",
+          "variable.jrxr = 0.0;",
+          "variable.jrxvl = 0.0;",
+          "variable.jrxvr = 0.0;",
+          "variable.jryl = 0.0;",
+          "variable.jryr = 0.0;",
+          "variable.jryvl = 0.0;",
+          "variable.jryvr = 0.0;",
+          "variable.jrzl = 0.0;",
+          "variable.jrzr = 0.0;",
+          "variable.jrzvl = 0.0;",
+          "variable.jrzvr = 0.0;",
+          "variable.jtp = 0.0;",
+          "variable.jtv = 0.0;",
+          "variable.jtx = 0.0;",
+          "variable.jtx2 = 0.0;",
+          "variable.jty = 0.0;",
+          "variable.jtz = 0.0;",
+          "variable.jtz2 = 0.0;",
+          "variable.jvert = 0.0;",
+          "variable.jvl = 0.0;",
+          "variable.jvr = 0.0;",
+          "variable.jvy = 0.0;",
+          "variable.jwas_air = 0.0;",
+          "variable.k_bottom_kick_x = 0.0;",
+          "variable.k_bottom_kick_y = 0.0;",
+          "variable.k_bottom_kick_z = 0.0;",
+          "variable.k_front_kick_x = 0.0;",
+          "variable.k_front_kick_y = 0.0;",
+          "variable.k_front_kick_z = 0.0;",
+          "variable.k_left_kick_x = 0.0;",
+          "variable.k_left_kick_y = 0.0;",
+          "variable.k_left_kick_z = 0.0;",
+          "variable.k_right_kick_x = 0.0;",
+          "variable.k_right_kick_y = 0.0;",
+          "variable.k_right_kick_z = 0.0;",
+          "variable.k_top_kick_x = 0.0;",
+          "variable.k_top_kick_y = 0.0;",
+          "variable.k_top_kick_z = 0.0;",
+          "variable.kick_grow = 0.0;",
+          "variable.kick_shown = 0.0;",
+          "variable.kick_w = 0.0;",
+          "variable.kicking = 0.0;",
+          "variable.kl = 0.0;",
+          "variable.kp_bottom_kick = 0.0;",
+          "variable.kp_front_kick = 0.0;",
+          "variable.kp_left_kick = 0.0;",
+          "variable.kp_right_kick = 0.0;",
+          "variable.kp_top_kick = 0.0;",
+          "variable.kr_f = 0.0;",
+          "variable.leg_layer_visible = 0.0;",
+          "variable.map_angle = 0.0;",
+          "variable.mp_baby = 0.0;",
+          "variable.mp_bp = 0.0;",
+          "variable.mp_female = 0.0;",
+          "variable.mp_kick = 0.0;",
+          "variable.mp_labor = 0.0;",
+          "variable.mp_navel = 0.0;",
+          "variable.mp_phase = 0.0;",
+          "variable.mp_pose = 0.0;",
+          "variable.mp_predefined = 0.0;",
+          "variable.mp_pregnant = 0.0;",
+          "variable.mp_skin = 0.0;",
+          "variable.push = 0.0;",
+          "variable.riding_y_offset = 0.0;",
+          "variable.strain = 0.0;",
+          "variable.tcos0 = 0.0;",
+          "variable.mp_native = 1.0;"
+        ],
+        "pre_animation": [
+          "variable.helmet_layer_visible = !query.has_head_gear;",
+          "variable.leg_layer_visible = 1.0;",
+          "variable.boot_layer_visible = 1.0;",
+          "variable.chest_layer_visible = 1.0;",
+          "variable.attack_body_rot_y = Math.sin(360*Math.sqrt(variable.attack_time)) * 5.0;",
+          "variable.tcos0 = (math.cos(query.modified_distance_moved * 38.17) * query.modified_move_speed / variable.gliding_speed_value) * 57.3;",
+          "variable.first_person_rotation_factor = math.sin((1 - variable.attack_time) * 180.0);",
+          "variable.hand_bob = query.life_time < 0.01 ? 0.0 : variable.hand_bob + ((query.is_on_ground && query.is_alive ? math.clamp(math.sqrt(math.pow(query.position_delta(0), 2.0) + math.pow(query.position_delta(2), 2.0)), 0.0, 0.1) : 0.0) - variable.hand_bob) * 0.02;",
+          "variable.map_angle = math.clamp(1 - variable.player_x_rotation / 45.1, 0.0, 1.0);",
+          "variable.item_use_normalized = query.main_hand_item_use_duration / query.main_hand_item_max_duration;",
+          "variable.riding_y_offset = query.is_riding_any_entity_of_type('minecraft:minecart', 'minecraft:boat', 'minecraft:chest_boat', 'minecraft:strider') ? -3.0 : 0.0;",
+          "variable.mp_phase = query.property('minepreggo:phase');",
+          "variable.mp_pose = query.property('minepreggo:pose');",
+          "variable.mp_bp = (query.property('minepreggo:belly') == 'p0' ? 0 : (query.property('minepreggo:belly') == 'p1' ? 1 : (query.property('minepreggo:belly') == 'p2' ? 2 : (query.property('minepreggo:belly') == 'p3' ? 3 : (query.property('minepreggo:belly') == 'p4' ? 4 : (query.property('minepreggo:belly') == 'p5' ? 5 : (query.property('minepreggo:belly') == 'p6' ? 6 : (query.property('minepreggo:belly') == 'p7' ? 7 : (query.property('minepreggo:belly') == 'p8' ? 8 : (query.property('minepreggo:belly') == 'p9' ? 9 : -1))))))))));",
+          "variable.mp_bp = variable.mp_bp >= 0 ? variable.mp_bp : (variable.mp_phase >= 0 ? variable.mp_phase : ((variable.mp_pose == 'none' || variable.mp_pose == 'postbirth' || variable.mp_pose == 'miscarriage') ? -1 : 5));",
+          "variable.mp_phase = variable.mp_bp;",
+          "variable.mp_navel = query.property('minepreggo:navel');",
+          "v.push = variable.mp_pose == 'birth' ? q.property('minepreggo:growth') : 0.0;",
+          "variable.mp_kick = query.property('minepreggo:kick');",
+          "variable.mp_female = query.property('minepreggo:gender') == 'female';",
+          "variable.mp_skin = query.property('minepreggo:skin');",
+          "variable.mp_predefined = variable.mp_female && !(variable.mp_skin == 'custom');",
+          "v.k_front_kick_x = variable.mp_predefined ? (variable.mp_bp == 3 ? 0.40 : (variable.mp_bp == 4 ? 0.45 : (variable.mp_bp == 5 ? 0.80 : (variable.mp_bp == 6 ? 1.10 : (variable.mp_bp == 7 ? 2.05 : (variable.mp_bp == 8 ? 2.35 : (variable.mp_bp == 9 ? 3.55 : 0.0))))))) : (variable.mp_bp == 3 ? 0.40 : (variable.mp_bp == 4 ? 0.40 : (variable.mp_bp == 5 ? 1.00 : (variable.mp_bp == 6 ? 1.55 : (variable.mp_bp == 7 ? 1.86 : (variable.mp_bp == 8 ? 2.26 : (variable.mp_bp == 9 ? 2.96 : 0.0)))))));",
+          "v.k_front_kick_y = variable.mp_predefined ? (variable.mp_bp == 3 ? 1.60 : (variable.mp_bp == 4 ? 2.55 : (variable.mp_bp == 5 ? 2.99 : (variable.mp_bp == 6 ? 1.75 : (variable.mp_bp == 7 ? 2.70 : (variable.mp_bp == 8 ? 3.10 : (variable.mp_bp == 9 ? 3.30 : 0.0))))))) : (variable.mp_bp == 3 ? 1.60 : (variable.mp_bp == 4 ? 2.50 : (variable.mp_bp == 5 ? 3.09 : (variable.mp_bp == 6 ? 1.92 : (variable.mp_bp == 7 ? 2.79 : (variable.mp_bp == 8 ? 2.67 : (variable.mp_bp == 9 ? 2.87 : 0.0)))))));",
+          "v.k_front_kick_z = variable.mp_predefined ? (variable.mp_bp == 3 ? 0.83 : (variable.mp_bp == 4 ? 3.00 : (variable.mp_bp == 5 ? 5.28 : (variable.mp_bp == 6 ? 4.00 : (variable.mp_bp == 7 ? 3.38 : (variable.mp_bp == 8 ? 6.61 : (variable.mp_bp == 9 ? 9.70 : 0.0))))))) : (variable.mp_bp == 3 ? 0.83 : (variable.mp_bp == 4 ? 2.88 : (variable.mp_bp == 5 ? 4.08 : (variable.mp_bp == 6 ? 4.79 : (variable.mp_bp == 7 ? 3.84 : (variable.mp_bp == 8 ? 7.04 : (variable.mp_bp == 9 ? 10.46 : 0.0)))))));",
+          "v.k_left_kick_x = variable.mp_predefined ? (variable.mp_bp == 3 ? 2.50 : (variable.mp_bp == 4 ? 2.55 : (variable.mp_bp == 5 ? 2.90 : (variable.mp_bp == 6 ? 2.10 : (variable.mp_bp == 7 ? 2.15 : (variable.mp_bp == 8 ? 2.35 : (variable.mp_bp == 9 ? 3.55 : 0.0))))))) : (variable.mp_bp == 3 ? 2.50 : (variable.mp_bp == 4 ? 2.50 : (variable.mp_bp == 5 ? 3.10 : (variable.mp_bp == 6 ? 2.55 : (variable.mp_bp == 7 ? 1.86 : (variable.mp_bp == 8 ? 2.26 : (variable.mp_bp == 9 ? 2.96 : 0.0)))))));",
+          "v.k_left_kick_y = variable.mp_predefined ? (variable.mp_bp == 3 ? 1.60 : (variable.mp_bp == 4 ? 2.55 : (variable.mp_bp == 5 ? 2.99 : (variable.mp_bp == 6 ? 1.75 : (variable.mp_bp == 7 ? 3.70 : (variable.mp_bp == 8 ? 4.10 : (variable.mp_bp == 9 ? 4.30 : 0.0))))))) : (variable.mp_bp == 3 ? 1.60 : (variable.mp_bp == 4 ? 2.50 : (variable.mp_bp == 5 ? 3.29 : (variable.mp_bp == 6 ? 1.92 : (variable.mp_bp == 7 ? 2.39 : (variable.mp_bp == 8 ? 3.67 : (variable.mp_bp == 9 ? 3.87 : 0.0)))))));",
+          "v.k_left_kick_z = variable.mp_predefined ? (variable.mp_bp == 3 ? 1.43 : (variable.mp_bp == 4 ? 3.60 : (variable.mp_bp == 5 ? 5.88 : (variable.mp_bp == 6 ? 6.00 : (variable.mp_bp == 7 ? 4.38 : (variable.mp_bp == 8 ? 7.61 : (variable.mp_bp == 9 ? 10.70 : 0.0))))))) : (variable.mp_bp == 3 ? 1.43 : (variable.mp_bp == 4 ? 3.48 : (variable.mp_bp == 5 ? 4.68 : (variable.mp_bp == 6 ? 6.79 : (variable.mp_bp == 7 ? 4.84 : (variable.mp_bp == 8 ? 8.04 : (variable.mp_bp == 9 ? 10.46 : 0.0)))))));",
+          "v.k_right_kick_x = variable.mp_predefined ? (variable.mp_bp == 3 ? 2.50 : (variable.mp_bp == 4 ? 2.55 : (variable.mp_bp == 5 ? 2.90 : (variable.mp_bp == 6 ? 3.10 : (variable.mp_bp == 7 ? 4.05 : (variable.mp_bp == 8 ? 4.35 : (variable.mp_bp == 9 ? 5.55 : 0.0))))))) : (variable.mp_bp == 3 ? 2.50 : (variable.mp_bp == 4 ? 2.50 : (variable.mp_bp == 5 ? 3.10 : (variable.mp_bp == 6 ? 3.55 : (variable.mp_bp == 7 ? 3.86 : (variable.mp_bp == 8 ? 4.26 : (variable.mp_bp == 9 ? 4.96 : 0.0)))))));",
+          "v.k_right_kick_y = variable.mp_predefined ? (variable.mp_bp == 3 ? 0.50 : (variable.mp_bp == 4 ? 1.45 : (variable.mp_bp == 5 ? 1.89 : (variable.mp_bp == 6 ? 2.81 : (variable.mp_bp == 7 ? 3.70 : (variable.mp_bp == 8 ? 4.10 : (variable.mp_bp == 9 ? 4.30 : 0.0))))))) : (variable.mp_bp == 3 ? 0.50 : (variable.mp_bp == 4 ? 1.40 : (variable.mp_bp == 5 ? 2.21 : (variable.mp_bp == 6 ? 3.53 : (variable.mp_bp == 7 ? 2.39 : (variable.mp_bp == 8 ? 3.67 : (variable.mp_bp == 9 ? 3.87 : 0.0)))))));",
+          "v.k_right_kick_z = variable.mp_predefined ? (variable.mp_bp == 3 ? 1.33 : (variable.mp_bp == 4 ? 3.50 : (variable.mp_bp == 5 ? 5.78 : (variable.mp_bp == 6 ? 4.00 : (variable.mp_bp == 7 ? 2.38 : (variable.mp_bp == 8 ? 5.61 : (variable.mp_bp == 9 ? 8.70 : 0.0))))))) : (variable.mp_bp == 3 ? 1.33 : (variable.mp_bp == 4 ? 3.38 : (variable.mp_bp == 5 ? 4.58 : (variable.mp_bp == 6 ? 4.79 : (variable.mp_bp == 7 ? 2.84 : (variable.mp_bp == 8 ? 6.04 : (variable.mp_bp == 9 ? 8.46 : 0.0)))))));",
+          "v.k_top_kick_x = variable.mp_predefined ? (variable.mp_bp == 3 ? 0.00 : (variable.mp_bp == 4 ? 0.00 : (variable.mp_bp == 5 ? 0.00 : (variable.mp_bp == 6 ? 2.10 : (variable.mp_bp == 7 ? 3.05 : (variable.mp_bp == 8 ? 3.35 : (variable.mp_bp == 9 ? 4.55 : 0.0))))))) : (variable.mp_bp == 3 ? 0.00 : (variable.mp_bp == 4 ? 0.00 : (variable.mp_bp == 5 ? 0.00 : (variable.mp_bp == 6 ? 2.55 : (variable.mp_bp == 7 ? 2.86 : (variable.mp_bp == 8 ? 3.26 : (variable.mp_bp == 9 ? 3.96 : 0.0)))))));",
+          "v.k_top_kick_y = variable.mp_predefined ? (variable.mp_bp == 3 ? 0.00 : (variable.mp_bp == 4 ? 0.00 : (variable.mp_bp == 5 ? 0.00 : (variable.mp_bp == 6 ? 0.75 : (variable.mp_bp == 7 ? 2.70 : (variable.mp_bp == 8 ? 3.10 : (variable.mp_bp == 9 ? 3.30 : 0.0))))))) : (variable.mp_bp == 3 ? 0.00 : (variable.mp_bp == 4 ? 0.00 : (variable.mp_bp == 5 ? 0.00 : (variable.mp_bp == 6 ? 0.92 : (variable.mp_bp == 7 ? 2.79 : (variable.mp_bp == 8 ? 2.67 : (variable.mp_bp == 9 ? 2.87 : 0.0)))))));",
+          "v.k_top_kick_z = variable.mp_predefined ? (variable.mp_bp == 3 ? 0.00 : (variable.mp_bp == 4 ? 0.00 : (variable.mp_bp == 5 ? 0.00 : (variable.mp_bp == 6 ? 3.00 : (variable.mp_bp == 7 ? 1.38 : (variable.mp_bp == 8 ? 6.61 : (variable.mp_bp == 9 ? 7.70 : 0.0))))))) : (variable.mp_bp == 3 ? 0.00 : (variable.mp_bp == 4 ? 0.00 : (variable.mp_bp == 5 ? 0.00 : (variable.mp_bp == 6 ? 3.79 : (variable.mp_bp == 7 ? 1.84 : (variable.mp_bp == 8 ? 5.04 : (variable.mp_bp == 9 ? 7.46 : 0.0)))))));",
+          "v.k_bottom_kick_x = variable.mp_predefined ? (variable.mp_bp == 3 ? 0.00 : (variable.mp_bp == 4 ? 0.00 : (variable.mp_bp == 5 ? 0.00 : (variable.mp_bp == 6 ? 3.10 : (variable.mp_bp == 7 ? 3.15 : (variable.mp_bp == 8 ? 3.35 : (variable.mp_bp == 9 ? 4.55 : 0.0))))))) : (variable.mp_bp == 3 ? 0.00 : (variable.mp_bp == 4 ? 0.00 : (variable.mp_bp == 5 ? 0.00 : (variable.mp_bp == 6 ? 3.55 : (variable.mp_bp == 7 ? 2.86 : (variable.mp_bp == 8 ? 3.26 : (variable.mp_bp == 9 ? 3.96 : 0.0)))))));",
+          "v.k_bottom_kick_y = variable.mp_predefined ? (variable.mp_bp == 3 ? 0.00 : (variable.mp_bp == 4 ? 0.00 : (variable.mp_bp == 5 ? 0.00 : (variable.mp_bp == 6 ? 2.81 : (variable.mp_bp == 7 ? 1.70 : (variable.mp_bp == 8 ? 3.56 : (variable.mp_bp == 9 ? 3.96 : 0.0))))))) : (variable.mp_bp == 3 ? 0.00 : (variable.mp_bp == 4 ? 0.00 : (variable.mp_bp == 5 ? 0.00 : (variable.mp_bp == 6 ? 3.53 : (variable.mp_bp == 7 ? 0.39 : (variable.mp_bp == 8 ? 3.36 : (variable.mp_bp == 9 ? 3.95 : 0.0)))))));",
+          "v.k_bottom_kick_z = variable.mp_predefined ? (variable.mp_bp == 3 ? 0.00 : (variable.mp_bp == 4 ? 0.00 : (variable.mp_bp == 5 ? 0.00 : (variable.mp_bp == 6 ? 5.00 : (variable.mp_bp == 7 ? 2.38 : (variable.mp_bp == 8 ? 5.61 : (variable.mp_bp == 9 ? 8.70 : 0.0))))))) : (variable.mp_bp == 3 ? 0.00 : (variable.mp_bp == 4 ? 0.00 : (variable.mp_bp == 5 ? 0.00 : (variable.mp_bp == 6 ? 5.79 : (variable.mp_bp == 7 ? 2.84 : (variable.mp_bp == 8 ? 6.04 : (variable.mp_bp == 9 ? 8.46 : 0.0)))))));",
+          "v.kr_f = v.k_front_kick_z;",
+          "variable.mp_pregnant = variable.mp_female && variable.mp_phase >= 0;",
+          "variable.mp_labor = variable.mp_female && (variable.mp_pose == 'water_breaking' || variable.mp_pose == 'prebirth' || variable.mp_pose == 'birth' || variable.mp_pose == 'postbirth' || variable.mp_pose == 'miscarriage');",
+          "variable.mp_baby = q.property('minepreggo:baby') == 'human' ? 1 : (q.property('minepreggo:baby') == 'zombie' ? 2 : (q.property('minepreggo:baby') == 'creeper' ? 3 : (q.property('minepreggo:baby') == 'ender' ? 4 : (q.property('minepreggo:baby') == 'slime' ? 5 : (q.property('minepreggo:baby') == 'villager' ? 6 : (0))))));",
+          "v.crown_scale = 0.875;",
+          "v.strain = math.clamp(v.strain + (q.is_sneaking ? 6.0 : -1.5) * q.delta_time, 0.0, 1.0);",
+          "v.crowning = (variable.mp_labor && variable.mp_pose == 'birth' && variable.mp_baby > 0) && v.push > 0.0;",
+          "v.crown_x = math.clamp((v.push - 0.15) / 0.65, 0.0, 1.0);",
+          "v.crown_t = v.push < 0.8 ? 3.0 * v.crown_x * v.crown_x * (3.0 - 2.0 * v.crown_x) : 3.0 + 8.0 * math.pow((v.push - 0.8) / 0.2, 2.0);",
+          "v.crown = (!v.crowning || v.crown_t < v.crown - 2.5) ? v.crown_t : v.crown + (v.crown_t - v.crown) * math.min(1.0, 6.0 * q.delta_time);",
+          "variable.kicking = variable.mp_pose == 'fetal_movement' || variable.mp_pose == 'kicking_sit' || variable.mp_pose == 'prebirth' || variable.mp_pose == 'birth';",
+          "variable.kick_shown = variable.kicking ? variable.mp_kick : variable.kick_shown;",
+          "variable.contracting = variable.mp_pose == 'contraction' || variable.mp_pose == 'prebirth';",
+          "variable.kick_w = math.clamp(variable.kick_w + (variable.kicking ? 1.6 : -1.1) * math.clamp(q.delta_time, 0.0, 0.1), 0.0, 1.0);",
+          "variable.cw = math.clamp(variable.cw + (variable.contracting ? 0.6 : -0.45) * math.clamp(q.delta_time, 0.0, 0.1), 0.0, 1.0);",
+          "variable.kick_grow = 1.0;",
+          "variable.kp_front_kick = variable.kick_w > 0.0 ? math.clamp(variable.kick_shown == 0 ? (math.clamp(math.min(math.mod(q.life_time + 0.0, 30.0) - 0.0, 6.0 - math.mod(q.life_time + 0.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 80.0 + 0.0)), 3.0) + math.clamp(math.min(math.mod(q.life_time + 0.0, 30.0) - 6.0, 12.0 - math.mod(q.life_time + 0.0, 30.0)), 0.0, 1.0) * (0.5 + 0.5 * math.sin(q.life_time * 72.0 + 0.0)) + math.clamp(math.min(math.mod(q.life_time + 0.0, 30.0) - 12.0, 18.0 - math.mod(q.life_time + 0.0, 30.0)), 0.0, 1.0) * math.clamp(1.6 * math.sin(q.life_time * 90.0 + 0.0) - 0.5, 0.0, 1.0) + math.clamp(math.min(math.mod(q.life_time + 0.0, 30.0) - 18.0, 24.0 - math.mod(q.life_time + 0.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 330.0)), 10.0) + math.clamp(math.min(math.mod(q.life_time + 0.0, 30.0) - 24.0, 30.0 - math.mod(q.life_time + 0.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 260.0 + 0.0 * 2.0)), 4.0)) : (variable.kick_shown == 1 ? (math.clamp(math.min(math.mod(q.life_time + 0.0, 30.0) - 0.0, 6.0 - math.mod(q.life_time + 0.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 0.0)), 3.0) + math.clamp(math.min(math.mod(q.life_time + 0.0, 30.0) - 6.0, 12.0 - math.mod(q.life_time + 0.0, 30.0)), 0.0, 1.0) * (0.5 + 0.5 * math.sin(q.life_time * 72.0 + 0.0)) + math.clamp(math.min(math.mod(q.life_time + 0.0, 30.0) - 12.0, 18.0 - math.mod(q.life_time + 0.0, 30.0)), 0.0, 1.0) * math.clamp(1.6 * math.sin(q.life_time * 90.0 + 0.0) - 0.5, 0.0, 1.0) + math.clamp(math.min(math.mod(q.life_time + 0.0, 30.0) - 18.0, 24.0 - math.mod(q.life_time + 0.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 330.0)), 10.0) + math.clamp(math.min(math.mod(q.life_time + 0.0, 30.0) - 24.0, 30.0 - math.mod(q.life_time + 0.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 260.0 + 0.0 * 2.0)), 4.0)) : (math.clamp(math.min(math.mod(q.life_time + 0.0, 30.0) - 0.0, 6.0 - math.mod(q.life_time + 0.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 0.0)), 3.0) + math.clamp(math.min(math.mod(q.life_time + 0.0, 30.0) - 6.0, 12.0 - math.mod(q.life_time + 0.0, 30.0)), 0.0, 1.0) * (0.5 + 0.5 * math.sin(q.life_time * 72.0 + 0.0)) + math.clamp(math.min(math.mod(q.life_time + 0.0, 30.0) - 12.0, 18.0 - math.mod(q.life_time + 0.0, 30.0)), 0.0, 1.0) * math.clamp(1.6 * math.sin(q.life_time * 90.0 + 0.0) - 0.5, 0.0, 1.0) + math.clamp(math.min(math.mod(q.life_time + 0.0, 30.0) - 18.0, 24.0 - math.mod(q.life_time + 0.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 330.0)), 10.0) + math.clamp(math.min(math.mod(q.life_time + 0.0, 30.0) - 24.0, 30.0 - math.mod(q.life_time + 0.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 260.0 + 0.0 * 2.0)), 4.0))), 0.0, 1.0) : 0.0;",
+          "variable.kp_left_kick = variable.kick_w > 0.0 ? math.clamp(variable.kick_shown == 0 ? 0.0 : (variable.kick_shown == 1 ? (math.clamp(math.min(math.mod(q.life_time + 9.0, 30.0) - 0.0, 6.0 - math.mod(q.life_time + 9.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 120.0)), 3.0) + math.clamp(math.min(math.mod(q.life_time + 9.0, 30.0) - 6.0, 12.0 - math.mod(q.life_time + 9.0, 30.0)), 0.0, 1.0) * (0.5 + 0.5 * math.sin(q.life_time * 72.0 + 120.0)) + math.clamp(math.min(math.mod(q.life_time + 9.0, 30.0) - 12.0, 18.0 - math.mod(q.life_time + 9.0, 30.0)), 0.0, 1.0) * math.clamp(1.6 * math.sin(q.life_time * 90.0 + 120.0) - 0.5, 0.0, 1.0) + math.clamp(math.min(math.mod(q.life_time + 9.0, 30.0) - 18.0, 24.0 - math.mod(q.life_time + 9.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 330.0)), 10.0) + math.clamp(math.min(math.mod(q.life_time + 9.0, 30.0) - 24.0, 30.0 - math.mod(q.life_time + 9.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 260.0 + 120.0 * 2.0)), 4.0)) : (math.clamp(math.min(math.mod(q.life_time + 7.0, 30.0) - 0.0, 6.0 - math.mod(q.life_time + 7.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 72.0)), 3.0) + math.clamp(math.min(math.mod(q.life_time + 7.0, 30.0) - 6.0, 12.0 - math.mod(q.life_time + 7.0, 30.0)), 0.0, 1.0) * (0.5 + 0.5 * math.sin(q.life_time * 72.0 + 72.0)) + math.clamp(math.min(math.mod(q.life_time + 7.0, 30.0) - 12.0, 18.0 - math.mod(q.life_time + 7.0, 30.0)), 0.0, 1.0) * math.clamp(1.6 * math.sin(q.life_time * 90.0 + 72.0) - 0.5, 0.0, 1.0) + math.clamp(math.min(math.mod(q.life_time + 7.0, 30.0) - 18.0, 24.0 - math.mod(q.life_time + 7.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 330.0)), 10.0) + math.clamp(math.min(math.mod(q.life_time + 7.0, 30.0) - 24.0, 30.0 - math.mod(q.life_time + 7.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 260.0 + 72.0 * 2.0)), 4.0))), 0.0, 1.0) : 0.0;",
+          "variable.kp_right_kick = variable.kick_w > 0.0 ? math.clamp(variable.kick_shown == 0 ? (math.clamp(math.min(math.mod(q.life_time + 13.0, 30.0) - 0.0, 6.0 - math.mod(q.life_time + 13.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 80.0 + 200.0)), 3.0) + math.clamp(math.min(math.mod(q.life_time + 13.0, 30.0) - 6.0, 12.0 - math.mod(q.life_time + 13.0, 30.0)), 0.0, 1.0) * (0.5 + 0.5 * math.sin(q.life_time * 72.0 + 200.0)) + math.clamp(math.min(math.mod(q.life_time + 13.0, 30.0) - 12.0, 18.0 - math.mod(q.life_time + 13.0, 30.0)), 0.0, 1.0) * math.clamp(1.6 * math.sin(q.life_time * 90.0 + 200.0) - 0.5, 0.0, 1.0) + math.clamp(math.min(math.mod(q.life_time + 13.0, 30.0) - 18.0, 24.0 - math.mod(q.life_time + 13.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 330.0)), 10.0) + math.clamp(math.min(math.mod(q.life_time + 13.0, 30.0) - 24.0, 30.0 - math.mod(q.life_time + 13.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 260.0 + 200.0 * 2.0)), 4.0)) : (variable.kick_shown == 1 ? (math.clamp(math.min(math.mod(q.life_time + 19.0, 30.0) - 0.0, 6.0 - math.mod(q.life_time + 19.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 100.0 + 240.0)), 3.0) + math.clamp(math.min(math.mod(q.life_time + 19.0, 30.0) - 6.0, 12.0 - math.mod(q.life_time + 19.0, 30.0)), 0.0, 1.0) * (0.5 + 0.5 * math.sin(q.life_time * 72.0 + 240.0)) + math.clamp(math.min(math.mod(q.life_time + 19.0, 30.0) - 12.0, 18.0 - math.mod(q.life_time + 19.0, 30.0)), 0.0, 1.0) * math.clamp(1.6 * math.sin(q.life_time * 90.0 + 240.0) - 0.5, 0.0, 1.0) + math.clamp(math.min(math.mod(q.life_time + 19.0, 30.0) - 18.0, 24.0 - math.mod(q.life_time + 19.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 330.0)), 10.0) + math.clamp(math.min(math.mod(q.life_time + 19.0, 30.0) - 24.0, 30.0 - math.mod(q.life_time + 19.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 260.0 + 240.0 * 2.0)), 4.0)) : (math.clamp(math.min(math.mod(q.life_time + 14.0, 30.0) - 0.0, 6.0 - math.mod(q.life_time + 14.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 144.0)), 3.0) + math.clamp(math.min(math.mod(q.life_time + 14.0, 30.0) - 6.0, 12.0 - math.mod(q.life_time + 14.0, 30.0)), 0.0, 1.0) * (0.5 + 0.5 * math.sin(q.life_time * 72.0 + 144.0)) + math.clamp(math.min(math.mod(q.life_time + 14.0, 30.0) - 12.0, 18.0 - math.mod(q.life_time + 14.0, 30.0)), 0.0, 1.0) * math.clamp(1.6 * math.sin(q.life_time * 90.0 + 144.0) - 0.5, 0.0, 1.0) + math.clamp(math.min(math.mod(q.life_time + 14.0, 30.0) - 18.0, 24.0 - math.mod(q.life_time + 14.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 330.0)), 10.0) + math.clamp(math.min(math.mod(q.life_time + 14.0, 30.0) - 24.0, 30.0 - math.mod(q.life_time + 14.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 260.0 + 144.0 * 2.0)), 4.0))), 0.0, 1.0) : 0.0;",
+          "variable.kp_top_kick = variable.kick_w > 0.0 ? math.clamp(variable.kick_shown == 0 ? 0.0 : (variable.kick_shown == 1 ? 0.0 : (math.clamp(math.min(math.mod(q.life_time + 21.0, 30.0) - 0.0, 6.0 - math.mod(q.life_time + 21.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 216.0)), 3.0) + math.clamp(math.min(math.mod(q.life_time + 21.0, 30.0) - 6.0, 12.0 - math.mod(q.life_time + 21.0, 30.0)), 0.0, 1.0) * (0.5 + 0.5 * math.sin(q.life_time * 72.0 + 216.0)) + math.clamp(math.min(math.mod(q.life_time + 21.0, 30.0) - 12.0, 18.0 - math.mod(q.life_time + 21.0, 30.0)), 0.0, 1.0) * math.clamp(1.6 * math.sin(q.life_time * 90.0 + 216.0) - 0.5, 0.0, 1.0) + math.clamp(math.min(math.mod(q.life_time + 21.0, 30.0) - 18.0, 24.0 - math.mod(q.life_time + 21.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 330.0)), 10.0) + math.clamp(math.min(math.mod(q.life_time + 21.0, 30.0) - 24.0, 30.0 - math.mod(q.life_time + 21.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 260.0 + 216.0 * 2.0)), 4.0))), 0.0, 1.0) : 0.0;",
+          "variable.kp_bottom_kick = variable.kick_w > 0.0 ? math.clamp(variable.kick_shown == 0 ? 0.0 : (variable.kick_shown == 1 ? 0.0 : (math.clamp(math.min(math.mod(q.life_time + 26.0, 30.0) - 0.0, 6.0 - math.mod(q.life_time + 26.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 125.0 + 288.0)), 3.0) + math.clamp(math.min(math.mod(q.life_time + 26.0, 30.0) - 6.0, 12.0 - math.mod(q.life_time + 26.0, 30.0)), 0.0, 1.0) * (0.5 + 0.5 * math.sin(q.life_time * 72.0 + 288.0)) + math.clamp(math.min(math.mod(q.life_time + 26.0, 30.0) - 12.0, 18.0 - math.mod(q.life_time + 26.0, 30.0)), 0.0, 1.0) * math.clamp(1.6 * math.sin(q.life_time * 90.0 + 288.0) - 0.5, 0.0, 1.0) + math.clamp(math.min(math.mod(q.life_time + 26.0, 30.0) - 18.0, 24.0 - math.mod(q.life_time + 26.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 330.0)), 10.0) + math.clamp(math.min(math.mod(q.life_time + 26.0, 30.0) - 24.0, 30.0 - math.mod(q.life_time + 26.0, 30.0)), 0.0, 1.0) * math.pow(math.max(0.0, math.sin(q.life_time * 260.0 + 288.0 * 2.0)), 4.0))), 0.0, 1.0) : 0.0;",
+          "v.kl = 1.0 + variable.mp_kick;",
+          "variable.belly_growth = (variable.mp_phase <= 2 ? 1.0 : (variable.mp_phase <= 4 ? 0.9 : (variable.mp_phase == 5 ? 0.8 : (variable.mp_phase <= 7 ? 0.7 : 0.6)))) * query.property('minepreggo:growth');",
+          "v.jdt = math.clamp(q.delta_time, 0.0, 0.1);",
+          "v.jf = v.jdt / 0.05;",
+          "v.jvy = q.position_delta(1) / 0.05;",
+          "v.jh = math.sqrt(math.pow(q.position_delta(0), 2) + math.pow(q.position_delta(2), 2));",
+          "v.jvert = math.abs(v.jvy) > 0.05;",
+          "v.jair = !q.is_on_ground || v.jvert;",
+          "v.jk = v.mp_phase <= 1 ? 2.5 : (v.mp_phase <= 4 ? 3.0 : (v.mp_phase <= 7 ? 3.5 : 4.0));",
+          "v.jmd = v.mp_phase <= 1 ? 0.4 : (v.mp_phase <= 4 ? 0.35 : (v.mp_phase <= 7 ? 0.25 : 0.2));",
+          "v.jmm = v.mp_phase <= 7 ? 0.7 : 0.6;",
+          "v.jmrx = v.mp_phase <= 1 ? 0.065 : 0.12;",
+          "v.jmrz = v.mp_phase <= 1 ? 0.065 : 0.18;",
+          "(v.jair && !v.jwas_air) ? { v.jtx = math.random(-1.0, 1.0) * v.jmrx; v.jtz = math.random(-1.0, 1.0) * v.jmrz; v.jet = math.random(0.4, 0.8); };",
+          "(!v.jair && v.jwas_air) ? { v.jet = 0.0; };",
+          "v.jwas_air = v.jair;",
+          "v.jmi = v.jh > 0.001 ? math.min(1.0, v.jmi + v.jh * v.jmm * v.jf) : v.jmi * math.pow(0.9, v.jf);",
+          "(v.jmi > 0.01 || v.jvert) ? { v.jo = v.jo + 0.15 * math.max(v.jmi, math.abs(v.jvy) * 2.0) * v.jf; };",
+          "v.jec = (v.jec + (v.jet - v.jec) * 0.15 * v.jf) * math.pow(0.85, v.jf);",
+          "v.jpd = v.jo * 57.2958;",
+          "v.jany = v.jmi > 0.05 || v.jvert;",
+          "v.javy = math.abs(v.jvy);",
+          "v.jvl = (v.jvl + (-v.jpl * v.jk - v.jvy * 0.1 - 0.02 * (v.jvl > 0 ? 1.0 : (v.jvl < 0 ? -1.0 : 0.0)) + v.jmi * 0.08 * math.sin((v.jpd + 0.0)) + 0.2 * math.cos(1.3 * (v.jpd + 0.0)) * v.jmi + 1.0 * 0.08 * math.sin(1.5 * (v.jpd + 0.0)) * v.jmi) * v.jf) * math.pow(0.4, v.jf);",
+          "v.jpl = math.clamp(v.jpl + v.jvl * 0.05 * v.jf, -v.jmd, v.jmd);",
+          "v.jty = v.jany ? (v.jmi * 0.25 * math.cos(0.8 * (v.jpd + 0.0)) + v.jvl * 0.4 + 1.0 * 0.2 * 1.5 * v.jmi * math.sin(1.1 * (v.jpd + 0.0)) + v.jvy * 0.3 + 1.0 * 0.05 * v.jmi) : 0.0;",
+          "v.jryvl = (v.jryvl + (v.jty - v.jryl) * (v.jany ? 0.25 : 0.35) * v.jf) * math.pow(0.88, v.jf);",
+          "v.jryl = math.clamp(v.jryl + v.jryvl * 0.05 * v.jf, -0.15, 0.15);",
+          "v.jtx2 = v.jany ? ((v.jair && v.jvert) ? (v.jtx + math.sin(2.5 * (v.jpd + 0.0)) * v.javy * 0.15 + 1.0 * 0.08 * math.cos(2.0 * (v.jpd + 0.0)) * v.javy * 0.2) : (v.jmi * 0.2 * math.sin(1.2 * (v.jpd + 0.0)) + v.jvy * 0.25 + 1.0 * 0.2 * 0.8 * math.cos(0.95 * (v.jpd + 0.0)) + (v.jvert ? (math.sin(1.5 * (v.jpd + 0.0)) * v.javy * 0.4 + 1.0 * 0.08 * math.cos(1.8 * (v.jpd + 0.0)) * v.javy) : 0.0))) : 0.0;",
+          "v.jrxvl = (v.jrxvl + (v.jtx2 - v.jrxl) * (v.jany ? 0.23 : 0.35) * v.jf) * math.pow(0.88, v.jf);",
+          "v.jrxl = math.clamp(v.jrxl + v.jrxvl * 0.05 * v.jf, -v.jmrx, v.jmrx);",
+          "v.jtz2 = v.jany ? ((v.jair && v.jvert) ? (v.jtz + 1.0 * math.cos(2.3 * (v.jpd + 0.0)) * v.javy * 0.18 + 1.0 * 0.08 * math.sin(2.2 * (v.jpd + 0.0)) * v.javy * 0.25) : (v.jmi * 0.22 * math.cos(1.05 * (v.jpd + 0.0)) + 1.0 * v.jvl * 0.6 + 1.0 * 0.2 * 1.5 * math.sin(1.15 * (v.jpd + 0.0)) + (v.jvert ? (1.0 * math.cos(1.3 * (v.jpd + 0.0)) * v.javy * 0.5 + 1.0 * 0.16 * math.sin(1.6 * (v.jpd + 0.0)) * v.javy) : 0.0))) : 0.0;",
+          "v.jrzvl = (v.jrzvl + (v.jtz2 - v.jrzl) * (v.jany ? 0.27 : 0.35) * v.jf) * math.pow(0.88, v.jf);",
+          "v.jrzl = math.clamp(v.jrzl + v.jrzvl * 0.05 * v.jf, -v.jmrz, v.jmrz);",
+          "v.jvr = (v.jvr + (-v.jpr * v.jk - v.jvy * 0.1 - 0.02 * (v.jvr > 0 ? 1.0 : (v.jvr < 0 ? -1.0 : 0.0)) + v.jmi * 0.08 * math.sin((v.jpd + 180.0)) + 0.2 * math.cos(1.3 * (v.jpd + 180.0)) * v.jmi + -1.0 * 0.08 * math.sin(1.5 * (v.jpd + 180.0)) * v.jmi) * v.jf) * math.pow(0.4, v.jf);",
+          "v.jpr = math.clamp(v.jpr + v.jvr * 0.05 * v.jf, -v.jmd, v.jmd);",
+          "v.jty = v.jany ? (v.jmi * 0.25 * math.cos(0.8 * (v.jpd + 180.0)) + v.jvr * 0.4 + -1.0 * 0.2 * 1.5 * v.jmi * math.sin(1.1 * (v.jpd + 180.0)) + v.jvy * 0.3 + -1.0 * 0.05 * v.jmi) : 0.0;",
+          "v.jryvr = (v.jryvr + (v.jty - v.jryr) * (v.jany ? 0.25 : 0.35) * v.jf) * math.pow(0.88, v.jf);",
+          "v.jryr = math.clamp(v.jryr + v.jryvr * 0.05 * v.jf, -0.15, 0.15);",
+          "v.jtx2 = v.jany ? ((v.jair && v.jvert) ? (v.jtx + math.sin(2.5 * (v.jpd + 180.0)) * v.javy * 0.15 + -1.0 * 0.08 * math.cos(2.0 * (v.jpd + 180.0)) * v.javy * 0.2) : (v.jmi * 0.2 * math.sin(1.2 * (v.jpd + 180.0)) + v.jvy * 0.25 + -1.0 * 0.2 * 0.8 * math.cos(0.95 * (v.jpd + 180.0)) + (v.jvert ? (math.sin(1.5 * (v.jpd + 180.0)) * v.javy * 0.4 + -1.0 * 0.08 * math.cos(1.8 * (v.jpd + 180.0)) * v.javy) : 0.0))) : 0.0;",
+          "v.jrxvr = (v.jrxvr + (v.jtx2 - v.jrxr) * (v.jany ? 0.23 : 0.35) * v.jf) * math.pow(0.88, v.jf);",
+          "v.jrxr = math.clamp(v.jrxr + v.jrxvr * 0.05 * v.jf, -v.jmrx, v.jmrx);",
+          "v.jtz2 = v.jany ? ((v.jair && v.jvert) ? (v.jtz + -1.0 * math.cos(2.3 * (v.jpd + 180.0)) * v.javy * 0.18 + -1.0 * 0.08 * math.sin(2.2 * (v.jpd + 180.0)) * v.javy * 0.25) : (v.jmi * 0.22 * math.cos(1.05 * (v.jpd + 180.0)) + -1.0 * v.jvr * 0.6 + -1.0 * 0.2 * 1.5 * math.sin(1.15 * (v.jpd + 180.0)) + (v.jvert ? (-1.0 * math.cos(1.3 * (v.jpd + 180.0)) * v.javy * 0.5 + -1.0 * 0.16 * math.sin(1.6 * (v.jpd + 180.0)) * v.javy) : 0.0))) : 0.0;",
+          "v.jrzvr = (v.jrzvr + (v.jtz2 - v.jrzr) * (v.jany ? 0.27 : 0.35) * v.jf) * math.pow(0.88, v.jf);",
+          "v.jrzr = math.clamp(v.jrzr + v.jrzvr * 0.05 * v.jf, -v.jmrz, v.jmrz);",
+          "v.jb_y = -((v.jpl - v.jec) + (v.jpr - v.jec)) * 0.5;",
+          "v.jb_ry = (v.jryl + v.jryr) * 0.5 * 57.2958;",
+          "v.jb_rx = (v.jrxl + v.jrxr) * 0.5 * 57.2958;",
+          "v.jbl_y = -(v.jpl - v.jec) * 0.4;",
+          "v.jbr_y = -(v.jpr - v.jec) * 0.4;",
+          "v.jbl_ry = v.jryl * 0.5 * 57.2958;",
+          "v.jbr_ry = v.jryr * 0.5 * 57.2958;",
+          "v.jbl_rx = v.jrxl * 0.6 * 57.2958;",
+          "v.jbr_rx = v.jrxr * 0.6 * 57.2958;",
+          "v.jbl_rz = v.jrzl * 0.6 * 57.2958;",
+          "v.jbr_rz = v.jrzr * 0.6 * 57.2958;",
+          "v.jbmm = v.mp_phase <= 1 ? 0.65 : (v.mp_phase <= 7 ? 0.6 : 0.5);",
+          "v.jbmr = v.mp_phase <= 1 ? 0.125 : 0.6;",
+          "v.jbmi = v.jh > 0.001 ? math.min(1.0, v.jbmi + v.jh * v.jbmm * v.jf) : v.jbmi * math.pow(0.92, v.jf);",
+          "(v.jh > 0.001) ? { v.jbo = v.jbo + 0.45 * math.max(v.jbmi, v.javy * 2.0) * v.jf; };",
+          "v.jbpd = v.jbo * 1.5 * 57.2958;",
+          "v.jbv = (v.jbv + (-v.jbp * 0.15 - v.jvy * 0.1 - 0.02 * (v.jbv > 0 ? 1.0 : (v.jbv < 0 ? -1.0 : 0.0)) + v.jbmi * 0.05 * math.sin(v.jbpd)) * v.jf) * math.pow(0.85, v.jf);",
+          "v.jbp = math.clamp(v.jbp + v.jbv * 0.05 * v.jf, -0.7, 0.7);",
+          "v.jbrv = (v.jbrv + ((v.jbv * 0.5 + v.jbmi * 0.2 * math.cos(0.8 * v.jbpd)) - v.jbr) * 0.2 * v.jf) * math.pow(0.88, v.jf);",
+          "v.jbr = math.clamp(v.jbr + v.jbrv * 0.05 * v.jf, -v.jbmr, v.jbmr);",
+          "v.jbelly_y = v.mp_phase >= 0 ? -v.jbp : 0.0;",
+          "v.jbelly_ry = v.mp_phase >= 0 ? v.jbr * 57.2958 : 0.0;",
+          "v.jtv = (v.jtv + (-v.jtp * 0.15 - v.jvy * 0.1 - 0.02 * (v.jtv > 0 ? 1.0 : (v.jtv < 0 ? -1.0 : 0.0))) * v.jf) * math.pow(0.85, v.jf);",
+          "v.jtp = math.clamp(v.jtp + v.jtv * 0.05 * v.jf, -1.0, 1.0);",
+          "v.jbutt_y = v.mp_phase >= 3 ? -v.jtp : 0.0;",
+          "variable.fp_belly_y = (variable.mp_predefined ? (variable.mp_bp == 0 ? -7.000 : (variable.mp_bp == 1 ? -6.000 : (variable.mp_bp == 2 ? -5.000 : (variable.mp_bp == 3 ? -5.000 : (variable.mp_bp == 4 ? -5.000 : (variable.mp_bp == 5 ? -5.000 : (variable.mp_bp == 6 ? -5.000 : (variable.mp_bp == 7 ? -9.000 : (variable.mp_bp == 8 ? -9.000 : (variable.mp_bp == 9 ? -9.000 : (0.0))))))))))) : (variable.mp_bp == 0 ? -6.000 : (variable.mp_bp == 1 ? -6.000 : (variable.mp_bp == 2 ? -5.000 : (variable.mp_bp == 3 ? -5.000 : (variable.mp_bp == 4 ? -5.100 : (variable.mp_bp == 5 ? -5.000 : (variable.mp_bp == 6 ? -8.450 : (variable.mp_bp == 7 ? -8.750 : (variable.mp_bp == 8 ? -10.250 : (variable.mp_bp == 9 ? -10.250 : (0.0))))))))))));",
+          "variable.fp_boobs_y = variable.mp_pregnant ? (variable.mp_predefined ? (variable.mp_bp == 0 ? -1.500 : (variable.mp_bp == 1 ? -1.500 : (variable.mp_bp == 2 ? -2.000 : (variable.mp_bp == 3 ? -2.000 : (variable.mp_bp == 4 ? -1.100 : (variable.mp_bp == 5 ? -1.000 : (variable.mp_bp == 6 ? -0.600 : (variable.mp_bp == 7 ? -1.100 : (variable.mp_bp == 8 ? -1.000 : (variable.mp_bp == 9 ? -1.000 : (0.0))))))))))) : (variable.mp_bp == 0 ? -1.600 : (variable.mp_bp == 1 ? -1.600 : (variable.mp_bp == 2 ? -2.100 : (variable.mp_bp == 3 ? -2.100 : (variable.mp_bp == 4 ? -1.100 : (variable.mp_bp == 5 ? -0.700 : (variable.mp_bp == 6 ? -0.400 : (variable.mp_bp == 7 ? -0.600 : (variable.mp_bp == 8 ? -0.600 : (variable.mp_bp == 9 ? -0.600 : (0.0)))))))))))) : (variable.mp_predefined ? -1.500 : -1.500);",
+          "variable.fp_belly_z = (variable.mp_predefined ? (variable.mp_bp == 0 ? -1.500 : (variable.mp_bp == 1 ? -2.000 : (variable.mp_bp == 2 ? -2.000 : (variable.mp_bp == 3 ? -2.000 : (variable.mp_bp == 4 ? -0.500 : (variable.mp_bp == 5 ? -1.000 : (variable.mp_bp == 6 ? -1.000 : (variable.mp_bp == 7 ? -1.300 : (variable.mp_bp == 8 ? -1.000 : (variable.mp_bp == 9 ? -1.000 : (0.0))))))))))) : (variable.mp_bp == 0 ? -1.800 : (variable.mp_bp == 1 ? -2.000 : (variable.mp_bp == 2 ? -2.000 : (variable.mp_bp == 3 ? -2.000 : (variable.mp_bp == 4 ? -2.000 : (variable.mp_bp == 5 ? -2.000 : (variable.mp_bp == 6 ? -2.000 : (variable.mp_bp == 7 ? -2.000 : (variable.mp_bp == 8 ? -2.000 : (variable.mp_bp == 9 ? -1.800 : (0.0))))))))))));",
+          "variable.fp_boobs_z = variable.mp_pregnant ? (variable.mp_predefined ? (variable.mp_bp == 0 ? -2.000 : (variable.mp_bp == 1 ? -2.000 : (variable.mp_bp == 2 ? -2.000 : (variable.mp_bp == 3 ? -2.000 : (variable.mp_bp == 4 ? -2.000 : (variable.mp_bp == 5 ? -2.000 : (variable.mp_bp == 6 ? -2.000 : (variable.mp_bp == 7 ? -2.000 : (variable.mp_bp == 8 ? -2.000 : (variable.mp_bp == 9 ? -2.000 : (0.0))))))))))) : (variable.mp_bp == 0 ? -2.000 : (variable.mp_bp == 1 ? -2.000 : (variable.mp_bp == 2 ? -2.000 : (variable.mp_bp == 3 ? -2.000 : (variable.mp_bp == 4 ? -2.000 : (variable.mp_bp == 5 ? -2.200 : (variable.mp_bp == 6 ? -2.200 : (variable.mp_bp == 7 ? -2.300 : (variable.mp_bp == 8 ? -2.300 : (variable.mp_bp == 9 ? -2.400 : (0.0)))))))))))) : (variable.mp_predefined ? -2.000 : -2.000);"
+        ],
+        "animate": [
+          "root",
+          {
+            "minepreggo_belly_low": "variable.mp_pregnant && variable.mp_phase <= 2"
+          },
+          {
+            "minepreggo_belly_medium": "variable.mp_pregnant && variable.mp_phase >= 3 && variable.mp_phase <= 6"
+          },
+          {
+            "minepreggo_belly_high": "variable.mp_pregnant && variable.mp_phase >= 7"
+          },
+          {
+            "minepreggo_belly_growth": "variable.mp_pregnant"
+          },
+          {
+            "minepreggo_belly_rubs_i": "variable.mp_pregnant && variable.mp_pose == 'belly_rubs' && variable.mp_phase <= 2"
+          },
+          {
+            "minepreggo_belly_rubs_ii": "variable.mp_pregnant && variable.mp_pose == 'belly_rubs' && variable.mp_phase >= 3 && variable.mp_phase <= 6"
+          },
+          {
+            "minepreggo_belly_rubs_iii": "variable.mp_pregnant && variable.mp_pose == 'belly_rubs' && variable.mp_phase >= 7"
+          },
+          {
+            "minepreggo_fetal_p3_i": "variable.kick_w * (variable.mp_phase == 3 && variable.kick_shown == 0)"
+          },
+          {
+            "minepreggo_fetal_p3_ii": "variable.kick_w * (variable.mp_phase == 3 && variable.kick_shown == 1)"
+          },
+          {
+            "minepreggo_fetal_p3_iii": "variable.kick_w * (variable.mp_phase == 3 && variable.kick_shown == 2)"
+          },
+          {
+            "minepreggo_fetal_p4_i": "variable.kick_w * (variable.mp_phase == 4 && variable.kick_shown == 0)"
+          },
+          {
+            "minepreggo_fetal_p4_ii": "variable.kick_w * (variable.mp_phase == 4 && variable.kick_shown == 1)"
+          },
+          {
+            "minepreggo_fetal_p4_iii": "variable.kick_w * (variable.mp_phase == 4 && variable.kick_shown == 2)"
+          },
+          {
+            "minepreggo_fetal_p5_i": "variable.kick_w * (variable.mp_phase == 5 && variable.kick_shown == 0)"
+          },
+          {
+            "minepreggo_fetal_p5_ii": "variable.kick_w * (variable.mp_phase == 5 && variable.kick_shown == 1)"
+          },
+          {
+            "minepreggo_fetal_p5_iii": "variable.kick_w * (variable.mp_phase == 5 && variable.kick_shown == 2)"
+          },
+          {
+            "minepreggo_fetal_p6_i": "variable.kick_w * (variable.mp_phase == 6 && variable.kick_shown == 0)"
+          },
+          {
+            "minepreggo_fetal_p6_ii": "variable.kick_w * (variable.mp_phase == 6 && variable.kick_shown == 1)"
+          },
+          {
+            "minepreggo_fetal_p6_iii": "variable.kick_w * (variable.mp_phase == 6 && variable.kick_shown == 2)"
+          },
+          {
+            "minepreggo_fetal_p7_i": "variable.kick_w * (variable.mp_phase == 7 && variable.kick_shown == 0)"
+          },
+          {
+            "minepreggo_fetal_p7_ii": "variable.kick_w * (variable.mp_phase == 7 && variable.kick_shown == 1)"
+          },
+          {
+            "minepreggo_fetal_p7_iii": "variable.kick_w * (variable.mp_phase == 7 && variable.kick_shown == 2)"
+          },
+          {
+            "minepreggo_fetal_p8_i": "variable.kick_w * (variable.mp_phase == 8 && variable.kick_shown == 0)"
+          },
+          {
+            "minepreggo_fetal_p8_ii": "variable.kick_w * (variable.mp_phase == 8 && variable.kick_shown == 1)"
+          },
+          {
+            "minepreggo_fetal_p8_iii": "variable.kick_w * (variable.mp_phase == 8 && variable.kick_shown == 2)"
+          },
+          {
+            "minepreggo_fetal_p9_i": "variable.kick_w * (variable.mp_phase == 9 && variable.kick_shown == 0)"
+          },
+          {
+            "minepreggo_fetal_p9_ii": "variable.kick_w * (variable.mp_phase == 9 && variable.kick_shown == 1)"
+          },
+          {
+            "minepreggo_fetal_p9_iii": "variable.kick_w * (variable.mp_phase == 9 && variable.kick_shown == 2)"
+          },
+          {
+            "minepreggo_jiggle": "variable.mp_female"
+          },
+          {
+            "minepreggo_player_back_pain": "!variable.is_first_person && variable.mp_female && variable.mp_pose == 'back_pain'"
+          },
+          {
+            "minepreggo_player_belly_rubbing_p0": "!variable.is_first_person && variable.mp_female && variable.mp_pose == 'rubbing' && variable.mp_phase == 0"
+          },
+          {
+            "minepreggo_player_belly_rubbing_p1": "!variable.is_first_person && variable.mp_female && variable.mp_pose == 'rubbing' && variable.mp_phase == 1"
+          },
+          {
+            "minepreggo_player_belly_rubbing_p2": "!variable.is_first_person && variable.mp_female && variable.mp_pose == 'rubbing' && variable.mp_phase == 2"
+          },
+          {
+            "minepreggo_player_belly_rubbing_p3": "!variable.is_first_person && variable.mp_female && variable.mp_pose == 'rubbing' && variable.mp_phase == 3"
+          },
+          {
+            "minepreggo_player_belly_rubbing_p4": "!variable.is_first_person && variable.mp_female && variable.mp_pose == 'rubbing' && variable.mp_phase == 4"
+          },
+          {
+            "minepreggo_player_belly_rubbing_p5": "!variable.is_first_person && variable.mp_female && variable.mp_pose == 'rubbing' && variable.mp_phase == 5"
+          },
+          {
+            "minepreggo_player_belly_rubbing_p6": "!variable.is_first_person && variable.mp_female && variable.mp_pose == 'rubbing' && variable.mp_phase == 6"
+          },
+          {
+            "minepreggo_player_belly_rubbing_p7": "!variable.is_first_person && variable.mp_female && variable.mp_pose == 'rubbing' && variable.mp_phase == 7"
+          },
+          {
+            "minepreggo_player_belly_rubbing_p8": "!variable.is_first_person && variable.mp_female && variable.mp_pose == 'rubbing' && variable.mp_phase == 8"
+          },
+          {
+            "minepreggo_player_belly_rubbing_p9": "!variable.is_first_person && variable.mp_female && variable.mp_pose == 'rubbing' && variable.mp_phase == 9"
+          },
+          {
+            "minepreggo_player_walking_heavy_p4": "!variable.is_first_person && variable.mp_female && variable.mp_phase == 4 && !variable.mp_labor && !(variable.mp_pose == 'rubbing') && query.modified_move_speed > 0.05 && query.is_on_ground && !query.is_riding"
+          },
+          {
+            "minepreggo_player_walking_heavy_p5": "!variable.is_first_person && variable.mp_female && variable.mp_phase == 5 && !variable.mp_labor && !(variable.mp_pose == 'rubbing') && query.modified_move_speed > 0.05 && query.is_on_ground && !query.is_riding"
+          },
+          {
+            "minepreggo_player_walking_heavy_p6": "!variable.is_first_person && variable.mp_female && variable.mp_phase == 6 && !variable.mp_labor && !(variable.mp_pose == 'rubbing') && query.modified_move_speed > 0.05 && query.is_on_ground && !query.is_riding"
+          },
+          {
+            "minepreggo_player_walking_heavy_p7": "!variable.is_first_person && variable.mp_female && variable.mp_phase == 7 && !variable.mp_labor && !(variable.mp_pose == 'rubbing') && query.modified_move_speed > 0.05 && query.is_on_ground && !query.is_riding"
+          },
+          {
+            "minepreggo_player_walking_heavy_p8": "!variable.is_first_person && variable.mp_female && variable.mp_phase == 8 && !variable.mp_labor && !(variable.mp_pose == 'rubbing') && query.modified_move_speed > 0.05 && query.is_on_ground && !query.is_riding"
+          },
+          {
+            "minepreggo_player_walking_heavy_p9": "!variable.is_first_person && variable.mp_female && variable.mp_phase == 9 && !variable.mp_labor && !(variable.mp_pose == 'rubbing') && query.modified_move_speed > 0.05 && query.is_on_ground && !query.is_riding"
+          },
+          {
+            "minepreggo_belly_hidden": "variable.mp_pose == 'postbirth'"
+          },
+          {
+            "minepreggo_labor_override": "!variable.is_first_person && !query.is_sleeping && variable.mp_labor && (variable.mp_pose == 'prebirth' || variable.mp_pose == 'birth' || variable.mp_pose == 'postbirth' || variable.mp_pose == 'miscarriage')"
+          },
+          {
+            "minepreggo_labor_water_breaking": "!variable.is_first_person && variable.mp_labor && variable.mp_pose == 'water_breaking'"
+          },
+          {
+            "minepreggo_labor_prebirth": "!variable.is_first_person && variable.mp_labor && variable.mp_pose == 'prebirth'"
+          },
+          {
+            "minepreggo_labor_birth": "!variable.is_first_person && variable.mp_labor && variable.mp_pose == 'birth'"
+          },
+          {
+            "minepreggo_crowning": "!variable.is_first_person && variable.mp_labor && variable.mp_pose == 'birth' && !variable.mp_navel"
+          },
+          {
+            "minepreggo_crowning_navel": "!variable.is_first_person && variable.mp_labor && variable.mp_pose == 'birth' && variable.mp_navel"
+          },
+          {
+            "minepreggo_labor_postbirth": "!variable.is_first_person && variable.mp_labor && variable.mp_pose == 'postbirth'"
+          },
+          {
+            "minepreggo_labor_miscarriage": "!variable.is_first_person && variable.mp_labor && variable.mp_pose == 'miscarriage'"
+          },
+          {
+            "minepreggo_navel_prebirth": "variable.mp_pregnant && variable.mp_navel && variable.mp_pose == 'prebirth'"
+          },
+          {
+            "minepreggo_navel_birth": "variable.mp_pregnant && variable.mp_navel && variable.mp_pose == 'birth'"
+          },
+          {
+            "minepreggo_fetal_push": "variable.kick_w * variable.mp_pregnant"
+          },
+          {
+            "minepreggo_birth_push": "variable.mp_pregnant && variable.mp_pose == 'birth'"
+          },
+          {
+            "minepreggo_kick_i": "variable.kick_w * (variable.mp_pregnant && variable.mp_phase >= 3 && variable.kick_shown == 0)"
+          },
+          {
+            "minepreggo_kick_ii": "variable.kick_w * (variable.mp_pregnant && variable.mp_phase >= 3 && variable.kick_shown == 1)"
+          },
+          {
+            "minepreggo_kick_iii": "variable.kick_w * (variable.mp_pregnant && variable.mp_phase >= 3 && variable.kick_shown == 2)"
+          },
+          {
+            "minepreggo_contraction_wave": "variable.mp_pregnant"
+          },
+          {
+            "minepreggo_walk_jiggle": "variable.mp_female"
+          },
+          {
+            "minepreggo_first_person_view": "variable.is_first_person && variable.mp_female"
+          }
+        ],
+        "variables": {
+          "variable.fp_melee_spear_use_attachable_rotation_z": "public",
+          "variable.tp_melee_spear_use_attachable_rotation_z": "public",
+          "variable.fp_melee_spear_attack_attachable_rotation_z": "public",
+          "variable.tp_melee_spear_attack_attachable_position_z": "public",
+          "variable.attack_time": "public",
+          "variable.item_use_normalized": "public",
+          "variable.mp_native": "public"
+        },
+        "should_update_effects_offscreen": "1.0"
+      },
+      "animations": {
+        "root": "controller.animation.player.root",
+        "base_controller": "controller.animation.player.base",
+        "hudplayer": "controller.animation.player.hudplayer",
+        "humanoid_base_pose": "animation.humanoid.base_pose",
+        "look_at_target": "controller.animation.humanoid.look_at_target",
+        "look_at_target_ui": "animation.player.look_at_target.ui",
+        "look_at_target_default": "animation.humanoid.look_at_target.default",
+        "look_at_target_gliding": "animation.humanoid.look_at_target.gliding",
+        "look_at_target_swimming": "animation.humanoid.look_at_target.swimming",
+        "look_at_target_inverted": "animation.player.look_at_target.inverted",
+        "cape": "animation.player.cape",
+        "move.arms": "animation.player.move.arms",
+        "move.legs": "animation.player.move.legs",
+        "swimming": "animation.player.swim",
+        "swimming.legs": "animation.player.swim.legs",
+        "riding.arms": "animation.player.riding.arms",
+        "riding.legs": "animation.player.riding.legs",
+        "holding": "animation.player.holding",
+        "brandish_spear": "animation.humanoid.brandish_spear",
+        "charging": "animation.humanoid.charging",
+        "attack.positions": "animation.player.attack.positions",
+        "attack.rotations": "animation.player.attack.rotations",
+        "sneaking": "animation.player.sneaking",
+        "bob": "animation.player.bob",
+        "damage_nearby_mobs": "animation.humanoid.damage_nearby_mobs",
+        "bow_and_arrow": "animation.humanoid.bow_and_arrow",
+        "use_item_progress": "animation.humanoid.use_item_progress",
+        "skeleton_attack": "animation.skeleton.attack",
+        "sleeping": "animation.player.sleeping",
+        "first_person_base_pose": "animation.player.first_person.base_pose",
+        "first_person_empty_hand": "animation.player.first_person.empty_hand",
+        "first_person_swap_item": "animation.player.first_person.swap_item",
+        "first_person_attack_controller": "controller.animation.player.first_person_attack",
+        "first_person_attack_rotation": "animation.player.first_person.attack_rotation",
+        "first_person_attack_rotation_item": "animation.player.first_person.attack_rotation_item",
+        "first_person_vr_attack_rotation": "animation.player.first_person.vr_attack_rotation",
+        "first_person_walk": "animation.player.first_person.walk",
+        "first_person_map_controller": "controller.animation.player.first_person_map",
+        "first_person_map_hold": "animation.player.first_person.map_hold",
+        "first_person_map_hold_attack": "animation.player.first_person.map_hold_attack",
+        "first_person_map_hold_off_hand": "animation.player.first_person.map_hold_off_hand",
+        "first_person_map_hold_main_hand": "animation.player.first_person.map_hold_main_hand",
+        "first_person_crossbow_equipped": "animation.player.first_person.crossbow_equipped",
+        "first_person_crossbow_hold": "animation.player.first_person.crossbow_hold",
+        "first_person_breathing_bob": "animation.player.first_person.breathing_bob",
+        "third_person_crossbow_equipped": "animation.player.crossbow_equipped",
+        "third_person_bow_equipped": "animation.player.bow_equipped",
+        "crossbow_hold": "animation.player.crossbow_hold",
+        "crossbow_controller": "controller.animation.player.crossbow",
+        "shield_block_main_hand": "animation.player.shield_block_main_hand",
+        "shield_block_off_hand": "animation.player.shield_block_off_hand",
+        "blink": "controller.animation.persona.blink",
+        "fishing_rod": "animation.humanoid.fishing_rod",
+        "holding_spyglass": "animation.humanoid.holding_spyglass",
+        "first_person_shield_block": "animation.player.first_person.shield_block",
+        "tooting_goat_horn": "animation.humanoid.tooting_goat_horn",
+        "holding_brush": "animation.humanoid.holding_brush",
+        "brushing": "animation.humanoid.brushing",
+        "crawling": "animation.player.crawl",
+        "crawling.legs": "animation.player.crawl.legs",
+        "swimming.no_right_arm": "animation.player.swim.no_right_arm",
+        "crawling.no_right_arm": "animation.player.crawl.no_right_arm",
+        "riding.root": "animation.player.riding.root",
+        "holding_heavy_core": "animation.player.holding_heavy_core",
+        "first_person_melee_spear_use": "animation.player.first_person.melee_spear_use",
+        "first_person_melee_spear_hold": "animation.player.first_person.melee_spear_hold",
+        "first_person_melee_spear_attack": "animation.player.first_person.melee_spear_attack",
+        "first_person_melee_spear_controller": "controller.animation.player.first_person_melee_spear",
+        "third_person_melee_spear_use": "animation.humanoid.melee_spear_use",
+        "third_person_melee_spear_hold": "animation.humanoid.melee_spear_hold",
+        "third_person_melee_spear_attack": "animation.player.melee_spear_attack",
+        "third_person_melee_spear_controller": "controller.animation.player.melee_spear",
+        "minepreggo_belly_low": "animation.minepreggo.belly.low_belly_inflation",
+        "minepreggo_belly_medium": "animation.minepreggo.belly.medium_belly_inflation",
+        "minepreggo_belly_high": "animation.minepreggo.belly.high_belly_inflation",
+        "minepreggo_belly_growth": "animation.minepreggo.belly_growth",
+        "minepreggo_belly_rubs_i": "animation.minepreggo.belly.belly_rubs_needs_i",
+        "minepreggo_belly_rubs_ii": "animation.minepreggo.belly.belly_rubs_needs_ii",
+        "minepreggo_belly_rubs_iii": "animation.minepreggo.belly.belly_rubs_needs_iii",
+        "minepreggo_fetal_p3_i": "animation.minepreggo.belly.fetal_movement_p3_i",
+        "minepreggo_fetal_p3_ii": "animation.minepreggo.belly.fetal_movement_p3_ii",
+        "minepreggo_fetal_p3_iii": "animation.minepreggo.belly.fetal_movement_p3_iii",
+        "minepreggo_fetal_p4_i": "animation.minepreggo.belly.fetal_movement_p4_i",
+        "minepreggo_fetal_p4_ii": "animation.minepreggo.belly.fetal_movement_p4_ii",
+        "minepreggo_fetal_p4_iii": "animation.minepreggo.belly.fetal_movement_p4_iii",
+        "minepreggo_fetal_p5_i": "animation.minepreggo.belly.fetal_movement_p5_i",
+        "minepreggo_fetal_p5_ii": "animation.minepreggo.belly.fetal_movement_p5_ii",
+        "minepreggo_fetal_p5_iii": "animation.minepreggo.belly.fetal_movement_p5_iii",
+        "minepreggo_fetal_p6_i": "animation.minepreggo.belly.fetal_movement_p6_i",
+        "minepreggo_fetal_p6_ii": "animation.minepreggo.belly.fetal_movement_p6_ii",
+        "minepreggo_fetal_p6_iii": "animation.minepreggo.belly.fetal_movement_p6_iii",
+        "minepreggo_fetal_p7_i": "animation.minepreggo.belly.fetal_movement_p7_i",
+        "minepreggo_fetal_p7_ii": "animation.minepreggo.belly.fetal_movement_p7_ii",
+        "minepreggo_fetal_p7_iii": "animation.minepreggo.belly.fetal_movement_p7_iii",
+        "minepreggo_fetal_p8_i": "animation.minepreggo.belly.fetal_movement_p8_i",
+        "minepreggo_fetal_p8_ii": "animation.minepreggo.belly.fetal_movement_p8_ii",
+        "minepreggo_fetal_p8_iii": "animation.minepreggo.belly.fetal_movement_p8_iii",
+        "minepreggo_fetal_p9_i": "animation.minepreggo.belly.fetal_movement_p9_i",
+        "minepreggo_fetal_p9_ii": "animation.minepreggo.belly.fetal_movement_p9_ii",
+        "minepreggo_fetal_p9_iii": "animation.minepreggo.belly.fetal_movement_p9_iii",
+        "minepreggo_jiggle": "animation.minepreggo.jiggle",
+        "minepreggo_player_back_pain": "animation.minepreggo.player.back_pain",
+        "minepreggo_player_belly_rubbing_p0": "animation.minepreggo.player.belly_rubbing_p0",
+        "minepreggo_player_belly_rubbing_p1": "animation.minepreggo.player.belly_rubbing_p1",
+        "minepreggo_player_belly_rubbing_p2": "animation.minepreggo.player.belly_rubbing_p2",
+        "minepreggo_player_belly_rubbing_p3": "animation.minepreggo.player.belly_rubbing_p3",
+        "minepreggo_player_belly_rubbing_p4": "animation.minepreggo.player.belly_rubbing_p4",
+        "minepreggo_player_belly_rubbing_p5": "animation.minepreggo.player.belly_rubbing_p5",
+        "minepreggo_player_belly_rubbing_p6": "animation.minepreggo.player.belly_rubbing_p6",
+        "minepreggo_player_belly_rubbing_p7": "animation.minepreggo.player.belly_rubbing_p7",
+        "minepreggo_player_belly_rubbing_p8": "animation.minepreggo.player.belly_rubbing_p8",
+        "minepreggo_player_belly_rubbing_p9": "animation.minepreggo.player.belly_rubbing_p9",
+        "minepreggo_player_walking_heavy_p4": "animation.minepreggo.player.walking_heavy_p4",
+        "minepreggo_player_walking_heavy_p5": "animation.minepreggo.player.walking_heavy_p5",
+        "minepreggo_player_walking_heavy_p6": "animation.minepreggo.player.walking_heavy_p6",
+        "minepreggo_player_walking_heavy_p7": "animation.minepreggo.player.walking_heavy_p7",
+        "minepreggo_player_walking_heavy_p8": "animation.minepreggo.player.walking_heavy_p8",
+        "minepreggo_player_walking_heavy_p9": "animation.minepreggo.player.walking_heavy_p9",
+        "minepreggo_belly_hidden": "animation.minepreggo.player.belly_hidden",
+        "minepreggo_labor_water_breaking": "animation.minepreggo.player.labor_water_breaking",
+        "minepreggo_labor_prebirth": "animation.minepreggo.player.labor_prebirth",
+        "minepreggo_labor_birth": "animation.minepreggo.player.labor_birth",
+        "minepreggo_labor_postbirth": "animation.minepreggo.player.labor_postbirth",
+        "minepreggo_labor_miscarriage": "animation.minepreggo.player.labor_miscarriage",
+        "minepreggo_navel_prebirth": "animation.minepreggo.navel_prebirth",
+        "minepreggo_navel_birth": "animation.minepreggo.navel_birth",
+        "minepreggo_fetal_push": "animation.minepreggo.fetal_push",
+        "minepreggo_birth_push": "animation.minepreggo.birth_push",
+        "minepreggo_kick_i": "animation.minepreggo.kick_i",
+        "minepreggo_kick_ii": "animation.minepreggo.kick_ii",
+        "minepreggo_kick_iii": "animation.minepreggo.kick_iii",
+        "minepreggo_contraction_wave": "animation.minepreggo.contraction_wave",
+        "minepreggo_crowning": "animation.minepreggo.crowning",
+        "minepreggo_crowning_navel": "animation.minepreggo.crowning_free",
+        "minepreggo_walk_jiggle": "animation.minepreggo.walk_jiggle",
+        "minepreggo_first_person_view": "animation.minepreggo.player.first_person_view",
+        "minepreggo_labor_override": "animation.minepreggo.player.labor_override"
+      },
+      "render_controllers": [
+        {
+          "controller.render.player.first_person_spectator": "variable.is_first_person && query.is_spectator"
+        },
+        {
+          "controller.render.player.third_person_spectator": "!variable.is_first_person && !variable.map_face_icon && query.is_spectator"
+        },
+        {
+          "controller.render.player.first_person": "variable.is_first_person && !query.is_spectator"
+        },
+        {
+          "controller.render.player.third_person": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && !variable.mp_predefined && !variable.mp_labor"
+        },
+        {
+          "controller.render.player.map": "variable.map_face_icon"
+        },
+        {
+          "controller.render.minepreggo.player_skin": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.mp_predefined && !variable.mp_labor"
+        },
+        {
+          "controller.render.minepreggo.player_boobs": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_female && !variable.mp_pregnant && !variable.mp_predefined"
+        },
+        {
+          "controller.render.minepreggo.player_labor": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.mp_labor"
+        },
+        {
+          "controller.render.minepreggo.player_boobs_predefined": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_female && !variable.mp_pregnant && variable.mp_predefined"
+        },
+        {
+          "controller.render.minepreggo.player_belly_custom_p0": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant && !variable.mp_predefined && variable.mp_bp == 0"
+        },
+        {
+          "controller.render.minepreggo.player_belly_predefined_p0": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 0"
+        },
+        {
+          "controller.render.minepreggo.player_belly_custom_p1": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant && !variable.mp_predefined && variable.mp_bp == 1"
+        },
+        {
+          "controller.render.minepreggo.player_belly_predefined_p1": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 1"
+        },
+        {
+          "controller.render.minepreggo.player_belly_custom_p2": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant && !variable.mp_predefined && variable.mp_bp == 2"
+        },
+        {
+          "controller.render.minepreggo.player_belly_predefined_p2": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 2"
+        },
+        {
+          "controller.render.minepreggo.player_belly_custom_p3": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant && !variable.mp_predefined && variable.mp_bp == 3"
+        },
+        {
+          "controller.render.minepreggo.player_belly_predefined_p3": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 3"
+        },
+        {
+          "controller.render.minepreggo.player_belly_custom_p4": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant && !variable.mp_predefined && variable.mp_bp == 4"
+        },
+        {
+          "controller.render.minepreggo.player_belly_predefined_p4": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 4"
+        },
+        {
+          "controller.render.minepreggo.player_belly_custom_p5": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant && !variable.mp_predefined && variable.mp_bp == 5"
+        },
+        {
+          "controller.render.minepreggo.player_belly_predefined_p5": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 5"
+        },
+        {
+          "controller.render.minepreggo.player_belly_custom_p6": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant && !variable.mp_predefined && variable.mp_bp == 6"
+        },
+        {
+          "controller.render.minepreggo.player_belly_predefined_p6": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 6"
+        },
+        {
+          "controller.render.minepreggo.player_belly_custom_p7": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant && !variable.mp_predefined && variable.mp_bp == 7"
+        },
+        {
+          "controller.render.minepreggo.player_belly_predefined_p7": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 7"
+        },
+        {
+          "controller.render.minepreggo.player_belly_custom_p8": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant && !variable.mp_predefined && variable.mp_bp == 8"
+        },
+        {
+          "controller.render.minepreggo.player_belly_predefined_p8": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 8"
+        },
+        {
+          "controller.render.minepreggo.player_belly_custom_p9": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant && !variable.mp_predefined && variable.mp_bp == 9"
+        },
+        {
+          "controller.render.minepreggo.player_belly_predefined_p9": "((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant && variable.mp_predefined && variable.mp_bp == 9"
+        },
+        {
+          "controller.render.minepreggo.player_crowning_humanoid": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.crowning && !variable.mp_navel && (variable.mp_baby >= 1 && variable.mp_baby <= 4)"
+        },
+        {
+          "controller.render.minepreggo.player_crowning_humanoid_slime": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.crowning && !variable.mp_navel && (variable.mp_baby == 5)"
+        },
+        {
+          "controller.render.minepreggo.player_crowning_villager": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.crowning && !variable.mp_navel && (variable.mp_baby == 6)"
+        },
+        {
+          "controller.render.minepreggo.player_crowning_navel_p4": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.crowning && variable.mp_navel && variable.mp_bp == 4 && variable.mp_baby >= 1 && variable.mp_baby <= 4"
+        },
+        {
+          "controller.render.minepreggo.player_crowning_navel_p5": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.crowning && variable.mp_navel && variable.mp_bp == 5 && variable.mp_baby >= 1 && variable.mp_baby <= 4"
+        },
+        {
+          "controller.render.minepreggo.player_crowning_navel_p6": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.crowning && variable.mp_navel && variable.mp_bp == 6 && variable.mp_baby >= 1 && variable.mp_baby <= 4"
+        },
+        {
+          "controller.render.minepreggo.player_crowning_navel_p7": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.crowning && variable.mp_navel && variable.mp_bp == 7 && variable.mp_baby >= 1 && variable.mp_baby <= 4"
+        },
+        {
+          "controller.render.minepreggo.player_crowning_navel_p8": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.crowning && variable.mp_navel && variable.mp_bp == 8 && variable.mp_baby >= 1 && variable.mp_baby <= 4"
+        },
+        {
+          "controller.render.minepreggo.player_crowning_navel_p9": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator && variable.crowning && variable.mp_navel && variable.mp_bp == 9 && variable.mp_baby >= 1 && variable.mp_baby <= 4"
+        }
+      ],
+      "enable_attachables": true
+    }
+  }
+}

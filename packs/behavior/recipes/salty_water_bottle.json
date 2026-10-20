@@ -1,0 +1,31 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "minepreggo:salty_water_bottle"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "item": "minepreggo:salt"
+      },
+      {
+        "item": "minecraft:potion",
+        "data": 0
+      },
+      {
+        "item": "minepreggo:chili_pepper"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "minepreggo:salt"
+      }
+    ],
+    "result": {
+      "item": "minepreggo:salty_water_bottle"
+    }
+  }
+}
