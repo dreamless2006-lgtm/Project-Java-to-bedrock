@@ -179,7 +179,7 @@ test('every variable the played animations read is set by the pre_animation', ()
       const def = ANIMATIONS.get(/** @type {string} */ (anim));
       if (!def) continue;
       const text = JSON.stringify(def);
-      // a read with a ?? fallback (v.kick_grow) is fine unset
+      // a read with a ?? fallback is fine unset
       for (const m of text.matchAll(/\b(?:v|variable)\.([a-z_0-9]+)(\s*\?\?)?/g)) if (!m[2]) assert.ok(set.has(m[1]), `${id}: ${anim} reads v.${m[1]}`);
     }
   }

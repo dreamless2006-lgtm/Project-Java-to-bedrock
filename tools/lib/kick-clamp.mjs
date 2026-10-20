@@ -38,9 +38,18 @@ function scaleComponent(bone, axis, value, peak) {
     return `math.clamp(${n}, -${room}, ${room})`;
   }
   const share = Math.min(1, Math.abs(n) / peak).toFixed(4);
-  if (axis === 'z') return n < 0 ? `(-${room} * ${share})` : n;
-  return `(${n < 0 ? '-' : ''}${room} * ${share})`;
+  if (axis === 'z') return n < 0 ? `(-${room} * ${share} * ${YIELD(bone)})` : n;
+  return `(${n < 0 ? '-' : ''}${room} * ${share} * ${YIELD(bone)})`;
 }
+
+/**
+ * The share of a kick bone's travel its keyframed kick keeps while the babies' movements
+ * (animation.minepreggo.kick_i/ii/iii) move the same bone: they add up, and each alone crosses the
+ * whole room, so the keyframed kick gives way by the movement's own share (v.kp_<bone>, 0..1,
+ * written by kickShareLines() in tools/lib/belly-render.mjs) and the two together never travel
+ * further than either alone. A body without the variable keeps the whole kick.
+ */
+const YIELD = (/** @type {string} */ bone) => `(1.0 - v.kp_${bone})`;
 
 function scaleVector(/** @type {string} */ bone, /** @type {unknown} */ vector, /** @type {number[]} */ peaks) {
   if (!Array.isArray(vector) || vector.length !== 3) return vector;

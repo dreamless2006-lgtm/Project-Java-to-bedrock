@@ -31,7 +31,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { blank, encodePng } from '../lib/png.mjs';
 import { KICK_BONES, kickRoom } from '../lib/kick-clamp.mjs';
-import { MOD, PHASES, initializers } from '../lib/belly-render.mjs';
+import { MOD, PHASES, initializers, kickShareLines } from '../lib/belly-render.mjs';
 import { PLAYER_BABIES, crowningAnimations, crowningLines } from '../lib/crowning.mjs';
 import { MINEPREGGO_JIGGLE_BONES, OWNER_WALK_LINES, walkJiggleAnimation } from '../lib/walk-jiggle.mjs';
 
@@ -149,6 +149,9 @@ function preAnimation(/** @type {number} */ p) {
     `v.cw = math.clamp(v.cw + (v.contracting ? 0.6 : -0.45) * ${DT}, 0.0, 1.0);`,
     'v.cw = v.contracting ? math.max(0.5, v.cw) : v.cw;',
     'v.kl = 1.0 + v.kick;',
+    // how much a kick swells, and the share of the babies' movements the keyframed kicks give way to
+    'v.kick_grow = 1.0;',
+    ...kickShareLines('v'),
     `v.growth_target = ${growthFactor(p)} * v.growth;`,
     // eased toward the target, but at once on a big jump (a new item, or no persistence at all)
     `v.belly_growth = math.abs(v.belly_growth - v.growth_target) > 0.2 ? v.growth_target : v.belly_growth + (v.growth_target - v.belly_growth) * math.min(1.0, 3.0 * ${DT});`,

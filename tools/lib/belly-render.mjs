@@ -78,6 +78,8 @@ export function kickStateLines() {
     "v.contracting = v.pose == 'contraction' || v.pose == 'prebirth' || (v.pose == 'incapacitated' && v.scene == 'none') || v.scene == 'contraction';",
     `v.kick_w = math.clamp(v.kick_w + (v.kicking ? 1.6 : -1.1) * ${DT}, 0.0, 1.0);`,
     `v.cw = math.clamp(v.cw + (v.contracting ? 0.6 : -0.45) * ${DT}, 0.0, 1.0);`,
+    'v.kick_grow = 1.0;',
+    ...kickShareLines('v'),
   ];
 }
 
@@ -89,6 +91,8 @@ export function playerKickStateLines() {
     "variable.contracting = variable.mp_pose == 'contraction' || variable.mp_pose == 'prebirth';",
     `variable.kick_w = math.clamp(variable.kick_w + (variable.kicking ? 1.6 : -1.1) * ${DT}, 0.0, 1.0);`,
     `variable.cw = math.clamp(variable.cw + (variable.contracting ? 0.6 : -0.45) * ${DT}, 0.0, 1.0);`,
+    'variable.kick_grow = 1.0;',
+    ...kickShareLines('variable'),
   ];
 }
 
@@ -113,30 +117,63 @@ const MOVEMENTS = [
 /** Seconds each movement lasts in the cycle (with a one-second fade in and out). */
 export const MOVEMENT_SECONDS = 6;
 
+/** strength -> [bone, degrees per second of its kick, phase, bulge beyond the skin, growth, drift, offset in the cycle (s)] */
+const PULSES = {
+  kick_i: [['front_kick', 80, 0, 0.7, 0.18, 0.3, 0], ['right_kick', 80, 200, 0.6, 0.14, 0.25, 13]],
+  kick_ii: [['front_kick', 100, 0, 0.8, 0.22, 0.35, 0], ['left_kick', 100, 120, 0.75, 0.2, 0.3, 9], ['right_kick', 100, 240, 0.75, 0.2, 0.3, 19]],
+  kick_iii: [['front_kick', 125, 0, 1.0, 0.26, 0.4, 0], ['left_kick', 125, 72, 0.95, 0.24, 0.35, 7], ['right_kick', 125, 144, 0.95, 0.24, 0.35, 14], ['top_kick', 125, 216, 0.9, 0.22, 0.3, 21], ['bottom_kick', 125, 288, 0.9, 0.22, 0.3, 26]],
+};
+const CYCLE = MOVEMENTS.length * MOVEMENT_SECONDS;
+
+/**
+ * Movement i of a pulsing bone at the moment: its window in the cycle times its motion, 0..1 (the
+ * windows take turns, so at most one is above 0).
+ * @param {number} f @param {number} phase @param {number} offset
+ */
+function movementTerms(f, phase, offset) {
+  const phi = Number(phase).toFixed(1);
+  const t = `math.mod(q.life_time + ${Number(offset).toFixed(1)}, ${CYCLE.toFixed(1)})`;
+  const weight = (/** @type {number} */ i) => `math.clamp(math.min(${t} - ${(i * MOVEMENT_SECONDS).toFixed(1)}, ${((i + 1) * MOVEMENT_SECONDS).toFixed(1)} - ${t}), 0.0, 1.0)`;
+  return { phi, term: (/** @type {number} */ i) => `${weight(i)} * ${MOVEMENTS[i][2](Number(f), phi)}` };
+}
+
+/**
+ * The pre_animation lines giving each kick bone's share of the babies' movements at the moment
+ * (v.kp_<bone>, 0..1, for the strength shown), by which the keyframed kicks of the mod give way
+ * (tools/lib/kick-clamp.mjs): the two would otherwise add up and carry the cube twice its room, far
+ * out of the belly. 0 while she is not kicking. (q.life_time reads the same clock in the pulses: the
+ * time since the entity's animations began.)
+ * @param {string} [prefix] the variable prefix of the body ('v' or 'variable')
+ */
+export function kickShareLines(prefix = 'v') {
+  return KICK_BONES.map((bone) => {
+    const byStrength = Object.values(PULSES).map((bones) => {
+      const own = bones.find(([name]) => name === bone);
+      if (!own) return '0.0';
+      const [, f, phase, , , , offset] = own;
+      const { term } = movementTerms(Number(f), Number(phase), Number(offset));
+      return `(${MOVEMENTS.map((_, i) => term(i)).join(' + ')})`;
+    });
+    const pick = `${prefix}.kick_shown == 0 ? ${byStrength[0]} : (${prefix}.kick_shown == 1 ? ${byStrength[1]} : ${byStrength[2]})`;
+    return `${prefix}.kp_${bone} = ${prefix}.kick_w > 0.0 ? math.clamp(${pick}, 0.0, 1.0) : 0.0;`;
+  });
+}
+
 export function kickPulseAnimations() {
-  /** strength -> [bone, degrees per second of its kick, phase, bulge beyond the skin, growth, drift, offset in the cycle (s)] */
-  const kicks = {
-    kick_i: [['front_kick', 80, 0, 0.7, 0.18, 0.3, 0], ['right_kick', 80, 200, 0.6, 0.14, 0.25, 13]],
-    kick_ii: [['front_kick', 100, 0, 0.8, 0.22, 0.35, 0], ['left_kick', 100, 120, 0.75, 0.2, 0.3, 9], ['right_kick', 100, 240, 0.75, 0.2, 0.3, 19]],
-    kick_iii: [['front_kick', 125, 0, 1.0, 0.26, 0.4, 0], ['left_kick', 125, 72, 0.95, 0.24, 0.35, 7], ['right_kick', 125, 144, 0.95, 0.24, 0.35, 14], ['top_kick', 125, 216, 0.9, 0.22, 0.3, 21], ['bottom_kick', 125, 288, 0.9, 0.22, 0.3, 26]],
-  };
-  const cycle = MOVEMENTS.length * MOVEMENT_SECONDS;
   /** @type {Record<string, unknown>} */
   const out = {};
-  for (const [name, bones] of Object.entries(kicks)) {
+  for (const [name, bones] of Object.entries(PULSES)) {
     /** @type {Record<string, unknown>} */
     const channels = {};
     for (const [bone, f, phase, bulge, grow, drift, offset] of bones) {
-      const phi = Number(phase).toFixed(1);
-      const t = `math.mod(q.life_time + ${Number(offset).toFixed(1)}, ${cycle.toFixed(1)})`;
-      const weight = (/** @type {number} */ i) => `math.clamp(math.min(${t} - ${(i * MOVEMENT_SECONDS).toFixed(1)}, ${((i + 1) * MOVEMENT_SECONDS).toFixed(1)} - ${t}), 0.0, 1.0)`;
-      const term = (/** @type {number} */ i) => `${weight(i)} * ${MOVEMENTS[i][2](Number(f), phi)}`;
+      const { phi, term } = movementTerms(Number(f), Number(phase), Number(offset));
       const outward = MOVEMENTS.map(([, share], i) => `(v.k_${bone}_z + ${(Number(bulge) * Number(share)).toFixed(2)}) * ${term(i)}`).join(' + ');
       // the roll slides across within the cube's own room sideways; the kick drifts a little
       const across = `math.clamp(v.k_${bone}_x + 0.4, 0.15, 1.2) * math.sin(q.life_time * 25.0 + ${phi}) * ${term(1)}`;
       const along = `${Number(drift).toFixed(2)} * math.sin(q.life_time * ${(Number(f) * 0.31).toFixed(1)} + ${phi}) * ${term(0)}`;
-      const swell = `${Number(grow).toFixed(2)} * (v.kick_grow ?? 1.0) * (${term(0)} + 0.5 * ${term(2)} + 0.3 * ${term(4)})`;
-      const lengthen = `${Number(grow).toFixed(2)} * (v.kick_grow ?? 1.0) * (${term(0)} + 0.9 * ${term(2)} + 0.3 * ${term(4)})`;
+      // (v.kick_grow: how much a kick swells, set by every body that kicks; a smooth shell's patch swells less)
+      const swell = `${Number(grow).toFixed(2)} * v.kick_grow * (${term(0)} + 0.5 * ${term(2)} + 0.3 * ${term(4)})`;
+      const lengthen = `${Number(grow).toFixed(2)} * v.kick_grow * (${term(0)} + 0.9 * ${term(2)} + 0.3 * ${term(4)})`;
       channels[bone] = {
         position: [across, along, `-(${outward})`],
         scale: [`1.0 + ${swell}`, `1.0 + ${lengthen}`, '1.0'],
