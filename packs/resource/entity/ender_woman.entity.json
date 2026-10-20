@@ -191,7 +191,8 @@
           },
           {
             "jiggle": "true"
-          }
+          },
+          "walk_jiggle"
         ],
         "initialize": [
           "variable.aggressive = 0.0;",
@@ -402,7 +403,8 @@
         "postbirth_p8": "animation.minepreggo.ender_woman.postbirth",
         "postbirth_p9": "animation.minepreggo.ender_woman.postbirth",
         "birth_flair": "animation.minepreggo.ender_woman.birth_flair",
-        "labor_flair": "animation.minepreggo.no_pose"
+        "labor_flair": "animation.minepreggo.no_pose",
+        "walk_jiggle": "animation.minepreggo.walk_jiggle"
       },
       "render_controllers": [
         {

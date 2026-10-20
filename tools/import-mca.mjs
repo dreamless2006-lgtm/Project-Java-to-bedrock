@@ -146,6 +146,8 @@ writeJson(join(RP, 'entity', PORT, 'villager_woman.entity.json'), {
       geometry: { default: 'geometry.humanoid.custom', chest: 'geometry.minepreggo.player_boobs_custom', ...Object.fromEntries(PHASES.map((p) => [`belly_p${p}`, `geometry.minepreggo.player_body_custom_p${p}`])) },
       animations: {
         ...vanilla, ...BELLY_ANIMATIONS, belly_controller: 'controller.animation.minepreggo.belly',
+        // her chest, belly and butt bounce as she walks: the bones of this pack's player bodies
+        walk_jiggle: 'animation.minepreggo.walk_jiggle',
         // her labor: the poses of this pack's player (the same humanoid bones)
         labor_water_breaking: 'animation.minepreggo.player.labor_water_breaking', labor_prebirth: 'animation.minepreggo.player.labor_prebirth',
         labor_birth: 'animation.minepreggo.player.labor_birth', labor_postbirth: 'animation.minepreggo.player.labor_postbirth',
@@ -154,7 +156,7 @@ writeJson(join(RP, 'entity', PORT, 'villager_woman.entity.json'), {
         initialize: initializers(pre, []),
         pre_animation: pre,
         animate: [
-          'look_at_target_controller', { move_controller: '!v.labor' }, 'bob_controller', 'holding_controller', 'attack_controller', 'belly_controller',
+          'look_at_target_controller', { move_controller: '!v.labor' }, 'bob_controller', 'holding_controller', 'attack_controller', 'belly_controller', 'walk_jiggle',
           { labor_water_breaking: "v.pose == 'water_breaking'" }, { labor_prebirth: "v.pose == 'prebirth'" }, { labor_birth: "v.pose == 'birth'" }, { labor_postbirth: "v.pose == 'postbirth'" },
         ],
       },

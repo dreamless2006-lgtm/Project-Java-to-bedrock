@@ -10,6 +10,7 @@ import { writeEntityJson } from './lib/entity-json.mjs';
 import { BELLY_ANIMATIONS, BELLY_PROPERTY, MINEPREGGO_PROPERTIES, MOD, PHASES, POSES, bellyController, bellyIndex, contractionWaveAnimation, NO_POSE, initializers, kickPulseAnimations, kickRoomLines, kickStateLines, playerKickStateLines } from './lib/belly-render.mjs';
 import { BABY_PROPERTY, FAMILY_CROWNING, PLAYER_BABIES, crowningAnimations, crowningLines } from './lib/crowning.mjs';
 import { mobBirthAnimations, mobBirthPainStates, mobBirthEntity } from './lib/mob-births.mjs';
+import { MINEPREGGO_JIGGLE_BONES, walkJiggleAnimation } from './lib/walk-jiggle.mjs';
 
 const ROOT = new URL('../', import.meta.url).pathname;
 const RP = join(ROOT, 'packs/resource');
@@ -77,6 +78,26 @@ write(join(RP, 'animation_controllers/belly.animation_controllers.json'), {
 }
 // each family's crowning in step with her own pushes, and her flair (tools/lib/mob-births.mjs)
 write(join(RP, 'animations/births.animation.json'), { format_version: '1.8.0', animations: mobBirthAnimations({ models: readModel }) });
+
+// ---- the walk jiggle every female and the player share, and the player's own view of her body -----
+// In first person the game turns her whole body with the camera (animation.player.first_person.base_pose
+// rotates body by the camera's pitch and yaw, so her arms stay in view), and a chest or belly hung on
+// it stays put on the screen, under it. Turned back by the pitch about the body's pivot (the bone's
+// own pivot is offset from it by v.fp_<bone>_y/z, per model) they stay where they are on her: looking
+// down shows them. (Her yaw is kept: they face where she looks.)
+/** @param {string} bone the variables of its pivot's offset from the body's */
+function firstPersonView(bone) {
+  const a = 'q.target_x_rotation';
+  const [y, z] = [`v.fp_${bone}_y`, `v.fp_${bone}_z`];
+  return { rotation: [`-${a}`, 0, 0], position: [0, `${y} * (math.cos(${a}) - 1.0) - ${z} * math.sin(${a})`, `${y} * math.sin(${a}) + ${z} * (math.cos(${a}) - 1.0)`] };
+}
+write(join(RP, 'animations/walk_jiggle.animation.json'), {
+  format_version: '1.8.0',
+  animations: {
+    [`animation.${MOD}.walk_jiggle`]: walkJiggleAnimation(MINEPREGGO_JIGGLE_BONES),
+    [`animation.${MOD}.player.first_person_view`]: { loop: true, bones: { boobs: firstPersonView('boobs'), belly: firstPersonView('belly') } },
+  },
+});
 
 // ---- each family ---------------------------------------------------------------------------------
 for (const [family, texture] of Object.entries(FAMILIES)) {
@@ -175,6 +196,8 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
   const animate = d.scripts.animate.filter((/** @type {string | Record<string, string>} */ a) => !(typeof a === 'object' && BELLY_ANIMATE.test(Object.keys(a)[0])) && a !== 'belly_controller');
   const pain = animate.indexOf('pain_controller');
   animate.splice(pain < 0 ? animate.length : pain + 1, 0, 'belly_controller');
+  d.animations.walk_jiggle = `animation.${MOD}.walk_jiggle`;
+  if (!animate.includes('walk_jiggle')) animate.push('walk_jiggle');
   d.scripts.animate = animate;
   for (const name of ['belly_low', 'belly_medium', 'belly_high', 'belly_growth', 'fetal_push', 'birth_push', 'belly_hidden', 'kick_i', 'kick_ii', 'kick_iii', 'contraction_wave', ...PHASES.filter((p) => p >= 3).flatMap((p) => [`fetal_p${p}_i`, `fetal_p${p}_ii`, `fetal_p${p}_iii`])]) {
     if (!d.animations[name]) throw new Error(`${family}: the belly controller needs animation "${name}"`);
@@ -240,7 +263,7 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
     if (at >= 0) d.scripts.animate[at] = entry;
     else d.scripts.animate.push(entry);
   }
-  const belly = '((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 15.0)) && variable.mp_pregnant';
+  const belly = '((!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) || (variable.is_first_person && !query.is_spectator && variable.player_x_rotation > 0.0)) && variable.mp_pregnant';
   d.render_controllers = d.render_controllers.filter((/** @type {string | Record<string, string>} */ rc) => typeof rc === 'string' || !/player_belly_(custom|predefined)/.test(Object.keys(rc)[0]));
   for (const p of PHASES) {
     d.render_controllers.push({ [`controller.render.${MOD}.player_belly_custom_p${p}`]: `${belly} && !variable.mp_predefined && variable.mp_bp == ${p}` });
@@ -267,7 +290,30 @@ for (const [family, texture] of Object.entries(FAMILIES)) {
   const predefinedAt = pre.findIndex((/** @type {string} */ line) => line.startsWith('variable.mp_predefined ='));
   if (predefinedAt < 0) throw new Error('player: no mp_predefined line');
   pre.splice(predefinedAt + 1, 0, ...kickRoomLines('variable.mp_bp', bodyOf('custom'), bodyOf('predefined'), 'variable.mp_predefined'));
+  // Her chest and belly in first person (animation.minepreggo.player.first_person_view): each model's
+  // pivots, offset from the body's.
+  for (let i = pre.length - 1; i >= 0; i--) if (/^variable\.fp_/.test(pre[i])) pre.splice(i, 1);
+  const boobsOf = (/** @type {string} */ kind) => read(join(RP, 'models/entity', MOD, `player_boobs_${kind}.geo.json`))['minecraft:geometry'][0];
+  /** @param {any} geometry @param {string} bone @returns {number[]} the bone's pivot less the body's (y, z) */
+  const offsetOf = (geometry, bone) => {
+    const byName = (/** @type {string} */ name) => geometry.bones.find((/** @type {any} */ b) => b.name === name);
+    const [own, body] = [byName(bone), byName('body')];
+    if (!own || !body || own.parent !== 'body' || own.rotation?.[1] || own.rotation?.[2]) throw new Error(`player: ${bone} must hang on body, turned only about x`);
+    return [own.pivot[1] - body.pivot[1], own.pivot[2] - body.pivot[2]];
+  };
+  const bySize = (/** @type {(p: number) => number} */ value) => PHASES.reduceRight((rest, p) => `variable.mp_bp == ${p} ? ${value(p).toFixed(3)} : (${rest})`, '0.0');
+  ['y', 'z'].forEach((axis, k) => {
+    const pregnant = (/** @type {string} */ bone) => `(variable.mp_predefined ? (${bySize((p) => offsetOf(bodyOf('predefined')(p), bone)[k])}) : (${bySize((p) => offsetOf(bodyOf('custom')(p), bone)[k])}))`;
+    pre.push(`variable.fp_belly_${axis} = ${pregnant('belly')};`);
+    pre.push(`variable.fp_boobs_${axis} = variable.mp_pregnant ? ${pregnant('boobs')} : (variable.mp_predefined ? ${offsetOf(boobsOf('predefined'), 'boobs')[k].toFixed(3)} : ${offsetOf(boobsOf('custom'), 'boobs')[k].toFixed(3)});`);
+  });
   d.scripts.pre_animation = pre;
+  d.animations.minepreggo_walk_jiggle = `animation.${MOD}.walk_jiggle`;
+  setEntry('minepreggo_walk_jiggle', 'variable.mp_female');
+  d.animations.minepreggo_first_person_view = `animation.${MOD}.player.first_person_view`;
+  setEntry('minepreggo_first_person_view', 'variable.is_first_person && variable.mp_female');
+  // (her chest shows in first person on the same terms as her belly)
+  for (const entry of d.render_controllers) if (typeof entry === 'object') for (const key of Object.keys(entry)) entry[key] = entry[key].replace('variable.player_x_rotation > 15.0', 'variable.player_x_rotation > 0.0');
   for (const key of Object.keys(d.geometry)) if (/^minepreggo_crowning/.test(key)) delete d.geometry[key];
   for (const key of Object.keys(d.textures)) if (/^minepreggo_fetus_/.test(key)) delete d.textures[key];
   const crownKinds = [...new Set(PLAYER_BABIES.map(([, model]) => model))];

@@ -50,6 +50,8 @@
           "variable.kr_f = 0.0;",
           "variable.mp_baby = 0.0;",
           "variable.navel = 0.0;",
+          "variable.owner_distance_moved = 0.0;",
+          "variable.owner_move_speed = 0.0;",
           "variable.pose = 0.0;",
           "variable.push = 0.0;",
           "variable.strain = 0.0;"
@@ -61,6 +63,8 @@
           "v.navel = c.owning_entity->q.property('minepreggo:navel');",
           "v.mp_baby = c.owning_entity->q.property('minepreggo:baby') == 'human' ? 1 : (c.owning_entity->q.property('minepreggo:baby') == 'zombie' ? 2 : (c.owning_entity->q.property('minepreggo:baby') == 'creeper' ? 3 : (c.owning_entity->q.property('minepreggo:baby') == 'ender' ? 4 : (c.owning_entity->q.property('minepreggo:baby') == 'slime' ? 5 : (c.owning_entity->q.property('minepreggo:baby') == 'villager' ? 6 : (0))))));",
           "v.hidden = c.is_first_person || c.owning_entity->v.mp_native || c.owning_entity->q.is_invisible || c.owning_entity->q.is_sleeping;",
+          "v.owner_move_speed = c.owning_entity->q.modified_move_speed;",
+          "v.owner_distance_moved = c.owning_entity->q.modified_distance_moved;",
           "v.push = v.pose == 'birth' ? v.growth : 0.0;",
           "v.kicking = v.pose == 'fetal_movement' || v.pose == 'kicking_sit' || v.pose == 'prebirth' || v.pose == 'birth';",
           "v.kick_shown = v.kicking ? v.kick : v.kick_shown;",
@@ -101,6 +105,7 @@
           "inflation",
           "growth",
           "contraction",
+          "walk_jiggle",
           {
             "rubs_need": "v.pose == 'belly_rubs'"
           },
@@ -156,6 +161,7 @@
         "fetal_push": "animation.minepreggo.fetal_push",
         "birth_push": "animation.minepreggo.birth_push",
         "crowning": "animation.minepreggo.crowning_free",
+        "walk_jiggle": "animation.minepreggo.belly_attachable.walk_jiggle",
         "fetal_i": "animation.minepreggo.belly.fetal_movement_p8_i",
         "fetal_ii": "animation.minepreggo.belly.fetal_movement_p8_ii",
         "fetal_iii": "animation.minepreggo.belly.fetal_movement_p8_iii",

@@ -33,6 +33,7 @@ import { blank, encodePng } from '../lib/png.mjs';
 import { KICK_BONES, kickRoom } from '../lib/kick-clamp.mjs';
 import { MOD, PHASES, initializers } from '../lib/belly-render.mjs';
 import { PLAYER_BABIES, crowningAnimations, crowningLines } from '../lib/crowning.mjs';
+import { MINEPREGGO_JIGGLE_BONES, OWNER_WALK_LINES, walkJiggleAnimation } from '../lib/walk-jiggle.mjs';
 
 const ROOT = new URL('../../', import.meta.url).pathname;
 const RP = `${ROOT}packs/resource/`;
@@ -87,6 +88,8 @@ write(`${RP}animations/belly_attachable.animation.json`, {
         ...NAVEL_BABIES.map(({ bone, i }) => [bone, { scale: `(v.crowning && v.navel && v.mp_baby == ${i}) ? 1.0 : 0.0` }]),
       ]),
     },
+    // her chest, belly and butt bounce as she walks: her walk, read through the arrow
+    [`animation.${MOD}.belly_attachable.walk_jiggle`]: walkJiggleAnimation(MINEPREGGO_JIGGLE_BONES, { owner: true }),
     // the crowning of a navel birth: the same free crowning, on the navel mount's own bones
     [`animation.${MOD}.belly_attachable.crowning_navel`]: {
       ...crowningFree,
@@ -134,6 +137,7 @@ function preAnimation(/** @type {number} */ p) {
     `v.navel = ${property('navel')};`,
     `v.mp_baby = ${babyIndex};`,
     `v.hidden = c.is_first_person || ${OWNER}v.mp_native || ${OWNER}q.is_invisible || ${OWNER}q.is_sleeping;`,
+    ...OWNER_WALK_LINES,
     "v.push = v.pose == 'birth' ? v.growth : 0.0;",
     "v.kicking = v.pose == 'fetal_movement' || v.pose == 'kicking_sit' || v.pose == 'prebirth' || v.pose == 'birth';",
     // the strength last kicked with stays while the kicks fade out (the property drops at once)
@@ -170,10 +174,11 @@ function animationsOf(/** @type {number} */ p) {
     fetal_push: `animation.${MOD}.fetal_push`,
     birth_push: `animation.${MOD}.birth_push`,
     crowning: `animation.${MOD}.crowning_free`,
+    walk_jiggle: `animation.${MOD}.belly_attachable.walk_jiggle`,
   };
   /** @type {(string | Record<string, string>)[]} */
   const animate = [
-    'shown', 'baby', 'inflation', 'growth', 'contraction',
+    'shown', 'baby', 'inflation', 'growth', 'contraction', 'walk_jiggle',
     { rubs_need: "v.pose == 'belly_rubs'" },
     { postbirth: "v.pose == 'postbirth'" },
     { fetal_push: 'v.kick_w' },

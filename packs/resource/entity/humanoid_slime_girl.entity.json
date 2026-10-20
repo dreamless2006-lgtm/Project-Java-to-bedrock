@@ -278,7 +278,8 @@
           "squish_controller",
           {
             "jiggle": "true"
-          }
+          },
+          "walk_jiggle"
         ]
       },
       "animations": {
@@ -375,7 +376,8 @@
         "postbirth_p8": "animation.minepreggo.humanoid_slime_girl.postbirth_puddle_p8",
         "postbirth_p9": "animation.minepreggo.humanoid_slime_girl.postbirth_puddle_p9",
         "birth_flair": "animation.minepreggo.humanoid_slime_girl.birth_flair",
-        "labor_flair": "animation.minepreggo.humanoid_slime_girl.labor_flair"
+        "labor_flair": "animation.minepreggo.humanoid_slime_girl.labor_flair",
+        "walk_jiggle": "animation.minepreggo.walk_jiggle"
       },
       "sound_effects": {
         "slime_squish": "mob.slime.big",

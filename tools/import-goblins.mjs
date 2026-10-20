@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { strFromU8, unzipSync } from 'fflate';
 import { stringifyEntity } from './lib/entity-json.mjs';
 import { FAMILY_TAG, MINEPREGGO_PROPERTIES, bellyPreAnimation, initializers, phaseEvents } from './lib/belly-render.mjs';
+import { walkJiggleAnimation } from './lib/walk-jiggle.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const BP = join(ROOT, 'packs/behavior');
@@ -64,6 +65,7 @@ const GIRLS = [
     skins: ['goblin0', 'goblin1', 'goblin2', 'goblin3', 'goblin4'],
     layers: { hair: ['hair0', 'hair1', 'hair2', 'hair3', 'hair4', 'hair5', 'hair6', 'hair7', 'hair8', 'hair9', 'hair10', 'hair11'], eyes: ['eye0', 'eye1', 'eye2', 'eye3', 'eye4', 'eye5'], cloth: ['cloth0', 'cloth1', 'cloth2', 'cloth3'] },
     belly: ['belly1', 'belly2', 'belly3'], idle: 'idle', walk: 'walk_a', sit: 'sit1', hidden: ['bottle'],
+    jiggle: { chest: ['tits'], breasts: ['tit6', 'tit5'], belly: ['belly1'] }, jiggleStrength: 0.8,
     biomes: ['forest', 'plains', 'taiga'],
   },
   {
@@ -71,6 +73,7 @@ const GIRLS = [
     skins: ['imp0', 'imp1', 'imp2', 'imp3', 'imp4', 'imp5', 'imp6', 'imp7', 'imp8'],
     layers: { hair: ['imphair1', 'imphair2', 'imphair3', 'imphair4', 'imphair5', 'imphair6', 'imphair7', 'imphair8', 'imphair9', 'imphair10', 'imphair11', 'imphair12'], eyes: ['eye0', 'eye1', 'eye2', 'eye3', 'eye4', 'eye5'], cloth: ['cloth1_imp', 'cloth3_imp', 'cloth4_imp', 'cloth5_imp'] },
     belly: ['belly1', 'belly2', 'belly3'], idle: 'idle', walk: 'walk_a', sit: 'sit1', hidden: ['bottle'],
+    jiggle: { chest: ['tits'], breasts: ['tit6', 'tit5'], belly: ['belly1'] }, jiggleStrength: 0.8,
     biomes: ['nether_wastes', 'crimson_forest', 'soulsand_valley'],
   },
   {
@@ -78,6 +81,7 @@ const GIRLS = [
     skins: ['berrygal', 'berrygal_a', 'berrygal_b', 'berrygal_c'],
     layers: {},
     belly: ['belly', 'belly2'], idle: 'idle1', walk: 'walk1', sit: 'sit1', hidden: [],
+    jiggle: { chest: ['tit3'], belly: ['belly'] }, jiggleStrength: 0.6,
     biomes: ['forest', 'flower_forest', 'birch'],
   },
 ];
@@ -207,6 +211,8 @@ for (const girl of GIRLS) {
   animations[animId('mp_kicks')] = kickAnimation(girl.belly);
   animations[animId('mp_contraction')] = contractionAnimation(girl.belly);
   animations[animId('mp_push')] = laborAnimation(girl.belly);
+  // her chest and belly bounce as she walks (tools/lib/walk-jiggle.mjs), a little less on a smaller body
+  animations[animId('mp_walk_jiggle')] = walkJiggleAnimation(girl.jiggle, { strength: girl.jiggleStrength });
   if (girl.hidden.length) animations[animId('mp_hidden')] = { loop: true, bones: Object.fromEntries(girl.hidden.map((b) => [b, { scale: 0 }])) };
   writeJson(join(RP, 'animations', PORT, `${slug}.animation.json`), { format_version: '1.8.0', animations });
 
@@ -262,14 +268,14 @@ for (const girl of GIRLS) {
         animations: {
           idle: animId(girl.idle), walk: animId(girl.walk), sit: animId(girl.sit),
           move_controller: controllerId,
-          belly: animId('mp_belly'), kicks: animId('mp_kicks'), contraction: animId('mp_contraction'), push: animId('mp_push'),
+          belly: animId('mp_belly'), kicks: animId('mp_kicks'), contraction: animId('mp_contraction'), push: animId('mp_push'), walk_jiggle: animId('mp_walk_jiggle'),
           ...(girl.hidden.length ? { hidden: animId('mp_hidden') } : {}),
           look_at_target: 'animation.common.look_at_target',
         },
         scripts: {
           initialize: initializers([...bellyPreAnimation(), "v.labor = v.pose == 'prebirth' || v.pose == 'birth' || v.pose == 'water_breaking';"], []),
           pre_animation: [...bellyPreAnimation(), "v.labor = v.pose == 'prebirth' || v.pose == 'birth' || v.pose == 'water_breaking';"],
-          animate: ['move_controller', 'belly', { kicks: 'v.kick_w' }, 'contraction', { push: "v.pose == 'birth'" }, ...(girl.hidden.length ? ['hidden'] : [])],
+          animate: ['move_controller', 'belly', { kicks: 'v.kick_w' }, 'contraction', { push: "v.pose == 'birth'" }, 'walk_jiggle', ...(girl.hidden.length ? ['hidden'] : [])],
         },
         render_controllers: rcs,
         spawn_egg: { base_color: girl.egg[0], overlay_color: girl.egg[1] },

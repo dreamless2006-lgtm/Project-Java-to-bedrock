@@ -185,8 +185,12 @@ test('every variable the played animations read is set by the pre_animation', ()
   }
 });
 
-test('the attachable animations: hide, one baby per species, and the navel crowning', () => {
-  assert.deepEqual(Object.keys(own).sort(), ['animation.minepreggo.belly_attachable', 'animation.minepreggo.belly_attachable.baby', 'animation.minepreggo.belly_attachable.crowning_navel']);
+test('the attachable animations: hide, one baby per species, the navel crowning and the walk jiggle', () => {
+  assert.deepEqual(Object.keys(own).sort(), ['animation.minepreggo.belly_attachable', 'animation.minepreggo.belly_attachable.baby', 'animation.minepreggo.belly_attachable.crowning_navel', 'animation.minepreggo.belly_attachable.walk_jiggle']);
+  // her walk, read from her through the arrow in the pre_animation
+  const jiggle = JSON.stringify(own['animation.minepreggo.belly_attachable.walk_jiggle']);
+  assert.match(jiggle, /v\.owner_distance_moved/);
+  assert.doesNotMatch(jiggle, /->/);
   for (const bone of ['mp_body', 'mp_right_leg', 'mp_left_leg']) assert.equal(own['animation.minepreggo.belly_attachable'].bones[bone].scale, 'v.hidden ? 0.0 : 1.0');
   const baby = own['animation.minepreggo.belly_attachable.baby'];
   assert.equal(baby.loop, true);

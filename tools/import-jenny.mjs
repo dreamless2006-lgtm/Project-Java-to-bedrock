@@ -30,6 +30,7 @@ import { girlPoseAnimations } from './lib/scene-poses.mjs';
 import { stringifyEntity } from './lib/entity-json.mjs';
 import { dropStructureEntities, parseNbt, renameStrings, writeNbt } from './lib/nbt.mjs';
 import { decodePng, encodePng } from './lib/png.mjs';
+import { JENNY_JIGGLE_BONES, walkJiggleAnimation } from './lib/walk-jiggle.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const RP = join(ROOT, 'packs/resource');
@@ -297,6 +298,8 @@ if (portBP && portRP) {
   const bellyControllers = {};
   /** @type {Record<string, unknown>} */
   const poseControllers = {};
+  /** @type {Record<string, any>} each girl's walk jiggle, on the bones of her rig */
+  const walkJiggles = {};
   for (const { file, doc } of clientDocs) {
     const d = doc['minecraft:client_entity'].description;
     const id = d.identifier;
@@ -404,6 +407,16 @@ if (portBP && portRP) {
             counts.poses += Object.keys(poses).length;
           }
         }
+        // her chest, belly and butt bounce as she walks (tools/lib/walk-jiggle.mjs), on the bones she has
+        if (girl && mainGeometry) {
+          const has = new Set(['belly', ...mainGeometry.bones.map((/** @type {any} */ b) => b.name)]);
+          const bones = Object.fromEntries(Object.entries(JENNY_JIGGLE_BONES).map(([part, names]) => [part, names.every((/** @type {string} */ n) => has.has(n)) ? names : []]));
+          const jiggleId = `animation.${MOD}.jp_${slug(id)}.walk_jiggle`;
+          walkJiggles[jiggleId] = walkJiggleAnimation(bones);
+          d.animations.mp_walk_jiggle = jiggleId;
+          const poseAt = animate.indexOf('mp_pose_controller');
+          if (!animate.includes('mp_walk_jiggle')) animate.splice(poseAt < 0 ? animate.length : poseAt, 0, 'mp_walk_jiggle');
+        }
         d.scripts.animate = [...animate, newborn, 'belly_controller'];
         d.scripts.pre_animation = pre;
         d.scripts.initialize = initializers(pre, d.scripts.initialize ?? []);
@@ -412,6 +425,7 @@ if (portBP && portRP) {
     writeFile(file, JSON.stringify(doc, null, 2) + '\n');
   }
   writeFile(join(RP, 'render_controllers', PORT, 'minepreggo_bellies.render_controllers.json'), JSON.stringify({ format_version: '1.10.0', render_controllers: bellyControllers }, null, 2) + '\n');
+  writeFile(join(RP, 'animations', PORT, MOD, 'walk_jiggle.animation.json'), JSON.stringify({ format_version: '1.8.0', animations: walkJiggles }, null, 2) + '\n');
   writeFile(join(RP, 'animation_controllers', PORT, 'minepreggo_poses.animation_controllers.json'), JSON.stringify({ format_version: '1.10.0', animation_controllers: poseControllers }, null, 2) + '\n');
 
   // Each girl's baby: an item with an icon in her colours (her skin, her hair, her kind's trait).

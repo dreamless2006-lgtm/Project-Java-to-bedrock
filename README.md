@@ -20,8 +20,9 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
   mod's Alex skin (`/scriptevent minepreggo:skin custom|alex|steve` changes it later). Her body
   shows the pregnancy: the belly grows through the phases, swells as she breathes, and the babies
   kick when she feels them. Chest, belly and hips have the mod's jiggle physics (they bounce with
-  steps, jumps and landings), and in first person the chest and belly come into view when you
-  look down.
+  steps, jumps and landings) and bounce and sway with every step she walks, as do every female
+  mob's (ours, the Jenny girls, the goblin girls and the MCA women). In first person the chest and
+  belly stay where they are on her body as the camera turns, so looking down shows them.
 - A Potion of Impregnation (creative inventory, *Items* tab) starts a pregnancy 15 seconds after
   drinking it; the action bar counts the seconds down. Stronger potions (II–VI) mean more babies
   and a later birth. All the mod's other potions are ported too (see **Potions** below).
@@ -53,7 +54,7 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
 A world keeps the pack versions it was created with, and Bedrock keeps older imports next to the
 new one. After importing a newer `.mcaddon`, open the world's settings and, under **Behavior
 Packs** *and* **Resource Packs**, remove Minepreggo from the active packs and add it again. The
-join message shows both versions (`[Minepreggo 0.9.1, resources 0.9.1]`); while the resources
+join message shows both versions (`[Minepreggo 0.9.2, resources 0.9.2]`); while the resources
 version lags behind, the models, bellies and animations are the old ones, whatever the scripts do.
 Old versions can be deleted in Settings → Storage.
 
@@ -127,7 +128,9 @@ their belly back.
 3. Both packs must be active on the world (the behavior pack pulls the resource pack in). If the
    game says a pack failed to load, your game is older than 1.26.30 or another copy of an older
    Minepreggo version is still installed: remove it in Settings → Storage and import again.
-4. Chest and belly show in third person and, in first person, when you look down more than 25°.
+4. Chest and belly show in third person and, in first person, when you look down (on this pack's
+   player model; under another pack's player model, such as Actions & Stuff's, the off-hand belly
+   still hides in first person).
 
 ### Other species
 
