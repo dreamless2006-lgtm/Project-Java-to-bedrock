@@ -633,10 +633,12 @@ for (const girl of GIRLS) {
       conditions: [{
         'minecraft:spawns_on_surface': {},
         ...(girl.id === 'imp_girl' ? { 'minecraft:spawns_underground': {} } : {}),
-        'minecraft:brightness_filter': girl.id === 'imp_girl' ? { min: 0, max: 15, adjust_for_weather: false } : { min: 7, max: 15, adjust_for_weather: false },
-        'minecraft:weight': { default: 4 },
-        'minecraft:herd': { min_size: 1, max_size: 2 },
-        'minecraft:density_limit': { surface: 2, underground: 2 },
+        // (any light for the goblins, who roam by night too; the bloatberry girl by day. As common as
+        // the farm animals, a few together: rarer, players never met them)
+        'minecraft:brightness_filter': girl.id === 'bloatberry_girl' ? { min: 7, max: 15, adjust_for_weather: false } : { min: 0, max: 15, adjust_for_weather: false },
+        'minecraft:weight': { default: 15 },
+        'minecraft:herd': { min_size: 1, max_size: 3 },
+        'minecraft:density_limit': { surface: 4, underground: 4 },
         'minecraft:biome_filter': { any_of: girl.biomes.map((b) => ({ test: 'has_biome_tag', value: b })) },
       }],
     },
