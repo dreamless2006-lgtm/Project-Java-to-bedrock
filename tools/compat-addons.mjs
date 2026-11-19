@@ -475,12 +475,19 @@ function womenOf(/** @type {Rig} */ rig, /** @type {Women['opts']} */ opts) {
     return null;
   }
   // a big people's torso (a colossus) gets as much bigger a belly, from the same waist bottom
-  // (and, on a girl's own body, a tall one as much bigger, like tools/lib/girl-port.mjs's)
   const legTop = Math.max(...[rig.legR, rig.legL].map((n) => rig.geometry.bones.find((/** @type {any} */ b) => b.name === n)?.pivot[1] ?? 0));
-  const grow = Math.max(1, Math.min(8, rig.torso.size[0] / 8), addon.build ? 1 : Math.min(1.5, legTop / 16));
+  const grow = Math.max(1, Math.min(8, rig.torso.size[0] / 8));
   const [[x0, x1], [y0, y1], [z0, z1]] = measured.box;
   /** @type {number[][]} */
-  let box = SHAPES[opts.shape]([[x0 * grow, x1 * grow], [y0, y0 + (y1 - y0) * grow], [z0, z0 + (z1 - z0) * grow]]);
+  let box = [[x0 * grow, x1 * grow], [y0, y0 + (y1 - y0) * grow], [z0, z0 + (z1 - z0) * grow]];
+  // a girl's belly runs from her hips (just under the top of her legs) to under her bust, whatever
+  // pieces her rig builds her torso of (the measured one is often her chest alone)
+  if (!addon.build) {
+    const bottom = legTop - 1;
+    const bust = rig.torso.origin[1] + rig.torso.size[1] - 2.5;
+    box = [box[0], [bottom, bottom + Math.min(13, Math.max(9, bust - bottom))], box[2]];
+  }
+  box = SHAPES[opts.shape](box);
   // a breast pregnancy leaves her belly small
   if (opts.type === 'breast') box = [[box[0][0] * 0.6, box[0][1] * 0.6], [box[1][0], box[1][0] + (box[1][1] - box[1][0]) * 0.75], [box[2][0], box[2][0] + (box[2][1] - box[2][0]) * 0.6]];
   // where her baby comes out: between her legs, her navel (a burst's too: mid-belly) or her chest
