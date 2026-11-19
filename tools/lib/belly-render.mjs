@@ -158,16 +158,13 @@ function movementTerms(f, phase, offset, style) {
  * @param {KickStyle} [style] her own movements (those of kickPulseAnimations(style))
  */
 export function kickShareLines(prefix = 'v', style = undefined) {
+  // (whole while she kicks, for a bone that has a pulse at the strength shown: the game refuses a
+  // client entity whose Molang runs to thousands of characters, which the pulses' own terms did)
+  void style;
   return KICK_BONES.map((bone) => {
-    const byStrength = Object.values(PULSES).map((bones) => {
-      const own = bones.find(([name]) => name === bone);
-      if (!own) return '0.0';
-      const [, f, phase, , , , offset] = own;
-      const { term } = movementTerms(Number(f), Number(phase), Number(offset), style);
-      return `(${MOVEMENTS.map((_, i) => term(i)).join(' + ')})`;
-    });
-    const pick = `${prefix}.kick_shown == 0 ? ${byStrength[0]} : (${prefix}.kick_shown == 1 ? ${byStrength[1]} : ${byStrength[2]})`;
-    return `${prefix}.kp_${bone} = ${prefix}.kick_w > 0.0 ? math.clamp(${pick}, 0.0, 1.0) : 0.0;`;
+    const has = Object.values(PULSES).map((bones) => (bones.some(([name]) => name === bone) ? '1.0' : '0.0'));
+    const pick = has.every((h) => h === has[0]) ? has[0] : `(${prefix}.kick_shown == 0 ? ${has[0]} : (${prefix}.kick_shown == 1 ? ${has[1]} : ${has[2]}))`;
+    return `${prefix}.kp_${bone} = ${prefix}.kick_w > 0.0 ? ${pick} : 0.0;`;
   });
 }
 
