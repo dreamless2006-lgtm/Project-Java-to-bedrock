@@ -55,7 +55,7 @@ const TYPE_BIRTHS = { normal: 'girlmob:standing', navel: 'girlmob:arched', burst
  * @type {Record<string, { type: 'normal' | 'navel' | 'burst' | 'breast', shape: keyof typeof SHAPES, tone?: number[] }>}
  */
 const GIRL_MOB = {
-  zombie: { type: 'normal', shape: 'round' }, husk: { type: 'normal', shape: 'low' }, drowned: { type: 'normal', shape: 'pointed' },
+  creeper: { type: 'burst', shape: 'round' }, zombie: { type: 'normal', shape: 'round' }, husk: { type: 'normal', shape: 'low' }, drowned: { type: 'normal', shape: 'pointed' },
   skeleton: { type: 'normal', shape: 'high' }, stray: { type: 'normal', shape: 'high' }, wither_skeleton: { type: 'burst', shape: 'pointed' },
   pillager: { type: 'normal', shape: 'wide' }, vindicator: { type: 'normal', shape: 'round' }, evocation_illager: { type: 'navel', shape: 'high' },
   witch: { type: 'navel', shape: 'low' }, wandering_trader: { type: 'normal', shape: 'wide' }, villager_v2: { type: 'normal', shape: 'round' },
@@ -89,6 +89,7 @@ const GROWN = `q.property('${MOD}:female') == 2 && !q.is_baby`;
  * @property {number} femaleDefault the minepreggo:female property's default (0: the script rolls it)
  * @property {boolean} build a woman's build (slimmer arms, bust, hips) on her model
  * @property {'cube' | 'round'} bellyStyle @property {Set<string>} skipRigs
+ * @property {boolean} [armless] its girls may have no arms (the creeper: her belly, kicks and burst, poses if they solve)
  * @property {(id: string) => boolean} skip mob types left as they are
  * @property {(rig: { key: string }, id: string) => { birth: string, type: 'normal' | 'navel' | 'burst' | 'breast', shape: keyof typeof SHAPES }} women how they carry and give birth
  */
@@ -107,7 +108,7 @@ const ADDONS = {
     title: 'Girl Mob', name: 'Minepreggo × Girl Mob', description: "Girl Mob's girls get pregnant in Minepreggo's pregnancy system, each in her own way. Needs Minepreggo and Girl Mob; put it above Girl Mob.",
     vendor: 'vendor/girlmob', dir: 'minepreggo_girlmob', prefix: 'girlmob',
     ids: { bp: '07598f2c-d0b0-4c7d-889c-e742806b6089', bpData: '5e748bbb-4a63-4b0f-87f7-4e2f2d38ea52', rp: 'dbda3fe3-4dc1-45ee-99de-5006a256f65d', rpResources: 'df822d24-9290-4ce8-b496-368d35603a06' },
-    female: GROWN, male: `!(${GROWN})`, femaleDefault: 2, build: false, bellyStyle: 'round',
+    female: GROWN, male: `!(${GROWN})`, femaleDefault: 2, build: false, bellyStyle: 'round', armless: true,
     skipRigs: new Set(), skip: (id) => !id.startsWith('minecraft:') || CHILD_SIZED.has(id) || id === 'minecraft:player',
     women: (_, id) => {
       const girl = GIRL_MOB[id.replace(/^minecraft:/, '')] ?? { type: 'normal', shape: 'round' };
@@ -316,7 +317,9 @@ function rigOf(/** @type {string} */ id) {
     // sides by where they hang (right is -x), whatever the rig calls them
     const sides = (/** @type {any[]} */ pair) => (pair.length === 2 ? [...pair].sort((a, b) => a.pivot[0] - b.pivot[0]) : []);
     const arms = sides(find(/^(right|left)_?arm$|^arm_?(right|left|r|l)$/i));
-    const legs = sides(find(/^(right|left)_?leg$|^leg_?(right|left|r|l)$|^leg[01]$/i));
+    // (four legs, a creeper's: her front two, toward -z)
+    const allLegs = find(/^(right|left)_?leg$|^leg_?(right|left|r|l)$|^leg[0-3]$/i);
+    const legs = sides(allLegs.length === 4 && addon.armless ? [...allLegs].sort((a, b) => a.pivot[2] - b.pivot[2]).slice(0, 2) : allLegs.filter((/** @type {any} */ b) => !/^leg[23]$/i.test(b.name)));
     // (a rig that hangs its torso from bones under the body: their cubes, but the head's, limbs' and chest's, on bones square to her)
     const limbs = new Set([head, ...arms, ...legs].filter(Boolean).map((b) => b.name));
     const square = (/** @type {any} */ bone) => !bone.rotation || bone.rotation.every((/** @type {number} */ a) => Math.abs(a) <= 35);
@@ -330,8 +333,8 @@ function rigOf(/** @type {string} */ id) {
     const legTop = legs.length ? Math.max(...legs.map((/** @type {any} */ l) => l.pivot[1])) : 0;
     const half = arms.length ? Math.max(2, Math.abs(arms[0].pivot[0]) - 1) : 4;
     const torso = found ?? (arms.length && legs.length ? { origin: [-half, legTop, -2], size: [2 * half, Math.max(6, arms[0].pivot[1] + 2 - legTop), 4], uv: [16, 16] } : undefined);
-    if (body && head && arms.length && legs.length && torso && !g.bones.some((/** @type {any} */ b) => ['mp_root', 'mp_waist', 'mp_bust', 'mp_hips', 'mp_hip'].includes(b.name))) {
-      rig = { key: id.replace(/^geometry\./, '').replace(/[^a-z0-9]+/gi, '_').toLowerCase(), geometry: g, body: body.name, head: head.name, armR: arms[0].name, armL: arms[1].name, legR: legs[0].name, legL: legs[1].name, torso };
+    if (body && head && (arms.length || addon.armless) && legs.length && torso && !g.bones.some((/** @type {any} */ b) => ['mp_root', 'mp_waist', 'mp_bust', 'mp_hips', 'mp_hip'].includes(b.name))) {
+      rig = { key: id.replace(/^geometry\./, '').replace(/[^a-z0-9]+/gi, '_').toLowerCase(), geometry: g, body: body.name, head: head.name, armR: arms[0]?.name ?? 'mp_no_arm_r', armL: arms[1]?.name ?? 'mp_no_arm_l', legR: legs[0].name, legL: legs[1].name, torso };
     }
   }
   rigs.set(id, rig);
