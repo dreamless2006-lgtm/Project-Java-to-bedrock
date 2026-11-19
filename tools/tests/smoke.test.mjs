@@ -1426,12 +1426,15 @@ test('the merged Jenny Mod Java Port: patched entities, bellies under every body
   for (const property of ['minepreggo:belly', 'minepreggo:kick', 'minepreggo:scene', 'minepreggo:phase']) assert.ok(stage.description.properties[property], property);
   const stageClient = json(join(RP, 'entity/jenny_port/jenny_stage.json'))['minecraft:client_entity'].description;
   assert.ok(stageClient.render_controllers.some((/** @type {any} */ rc) => typeof rc === 'object' && Object.keys(rc)[0].includes('jp_jenny_stage')));
-  // The house: blocks only, with our bed block and state.
-  const { parseNbt, get } = await import('../lib/nbt.mjs');
-  const house = readFileSync(join(BP, 'structures/minepreggo/jenny_house.mcstructure'));
-  const tree = parseNbt(new Uint8Array(house));
-  assert.equal(get(get(tree[0][1].value, 'structure').value, 'entities').value.items.length, 0, 'no entity in the house');
-  assert.ok(house.includes('minepreggo:jenny_bed') && house.includes('minepreggo:facing') && !house.includes('bridge:block_rotation'));
+  // The house (from the older Jenny packs, when they are imported too): blocks only, with our bed block and state.
+  const housePath = join(BP, 'structures/minepreggo/jenny_house.mcstructure');
+  if (existsSync(housePath)) {
+    const { parseNbt, get } = await import('../lib/nbt.mjs');
+    const house = readFileSync(housePath);
+    const tree = parseNbt(new Uint8Array(house));
+    assert.equal(get(get(tree[0][1].value, 'structure').value, 'entities').value.items.length, 0, 'no entity in the house');
+    assert.ok(house.includes('minepreggo:jenny_bed') && house.includes('minepreggo:facing') && !house.includes('bridge:block_rotation'));
+  }
   // The UI and the overlays the build merges are in place; nothing imported is tracked by git.
   assert.ok(existsSync(join(RP, 'ui/_ui_defs.json')) && existsSync(join(RP, 'sounds/jenny_port/sound_definitions.json')) && existsSync(join(RP, 'textures/jenny_port/item_texture.json')));
   const tracked = spawnSync('git', ['ls-files', '--', 'packs/behavior/entities/jenny_port', 'packs/resource/entity/jenny_port', 'packs/resource/ui', 'packs/behavior/structures'], { cwd: ROOT });
