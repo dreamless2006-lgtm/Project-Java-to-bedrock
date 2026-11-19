@@ -1,6 +1,6 @@
 {
   "name": "minepreggo-bedrock",
-  "version": "0.14.5",
+  "version": "0.15.0",
   "private": true,
   "description": "Bedrock Edition (.mcaddon) port of the Minepreggo Forge mod",
   "type": "module",

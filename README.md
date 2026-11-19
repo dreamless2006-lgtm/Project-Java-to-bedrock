@@ -54,7 +54,7 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
 A world keeps the pack versions it was created with, and Bedrock keeps older imports next to the
 new one. After importing a newer `.mcaddon`, open the world's settings and, under **Behavior
 Packs** *and* **Resource Packs**, remove Minepreggo from the active packs and add it again. The
-join message shows both versions (`[Minepreggo 0.14.5, resources 0.14.5]`); while the resources
+join message shows both versions (`[Minepreggo 0.15.0, resources 0.15.0]`); while the resources
 version lags behind, the models, bellies and animations are the old ones, whatever the scripts do.
 Old versions can be deleted in Settings → Storage.
 
@@ -261,8 +261,9 @@ npm run standin  # optional: dist/minepreggo-standin-player.mcpack, a plain play
                  # what Actions & Stuff players see (see **Actions & Stuff**)
 ```
 
-**Girl Mob** (AntiGM's girl versions of the vanilla mobs, in `vendor/girlmob/`) gets a compatibility
-add-on the same way (`dist/minepreggo-girlmob-<version>.mcaddon`, above Girl Mob): its grown girls get
+**Girl Mob** (AntiGM's girl versions of the vanilla mobs, in `vendor/girlmob/`) is merged into this
+add-on when present (built by `tools/compat-addons.mjs girlmob`, joined to our packs by
+`tools/build.mjs`; use it instead of Girl Mob): its grown girls get
 pregnant, each with her own belly shape, her own way of giving birth (normal, through her navel, a
 belly burst, or a breast pregnancy) and births made for them, and waddle heavily late in it.
 

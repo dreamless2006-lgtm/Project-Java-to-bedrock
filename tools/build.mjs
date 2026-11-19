@@ -113,6 +113,76 @@ for (const [target, overlay, merge] of OVERLAYS) {
   delete entries[overlay];
 }
 
+// Add-ons merged into Minepreggo itself (tools/compat-addons.mjs builds each, with its pregnancy files
+// over its own): Girl Mob. Their files join our packs; the few both have are combined (sounds,
+// translations, texture lists, materials), ours winning anything else.
+const MERGED = ['girlmob'];
+/** JSON as add-ons write it (comments, trailing commas), which the game reads. */
+function lenient(/** @type {string} */ text) {
+  const clean = text.replace(/^\uFEFF/, '');
+  try {
+    return JSON.parse(clean);
+  } catch {
+    let out = '';
+    for (let i = 0, string = false; i < clean.length; i++) {
+      const c = clean[i];
+      if (string) {
+        out += c;
+        if (c === '\\') out += clean[++i] ?? '';
+        else if (c === '"') string = false;
+      } else if (c === '"') {
+        string = true;
+        out += c;
+      } else if (c === '/' && clean[i + 1] === '/') {
+        while (i < clean.length && clean[i] !== '\n') i++;
+        out += '\n';
+      } else if (c === '/' && clean[i + 1] === '*') i = clean.indexOf('*/', i + 2) + 1 || clean.length;
+      else out += c;
+    }
+    // (and a stray quote before a key's colon, as Girl Mob's sounds.json has: "name"," : {)
+    return JSON.parse(out.replace(/,(\s*[}\]])/g, '$1').replace(/"([^"\n]*)","\s*:/g, '"$1":'));
+  }
+}
+/** @type {Record<string, (base: any, add: any) => void>} how a file both packs have is combined */
+const COMBINE = {
+  'sounds.json': (base, add) => {
+    for (const key of ['entity_sounds', 'individual_event_sounds', 'block_sounds', 'interactive_sounds']) {
+      if (!add[key]) continue;
+      base[key] ??= {};
+      for (const [k, v] of Object.entries(add[key])) base[key][k] = typeof v === 'object' && !Array.isArray(v) ? { ...(v ?? {}), ...(base[key][k] ?? {}) } : base[key][k] ?? v;
+    }
+  },
+  'sounds/sound_definitions.json': (base, add) => { base.sound_definitions = { ...(add.sound_definitions ?? {}), ...(base.sound_definitions ?? {}) }; },
+  'textures/item_texture.json': (base, add) => { base.texture_data = { ...(add.texture_data ?? {}), ...base.texture_data }; },
+  'textures/terrain_texture.json': (base, add) => { base.texture_data = { ...(add.texture_data ?? {}), ...base.texture_data }; },
+  'materials/entity.material': (base, add) => { base.materials = { ...(add.materials ?? {}), ...base.materials }; },
+  'blocks.json': (base, add) => { for (const [k, v] of Object.entries(add)) base[k] ??= v; },
+  'texts/languages.json': (base, add) => { for (const l of add) if (!base.includes(l)) base.push(l); },
+};
+for (const addon of MERGED) {
+  for (const [dir, pack] of [['behavior', 'Minepreggo_BP'], ['resource', 'Minepreggo_RP']]) {
+    const base = join(ROOT, 'compat', addon, dir);
+    if (!existsSync(join(base, 'manifest.json'))) continue;
+    for (const file of walk(base)) {
+      const inner = relative(base, file).split(sep).join('/');
+      if (inner === 'manifest.json' || inner === 'pack_icon.png') continue;
+      const key = `${pack}/${inner}`;
+      const data = new Uint8Array(readFileSync(file));
+      if (!entries[key]) entries[key] = data;
+      else if (/^texts\/.*\.lang$/.test(inner)) entries[key] = strToU8(strFromU8(entries[key]).replace(/\n*$/, '\n') + `## ${addon} (merged)\n` + strFromU8(data));
+      else if (COMBINE[inner]) {
+        try {
+          const merged = lenient(strFromU8(entries[key]));
+          COMBINE[inner](merged, lenient(strFromU8(data)));
+          entries[key] = strToU8(JSON.stringify(merged, null, 2) + '\n');
+        } catch (error) {
+          console.warn(`warning: ${addon}'s ${inner} could not be read (${error}); ours is kept`);
+        }
+      }
+    }
+  }
+}
+
 /**
  * An .mcaddon the way Minecraft imports it on every device: an .mcpack per pack (a zip with the
  * pack's manifest at its root and its folders listed), stored in the add-on's zip.
@@ -149,6 +219,7 @@ console.log(`Wrote ${relative(ROOT, out)} (${Object.keys(entries).length} files)
 // its own two packs, for players who have that add-on too, at this version (they need ours).
 const COMPATS = join(ROOT, 'compat');
 for (const addon of existsSync(COMPATS) ? readdirSync(COMPATS) : []) {
+  if (MERGED.includes(addon)) continue;
   const COMPAT = join(COMPATS, addon);
   if (!existsSync(join(COMPAT, 'behavior/manifest.json'))) continue;
   const ours = Object.fromEntries(PACKS.map((pack) => [JSON.parse(readFileSync(join(ROOT, pack.dir, 'manifest.json'), 'utf8')).header.uuid, true]));
