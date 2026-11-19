@@ -31,7 +31,7 @@ import { dirname, join } from 'node:path';
 import { strFromU8, unzipSync } from 'fflate';
 import { CUBE_BELLY, addNewborn, babyScale, fitBelly, measureBody, roundBelly, smoothBelly } from './lib/belly-fit.mjs';
 import { bellyTexture, skinTone } from './lib/belly-skin.mjs';
-import { BELLY_ANIMATIONS, FAMILY_TAG, MINEPREGGO_PROPERTIES, MOD, PHASES, bellyPreAnimation, initializers, kickRoomLines, phaseEvents } from './lib/belly-render.mjs';
+import { BELLY_ANIMATIONS, FAMILY_TAG, MINEPREGGO_PROPERTIES, MOD, PHASES, SPAWN_PREGNANT, bellyPreAnimation, initializers, kickRoomLines, phaseEvents } from './lib/belly-render.mjs';
 import { FETUS_SCALE, crowningLines } from './lib/crowning.mjs';
 import { GIRL_BIRTHS, girlBirthExit, girlEffects } from './lib/girl-births.mjs';
 import { girlSources, poseController } from './lib/girl-port.mjs';
@@ -679,6 +679,9 @@ for (const { path, doc } of theirs('resource', 'entity')) {
   }
   e.components['minecraft:type_family'] ??= { family: ['mob', FAMILY_TAG] };
   e.events = { ...(e.events ?? {}), ...phaseEvents() };
+  // (some come into the world pregnant: their spawn event, then ours)
+  const spawned = e.events['minecraft:entity_spawned'];
+  e.events['minecraft:entity_spawned'] = spawned ? { sequence: [spawned, SPAWN_PREGNANT] } : SPAWN_PREGNANT;
   writeJson(join(OBP, behavior.path), behavior.doc);
   peoples++;
 }

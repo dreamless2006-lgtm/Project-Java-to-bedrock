@@ -8,7 +8,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { CUBE_BELLY, addNewborn, babyScale, chestStyle, fitBelly, measureBody, roundBelly, smoothBelly } from './belly-fit.mjs';
 import { bellyTexture, skinTone } from './belly-skin.mjs';
-import { BELLY_ANIMATIONS, FAMILY_TAG, MINEPREGGO_PROPERTIES, MOD, PHASES, bellyPreAnimation, initializers, kickPulseAnimations, kickRoomLines, kickShareLines, phaseEvents } from './belly-render.mjs';
+import { BELLY_ANIMATIONS, FAMILY_TAG, MINEPREGGO_PROPERTIES, MOD, PHASES, SPAWN_PREGNANT, bellyPreAnimation, initializers, kickPulseAnimations, kickRoomLines, kickShareLines, phaseEvents } from './belly-render.mjs';
 import { FETUS_SCALE, crowningLines } from './crowning.mjs';
 import { stringifyEntity } from './entity-json.mjs';
 import { GIRL_BIRTHS, girlBirthExit, girlEffects } from './girl-births.mjs';
@@ -253,6 +253,7 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
           sequence: [
             { add: { component_groups: [`${ns}:wild`] } },
             { randomize: outfits.map((_, i) => ({ weight: 1, add: { component_groups: [`${ns}:variant_${i}`] } })) },
+            SPAWN_PREGNANT,
           ],
         },
         [`${ns}:on_tame`]: { remove: { component_groups: [`${ns}:wild`] }, add: { component_groups: [`${ns}:tamed`] } },

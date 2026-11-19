@@ -12,8 +12,10 @@ const PROPERTY = 'minepreggo:female';
 
 /** Rolls a unit's sex once; units without the property (its animals, its vehicles) are left alone. */
 function roll(/** @type {import('@minecraft/server').Entity} */ entity) {
-  if (!entity.typeId.startsWith('worldbox:')) return;
   try {
+    // a baby is never with child, whatever its spawn event rolled (its add-on's babies share its events)
+    if (entity.getComponent('minecraft:is_baby') && /** @type {number} */ (entity.getProperty('minepreggo:phase') ?? -1) >= 0) entity.setProperty('minepreggo:phase', -1);
+    if (!entity.typeId.startsWith('worldbox:')) return;
     if (entity.getProperty(PROPERTY) !== 0) return;
     entity.setProperty(PROPERTY, !entity.getComponent('minecraft:is_baby') && Math.random() < 0.5 ? 2 : 1);
   } catch {

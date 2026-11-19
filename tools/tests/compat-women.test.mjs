@@ -54,5 +54,9 @@ test("Girl Mob's girls are women from the start (vanilla mob types), but never a
   baby.properties.set('minepreggo:female', 2);
   baby.components['minecraft:is_baby'] = {};
   assert.equal(familyOf(baby), undefined);
+  // a baby whose spawn event rolled a pregnancy is cleared of it
+  baby.properties.set('minepreggo:phase', 5);
+  emit(world.afterEvents.entitySpawn, { entity: baby });
+  assert.equal(baby.getProperty('minepreggo:phase'), -1);
   assert.equal(familyOf(new Mob('minecraft:skeleton', { families: ['mob'] })), undefined);
 });

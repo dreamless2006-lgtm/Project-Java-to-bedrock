@@ -322,6 +322,13 @@ export function bellyController(/** @type {boolean} */ navel) {
  * The phase events the scripts fire on a female whose entity file is not ours (the Jenny port's
  * girls): they only set the properties, her own component groups are left alone.
  */
+/**
+ * A spawn event step: three in ten girls of another add-on's (who never spawn pregnant otherwise)
+ * come into the world pregnant, at any size up to P8; the mob system starts her pregnancy from the
+ * phase (mobs/system.js initWild), and her belly shows and kicks.
+ */
+export const SPAWN_PREGNANT = { randomize: [{ weight: 7, set_property: { [`${MOD}:phase`]: -1 } }, { weight: 3, set_property: { [`${MOD}:phase`]: 'math.random_integer(0, 8)' } }] };
+
 export function phaseEvents() {
   /** @type {Record<string, unknown>} */
   const events = {

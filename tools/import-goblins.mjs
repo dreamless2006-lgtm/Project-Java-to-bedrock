@@ -24,7 +24,7 @@ import { strFromU8, unzipSync } from 'fflate';
 import { crowningLines } from './lib/crowning.mjs';
 import { stringifyEntity } from './lib/entity-json.mjs';
 import { poseAt } from './lib/geo-render.mjs';
-import { FAMILY_TAG, MINEPREGGO_PROPERTIES, MOD, POSES, bellyPreAnimation, initializers, phaseEvents } from './lib/belly-render.mjs';
+import { FAMILY_TAG, MINEPREGGO_PROPERTIES, MOD, POSES, bellyPreAnimation, initializers, phaseEvents, SPAWN_PREGNANT } from './lib/belly-render.mjs';
 import { GOBLIN_RIGS, goblinCrowning, goblinPoseAnimations, ownPose } from './lib/goblins-poses.mjs';
 import { walkJiggleAnimation } from './lib/walk-jiggle.mjs';
 
@@ -614,6 +614,7 @@ for (const girl of GIRLS) {
             { randomize: Array.from({ length: girl.skins.length }, (_, i) => ({ weight: 1, add: { component_groups: [`${NS}:variant_${i}`] } })) },
             { randomize: Array.from({ length: markCount }, (_, i) => ({ weight: 1, add: { component_groups: [`${NS}:mark_variant_${i}`] } })) },
             { randomize: Array.from({ length: 6 }, (_, i) => ({ weight: 1, add: { component_groups: [`${NS}:skin_id_${i}`] } })) },
+            SPAWN_PREGNANT,
           ],
         },
         // tamed with her treat, she eats it
