@@ -26,8 +26,10 @@ packs/resource/**/goblins_port/
 # Minecraft Comes Alive (vendor/mca/, merged by tools/import-mca.mjs)
 packs/behavior/**/mca_port/
 packs/resource/**/mca_port/
-# World Alliance (vendor/worldalliance/, merged by tools/import-worldalliance.mjs): its identifier-found
-# files under worldalliance_port/, its path-found ones under worldbox/ folders or with worldbox names
+# The Minepreggo x World Alliance compatibility add-on (built from vendor/worldalliance/ by
+# tools/compat-worldalliance.mjs), and World Alliance as earlier versions merged it into our packs
+# (that removes it): its files under worldalliance_port/ and worldbox/ folders or with worldbox names
+compat/
 packs/behavior/**/worldalliance_port/
 packs/resource/**/worldalliance_port/
 packs/behavior/worldalliance_port/

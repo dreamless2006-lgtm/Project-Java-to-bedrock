@@ -1,5 +1,6 @@
-// World Alliance's women (tools/import-wa-women.mjs): each humanoid unit of the add-on is rolled a
-// woman or a man the first time it appears (half of each), on the minepreggo:female property
+// World Alliance's women (its compatibility add-on, tools/compat-worldalliance.mjs): with it
+// installed, each humanoid unit of World Alliance is rolled a woman or a man the first time it
+// appears (half of each), on the minepreggo:female property
 // (0 not yet, 1 a man, 2 a woman; written here, because the client sees only properties the script
 // API writes). Her hurt, death and removal reach the mob system like our own mobs' (whose events
 // filter by type, and World Alliance's types hold both sexes).

@@ -1,4 +1,5 @@
-// Packages packs/behavior and packs/resource into dist/minepreggo-<version>.mcaddon.
+// Packages packs/behavior and packs/resource into dist/minepreggo-<version>.mcaddon (and the World
+// Alliance compatibility add-on, when built, into dist/minepreggo-worldalliance-<version>.mcaddon).
 // Run `npm run import` first: the resource pack is unusable without the jar's assets.
 // Of the imported textures, sounds and models, only those referenced from a resource pack JSON file
 // are shipped, so each release carries just the assets of features that have actually been ported.
@@ -97,11 +98,6 @@ const OVERLAYS = [
     if (add.individual_event_sounds?.events) Object.assign(((base.individual_event_sounds ??= {}).events ??= {}), add.individual_event_sounds.events);
   }],
   ['Minepreggo_RP/textures/item_texture.json', 'Minepreggo_RP/textures/jenny_port/item_texture.json', (/** @type {any} */ base, /** @type {any} */ add) => Object.assign(base.texture_data, add.texture_data ?? {})],
-  // World Alliance's (tools/import-worldalliance.mjs): its texture atlases, blocks and entity materials
-  ['Minepreggo_RP/textures/item_texture.json', 'Minepreggo_RP/textures/worldalliance_port/item_texture.json', (/** @type {any} */ base, /** @type {any} */ add) => Object.assign(base.texture_data, add.texture_data ?? {})],
-  ['Minepreggo_RP/textures/terrain_texture.json', 'Minepreggo_RP/textures/worldalliance_port/terrain_texture.json', (/** @type {any} */ base, /** @type {any} */ add) => Object.assign(base.texture_data, add.texture_data ?? {})],
-  ['Minepreggo_RP/blocks.json', 'Minepreggo_RP/worldalliance_port/blocks.json', (/** @type {any} */ base, /** @type {any} */ add) => Object.assign(base, add)],
-  ['Minepreggo_RP/materials/entity.material', 'Minepreggo_RP/worldalliance_port/entity.material', (/** @type {any} */ base, /** @type {any} */ add) => Object.assign(base.materials, add.materials ?? {})],
 ];
 for (const [target, overlay, merge] of OVERLAYS) {
   if (!entries[overlay]) continue;
@@ -121,3 +117,32 @@ const out = join(ROOT, 'dist', `minepreggo-${version}.mcaddon`);
 mkdirSync(dirname(out), { recursive: true });
 writeFileSync(out, zipSync(entries, { level: 9 }));
 console.log(`Wrote ${relative(ROOT, out)} (${Object.keys(entries).length} files)`);
+
+// The Minepreggo x World Alliance compatibility add-on (tools/compat-worldalliance.mjs), when it was
+// built: its own two packs, for players who have World Alliance too, at this version (it needs ours).
+const COMPAT = join(ROOT, 'compat/worldalliance');
+if (existsSync(join(COMPAT, 'behavior/manifest.json'))) {
+  const ours = Object.fromEntries(PACKS.map((pack) => [JSON.parse(readFileSync(join(ROOT, pack.dir, 'manifest.json'), 'utf8')).header.uuid, true]));
+  const numbers = version.split('.').map(Number);
+  const own = new Set(['behavior', 'resource'].map((dir) => JSON.parse(readFileSync(join(COMPAT, dir, 'manifest.json'), 'utf8')).header.uuid));
+  /** @type {Record<string, Uint8Array>} */
+  const compat = {};
+  for (const [dir, name] of [['behavior', 'Minepreggo_WorldAlliance_BP'], ['resource', 'Minepreggo_WorldAlliance_RP']]) {
+    const base = join(COMPAT, dir);
+    for (const file of walk(base)) {
+      const inner = relative(base, file).split(sep).join('/');
+      let data = new Uint8Array(readFileSync(file));
+      if (inner === 'manifest.json') {
+        const manifest = JSON.parse(strFromU8(data));
+        manifest.header.version = numbers;
+        for (const module of manifest.modules) module.version = numbers;
+        for (const dependency of manifest.dependencies ?? []) if (ours[dependency.uuid] || own.has(dependency.uuid)) dependency.version = numbers;
+        data = strToU8(JSON.stringify(manifest, null, 2) + '\n');
+      }
+      compat[`${name}/${inner}`] = data;
+    }
+  }
+  const compatOut = join(ROOT, 'dist', `minepreggo-worldalliance-${version}.mcaddon`);
+  writeFileSync(compatOut, zipSync(compat, { level: 9 }));
+  console.log(`Wrote ${relative(ROOT, compatOut)} (${Object.keys(compat).length} files)`);
+}

@@ -1,4 +1,4 @@
-// World Alliance's women (tools/import-wa-women.mjs, packs/behavior/scripts/mobs/worldbox_women.js):
+// World Alliance's women (tools/compat-worldalliance.mjs, packs/behavior/scripts/mobs/worldbox_women.js):
 // one mob type for both sexes, a woman marked by her minepreggo:female property.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

@@ -54,7 +54,7 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
 A world keeps the pack versions it was created with, and Bedrock keeps older imports next to the
 new one. After importing a newer `.mcaddon`, open the world's settings and, under **Behavior
 Packs** *and* **Resource Packs**, remove Minepreggo from the active packs and add it again. The
-join message shows both versions (`[Minepreggo 0.12.1, resources 0.12.1]`); while the resources
+join message shows both versions (`[Minepreggo 0.13.0, resources 0.13.0]`); while the resources
 version lags behind, the models, bellies and animations are the old ones, whatever the scripts do.
 Old versions can be deleted in Settings → Storage.
 
@@ -245,19 +245,27 @@ npm install
 cp /path/to/minepreggo-official-1.3.9-mc1.20.1.jar vendor/   # or 1.3.2; or pass the path to `npm run import`
 mkdir -p vendor/jenny                                         # optional: the Jenny add-ons to merge in
 cp "/path/to/Jenny-Mod-Java-Port-v2.7.2.mcaddon" /path/to/jenny*.mcpack vendor/jenny/
-mkdir -p vendor/worldalliance vendor/skelly vendor/insanity  # optional: World Alliance, Skelly, the InsanityV women
+mkdir -p vendor/worldalliance vendor/skelly vendor/insanity  # optional: World Alliance (its compatibility add-on), Skelly, the InsanityV women
 cp /path/to/Insanityv_6.6V.jar vendor/insanity/
 cp /path/to/World_Alliance_20.mcaddon vendor/worldalliance/
 cp /path/to/skelly.zip vendor/skelly/
+node tools/fetch-vanilla-models.mjs   # with World Alliance: the vanilla mob models its women are built on
 npm run import   # extracts textures, sounds, translations, models, animations and icon into packs/,
                  # then merges the Jenny add-ons (tools/import-jenny.mjs) when vendor/jenny/ has them
 npm run check    # type-checks scripts, validates JSON against Mojang's schemas and cross-references
 npm test         # unit tests, model conversion checks, pregnancy simulations (players and mobs) and a
                  # smoke test that loads the whole script entry point against the mocked game API
-npm run build    # writes dist/minepreggo-<version>.mcaddon
+npm run build    # writes dist/minepreggo-<version>.mcaddon (and, with World Alliance,
+                 # dist/minepreggo-worldalliance-<version>.mcaddon: see **World Alliance**)
 npm run standin  # optional: dist/minepreggo-standin-player.mcpack, a plain player model to test
                  # what Actions & Stuff players see (see **Actions & Stuff**)
 ```
+
+**World Alliance** is not part of this add-on. Its compatibility add-on (built by
+`tools/compat-worldalliance.mjs`) gives its humanoid peoples their women: half of each people's units
+are women, with a female build (slimmer arms, a bust and wider hips in their own outfit), a blocky belly,
+kicks, the pregnancy and scene poses and a birth. Install it with Minepreggo and World Alliance and put
+it above World Alliance in the pack list (it replaces those peoples' definitions).
 
 Open the `.mcaddon` on a device with Minecraft installed (double-click on Windows, "open with
 Minecraft" on mobile), then activate both packs on a world.

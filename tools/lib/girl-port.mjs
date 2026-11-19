@@ -161,7 +161,9 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
       geometry: 'Array.bellies[math.clamp(v.bp, 0, 9)]', materials: [{ '*': 'Material.default' }], textures: ['Texture.belly'],
     },
   };
-  const pre = [...bellyPreAnimation().filter((l) => !l.startsWith('v.kp_')), ...kickShareLines('v', girl.kicks), ...kickRoomLines('v.bp', (p) => bellies[p]['minecraft:geometry'][0]), 'v.kick_grow = 0.35;',
+  const pre = [...bellyPreAnimation().filter((l) => !l.startsWith('v.kp_')), ...kickShareLines('v', girl.kicks), ...kickRoomLines('v.bp', (p) => bellies[p]['minecraft:geometry'][0]),
+    // (a blocky belly kicks with the mod's own cubes, swelling fully; a smooth one's skin patches less)
+    `v.kick_grow = ${style === 'cube' ? '1.0' : '0.35'};`,
     ...crowningLines({ when: "v.pose == 'birth'", scale: crownScale, ...(exit ? { head: exit.head, rest: exit.rest } : {}) }), ...(girl.extra?.pre ?? [])];
   const effects = spec ? girlEffects(spec) : { sound_effects: {}, particle_effects: {} };
   const sound_effects = { ...effects.sound_effects, ...(girl.extra?.effects?.sound_effects ?? {}) };

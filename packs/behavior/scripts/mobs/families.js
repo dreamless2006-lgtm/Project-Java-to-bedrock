@@ -199,7 +199,7 @@ export const INSANITY_FAMILIES = Object.fromEntries(
   ])
 );
 /**
- * World Alliance's women (tools/import-wa-women.mjs): its peoples stay one mob type for both sexes
+ * World Alliance's women (its compatibility add-on, tools/compat-worldalliance.mjs): its peoples stay one mob type for both sexes
  * (its kingdoms know their units by type), so she is found by her minepreggo:female property
  * (mobs/system.js familyOf), not by her type.
  */
