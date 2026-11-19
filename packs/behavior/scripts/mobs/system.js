@@ -12,7 +12,7 @@ import { EntityDamageCause, ItemStack, system, world } from '@minecraft/server';
 import { BABIES_BY_FINAL_PHASE, BELLY_RUBS_TICKS, CONFIG, CRAVING_TICKS, MAX_LEVEL, MILKING_TICKS, PHASES, TICKS } from '../pregnancy/data.js';
 import { accelerationDays, advancePhases, babiesFromPotion, clampBabies, createCommonPain, daysByPhase, distributeExtraDays, duplicateBabies as planDuplication, gradualAccelerationSpeed, pregnancyDamage, randomCraving, sigmoid, symptomSeverity } from '../pregnancy/math.js';
 import { clampLevel, newPregnancy } from '../pregnancy/state.js';
-import { COURTERS, COURTING_RANGE, COURTING_TICKS, FAMILIES, FULLNESS, WORLDBOX_WOMAN, birthItemOf, birthTicks, hungerTicks, postBirthTicks } from './families.js';
+import { COURTERS, COURTING_RANGE, COURTING_TICKS, FAMILIES, FULLNESS, COMPAT_WOMAN, birthItemOf, birthTicks, hungerTicks, postBirthTicks } from './families.js';
 import { MobRecord } from './state.js';
 
 /** @typedef {import('@minecraft/server').Entity} Entity */
@@ -58,16 +58,15 @@ export function getRecord(entity) {
 }
 
 export const forgetRecord = (/** @type {string} */ id) => records.delete(id);
-/** A World Alliance unit who is a woman (her property says so) and grown. */
-export function isWorldboxWoman(/** @type {Entity} */ entity) {
-  if (!entity.typeId.startsWith('worldbox:')) return false;
+/** A woman of a compatibility add-on's mob (tools/compat-addons.mjs): her property says so, and she is grown. */
+export function isCompatWoman(/** @type {Entity} */ entity) {
   try {
     return entity.getProperty('minepreggo:female') === 2 && !entity.getComponent('minecraft:is_baby');
   } catch {
     return false;
   }
 }
-export const familyOf = (/** @type {Entity} */ entity) => FAMILIES[entity.typeId] ?? (isWorldboxWoman(entity) ? WORLDBOX_WOMAN : undefined);
+export const familyOf = (/** @type {Entity} */ entity) => FAMILIES[entity.typeId] ?? (isCompatWoman(entity) ? COMPAT_WOMAN : undefined);
 export const isTamed = (/** @type {Entity} */ entity) => entity.getComponent('minecraft:is_tamed') !== undefined;
 const phaseProperty = (/** @type {Entity} */ entity) => /** @type {number} */ (entity.getProperty('minepreggo:phase') ?? -1);
 /** The pregnancy variant the component groups carry (minecraft:variant = phase + 1, 0 when not pregnant). */

@@ -5,7 +5,7 @@ import { system, world } from '@minecraft/server';
 import { FAMILIES } from './families.js';
 import { FAMILY_TAG, STEP, familyOf, forgetRecord, onDeath, onHurt, tickMob } from './system.js';
 import './interact.js';
-import './worldbox_women.js';
+import './compat_women.js';
 
 const DIMENSIONS = ['minecraft:overworld', 'minecraft:nether', 'minecraft:the_end'];
 const MOB_TYPES = Object.keys(FAMILIES);

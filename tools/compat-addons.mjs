@@ -1,25 +1,35 @@
-// Builds the Minepreggo x World Alliance compatibility add-on (compat/worldalliance/: a behavior and a
-// resource pack of their own, packaged by tools/build.mjs as dist/minepreggo-worldalliance-<version>
-// .mcaddon) from the World Alliance add-on in vendor/worldalliance/ at import time; nothing of it is
-// committed. Players install it with both add-ons, above World Alliance: it replaces the add-on's
-// humanoid peoples' definitions with copies that have women, and needs nothing else of ours than the
-// Minepreggo packs (their pregnancy system, scripts/mobs/worldbox_women.js and the belly animations).
+// Builds Minepreggo's compatibility add-ons for other add-ons: for each, a behavior and a resource pack
+// of their own (compat/<add-on>/, packaged by tools/build.mjs as dist/minepreggo-<add-on>-<version>
+// .mcaddon), made from the add-on in vendor/ at import time; nothing of it is committed. Players
+// install one with Minepreggo and its add-on, above the add-on: it replaces that add-on's humanoid
+// mobs' definitions with copies whose women are in Minepreggo's pregnancy system (it needs nothing else
+// of ours than the Minepreggo packs: their pregnancy system, scripts/mobs/compat_women.js and the
+// belly animations). A woman is a mob whose minepreggo:female property is 2 (and is grown).
 //
-// A people keeps its mob type (its kingdoms, armies and scripts know their units by type): a unit is a
-// woman when its minepreggo:female property is 2 (the script rolls half of them). A woman is drawn on
-// her own female model, a copy of her people's rig (the add-on's, or the vanilla one it borrows, from
+// World Alliance (vendor/worldalliance/): a people keeps its mob type (its kingdoms, armies and scripts
+// know their units by type), and the script rolls half of its units women. A woman is drawn on her own
+// female model, a copy of her people's rig (the add-on's, or the vanilla one it borrows, from
 // vendor/vanilla-models/: Mojang's bedrock-samples) with a woman's build: slimmer arms, a bust and wider
 // hips, cut from her unit's own texture so they wear her outfit; a man keeps the rig as it is. Over
-// her goes a blocky belly (like her people's boxes) for every size in her skin tone, and on her the
-// Jenny-style pregnancy and scene poses and a birth, solved onto her rig (tools/lib/scene-poses.mjs),
-// with her baby crowning, kicks and a walk jiggle. Animals, vehicles, blobs, golems, dragons and tiny
+// her goes a blocky belly (like her people's boxes). Animals, vehicles, blobs, golems, dragons and tiny
 // folk (pixies) are left out.
 //
-// Run: node tools/compat-worldalliance.mjs (part of npm run import; after tools/import-jar.mjs).
+// Girl Mob (vendor/girlmob/: AntiGM's girl versions of the vanilla mobs): every grown mob of it is a
+// girl. Each has her own way of carrying and giving birth (GIRL_MOB): a normal birth, through her
+// navel, a belly burst, or a breast pregnancy (her breasts swell with it, her belly stays small, and
+// the baby comes at her chest); a belly shape of her own (round, high, low, wide or pointed); one of
+// the births made for them (tools/lib/girl-births.mjs 'girlmob:'); and a heavy pregnant waddle, a
+// hand at the small of her back and one on her belly. Those too small for it (the bee, the vex, the
+// cave spider, the slime) and babies are left out.
+//
+// For both: the Jenny-style pregnancy and scene poses and her birth, solved onto her rig
+// (tools/lib/scene-poses.mjs), with her baby crowning, kicks and a walk jiggle.
+//
+// Run: node tools/compat-addons.mjs <worldalliance | girlmob> (part of npm run import).
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { strFromU8, unzipSync } from 'fflate';
-import { CUBE_BELLY, addNewborn, babyScale, fitBelly, measureBody, roundBelly } from './lib/belly-fit.mjs';
+import { CUBE_BELLY, addNewborn, babyScale, fitBelly, measureBody, roundBelly, smoothBelly } from './lib/belly-fit.mjs';
 import { bellyTexture, skinTone } from './lib/belly-skin.mjs';
 import { BELLY_ANIMATIONS, FAMILY_TAG, MINEPREGGO_PROPERTIES, MOD, PHASES, bellyPreAnimation, initializers, kickRoomLines, phaseEvents } from './lib/belly-render.mjs';
 import { FETUS_SCALE, crowningLines } from './lib/crowning.mjs';
@@ -32,22 +42,92 @@ import { walkJiggleAnimation } from './lib/walk-jiggle.mjs';
 const ROOT = new URL('../', import.meta.url).pathname;
 const BP = join(ROOT, 'packs/behavior');
 const RP = join(ROOT, 'packs/resource');
-const OUT = join(ROOT, 'compat/worldalliance');
+const VANILLA = join(ROOT, 'vendor/vanilla-models');
+/** Whose birth each World Alliance people's women give birth like (tools/lib/girl-births.mjs), by rig. */
+const BIRTHS = /** @type {[RegExp, string][]} */ ([[/elf/, 'kum:luna'], [/dwarf/, 'jhelliedev:ellie'], [/orc|piglin|troll/, 'kum:galath'], [/mushroom|spore/, 'jhallie4:allie'], [/enderman|skeleton|dread|colossus/, 'fapcraft:jenny'], [/./, 'kum:bia']]);
+/** Each way of giving birth's own birth, for Girl Mob's girls. */
+const TYPE_BIRTHS = { normal: 'girlmob:standing', navel: 'girlmob:arched', burst: 'girlmob:sprawl', breast: 'girlmob:cradle' };
+/**
+ * Girl Mob's girls, by their mob: how she carries and gives birth, her belly's shape. Normal births
+ * for most; through the navel for the strange ones (the enderman, the evoker, the witch, the golem);
+ * a belly burst for the fierce (the blaze, the warden, the brute, the wither skeleton); a breast
+ * pregnancy for the milk-giving farm girls.
+ * @type {Record<string, { type: 'normal' | 'navel' | 'burst' | 'breast', shape: keyof typeof SHAPES, tone?: number[] }>}
+ */
+const GIRL_MOB = {
+  zombie: { type: 'normal', shape: 'round' }, husk: { type: 'normal', shape: 'low' }, drowned: { type: 'normal', shape: 'pointed' },
+  skeleton: { type: 'normal', shape: 'high' }, stray: { type: 'normal', shape: 'high' }, wither_skeleton: { type: 'burst', shape: 'pointed' },
+  pillager: { type: 'normal', shape: 'wide' }, vindicator: { type: 'normal', shape: 'round' }, evocation_illager: { type: 'navel', shape: 'high' },
+  witch: { type: 'navel', shape: 'low' }, wandering_trader: { type: 'normal', shape: 'wide' }, villager_v2: { type: 'normal', shape: 'round' },
+  piglin: { type: 'normal', shape: 'wide' }, piglin_brute: { type: 'burst', shape: 'wide' }, enderman: { type: 'navel', shape: 'round', tone: [38, 28, 48] },
+  warden: { type: 'burst', shape: 'wide' }, iron_golem: { type: 'navel', shape: 'wide' }, blaze: { type: 'burst', shape: 'round' },
+  spider: { type: 'normal', shape: 'low' }, fox: { type: 'normal', shape: 'pointed' }, wolf: { type: 'normal', shape: 'pointed' }, horse: { type: 'normal', shape: 'low' },
+  cow: { type: 'breast', shape: 'low' }, pig: { type: 'breast', shape: 'round' }, sheep: { type: 'breast', shape: 'wide' }, chicken: { type: 'breast', shape: 'high' },
+};
+/** Belly shapes: the waist box the belly is fitted to, moved and stretched ([[x0, x1], [y0, y1], [z0, z1]], her front at z0). */
+const SHAPES = {
+  round: (/** @type {number[][]} */ b) => b,
+  // carried high and forward
+  high: ([[x0, x1], [y0, y1], [z0, z1]]) => [[x0 * 0.95, x1 * 0.95], [y0 + (y1 - y0) * 0.15, y1 + (y1 - y0) * 0.15], [z0, z0 + (z1 - z0) * 1.15]],
+  // dropped low and heavy
+  low: ([[x0, x1], [y0, y1], [z0, z1]]) => [[x0 * 1.08, x1 * 1.08], [y0 - (y1 - y0) * 0.12, y1 - (y1 - y0) * 0.12], [z0, z0 + (z1 - z0) * 1.1]],
+  // broad from side to side
+  wide: ([[x0, x1], [y0, y1], [z0, z1]]) => [[x0 * 1.3, x1 * 1.3], [y0, y1], [z0, z0 + (z1 - z0) * 0.95]],
+  // narrow and sticking far out
+  pointed: ([[x0, x1], [y0, y1], [z0, z1]]) => [[x0 * 0.82, x1 * 0.82], [y0, y1], [z0, z0 + (z1 - z0) * 1.35]],
+};
+/** Girl Mob's mobs too small to be with child (the slime by its smaller sizes). */
+const CHILD_SIZED = new Set(['minecraft:bee', 'minecraft:vex', 'minecraft:cave_spider', 'minecraft:slime']);
+const GROWN = `q.property('${MOD}:female') == 2 && !q.is_baby`;
+/**
+ * @typedef {object} Addon
+ * @property {string} title @property {string} name @property {string} description its packs' own
+ * @property {string} vendor where its .mcaddon (or a .zip of its .mcpack files) is
+ * @property {string} dir its files' folder in our packs @property {string} prefix its ids'
+ * @property {{ bp: string, bpData: string, rp: string, rpResources: string }} ids our packs' and modules' ids
+ * @property {string} female @property {string} male who is drawn a woman, who not
+ * @property {number} femaleDefault the minepreggo:female property's default (0: the script rolls it)
+ * @property {boolean} build a woman's build (slimmer arms, bust, hips) on her model
+ * @property {'cube' | 'round'} bellyStyle @property {Set<string>} skipRigs
+ * @property {(id: string) => boolean} skip mob types left as they are
+ * @property {(rig: { key: string }, id: string) => { birth: string, type: 'normal' | 'navel' | 'burst' | 'breast', shape: keyof typeof SHAPES }} women how they carry and give birth
+ */
+/** @type {Record<string, Addon>} */
+const ADDONS = {
+  worldalliance: {
+    title: 'World Alliance', name: 'Minepreggo × World Alliance', description: "World Alliance's peoples get their women in Minepreggo's pregnancy system. Needs Minepreggo and World Alliance; put it above World Alliance.",
+    vendor: 'vendor/worldalliance', dir: 'minepreggo_worldalliance', prefix: 'worldbox',
+    ids: { bp: '21ba7e65-b20f-4f1a-8605-f36f2484257d', bpData: '8a81c26f-a413-4d09-9af3-b8c0a19d20b7', rp: 'bdfcf66a-f890-4f6f-90cf-bac9423efa98', rpResources: 'b58afbd6-d8c1-48f6-9b97-d742f661bbe6' },
+    female: `q.property('${MOD}:female') == 2`, male: `q.property('${MOD}:female') != 2`, femaleDefault: 0, build: true, bellyStyle: 'cube',
+    // (a fairy no taller than a sapling)
+    skipRigs: new Set(['geometry.pixie']), skip: () => false,
+    women: (rig) => ({ birth: /** @type {string} */ (BIRTHS.find(([re]) => re.test(rig.key))?.[1]), type: 'normal', shape: 'round' }),
+  },
+  girlmob: {
+    title: 'Girl Mob', name: 'Minepreggo × Girl Mob', description: "Girl Mob's girls get pregnant in Minepreggo's pregnancy system, each in her own way. Needs Minepreggo and Girl Mob; put it above Girl Mob.",
+    vendor: 'vendor/girlmob', dir: 'minepreggo_girlmob', prefix: 'girlmob',
+    ids: { bp: '07598f2c-d0b0-4c7d-889c-e742806b6089', bpData: '5e748bbb-4a63-4b0f-87f7-4e2f2d38ea52', rp: 'dbda3fe3-4dc1-45ee-99de-5006a256f65d', rpResources: 'df822d24-9290-4ce8-b496-368d35603a06' },
+    female: GROWN, male: `!(${GROWN})`, femaleDefault: 2, build: false, bellyStyle: 'round',
+    skipRigs: new Set(), skip: (id) => !id.startsWith('minecraft:') || CHILD_SIZED.has(id) || id === 'minecraft:player',
+    women: (_, id) => {
+      const girl = GIRL_MOB[id.replace(/^minecraft:/, '')] ?? { type: 'normal', shape: 'round' };
+      return { ...girl, birth: TYPE_BIRTHS[girl.type] };
+    },
+  },
+};
+const addon = ADDONS[process.argv[2]];
+if (!addon) throw new Error(`usage: node tools/compat-addons.mjs <${Object.keys(ADDONS).join(' | ')}>`);
+const OUT = join(ROOT, 'compat', process.argv[2]);
 const OBP = join(OUT, 'behavior');
 const ORP = join(OUT, 'resource');
-const VENDOR = join(ROOT, 'vendor/worldalliance');
-const VANILLA = join(ROOT, 'vendor/vanilla-models');
-const DIR = 'minepreggo_worldalliance';
-/** This compatibility add-on's own pack and module ids. */
-const IDS = { bp: '21ba7e65-b20f-4f1a-8605-f36f2484257d', bpData: '8a81c26f-a413-4d09-9af3-b8c0a19d20b7', rp: 'bdfcf66a-f890-4f6f-90cf-bac9423efa98', rpResources: 'b58afbd6-d8c1-48f6-9b97-d742f661bbe6' };
-const FEMALE = `q.property('${MOD}:female') == 2`;
-const MALE = `q.property('${MOD}:female') != 2`;
-const JIGGLE = `animation.${MOD}.worldbox_woman.walk_jiggle`;
-const RC_BELLY = `controller.render.${MOD}.worldbox_woman.belly`;
-/** Rigs of the add-on's own that are not women's bodies (a fairy no taller than a sapling). */
-const SKIPPED_RIGS = new Set(['geometry.pixie']);
-/** Whose birth each people's women give birth like (tools/lib/girl-births.mjs), by rig. */
-const BIRTHS = /** @type {[RegExp, string][]} */ ([[/elf/, 'kum:luna'], [/dwarf/, 'jhelliedev:ellie'], [/orc|piglin|troll/, 'kum:galath'], [/mushroom|spore/, 'jhallie4:allie'], [/enderman|skeleton|dread|colossus/, 'fapcraft:jenny'], [/./, 'kum:bia']]);
+const VENDOR = join(ROOT, addon.vendor);
+const DIR = addon.dir;
+const IDS = addon.ids;
+const FEMALE = addon.female;
+const MALE = addon.male;
+const WOMAN = `${addon.prefix}_woman`;
+const JIGGLE = `animation.${MOD}.${WOMAN}.walk_jiggle`;
+const RC_BELLY = `controller.render.${MOD}.${WOMAN}.belly`;
 
 const writeJson = (/** @type {string} */ file, /** @type {unknown} */ doc) => {
   mkdirSync(dirname(file), { recursive: true });
@@ -57,13 +137,33 @@ const writeBytes = (/** @type {string} */ file, /** @type {Uint8Array} */ data) 
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, data);
 };
-/** JSON that may carry a byte-order mark or line comments (Mojang's samples do). */
+/**
+ * JSON as add-ons write it, which the game reads: a byte-order mark, comments (whole lines or after a
+ * value), trailing commas.
+ */
 function parse(/** @type {string} */ text) {
-  const clean = text.replace(/^﻿/, '');
+  const clean = text.replace(/^\uFEFF/, '');
   try {
     return JSON.parse(clean);
   } catch {
-    return JSON.parse(clean.replace(/^\s*\/\/.*$/gm, '').replace(/,\s*([}\]])/g, '$1'));
+    let out = '';
+    for (let i = 0, string = false; i < clean.length; i++) {
+      const c = clean[i];
+      if (string) {
+        out += c;
+        if (c === '\\') out += clean[++i] ?? '';
+        else if (c === '"') string = false;
+      } else if (c === '"') {
+        string = true;
+        out += c;
+      } else if (c === '/' && clean[i + 1] === '/') {
+        while (i < clean.length && clean[i] !== '\n') i++;
+        out += '\n';
+      } else if (c === '/' && clean[i + 1] === '*') {
+        i = clean.indexOf('*/', i + 2) + 1 || clean.length;
+      } else out += c;
+    }
+    return JSON.parse(out.replace(/,(\s*[}\]])/g, '$1'));
   }
 }
 const round = (/** @type {number} */ v) => Math.round(v * 1000) / 1000;
@@ -97,9 +197,9 @@ rmSync(OUT, { recursive: true, force: true });
   }
 }
 
-const archive = existsSync(VENDOR) ? readdirSync(VENDOR).find((f) => f.endsWith('.mcaddon')) : undefined;
+const archive = existsSync(VENDOR) ? readdirSync(VENDOR).find((f) => /\.(mcaddon|zip)$/.test(f)) : undefined;
 if (!archive) {
-  console.warn('warning: no World Alliance .mcaddon in vendor/worldalliance/; no compatibility add-on for it');
+  console.warn(`warning: no ${addon.title} add-on in ${addon.vendor}/; no compatibility add-on for it`);
   process.exit(0);
 }
 
@@ -206,7 +306,7 @@ const part = (/** @type {any} */ face, /** @type {number} */ x0, /** @type {numb
 const rigs = new Map();
 function rigOf(/** @type {string} */ id) {
   if (rigs.has(id)) return /** @type {Rig | null} */ (rigs.get(id));
-  const g = SKIPPED_RIGS.has(id) ? undefined : geometryOf(id);
+  const g = addon.skipRigs.has(id) ? undefined : geometryOf(id);
   /** @type {Rig | null} */
   let rig = null;
   if (g) {
@@ -216,9 +316,21 @@ function rigOf(/** @type {string} */ id) {
     // sides by where they hang (right is -x), whatever the rig calls them
     const sides = (/** @type {any[]} */ pair) => (pair.length === 2 ? [...pair].sort((a, b) => a.pivot[0] - b.pivot[0]) : []);
     const arms = sides(find(/^(right|left)_?arm$|^arm_?(right|left|r|l)$/i));
-    const legs = sides(find(/^(right|left)_?leg$|^leg_?(right|left|r|l)$/i));
-    const torso = [...(body?.cubes ?? [])].sort((a, b) => b.size[0] * b.size[1] * b.size[2] - a.size[0] * a.size[1] * a.size[2])[0];
-    if (body && head && arms.length && legs.length && torso && !g.bones.some((/** @type {any} */ b) => ['mp_root', 'mp_waist', 'mp_bust', 'mp_hips', 'hip', 'torso', 'trunk', 'upperBody'].includes(b.name))) {
+    const legs = sides(find(/^(right|left)_?leg$|^leg_?(right|left|r|l)$|^leg[01]$/i));
+    // (a rig that hangs its torso from bones under the body: their cubes, but the head's, limbs' and chest's, on bones square to her)
+    const limbs = new Set([head, ...arms, ...legs].filter(Boolean).map((b) => b.name));
+    const square = (/** @type {any} */ bone) => !bone.rotation || bone.rotation.every((/** @type {number} */ a) => Math.abs(a) <= 35);
+    const trunkCubes = (/** @type {any} */ bone) => [...(square(bone) ? bone.cubes ?? [] : []), ...g.bones.filter((/** @type {any} */ b) => b.parent === bone.name && !limbs.has(b.name) && !/breast|boob|bust|chest|hair|skirt|tail|wing/i.test(b.name)).flatMap(trunkCubes)];
+    // (only pieces between the top of her legs and her shoulders: not a skirt, not a collar)
+    const shoulders = arms.length ? Math.max(...arms.map((/** @type {any} */ a) => a.pivot[1])) + 2 : Infinity;
+    const legsTop = legs.length ? Math.max(...legs.map((/** @type {any} */ l) => l.pivot[1])) : -Infinity;
+    const between = (/** @type {any} */ c) => c.origin[1] >= legsTop - 1.5 && c.origin[1] + c.size[1] <= shoulders + 1;
+    const found = [...(body?.cubes?.length ? body.cubes : body ? trunkCubes(body).filter(between) : [])].sort((a, b) => b.size[0] * b.size[1] * b.size[2] - a.size[0] * a.size[1] * a.size[2])[0];
+    // else the usual torso, between her shoulders and from the top of her legs (in the usual skin's place)
+    const legTop = legs.length ? Math.max(...legs.map((/** @type {any} */ l) => l.pivot[1])) : 0;
+    const half = arms.length ? Math.max(2, Math.abs(arms[0].pivot[0]) - 1) : 4;
+    const torso = found ?? (arms.length && legs.length ? { origin: [-half, legTop, -2], size: [2 * half, Math.max(6, arms[0].pivot[1] + 2 - legTop), 4], uv: [16, 16] } : undefined);
+    if (body && head && arms.length && legs.length && torso && !g.bones.some((/** @type {any} */ b) => ['mp_root', 'mp_waist', 'mp_bust', 'mp_hips', 'mp_hip'].includes(b.name))) {
       rig = { key: id.replace(/^geometry\./, '').replace(/[^a-z0-9]+/gi, '_').toLowerCase(), geometry: g, body: body.name, head: head.name, armR: arms[0].name, armL: arms[1].name, legR: legs[0].name, legL: legs[1].name, torso };
     }
   }
@@ -232,9 +344,9 @@ function rigOf(/** @type {string} */ id) {
  * quarters as wide, toward her shoulders, their texture squeezed to fit), a bust and wider hips cut
  * from her torso's texture.
  */
-function femaleGeometry(/** @type {Rig} */ rig) {
+function femaleGeometry(/** @type {Rig} */ rig, /** @type {Women['opts']} */ opts) {
   const g = structuredClone(rig.geometry);
-  g.description = { ...g.description, identifier: `geometry.${MOD}.worldbox_${rig.key}_female` };
+  g.description = { ...g.description, identifier: `geometry.${MOD}.${addon.prefix}_${rig.key}${opts.suffix}_female` };
   const byName = new Map(g.bones.map((/** @type {any} */ b) => [b.name, b]));
   for (const bone of g.bones) {
     if (bone.parent) continue;
@@ -245,9 +357,14 @@ function femaleGeometry(/** @type {Rig} */ rig) {
   const trunk = byName.get(rig.body);
   g.bones.splice(1, 0, { name: 'mp_waist', parent: trunk.parent, pivot: [0, rig.torso.origin[1], trunk.pivot[2]] });
   trunk.parent = 'mp_waist';
-  // slimmer arms
+  // where a belly bursts: the middle of her waist, a hand in front of it
+  if (opts.type === 'burst') {
+    const [, y0, z0] = rig.torso.origin;
+    g.bones[1].locators = { mp_burst: [0, round(y0 + rig.torso.size[1] * 0.3), round(z0 - 5)] };
+  }
+  // slimmer arms (on a woman's build)
   const under = (/** @type {string} */ n) => [n, ...g.bones.filter((/** @type {any} */ b) => b.parent === n).flatMap((/** @type {any} */ b) => under(b.name))];
-  for (const [arm, side] of [[rig.armR, -1], [rig.armL, 1]]) {
+  for (const [arm, side] of addon.build ? [[rig.armR, -1], [rig.armL, 1]] : []) {
     for (const name of under(/** @type {string} */ (arm))) {
       const bone = byName.get(name);
       for (const cube of bone?.cubes ?? []) {
@@ -260,7 +377,8 @@ function femaleGeometry(/** @type {Rig} */ rig) {
       }
     }
   }
-  // her bust and hips, in her torso's texture
+  // her bust and hips, in her torso's texture (a breast pregnancy's bust only, swelling with it)
+  if (!addon.build && opts.type !== 'breast') return g;
   const faces = facesOf(rig.torso, trunk.mirror);
   const front = faces.north ?? Object.values(faces)[0];
   if (!front) return undefined;
@@ -284,6 +402,8 @@ function femaleGeometry(/** @type {Rig} */ rig) {
   g.bones.push(
     { name: 'mp_bust', parent: rig.body, pivot: [0, round(top - 1.5 * k), round(z0 - out)] },
     breast(-1), breast(1),
+  );
+  if (addon.build) g.bones.push(
     {
       name: 'mp_hips', parent: rig.body, pivot: [0, round(y0), round(z0 + d / 2)],
       cubes: [{
@@ -297,8 +417,12 @@ function femaleGeometry(/** @type {Rig} */ rig) {
 
 /** Her model on the Jenny rig's names (what the pose solver and belly fitter know), and the way back. */
 function onJennyNames(/** @type {Rig} */ rig, /** @type {any} */ female) {
-  const to = /** @type {Record<string, string>} */ ({ mp_root: 'body', mp_waist: 'upperBody', [rig.body]: 'trunk', [rig.head]: 'head', [rig.armR]: 'armR', [rig.armL]: 'armL', [rig.legR]: 'legR', [rig.legL]: 'legL', mp_bust: 'boobs' });
+  // (her own bones of the names the solver gives ours stand aside, and ours go back under names of ours)
+  const own = new Set(female.bones.map((/** @type {any} */ b) => b.name));
+  const aside = ['hip', 'torso', 'trunk', 'upperBody', 'boobs', 'head', 'armR', 'armL', 'legR', 'legL'].filter((n) => own.has(n) && ![rig.head, rig.armR, rig.armL, rig.legR, rig.legL].includes(n));
+  const to = /** @type {Record<string, string>} */ ({ ...Object.fromEntries(aside.map((n) => [n, `${n}_own`])), mp_root: 'body', mp_waist: 'upperBody', [rig.body]: 'trunk', [rig.head]: 'head', [rig.armR]: 'armR', [rig.armL]: 'armL', [rig.legR]: 'legR', [rig.legL]: 'legL', mp_bust: 'boobs' });
   const back = Object.fromEntries(Object.entries(to).map(([k, v]) => [v, k]));
+  if (aside.includes('hip')) back.hip = 'mp_hip';
   const g = structuredClone(female);
   for (const bone of g.bones) {
     bone.name = to[bone.name] ?? bone.name;
@@ -325,6 +449,8 @@ const sources = girlSources(RP);
 const animationControllers = {};
 /**
  * @typedef {object} Women what a rig's women have
+ * @property {{ birth: string, type: string, shape: keyof typeof SHAPES, suffix: string }} opts how they carry and give birth
+ * @property {Record<string, string>} ids @property {any[]} animate @property {string[]} pre their own animations, how they play, their variables
  * @property {string} female her model's identifier
  * @property {any[]} bellies her bellies (her rig's names)
  * @property {{ pose: string, id: string }[]} poses @property {{ flair: string, crowning: string } | undefined} extras
@@ -334,25 +460,37 @@ const animationControllers = {};
 /** @type {Map<string, Women | null>} */
 const made = new Map();
 let poseCount = 0;
-function womenOf(/** @type {Rig} */ rig) {
-  if (made.has(rig.key)) return /** @type {Women | null} */ (made.get(rig.key));
-  const female = femaleGeometry(rig);
+function womenOf(/** @type {Rig} */ rig, /** @type {Women['opts']} */ opts) {
+  const key = `${rig.key}${opts.suffix}`;
+  if (made.has(key)) return /** @type {Women | null} */ (made.get(key));
+  const female = femaleGeometry(rig, opts);
   const jenny = female && onJennyNames(rig, female);
   const measured = jenny && measureBody(jenny.geometry);
   if (!female || !jenny || !measured) {
-    made.set(rig.key, null);
+    made.set(key, null);
     return null;
   }
   // a big people's torso (a colossus) gets as much bigger a belly, from the same waist bottom
-  const grow = Math.max(1, Math.min(8, rig.torso.size[0] / 8));
+  // (and, on a girl's own body, a tall one as much bigger, like tools/lib/girl-port.mjs's)
+  const legTop = Math.max(...[rig.legR, rig.legL].map((n) => rig.geometry.bones.find((/** @type {any} */ b) => b.name === n)?.pivot[1] ?? 0));
+  const grow = Math.max(1, Math.min(8, rig.torso.size[0] / 8), addon.build ? 1 : Math.min(1.5, legTop / 16));
   const [[x0, x1], [y0, y1], [z0, z1]] = measured.box;
-  const body = { ...measured, box: [[x0 * grow, x1 * grow], [y0, y0 + (y1 - y0) * grow], [z0, z0 + (z1 - z0) * grow]] };
-  // her people are drawn in boxes, so is her belly (tools/lib/belly-fit.mjs chestStyle 'cube')
-  const onJenny = PHASES.map((p) => addNewborn(roundBelly(fitBelly(sources.playerBodies[p], `geometry.${MOD}.worldbox_${rig.key}_belly_p${p}`, body), CUBE_BELLY), body, {}));
-  const id = `${MOD}:worldbox_${rig.key}`;
-  const prefix = `animation.${MOD}.worldbox_${rig.key}`;
-  const birth = /** @type {string} */ (BIRTHS.find(([re]) => re.test(rig.key))?.[1]);
-  GIRL_BIRTHS[id] = { ...GIRL_BIRTHS[birth], name: rig.key };
+  /** @type {number[][]} */
+  let box = SHAPES[opts.shape]([[x0 * grow, x1 * grow], [y0, y0 + (y1 - y0) * grow], [z0, z0 + (z1 - z0) * grow]]);
+  // a breast pregnancy leaves her belly small
+  if (opts.type === 'breast') box = [[box[0][0] * 0.6, box[0][1] * 0.6], [box[1][0], box[1][0] + (box[1][1] - box[1][0]) * 0.75], [box[2][0], box[2][0] + (box[2][1] - box[2][0]) * 0.6]];
+  // where her baby comes out: between her legs, her navel (a burst's too: mid-belly) or her chest
+  const [, ty, tz] = rig.torso.origin;
+  const front = tz - (rig.torso.inflate ?? 0);
+  const opening = opts.type === 'navel' || opts.type === 'burst' ? [0, round((box[1][0] + box[1][1]) / 2), round(box[2][0] + 1)]
+    : opts.type === 'breast' ? [0, round(ty + rig.torso.size[1] - 3.5 * (rig.torso.size[0] / 8)), round(front + 0.5)] : measured.opening;
+  const body = { ...measured, box, opening };
+  // her people drawn in boxes get a blocky belly (tools/lib/belly-fit.mjs chestStyle 'cube'), girls a round one
+  const shell = (/** @type {any} */ fitted) => (addon.bellyStyle === 'cube' ? roundBelly(fitted, CUBE_BELLY) : smoothBelly(fitted, body));
+  const onJenny = PHASES.map((p) => addNewborn(shell(fitBelly(sources.playerBodies[p], `geometry.${MOD}.${addon.prefix}_${key}_belly_p${p}`, body)), body, {}));
+  const id = `${MOD}:${addon.prefix}_${key}`;
+  const prefix = `animation.${MOD}.${addon.prefix}_${key}`;
+  GIRL_BIRTHS[id] = { ...GIRL_BIRTHS[opts.birth], name: key };
   const solved = girlPoseAnimations({ id, geometry: jenny.geometry, sourceGeometry: sources.creeper.geometry, sourceAnimations: sources.creeper.animations, prefix, bellies: Object.fromEntries(PHASES.map((p) => [p, onJenny[p]['minecraft:geometry'][0]])), swells: sources.swells });
   const crownScale = FETUS_SCALE * babyScale(body);
   const spec = GIRL_BIRTHS[id];
@@ -368,19 +506,65 @@ function womenOf(/** @type {Rig} */ rig) {
   const extras = solved?.birthExtras;
   if (extras) for (const { id: extraId, animation } of [extras.flair, extras.crowning]) animations[extraId] = back(animation);
   poseCount += poses.length;
-  const controller = poses.length ? `controller.animation.${MOD}.worldbox_${rig.key}.pose` : undefined;
+  const controller = poses.length ? `controller.animation.${MOD}.${addon.prefix}_${key}.pose` : undefined;
   if (controller) animationControllers[controller] = poseController(poses.map((p) => p.pose), extras ? { birth: ['mp_birth_flair', 'mp_birth_crowning'] } : {});
 
-  writeJson(join(ORP, 'models/entity', DIR, `${rig.key}_female.geo.json`), { format_version: '1.12.0', 'minecraft:geometry': [female] });
+  // her own ways (Girl Mob's girls): the pregnant waddle, her swelling breasts, her belly's burst
+  /** @type {Record<string, string>} */
+  const ids = {};
+  /** @type {any[]} */
+  const animate = [];
+  /** @type {string[]} */
+  const pre = [];
+  if (!addon.build) {
+    // heavier from P4 on: her hips sway as she walks, she leans back, a hand at the small of her back
+    // and one on her belly
+    pre.push('v.mp_heavy = math.clamp((v.bp - 3.0) / 6.0, 0.0, 1.0);');
+    ids.mp_pregnant = `${prefix}.pregnant`;
+    animations[ids.mp_pregnant] = {
+      loop: true,
+      bones: {
+        mp_root: { rotation: [0, 0, 'math.sin(q.modified_distance_moved * 19.0) * 5.0 * v.mp_heavy * math.clamp(q.modified_move_speed * 4.0, 0.0, 1.0)'] },
+        mp_waist: { rotation: ['-7.0 * v.mp_heavy', 0, 0] },
+        [rig.armR]: { rotation: ['28.0 * v.mp_heavy', '-12.0 * v.mp_heavy', '-18.0 * v.mp_heavy'] },
+        [rig.armL]: { rotation: ['-32.0 * v.mp_heavy', '-22.0 * v.mp_heavy', '6.0 * v.mp_heavy'] },
+      },
+    };
+    animate.push({ mp_pregnant: "v.mp_female && v.bp >= 4 && v.pose == 'none'" });
+  }
+  if (opts.type === 'breast') {
+    // none before she is with child, then fuller at every size, fullest giving birth
+    ids.mp_breasts = `${prefix}.breasts`;
+    animations[ids.mp_breasts] = { loop: true, bones: { mp_bust: { scale: "v.bp < 0 ? 0.0 : 0.8 + 0.09 * v.bp + (v.pose == 'birth' ? 0.2 : 0.0)" } } };
+    animate.push({ mp_breasts: 'v.mp_female' });
+  }
+  if (opts.type === 'burst') {
+    // her belly swells and shakes as she pushes, and at four fifths of the birth bursts (gone at once,
+    // with a puff and a pop), the baby already half out in front of her
+    pre.push(`v.mp_burst = v.mp_female && v.pose == 'birth' && v.push >= 0.8;`);
+    ids.mp_belly_burst = `${prefix}.belly_burst`;
+    animations[ids.mp_belly_burst] = { loop: true, bones: { belly: { scale: 'v.mp_burst ? 0.0 : 1.0 + 0.3 * math.pow(math.clamp(v.push / 0.8, 0.0, 1.0), 2.0) + 0.04 * v.push * math.sin(q.life_time * 2400.0)' } } };
+    ids.mp_burst_controller = `controller.animation.${MOD}.${WOMAN}.burst`;
+    animationControllers[ids.mp_burst_controller] = {
+      initial_state: 'whole',
+      states: {
+        whole: { transitions: [{ burst: 'v.mp_burst' }] },
+        burst: { particle_effects: [{ effect: 'mp_burst_dust', locator: 'mp_burst' }, { effect: 'mp_burst_sparks', locator: 'mp_burst' }], sound_effects: [{ effect: 'mp_burst' }], transitions: [{ whole: '!v.mp_burst' }] },
+      },
+    };
+    animate.push({ mp_belly_burst: "v.mp_female && v.pose == 'birth'" }, 'mp_burst_controller');
+  }
+
+  writeJson(join(ORP, 'models/entity', DIR, `${key}_female.geo.json`), { format_version: '1.12.0', 'minecraft:geometry': [female] });
   const bellies = onJenny.map((doc, p) => {
     const mine = renameBones(doc, jenny.back);
-    writeJson(join(ORP, 'models/entity', DIR, `${rig.key}_belly_p${p}.geo.json`), mine);
+    writeJson(join(ORP, 'models/entity', DIR, `${key}_belly_p${p}.geo.json`), mine);
     return mine;
   });
-  if (Object.keys(animations).length) writeJson(join(ORP, 'animations', DIR, `${rig.key}.animation.json`), { format_version: '1.8.0', animations });
+  if (Object.keys(animations).length) writeJson(join(ORP, 'animations', DIR, `${key}.animation.json`), { format_version: '1.8.0', animations });
   /** @type {Women} */
-  const women = { female: female.description.identifier, bellies, poses, extras: extras ? { flair: extras.flair.id, crowning: extras.crowning.id } : undefined, controller, spec, crownScale, exit };
-  made.set(rig.key, women);
+  const women = { opts, ids, animate, pre, female: female.description.identifier, bellies, poses, extras: extras ? { flair: extras.flair.id, crowning: extras.crowning.id } : undefined, controller, spec, crownScale, exit };
+  made.set(key, women);
   return women;
 }
 
@@ -401,7 +585,7 @@ let peoples = 0;
 for (const { path, doc } of theirs('resource', 'entity')) {
   const d = doc['minecraft:client_entity']?.description;
   const behavior = d && behaviors.get(d.identifier);
-  if (!d?.geometry || !behavior) continue;
+  if (!d?.geometry || !behavior || addon.skip(d.identifier)) continue;
   const [geoKey, geoId] = Object.entries(d.geometry)[0];
   const rig = rigOf(/** @type {string} */ (geoId));
   if (!rig) continue;
@@ -412,23 +596,27 @@ for (const { path, doc } of theirs('resource', 'entity')) {
   for (const entry of [d.render_controllers ?? []].flat()) {
     const [name, condition] = typeof entry === 'string' ? [entry, undefined] : Object.entries(entry)[0];
     const def = controllers[name] ?? (name.startsWith('controller.render.') && d.textures?.default ? { geometry: `Geometry.${geoKey}`, materials: [{ '*': 'Material.default' }], textures: ['Texture.default'] } : undefined);
-    if (def?.geometry !== `Geometry.${geoKey}`) {
+    // (one that draws her body, among others perhaps: a baby's, a sheared one's; hers wherever it does)
+    const body = new RegExp(`\\bGeometry\\.${geoKey}\\b`, 'gi');
+    if (!def || !body.test(JSON.stringify([def.geometry, def.arrays?.geometries ?? {}]))) {
       list.push(entry);
       continue;
     }
-    const hers = `controller.render.${MOD}.worldbox_woman.${name.replace(/^controller\.render\./, '').replace(/[^a-z0-9]+/gi, '_')}`;
-    renderControllers[hers] ??= { ...structuredClone(def), geometry: 'Geometry.mp_female' };
+    const hers = `controller.render.${MOD}.${WOMAN}.${name.replace(/^controller\.render\./, '').replace(/[^a-z0-9]+/gi, '_')}`;
+    renderControllers[hers] ??= def.geometry === `Geometry.${geoKey}` ? { ...structuredClone(def), geometry: 'Geometry.mp_female' } : JSON.parse(JSON.stringify(def).replace(body, 'Geometry.mp_female'));
     list.push({ [name]: both(/** @type {string | undefined} */ (condition), MALE) }, { [hers]: both(/** @type {string | undefined} */ (condition), FEMALE) });
     drawn = true;
   }
   if (!drawn) continue;
-  const women = womenOf(rig);
+  const how = addon.women(rig, d.identifier);
+  const women = womenOf(rig, { ...how, suffix: `${how.type === 'normal' ? '' : `_${how.type}`}${how.shape === 'round' ? '' : `_${how.shape}`}` });
   if (!women) continue;
 
   // her belly's skin: the tone of her unit's face (the vanilla textures are the game's: a usual tone)
   const texturePath = /** @type {string | undefined} */ (d.textures?.default ?? Object.values(d.textures ?? {})[0]);
   const png = texturePath && packs.resource.files[`${texturePath}.png`];
-  const tone = png ? skinTone(decodePng(png), rig.geometry) : [224, 188, 160];
+  // (a girl whose face is no guide to her skin has hers given)
+  const tone = GIRL_MOB[d.identifier.replace(/^minecraft:/, '')]?.tone ?? (png ? skinTone(decodePng(png), rig.geometry) : [224, 188, 160]);
   const toneKey = tone.map((c) => c.toString(16).padStart(2, '0')).join('');
   if (!bellySkins.has(toneKey)) {
     const skin = `textures/${DIR}/belly_${toneKey}`;
@@ -439,9 +627,10 @@ for (const { path, doc } of theirs('resource', 'entity')) {
   // the client entity: her model and bellies, the belly animations, her poses
   const pre = [
     `v.mp_female = ${FEMALE};`, ...bellyPreAnimation(), ...kickRoomLines('v.bp', (p) => women.bellies[p]['minecraft:geometry'][0]),
-    // (her blocky belly kicks with the mod's own cubes)
-    'v.kick_grow = 1.0;',
+    // (a blocky belly kicks with the mod's own cubes, swelling fully; a round one's skin patches less)
+    `v.kick_grow = ${addon.bellyStyle === 'cube' ? '1.0' : '0.35'};`,
     ...crowningLines({ when: "v.mp_female && v.pose == 'birth'", scale: women.crownScale, ...(women.exit ? { head: women.exit.head, rest: women.exit.rest } : {}) }),
+    ...women.pre,
   ];
   d.materials = { default: 'entity_alphatest', ...(d.materials ?? {}) };
   d.textures = { ...d.textures, mp_belly: /** @type {string} */ (bellySkins.get(toneKey)) };
@@ -455,11 +644,16 @@ for (const { path, doc } of theirs('resource', 'entity')) {
     ...(women.controller ? { mp_pose_controller: women.controller } : {}),
     ...Object.fromEntries(women.poses.map(({ pose, id }) => [`mp_pose_${pose}`, id])),
     ...(women.extras ? { mp_birth_flair: women.extras.flair, mp_birth_crowning: women.extras.crowning } : {}),
+    ...women.ids,
   };
   if (women.poses.length) {
     const effects = girlEffects(women.spec);
     d.sound_effects = { ...(d.sound_effects ?? {}), ...effects.sound_effects };
     d.particle_effects = { ...(d.particle_effects ?? {}), ...effects.particle_effects };
+  }
+  if (women.opts.type === 'burst') {
+    d.particle_effects = { ...(d.particle_effects ?? {}), mp_burst_dust: 'minecraft:large_explosion', mp_burst_sparks: 'minecraft:critical_hit_emitter' };
+    d.sound_effects = { ...(d.sound_effects ?? {}), mp_burst: 'random.pop' };
   }
   d.scripts = {
     ...(d.scripts ?? {}),
@@ -470,6 +664,7 @@ for (const { path, doc } of theirs('resource', 'entity')) {
       { mp_walk_jiggle: 'v.mp_female' }, { belly_controller: 'v.mp_female' },
       ...(women.controller ? [{ mp_pose_controller: 'v.mp_female' }] : []),
       { newborn: "v.mp_female && v.pose == 'birth' && !v.crowning" },
+      ...women.animate,
     ],
   };
   d.render_controllers = [...list, { [RC_BELLY]: `${FEMALE} && v.bp >= 0` }];
@@ -477,7 +672,7 @@ for (const { path, doc } of theirs('resource', 'entity')) {
 
   // the behaviour: the pregnancy's properties and events, and the family our mob system looks for
   const e = behavior.doc['minecraft:entity'];
-  e.description.properties = { ...(e.description.properties ?? {}), ...MINEPREGGO_PROPERTIES, [`${MOD}:female`]: { type: 'int', range: [0, 2], default: 0, client_sync: true } };
+  e.description.properties = { ...(e.description.properties ?? {}), ...MINEPREGGO_PROPERTIES, [`${MOD}:female`]: { type: 'int', range: [0, 2], default: addon.femaleDefault, client_sync: true } };
   for (const group of [e.components, ...Object.values(e.component_groups ?? {})]) {
     const family = group?.['minecraft:type_family'];
     if (family && !family.family.includes(FAMILY_TAG)) family.family.push(FAMILY_TAG);
@@ -491,11 +686,10 @@ writeJson(join(ORP, 'render_controllers', `${DIR}.render_controllers.json`), { f
 writeJson(join(ORP, 'animation_controllers', `${DIR}.animation_controllers.json`), { format_version: '1.10.0', animation_controllers: animationControllers });
 writeJson(join(ORP, 'animations', DIR, 'walk_jiggle.animation.json'), { format_version: '1.8.0', animations: { [JIGGLE]: walkJiggleAnimation({ chest: ['mp_bust'], belly: ['belly'], buttRoot: ['mp_hips'] }) } });
 
-// ---- the packs' manifests: they need Minepreggo's packs and World Alliance's ---------------------------
+// ---- the packs' manifests: they need Minepreggo's packs and the add-on's -------------------------------
 const version = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version.split('.').map(Number);
 const ours = { bp: JSON.parse(readFileSync(join(BP, 'manifest.json'), 'utf8')).header, rp: JSON.parse(readFileSync(join(RP, 'manifest.json'), 'utf8')).header };
-const name = 'Minepreggo × World Alliance';
-const description = "World Alliance's peoples get their women in Minepreggo's pregnancy system. Needs Minepreggo and World Alliance; put it above World Alliance.";
+const { name, description } = addon;
 writeJson(join(OBP, 'manifest.json'), {
   format_version: 2,
   header: { name, description, uuid: IDS.bp, version, min_engine_version: ours.bp.min_engine_version },
@@ -510,4 +704,4 @@ writeJson(join(ORP, 'manifest.json'), {
 });
 for (const [file, out] of [['pack_icon.png', OBP], ['pack_icon.png', ORP]]) if (existsSync(join(BP, file))) writeBytes(join(out, file), new Uint8Array(readFileSync(join(BP, file))));
 const usable = [...made.values()].filter(Boolean);
-console.log(`World Alliance compatibility: ${peoples} peoples with women, on ${usable.length} rigs (${usable.filter((w) => w?.poses.length).length} with poses, ${poseCount} poses), ${bellySkins.size} belly skin tones`);
+console.log(`${addon.title} compatibility: ${peoples} ${addon.build ? 'peoples' : 'mobs'} with women, on ${usable.length} rigs (${usable.filter((w) => w?.poses.length).length} with poses, ${poseCount} poses), ${bellySkins.size} belly skin tones`);

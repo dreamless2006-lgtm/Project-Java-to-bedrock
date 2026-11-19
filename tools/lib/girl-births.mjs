@@ -124,6 +124,12 @@ const KOBOLD = /** @type {Rhythm} */ ({ length: 5.5, pushes: [[0.5, 2.2], [3.0, 
 const ELLIE = /** @type {Rhythm} */ ({ length: 7, pushes: [[0.6, 3.0], [3.8, 6.2]] });
 
 /** A pair of legs from the right one's orientation and the pelvis height (both legs carry the same position: it moves her pelvis). */
+// ---- Girl Mob's girls: standing braced, kneeling arched, sprawled back, kneeling hugging her chest --
+const GM_STAND = /** @type {Rhythm} */ ({ length: 5, pushes: [[0.5, 2.3], [2.9, 4.7]] });
+const GM_ARCH = /** @type {Rhythm} */ ({ length: 6, pushes: [[0.6, 2.8], [3.4, 5.6]] });
+const GM_SPRAWL = /** @type {Rhythm} */ ({ length: 4.5, pushes: [[0.4, 2.0], [2.6, 4.2]] });
+const GM_CRADLE = /** @type {Rhythm} */ ({ length: 5.5, pushes: [[0.5, 2.4], [3.1, 5.0]] });
+
 function legs(/** @type {Rhythm} */ rhythm, /** @type {number[]} */ rest, /** @type {number[]} */ push, /** @type {any} */ position) {
   return {
     right_leg: { rotation: restPush(rhythm, rest, push), position },
@@ -357,6 +363,71 @@ export const GIRL_BIRTHS = /** @type {Record<string, GirlBirth>} */ ({
     sounds: { mp_push: { event: 'minepreggo.player_push', at: [0.6, 3.8] } },
     particles: {},
     handsFree: true,
+  },
+
+  // ---- Girl Mob's girls (tools/compat-addons.mjs): births of their own, one for each way of giving birth
+  // a normal birth: standing, feet wide, bent forward with her hands braced on her knees; she sinks
+  // lower and bears down on each push, her head dropping, and her legs shake
+  'girlmob:standing': {
+    name: 'standing',
+    rhythm: GM_STAND,
+    authored: authored(GM_STAND, { knee: { rest: 35, push: 60 }, elbow: -15 }, {
+      body: { rotation: restPush(GM_STAND, [22, 0, 0], [36, 0, 0]) },
+      head: { rotation: restPush(GM_STAND, [-15, 0, 0], [15, 0, 0]) },
+      ...arms(GM_STAND, [-50, 0, 12], [-62, 0, 10]),
+      ...legs(GM_STAND, [-20, 20, 0], [-32, 26, 0], pelvis(GM_STAND, -1.5, -3.5)),
+    }),
+    exitWant: [0, -1, 0],
+    floor: 'plant',
+    flair: (ctx) => ({ legR: { rotation: vec(tremble(ctx.rhythm, 1.5, 10), 0, 0) }, legL: { rotation: vec(tremble(ctx.rhythm, 1.5, 10, 90), 0, 0) } }),
+    sounds: { mp_pain: { event: 'minepreggo.pregnancy_pain', at: [0.5] }, mp_push: { event: 'minepreggo.player_push', at: [2.9] } },
+    particles: {},
+  },
+  // a navel birth: kneeling up, her back arched and her belly pushed forward, hands laced behind her
+  // head; she arches further and throws her head back on each push, the baby coming out of her navel
+  'girlmob:arched': {
+    name: 'arched',
+    rhythm: GM_ARCH,
+    authored: authored(GM_ARCH, { knee: 95, elbow: -125 }, {
+      body: { rotation: restPush(GM_ARCH, [-18, 0, 0], [-32, 0, 0]) },
+      head: { rotation: restPush(GM_ARCH, [-5, 0, 0], [-35, 0, 0]) },
+      ...arms(GM_ARCH, [-150, 0, -25], [-160, 0, -30]),
+      ...legs(GM_ARCH, [-5, 12, 0], [-5, 12, 0], pelvis(GM_ARCH, -5.5, -6)),
+    }),
+    exitWant: [0, 0.15, -0.99],
+    sounds: { mp_pain: { event: 'minepreggo.pregnancy_pain', at: [0.6] }, mp_push: { event: 'minepreggo.player_push', at: [3.4] } },
+    particles: {},
+  },
+  // the belly burst: sitting back propped on her hands, legs splayed, staring at her swelling belly;
+  // she rocks back on each push (the burst itself is tools/compat-addons.mjs's, like Skelly's)
+  'girlmob:sprawl': {
+    name: 'sprawl',
+    rhythm: GM_SPRAWL,
+    authored: authored(GM_SPRAWL, { knee: 70, elbow: { rest: -10, push: -35 } }, {
+      body: { rotation: restPush(GM_SPRAWL, [-48, 0, 0], [-58, 0, 0]) },
+      head: { rotation: restPush(GM_SPRAWL, [30, 0, 0], [10, 0, 0]) },
+      ...arms(GM_SPRAWL, [42, 0, 22], [48, 0, 25]),
+      ...legs(GM_SPRAWL, [-88, 30, 0], [-95, 35, 0], pelvis(GM_SPRAWL, -9.5)),
+    }),
+    exitWant: [0, 0.5, -0.87],
+    handsFree: true,
+    sounds: { mp_pain: { event: 'minepreggo.pregnancy_pain', at: [0.4, 2.6] } },
+    particles: {},
+  },
+  // a breast birth: kneeling, leaning back a little, her forearms crossed under her swollen chest and
+  // lifting it; on each push she hugs it tighter and curls over it, the baby coming out at her chest
+  'girlmob:cradle': {
+    name: 'cradle',
+    rhythm: GM_CRADLE,
+    authored: authored(GM_CRADLE, { knee: 95, elbow: -95 }, {
+      body: { rotation: restPush(GM_CRADLE, [-8, 0, 0], [6, 0, 0]) },
+      head: { rotation: restPush(GM_CRADLE, [25, 0, 0], [10, 0, 0]) },
+      ...arms(GM_CRADLE, [-70, 38, 18], [-78, 45, 20]),
+      ...legs(GM_CRADLE, [-5, 12, 0], [-5, 12, 0], pelvis(GM_CRADLE, -5.5)),
+    }),
+    exitWant: [0, -0.2, -0.98],
+    sounds: { mp_pain: { event: 'minepreggo.pregnancy_pain', at: [0.5] }, mp_push: { event: 'minepreggo.player_push', at: [3.1] } },
+    particles: {},
   },
 });
 

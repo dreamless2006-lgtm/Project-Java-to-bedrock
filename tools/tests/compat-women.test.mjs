@@ -1,10 +1,10 @@
-// World Alliance's women (tools/compat-worldalliance.mjs, packs/behavior/scripts/mobs/worldbox_women.js):
-// one mob type for both sexes, a woman marked by her minepreggo:female property.
+// Other add-ons' women (tools/compat-addons.mjs, packs/behavior/scripts/mobs/compat_women.js): a woman
+// is marked by her minepreggo:female property, whatever her mob type.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Mob, emit, world } from './mock-server.mjs';
 import '../../packs/behavior/scripts/main.js';
-import { WORLDBOX_WOMAN } from '../../packs/behavior/scripts/mobs/families.js';
+import { COMPAT_WOMAN } from '../../packs/behavior/scripts/mobs/families.js';
 import { familyOf } from '../../packs/behavior/scripts/mobs/system.js';
 
 const unit = (/** @type {number} */ female) => {
@@ -27,7 +27,7 @@ test('a World Alliance unit is rolled a woman or a man once, when it first appea
   }
   assert.deepEqual([...sexes].sort(), [1, 2], 'both women and men');
 
-  assert.equal(familyOf(unit(2)), WORLDBOX_WOMAN);
+  assert.equal(familyOf(unit(2)), COMPAT_WOMAN);
   assert.equal(familyOf(unit(1)), undefined);
   assert.equal(familyOf(unit(0)), undefined);
   const grown = unit(2);
@@ -42,4 +42,17 @@ test('a World Alliance unit is rolled a woman or a man once, when it first appea
   const cart = new Mob('worldbox:dwarf_coach', { families: ['mob'] });
   emit(world.afterEvents.entitySpawn, { entity: cart });
   assert.equal(cart.getProperty('minepreggo:female'), undefined);
+});
+
+test("Girl Mob's girls are women from the start (vanilla mob types), but never a baby, and a mob without the property is no one's", () => {
+  const girl = new Mob('minecraft:zombie', { families: ['mob', 'zombie', 'minepreggo_preggo_mob'] });
+  girl.properties.set('minepreggo:female', 2);
+  assert.equal(familyOf(girl), COMPAT_WOMAN);
+  emit(world.afterEvents.entitySpawn, { entity: girl });
+  assert.equal(girl.getProperty('minepreggo:female'), 2, 'not rolled again');
+  const baby = new Mob('minecraft:zombie', { families: ['mob', 'zombie'] });
+  baby.properties.set('minepreggo:female', 2);
+  baby.components['minecraft:is_baby'] = {};
+  assert.equal(familyOf(baby), undefined);
+  assert.equal(familyOf(new Mob('minecraft:skeleton', { families: ['mob'] })), undefined);
 });

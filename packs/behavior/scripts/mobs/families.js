@@ -199,11 +199,12 @@ export const INSANITY_FAMILIES = Object.fromEntries(
   ])
 );
 /**
- * World Alliance's women (its compatibility add-on, tools/compat-worldalliance.mjs): its peoples stay one mob type for both sexes
+ * The women of other add-ons' mobs, through Minepreggo's compatibility add-ons for them
+ * (tools/compat-addons.mjs: World Alliance's peoples, Girl Mob's girls): World Alliance's peoples stay one mob type for both sexes
  * (its kingdoms know their units by type), so she is found by her minepreggo:female property
  * (mobs/system.js familyOf), not by her type.
  */
-export const WORLDBOX_WOMAN = /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: 'minepreggo:baby_human' });
+export const COMPAT_WOMAN = /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: 'minepreggo:baby_human' });
 export const GOBLIN_FAMILIES = Object.fromEntries(
   ['expandable_goblins:goblin_girl', 'expandable_goblins:imp_girl', 'expandable_goblins:bloatberry_girl'].map((id) => [
     id,

@@ -1,5 +1,5 @@
-// Packages packs/behavior and packs/resource into dist/minepreggo-<version>.mcaddon (and the World
-// Alliance compatibility add-on, when built, into dist/minepreggo-worldalliance-<version>.mcaddon).
+// Packages packs/behavior and packs/resource into dist/minepreggo-<version>.mcaddon (and each
+// compatibility add-on built, into dist/minepreggo-<add-on>-<version>.mcaddon).
 // Run `npm run import` first: the resource pack is unusable without the jar's assets.
 // Of the imported textures, sounds and models, only those referenced from a resource pack JSON file
 // are shipped, so each release carries just the assets of features that have actually been ported.
@@ -113,21 +113,50 @@ for (const [target, overlay, merge] of OVERLAYS) {
   delete entries[overlay];
 }
 
+/**
+ * An .mcaddon the way Minecraft imports it on every device: an .mcpack per pack (a zip with the
+ * pack's manifest at its root and its folders listed), stored in the add-on's zip.
+ * @param {Record<string, Uint8Array>} files 'Pack_Name/path/in/pack' -> its bytes
+ */
+function mcaddon(files) {
+  /** @type {Record<string, Record<string, Uint8Array>>} */
+  const packs = {};
+  for (const [path, data] of Object.entries(files)) {
+    const at = path.indexOf('/');
+    (packs[path.slice(0, at)] ??= {})[path.slice(at + 1)] = data;
+  }
+  /** @type {Record<string, Uint8Array>} */
+  const out = {};
+  for (const [name, inner] of Object.entries(packs)) {
+    /** @type {Record<string, Uint8Array>} */
+    const listed = {};
+    for (const path of Object.keys(inner).sort()) {
+      const parts = path.split('/');
+      for (let i = 1; i < parts.length; i++) listed[`${parts.slice(0, i).join('/')}/`] ??= new Uint8Array(0);
+      listed[path] = inner[path];
+    }
+    out[`${name}.mcpack`] = zipSync(listed, { level: 9 });
+  }
+  return zipSync(out, { level: 0 });
+}
+
 const out = join(ROOT, 'dist', `minepreggo-${version}.mcaddon`);
 mkdirSync(dirname(out), { recursive: true });
-writeFileSync(out, zipSync(entries, { level: 9 }));
+writeFileSync(out, mcaddon(entries));
 console.log(`Wrote ${relative(ROOT, out)} (${Object.keys(entries).length} files)`);
 
-// The Minepreggo x World Alliance compatibility add-on (tools/compat-worldalliance.mjs), when it was
-// built: its own two packs, for players who have World Alliance too, at this version (it needs ours).
-const COMPAT = join(ROOT, 'compat/worldalliance');
-if (existsSync(join(COMPAT, 'behavior/manifest.json'))) {
+// Minepreggo's compatibility add-ons for other add-ons (tools/compat-addons.mjs), those built: each
+// its own two packs, for players who have that add-on too, at this version (they need ours).
+const COMPATS = join(ROOT, 'compat');
+for (const addon of existsSync(COMPATS) ? readdirSync(COMPATS) : []) {
+  const COMPAT = join(COMPATS, addon);
+  if (!existsSync(join(COMPAT, 'behavior/manifest.json'))) continue;
   const ours = Object.fromEntries(PACKS.map((pack) => [JSON.parse(readFileSync(join(ROOT, pack.dir, 'manifest.json'), 'utf8')).header.uuid, true]));
   const numbers = version.split('.').map(Number);
   const own = new Set(['behavior', 'resource'].map((dir) => JSON.parse(readFileSync(join(COMPAT, dir, 'manifest.json'), 'utf8')).header.uuid));
   /** @type {Record<string, Uint8Array>} */
   const compat = {};
-  for (const [dir, name] of [['behavior', 'Minepreggo_WorldAlliance_BP'], ['resource', 'Minepreggo_WorldAlliance_RP']]) {
+  for (const [dir, kind] of [['behavior', 'BP'], ['resource', 'RP']]) {
     const base = join(COMPAT, dir);
     for (const file of walk(base)) {
       const inner = relative(base, file).split(sep).join('/');
@@ -139,10 +168,10 @@ if (existsSync(join(COMPAT, 'behavior/manifest.json'))) {
         for (const dependency of manifest.dependencies ?? []) if (ours[dependency.uuid] || own.has(dependency.uuid)) dependency.version = numbers;
         data = strToU8(JSON.stringify(manifest, null, 2) + '\n');
       }
-      compat[`${name}/${inner}`] = data;
+      compat[`Minepreggo_${addon}_${kind}/${inner}`] = data;
     }
   }
-  const compatOut = join(ROOT, 'dist', `minepreggo-worldalliance-${version}.mcaddon`);
-  writeFileSync(compatOut, zipSync(compat, { level: 9 }));
+  const compatOut = join(ROOT, 'dist', `minepreggo-${addon}-${version}.mcaddon`);
+  writeFileSync(compatOut, mcaddon(compat));
   console.log(`Wrote ${relative(ROOT, compatOut)} (${Object.keys(compat).length} files)`);
 }
