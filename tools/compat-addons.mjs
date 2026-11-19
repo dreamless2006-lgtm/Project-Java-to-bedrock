@@ -715,7 +715,7 @@ writeJson(join(ORP, 'render_controllers', `${DIR}.render_controllers.json`), { f
 writeJson(join(ORP, 'animation_controllers', `${DIR}.animation_controllers.json`), { format_version: '1.10.0', animation_controllers: animationControllers });
 writeJson(join(ORP, 'animations', DIR, 'walk_jiggle.animation.json'), { format_version: '1.8.0', animations: { [JIGGLE]: walkJiggleAnimation({ chest: ['mp_bust'], belly: ['belly'], buttRoot: ['mp_hips'] }) } });
 
-// ---- the packs' manifests: they need Minepreggo's packs and the add-on's -------------------------------
+// ---- the packs' manifests ----------------------------------------------------------------------------------
 const version = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version.split('.').map(Number);
 const ours = { bp: JSON.parse(readFileSync(join(BP, 'manifest.json'), 'utf8')).header, rp: JSON.parse(readFileSync(join(RP, 'manifest.json'), 'utf8')).header };
 const { name, description } = addon;
@@ -723,13 +723,14 @@ writeJson(join(OBP, 'manifest.json'), {
   format_version: 2,
   header: { name, description, uuid: IDS.bp, version, min_engine_version: ours.bp.min_engine_version },
   modules: [{ type: 'data', uuid: IDS.bpData, version }],
-  dependencies: [{ uuid: IDS.rp, version }, { uuid: ours.bp.uuid, version: ours.bp.version }, { uuid: packs.behavior.manifest.header.uuid, version: packs.behavior.manifest.header.version }],
+  // (only its own resource pack: one on Minepreggo's or the add-on's exact versions is refused as a
+  // missing dependency whenever the player has another; the description says what it needs)
+  dependencies: [{ uuid: IDS.rp, version }],
 });
 writeJson(join(ORP, 'manifest.json'), {
   format_version: 2,
   header: { name, description, uuid: IDS.rp, version, min_engine_version: ours.bp.min_engine_version },
   modules: [{ type: 'resources', uuid: IDS.rpResources, version }],
-  dependencies: [{ uuid: ours.rp.uuid, version: ours.rp.version }, { uuid: packs.resource.manifest.header.uuid, version: packs.resource.manifest.header.version }],
 });
 for (const [file, out] of [['pack_icon.png', OBP], ['pack_icon.png', ORP]]) if (existsSync(join(BP, file))) writeBytes(join(out, file), new Uint8Array(readFileSync(join(BP, file))));
 const usable = [...made.values()].filter(Boolean);
