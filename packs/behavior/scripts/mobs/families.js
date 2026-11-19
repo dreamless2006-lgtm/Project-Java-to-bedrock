@@ -190,6 +190,13 @@ export const PORT_GIRL_FAMILIES = Object.fromEntries(
  * their own entity, pregnant through our potions and the Jenny Bed; their bellies are their own.
  * @type {Record<string, Family>}
  */
+/** The InsanityV women (tools/import-insanity.mjs): tamed with their treats by their own entities. */
+export const INSANITY_FAMILIES = Object.fromEntries(
+  ['insanityv:molten', 'insanityv:daisy', 'insanityv:oxy', 'insanityv:stella', 'insanityv:enny'].map((id) => [
+    id,
+    /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: 'minepreggo:baby_human' }),
+  ])
+);
 export const GOBLIN_FAMILIES = Object.fromEntries(
   ['expandable_goblins:goblin_girl', 'expandable_goblins:imp_girl', 'expandable_goblins:bloatberry_girl'].map((id) => [
     id,
@@ -269,6 +276,7 @@ export const FAMILIES = {
   ...PORT_GIRL_FAMILIES,
   ...GOBLIN_FAMILIES,
   ...MCA_FAMILIES,
+  ...INSANITY_FAMILIES,
 };
 
 /** Tamed mobs: fullness points per meal are capped like Java's DataHungry (0-30, eats below 20). */

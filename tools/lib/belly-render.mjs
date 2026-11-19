@@ -126,15 +126,26 @@ const PULSES = {
 const CYCLE = MOVEMENTS.length * MOVEMENT_SECONDS;
 
 /**
+ * A character's own way of moving inside her (the default: none): the order her babies' five
+ * movements take turns in (kick, roll, stretch, hiccups, flutter), how fast her babies move, and how
+ * far each movement rises beyond the skin.
+ * @typedef {{ name: string, order?: number[], rate?: number, emphasis?: number[] }} KickStyle
+ */
+
+/**
  * Movement i of a pulsing bone at the moment: its window in the cycle times its motion, 0..1 (the
  * windows take turns, so at most one is above 0).
- * @param {number} f @param {number} phase @param {number} offset
+ * @param {number} f @param {number} phase @param {number} offset @param {KickStyle} [style]
  */
-function movementTerms(f, phase, offset) {
+function movementTerms(f, phase, offset, style) {
   const phi = Number(phase).toFixed(1);
-  const t = `math.mod(q.life_time + ${Number(offset).toFixed(1)}, ${CYCLE.toFixed(1)})`;
-  const weight = (/** @type {number} */ i) => `math.clamp(math.min(${t} - ${(i * MOVEMENT_SECONDS).toFixed(1)}, ${((i + 1) * MOVEMENT_SECONDS).toFixed(1)} - ${t}), 0.0, 1.0)`;
-  return { phi, term: (/** @type {number} */ i) => `${weight(i)} * ${MOVEMENTS[i][2](Number(f), phi)}` };
+  const rate = style?.rate ?? 1;
+  const clock = rate === 1 ? 'q.life_time' : `(q.life_time * ${rate.toFixed(2)})`;
+  const t = `math.mod(${clock} + ${Number(offset).toFixed(1)}, ${CYCLE.toFixed(1)})`;
+  const slot = (/** @type {number} */ i) => (style?.order ? style.order.indexOf(i) : i);
+  const weight = (/** @type {number} */ i) => `math.clamp(math.min(${t} - ${(slot(i) * MOVEMENT_SECONDS).toFixed(1)}, ${((slot(i) + 1) * MOVEMENT_SECONDS).toFixed(1)} - ${t}), 0.0, 1.0)`;
+  const motion = (/** @type {number} */ i) => MOVEMENTS[i][2](Number(f), phi).replaceAll('q.life_time', clock);
+  return { phi, clock, term: (/** @type {number} */ i) => `${weight(i)} * ${motion(i)}` };
 }
 
 /**
@@ -144,14 +155,15 @@ function movementTerms(f, phase, offset) {
  * out of the belly. 0 while she is not kicking. (q.life_time reads the same clock in the pulses: the
  * time since the entity's animations began.)
  * @param {string} [prefix] the variable prefix of the body ('v' or 'variable')
+ * @param {KickStyle} [style] her own movements (those of kickPulseAnimations(style))
  */
-export function kickShareLines(prefix = 'v') {
+export function kickShareLines(prefix = 'v', style = undefined) {
   return KICK_BONES.map((bone) => {
     const byStrength = Object.values(PULSES).map((bones) => {
       const own = bones.find(([name]) => name === bone);
       if (!own) return '0.0';
       const [, f, phase, , , , offset] = own;
-      const { term } = movementTerms(Number(f), Number(phase), Number(offset));
+      const { term } = movementTerms(Number(f), Number(phase), Number(offset), style);
       return `(${MOVEMENTS.map((_, i) => term(i)).join(' + ')})`;
     });
     const pick = `${prefix}.kick_shown == 0 ? ${byStrength[0]} : (${prefix}.kick_shown == 1 ? ${byStrength[1]} : ${byStrength[2]})`;
@@ -159,27 +171,33 @@ export function kickShareLines(prefix = 'v') {
   });
 }
 
-export function kickPulseAnimations() {
+/**
+ * The babies' movements (animation.minepreggo.kick_i/ii/iii), or a character's own (her style:
+ * animation.minepreggo.<style name>.kick_i/ii/iii, played under the same short names).
+ * @param {KickStyle} [style]
+ */
+export function kickPulseAnimations(style = undefined) {
+  const emphasis = (/** @type {number} */ i) => style?.emphasis?.[i] ?? 1;
   /** @type {Record<string, unknown>} */
   const out = {};
   for (const [name, bones] of Object.entries(PULSES)) {
     /** @type {Record<string, unknown>} */
     const channels = {};
     for (const [bone, f, phase, bulge, grow, drift, offset] of bones) {
-      const { phi, term } = movementTerms(Number(f), Number(phase), Number(offset));
-      const outward = MOVEMENTS.map(([, share], i) => `(v.k_${bone}_z + ${(Number(bulge) * Number(share)).toFixed(2)}) * ${term(i)}`).join(' + ');
+      const { phi, clock, term } = movementTerms(Number(f), Number(phase), Number(offset), style);
+      const outward = MOVEMENTS.map(([, share], i) => `(v.k_${bone}_z + ${(Number(bulge) * Number(share) * emphasis(i)).toFixed(2)}) * ${term(i)}`).join(' + ');
       // the roll slides across within the cube's own room sideways; the kick drifts a little
-      const across = `math.clamp(v.k_${bone}_x + 0.4, 0.15, 1.2) * math.sin(q.life_time * 25.0 + ${phi}) * ${term(1)}`;
-      const along = `${Number(drift).toFixed(2)} * math.sin(q.life_time * ${(Number(f) * 0.31).toFixed(1)} + ${phi}) * ${term(0)}`;
+      const across = `math.clamp(v.k_${bone}_x + 0.4, 0.15, 1.2) * math.sin(${clock} * 25.0 + ${phi}) * ${term(1)}`;
+      const along = `${Number(drift).toFixed(2)} * math.sin(${clock} * ${(Number(f) * 0.31).toFixed(1)} + ${phi}) * ${term(0)}`;
       // (v.kick_grow: how much a kick swells, set by every body that kicks; a smooth shell's patch swells less)
-      const swell = `${Number(grow).toFixed(2)} * v.kick_grow * (${term(0)} + 0.5 * ${term(2)} + 0.3 * ${term(4)})`;
-      const lengthen = `${Number(grow).toFixed(2)} * v.kick_grow * (${term(0)} + 0.9 * ${term(2)} + 0.3 * ${term(4)})`;
+      const swell = `${Number(grow).toFixed(2)} * v.kick_grow * (${(emphasis(0)).toFixed(2)} * ${term(0)} + ${(0.5 * emphasis(2)).toFixed(2)} * ${term(2)} + ${(0.3 * emphasis(4)).toFixed(2)} * ${term(4)})`;
+      const lengthen = `${Number(grow).toFixed(2)} * v.kick_grow * (${(emphasis(0)).toFixed(2)} * ${term(0)} + ${(0.9 * emphasis(2)).toFixed(2)} * ${term(2)} + ${(0.3 * emphasis(4)).toFixed(2)} * ${term(4)})`;
       channels[bone] = {
         position: [across, along, `-(${outward})`],
         scale: [`1.0 + ${swell}`, `1.0 + ${lengthen}`, '1.0'],
       };
     }
-    out[`animation.${MOD}.${name}`] = { loop: true, bones: channels };
+    out[style ? `animation.${MOD}.${style.name}.${name}` : `animation.${MOD}.${name}`] = { loop: true, bones: channels };
   }
   return out;
 }
