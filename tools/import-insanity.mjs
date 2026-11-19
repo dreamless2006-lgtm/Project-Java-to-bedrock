@@ -168,6 +168,8 @@ for (const girl of GIRLS) {
   GIRL_BIRTHS[`${NS}:${girl.key}`] = { ...GIRL_BIRTHS[girl.birth], name: girl.key };
   const out = portGirl(sources, { BP, RP, port: PORT, ns: NS }, {
     ...girl, outfits, moves, family: 'insanity_girl', jiggle: { chest: ['Breasts'], belly: ['belly'], buttRoot: ['Ass'] },
+    // round and smooth, though they are drawn in boxes: a blocky belly takes the charm out of them
+    bellyStyle: 'round',
   });
   Object.assign(controllers, out.controllers);
   Object.assign(renderControllers, out.renderControllers);
