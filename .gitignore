@@ -40,6 +40,8 @@ packs/resource/textures/models/
 # The InsanityV women (vendor/insanity/, merged by tools/import-insanity.mjs)
 packs/behavior/**/insanity_port/
 packs/resource/**/insanity_port/
-# The Skelly skeleton model (vendor/skelly/, converted by tools/import-skelly.mjs)
+# Skelly, her own mob (vendor/skelly/, converted by tools/import-skelly.mjs); the skeleton texture
+# an earlier import replaced
+packs/behavior/**/skelly_port/
 packs/resource/**/skelly_port/
 packs/resource/textures/entity/skeleton/

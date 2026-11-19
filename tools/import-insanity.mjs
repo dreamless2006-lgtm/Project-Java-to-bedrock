@@ -14,16 +14,8 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { strFromU8, unzipSync } from 'fflate';
-import { addNewborn, babyScale, fitBelly, measureBody, smoothBelly } from './lib/belly-fit.mjs';
-import { bellyTexture, skinTone } from './lib/belly-skin.mjs';
-import { BELLY_ANIMATIONS, FAMILY_TAG, MINEPREGGO_PROPERTIES, MOD, PHASES, bellyPreAnimation, initializers, kickPulseAnimations, kickRoomLines, kickShareLines, phaseEvents } from './lib/belly-render.mjs';
-import { FETUS_SCALE, crowningLines } from './lib/crowning.mjs';
-import { stringifyEntity } from './lib/entity-json.mjs';
-import { GIRL_BIRTHS, girlBirthExit, girlEffects } from './lib/girl-births.mjs';
-import { bellySwells } from './lib/jenny-poses.mjs';
-import { decodePng, encodePng } from './lib/png.mjs';
-import { girlPoseAnimations } from './lib/scene-poses.mjs';
-import { walkJiggleAnimation } from './lib/walk-jiggle.mjs';
+import { GIRL_BIRTHS } from './lib/girl-births.mjs';
+import { girlSources, portGirl } from './lib/girl-port.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const BP = join(ROOT, 'packs/behavior');
@@ -94,16 +86,7 @@ const need = (/** @type {string} */ path) => {
   return data;
 };
 
-// the shared sources: the mod's pregnant player bodies (every fitted belly), the humanoid creeper
-// girl (the pregnancy and scene poses solved onto each rig) and the belly animations (how they swell)
-const modelOf = (/** @type {string} */ name) => parse(readFileSync(join(RP, 'models/entity', MOD, `${name}.geo.json`), 'utf8'));
-const playerBodies = PHASES.map((p) => modelOf(`player_body_predefined_p${p}`));
-const creeperPrefix = `animation.${MOD}.humanoid_creeper_girl.`;
-const creeper = {
-  geometry: modelOf('humanoid_creeper_girl')['minecraft:geometry'][0],
-  animations: Object.fromEntries(Object.entries(parse(readFileSync(join(RP, 'animations', MOD, 'humanoid_creeper_girl.animation.json'), 'utf8')).animations).map(([k, v]) => [k.startsWith(creeperPrefix) ? k.slice(creeperPrefix.length) : k, v])),
-};
-const swells = bellySwells(Object.assign({}, ...[join(RP, 'animations', MOD, 'belly.animation.json'), join(RP, 'animations/preggo_mob.animation.json')].map((f) => parse(readFileSync(f, 'utf8')).animations)));
+const sources = girlSources(RP);
 
 /**
  * GeckoLib keyframes hold {vector, easing, lerp_mode}; Bedrock takes the vector, eased linearly, or
@@ -162,14 +145,6 @@ function renamed(/** @type {any} */ animation) {
   return { ...animation, ...(typeof animation.loop === 'string' && animation.loop !== 'hold_on_last_frame' ? { loop: true } : {}), bones };
 }
 
-/** A pose controller: one state per pose, while the pose property says so (Jenny port girls' too). */
-function poseController(/** @type {string[]} */ poses, /** @type {Record<string, string[]>} */ alongside = {}) {
-  /** @type {Record<string, unknown>} */
-  const states = { default: { transitions: poses.map((pose) => ({ [pose]: `v.pose == '${pose}'` })), blend_transition: 0.45 } };
-  for (const pose of poses) states[pose] = { animations: [`mp_pose_${pose}`, ...(alongside[pose] ?? [])], transitions: [{ default: `!(v.pose == '${pose}')` }], blend_transition: 0.45 };
-  return { initial_state: 'default', states };
-}
-
 /** @type {Record<string, unknown>} */
 const controllers = {};
 /** @type {Record<string, unknown>} */
@@ -177,187 +152,25 @@ const renderControllers = {};
 const lang = [LANG_HEADER];
 let poseCount = 0;
 for (const girl of GIRLS) {
-  const id = `${NS}:${girl.key}`;
-  const prefix = `animation.${MOD}.${PORT.replace('_port', '')}_${girl.key}`;
-  // her outfits on the Jenny rig
-  const outfits = girl.outfits.filter((o) => jar[`${ASSETS}geo/${o}.geo.json`] && jar[`${ASSETS}textures/entities/${o}.png`]);
-  const geometries = outfits.map((o) => onJennyRig(parse(strFromU8(need(`geo/${o}.geo.json`))), `geometry.${NS}.${o}`));
-  outfits.forEach((o, i) => {
-    writeJson(join(RP, 'models/entity', PORT, `${o}.geo.json`), geometries[i]);
-    write(join(RP, 'textures', PORT, `${o}.png`), need(`textures/entities/${o}.png`));
-  });
-  const main = geometries[0]['minecraft:geometry'][0];
-  const measured = measureBody(main);
-  if (!measured) throw new Error(`${id}: her waist could not be measured`);
-  // the fitter's limits are a player-sized girl's: she is taller (her legs reach 1.3-1.5 times as
-  // high), so her belly is as much bigger, from the same waist bottom
-  const legTop = Math.max(...main.bones.filter((/** @type {any} */ b) => b.name === 'legL' || b.name === 'legR').map((/** @type {any} */ b) => b.pivot[1]));
-  const grow = Math.min(1.5, Math.max(1, legTop / 16));
-  const [[x0, x1], [y0, y1], [z0, z1]] = measured.box;
-  const body = { ...measured, box: [[x0 * grow, x1 * grow], [y0, y0 + (y1 - y0) * grow], [z0, z0 + (z1 - z0) * grow]] };
-
-  // her belly of each size, in her skin tone, with the crowning mount
-  const tone = skinTone(decodePng(need(`textures/entities/${outfits[0]}.png`)), { ...main, bones: main.bones.map((/** @type {any} */ b) => (b.name === 'head' ? { ...b, cubes: b.cubes } : b)) });
-  write(join(RP, 'textures', PORT, `${girl.key}_belly.png`), encodePng(bellyTexture(tone)));
-  const bellies = PHASES.map((p) => addNewborn(smoothBelly(fitBelly(playerBodies[p], `geometry.${MOD}.${girl.key}_belly_p${p}`, body), body), body, {}));
-  PHASES.forEach((p) => writeJson(join(RP, 'models/entity', PORT, `${girl.key}_belly_p${p}.geo.json`), bellies[p]));
-
-  // her everyday animations, her babies' movements, her walk jiggle
-  const source = parse(strFromU8(need(`animations/${outfits[0]}.animation.json`))).animations;
+  // her outfits on the Jenny rig, her everyday animations, her birth (a Jenny girl's, her own)
+  const outfits = girl.outfits.filter((o) => jar[`${ASSETS}geo/${o}.geo.json`] && jar[`${ASSETS}textures/entities/${o}.png`])
+    .map((o) => ({ name: o, geometry: onJennyRig(parse(strFromU8(need(`geo/${o}.geo.json`))), `geometry.${NS}.${o}`), texture: need(`textures/entities/${o}.png`) }));
+  const source = parse(strFromU8(need(`animations/${outfits[0].name}.animation.json`))).animations;
   /** @type {Record<string, any>} */
-  const animations = {};
-  const moveIds = /** @type {Record<string, string>} */ ({});
+  const moves = {};
   for (const [move, name] of Object.entries(girl.moves)) {
     if (!source[name]) continue;
-    const animation = renamed(source[name]);
-    if (move === 'walk') animation.anim_time_update = 'q.modified_distance_moved * 0.06';
-    moveIds[move] = `${prefix}.${move}`;
-    animations[moveIds[move]] = animation;
+    moves[move] = renamed(source[name]);
+    if (move === 'walk') moves[move].anim_time_update = 'q.modified_distance_moved * 0.06';
   }
-  Object.assign(animations, kickPulseAnimations(girl.kicks));
-  animations[`${prefix}.walk_jiggle`] = walkJiggleAnimation({ chest: ['Breasts'], belly: ['belly'], buttRoot: ['Ass'] });
-
-  // her pregnancy and scene poses, solved onto her rig, and her birth (a Jenny girl's, her own)
-  GIRL_BIRTHS[id] = { ...GIRL_BIRTHS[girl.birth], name: girl.key };
-  const poses = girlPoseAnimations({ id, geometry: main, idle: moveIds.idle ? animations[moveIds.idle] : undefined, sourceGeometry: creeper.geometry, sourceAnimations: creeper.animations, prefix, bellies: Object.fromEntries(PHASES.map((p) => [p, bellies[p]['minecraft:geometry'][0]])), swells });
-  if (!poses) throw new Error(`${id}: no poses could be solved onto her rig`);
-  const extras = poses.birthExtras;
-  for (const [, { id: poseId, animation }] of Object.entries(poses)) if (poseId) animations[poseId] = animation;
-  if (extras) for (const { id: extraId, animation } of [extras.flair, extras.crowning]) animations[extraId] = animation;
-  poseCount += Object.keys(poses).filter((k) => k !== 'birthExtras').length;
-  const crownScale = FETUS_SCALE * babyScale(body);
-  const exit = poses.birth ? girlBirthExit({ spec: GIRL_BIRTHS[id], geometry: main, animation: poses.birth.animation, body, scale: crownScale }) : undefined;
-  if (exit && poses.birth) poses.birth.animation.bones.crowning = { rotation: exit.rotation };
-  writeJson(join(RP, 'animations', PORT, `${girl.key}.animation.json`), { format_version: '1.8.0', animations });
-
-  // her everyday state (walking, sitting, sleeping) under her pregnancy poses
-  const moveController = `controller.animation.${NS}.${girl.key}.move`;
-  controllers[moveController] = {
-    initial_state: 'idle',
-    states: {
-      idle: { animations: ['idle'], transitions: [{ sit: 'q.is_sitting || q.is_riding' }, { walk: 'q.modified_move_speed > 0.1' }], blend_transition: 0.25 },
-      walk: { animations: ['walk'], transitions: [{ sit: 'q.is_sitting || q.is_riding' }, { idle: 'q.modified_move_speed < 0.05' }], blend_transition: 0.25 },
-      sit: { animations: [moveIds.sit ? 'sit' : 'idle'], transitions: [{ idle: '!q.is_sitting && !q.is_riding' }], blend_transition: 0.3 },
-    },
-  };
-  const poseControllerId = `controller.animation.${NS}.${girl.key}.pose`;
-  controllers[poseControllerId] = poseController(Object.keys(poses).filter((k) => k !== 'birthExtras'), extras ? { birth: ['mp_birth_flair', 'mp_birth_crowning'] } : {});
-
-  // the client entity: her outfit, her belly of the size, her animations and ours
-  const rcBody = `controller.render.${NS}.${girl.key}`;
-  const rcBelly = `controller.render.${NS}.${girl.key}_belly`;
-  renderControllers[rcBody] = {
-    arrays: { geometries: { 'Array.outfits': outfits.map((_, i) => `Geometry.o${i}`) }, textures: { 'Array.skins': outfits.map((_, i) => `Texture.o${i}`) } },
-    geometry: `Array.outfits[math.clamp(q.variant, 0, ${outfits.length - 1})]`, materials: [{ '*': 'Material.default' }], textures: [`Array.skins[math.clamp(q.variant, 0, ${outfits.length - 1})]`],
-  };
-  renderControllers[rcBelly] = {
-    arrays: { geometries: { 'Array.bellies': PHASES.map((p) => `Geometry.belly_p${p}`) } },
-    geometry: 'Array.bellies[math.clamp(v.bp, 0, 9)]', materials: [{ '*': 'Material.default' }], textures: ['Texture.belly'],
-  };
-  const pre = [...bellyPreAnimation().filter((l) => !l.startsWith('v.kp_')), ...kickShareLines('v', girl.kicks), ...kickRoomLines('v.bp', (p) => bellies[p]['minecraft:geometry'][0]), 'v.kick_grow = 0.35;',
-    ...crowningLines({ when: "v.pose == 'birth'", scale: crownScale, ...(exit ? { head: exit.head, rest: exit.rest } : {}) })];
-  const spec = GIRL_BIRTHS[id];
-  writeJson(join(RP, 'entity', PORT, `${girl.key}.entity.json`), {
-    format_version: '1.10.0',
-    'minecraft:client_entity': {
-      description: {
-        identifier: id,
-        materials: { default: 'entity_alphatest' },
-        textures: { ...Object.fromEntries(outfits.map((o, i) => [`o${i}`, `textures/${PORT}/${o}`])), belly: `textures/${PORT}/${girl.key}_belly` },
-        geometry: { ...Object.fromEntries(outfits.map((o, i) => [`o${i}`, `geometry.${NS}.${o}`])), ...Object.fromEntries(PHASES.map((p) => [`belly_p${p}`, `geometry.${MOD}.${girl.key}_belly_p${p}`])) },
-        animations: {
-          ...Object.fromEntries(Object.entries(moveIds).map(([move, animId]) => [move, animId])),
-          move_controller: moveController,
-          ...BELLY_ANIMATIONS,
-          kick_i: `animation.${MOD}.${girl.kicks.name}.kick_i`, kick_ii: `animation.${MOD}.${girl.kicks.name}.kick_ii`, kick_iii: `animation.${MOD}.${girl.kicks.name}.kick_iii`,
-          belly_controller: `controller.animation.${MOD}.belly`,
-          newborn: `animation.${MOD}.crowning_free`,
-          walk_jiggle: `${prefix}.walk_jiggle`,
-          mp_pose_controller: poseControllerId,
-          ...Object.fromEntries(Object.entries(poses).filter(([k]) => k !== 'birthExtras').map(([pose, { id: poseId }]) => [`mp_pose_${pose}`, poseId])),
-          ...(extras ? { mp_birth_flair: extras.flair.id, mp_birth_crowning: extras.crowning.id } : {}),
-          look_at_target: 'animation.common.look_at_target',
-        },
-        ...(spec ? girlEffects(spec) : {}),
-        scripts: {
-          initialize: initializers(pre, []),
-          pre_animation: pre,
-          animate: [{ look_at_target: "v.pose == 'none'" }, 'move_controller', 'walk_jiggle', 'mp_pose_controller', { newborn: "v.pose == 'birth' && !v.crowning" }, 'belly_controller'],
-        },
-        render_controllers: [rcBody, { [rcBelly]: 'v.bp >= 0' }],
-        spawn_egg: { base_color: '#d06a2c', overlay_color: '#f2c6a0' },
-      },
-    },
+  GIRL_BIRTHS[`${NS}:${girl.key}`] = { ...GIRL_BIRTHS[girl.birth], name: girl.key };
+  const out = portGirl(sources, { BP, RP, port: PORT, ns: NS }, {
+    ...girl, outfits, moves, family: 'insanity_girl', jiggle: { chest: ['Breasts'], belly: ['belly'], buttRoot: ['Ass'] },
   });
-
-  // the behaviour: a woman who can be tamed with her treats, in the mob system
-  const variants = Object.fromEntries(outfits.map((_, i) => [`${NS}:variant_${i}`, { 'minecraft:variant': { value: i } }]));
-  const height = Math.round((Math.max(...main.bones.flatMap((/** @type {any} */ b) => (b.cubes ?? []).map((/** @type {any} */ c) => c.origin[1] + c.size[1]))) / 16) * 100) / 100;
-  writeJson(join(BP, 'entities', PORT, `${girl.key}.json`), JSON.parse(stringifyEntity({
-    format_version: '1.21.0',
-    'minecraft:entity': {
-      description: { identifier: id, is_spawnable: true, is_summonable: true, properties: { ...MINEPREGGO_PROPERTIES } },
-      component_groups: {
-        ...variants,
-        [`${NS}:wild`]: {
-          'minecraft:tameable': { probability: 0.33, tame_items: girl.treats, tame_event: { event: `${NS}:on_tame`, target: 'self' } },
-          'minecraft:behavior.random_stroll': { priority: 6, speed_multiplier: 0.8 },
-        },
-        [`${NS}:tamed`]: {
-          'minecraft:is_tamed': {},
-          'minecraft:sittable': {},
-          'minecraft:behavior.stay_while_sitting': { priority: 1 },
-          'minecraft:behavior.follow_owner': { priority: 4, speed_multiplier: 1.0, start_distance: 8, stop_distance: 2 },
-          'minecraft:behavior.random_stroll': { priority: 7, speed_multiplier: 0.6 },
-        },
-      },
-      components: {
-        'minecraft:type_family': { family: ['insanity_girl', girl.key, 'mob', FAMILY_TAG] },
-        'minecraft:health': { value: 20, max: 20 },
-        'minecraft:collision_box': { width: 0.6, height: Math.min(2.9, Math.max(1.8, height)) },
-        'minecraft:movement': { value: 0.25 },
-        'minecraft:movement.basic': {},
-        'minecraft:navigation.walk': { can_path_over_water: true, avoid_damage_blocks: true },
-        'minecraft:jump.static': {},
-        'minecraft:can_climb': {},
-        'minecraft:physics': {},
-        'minecraft:pushable': { is_pushable: true, is_pushable_by_piston: true },
-        'minecraft:nameable': {},
-        'minecraft:persistent': {},
-        'minecraft:breathable': { total_supply: 15, suffocate_time: 0 },
-        'minecraft:behavior.float': { priority: 0 },
-        'minecraft:behavior.panic': { priority: 1, speed_multiplier: 1.25 },
-        'minecraft:behavior.look_at_player': { priority: 8, look_distance: 8, probability: 0.02 },
-        'minecraft:behavior.random_look_around': { priority: 9 },
-        ...(girl.fireproof ? { 'minecraft:fire_immune': {} } : {}),
-      },
-      events: {
-        'minecraft:entity_spawned': {
-          sequence: [
-            { add: { component_groups: [`${NS}:wild`] } },
-            { randomize: outfits.map((_, i) => ({ weight: 1, add: { component_groups: [`${NS}:variant_${i}`] } })) },
-          ],
-        },
-        [`${NS}:on_tame`]: { remove: { component_groups: [`${NS}:wild`] }, add: { component_groups: [`${NS}:tamed`] } },
-        ...phaseEvents(),
-      },
-    },
-  })));
-  writeJson(join(BP, 'spawn_rules', PORT, `${girl.key}.json`), {
-    format_version: '1.8.0',
-    'minecraft:spawn_rules': {
-      description: { identifier: id, population_control: 'animal' },
-      conditions: [{
-        'minecraft:spawns_on_surface': {},
-        'minecraft:brightness_filter': girl.fireproof ? { min: 0, max: 15, adjust_for_weather: false } : { min: 7, max: 15, adjust_for_weather: false },
-        'minecraft:weight': { default: 3 },
-        'minecraft:herd': { min_size: 1, max_size: 1 },
-        'minecraft:density_limit': { surface: 2 },
-        'minecraft:biome_filter': { any_of: girl.biomes.map((b) => ({ test: 'has_biome_tag', value: b })) },
-      }],
-    },
-  });
-  lang.push(`entity.${id}.name=${girl.name}`, `item.spawn_egg.entity.${id}.name=${girl.name} Spawn Egg`);
+  Object.assign(controllers, out.controllers);
+  Object.assign(renderControllers, out.renderControllers);
+  lang.push(...out.lang);
+  poseCount += out.poses;
 }
 writeJson(join(RP, 'animation_controllers', PORT, 'insanity.animation_controllers.json'), { format_version: '1.10.0', animation_controllers: controllers });
 writeJson(join(RP, 'render_controllers', PORT, 'insanity.render_controllers.json'), { format_version: '1.8.0', render_controllers: renderControllers });

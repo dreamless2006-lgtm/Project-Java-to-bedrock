@@ -3,8 +3,9 @@
 
 import { system, world } from '@minecraft/server';
 import { FAMILIES } from './families.js';
-import { FAMILY_TAG, STEP, forgetRecord, onDeath, onHurt, tickMob } from './system.js';
+import { FAMILY_TAG, STEP, familyOf, forgetRecord, onDeath, onHurt, tickMob } from './system.js';
 import './interact.js';
+import './worldbox_women.js';
 
 const DIMENSIONS = ['minecraft:overworld', 'minecraft:nether', 'minecraft:the_end'];
 const MOB_TYPES = Object.keys(FAMILIES);
@@ -12,7 +13,8 @@ const MOB_TYPES = Object.keys(FAMILIES);
 system.runInterval(() => {
   for (const id of DIMENSIONS) {
     for (const entity of world.getDimension(id).getEntities({ families: [FAMILY_TAG] })) {
-      if (!entity.isValid) continue;
+      // (World Alliance's men carry the family too: its peoples are one type for both sexes)
+      if (!entity.isValid || !familyOf(entity)) continue;
       try {
         tickMob(entity);
       } catch (error) {

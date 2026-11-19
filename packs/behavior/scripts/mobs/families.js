@@ -192,11 +192,18 @@ export const PORT_GIRL_FAMILIES = Object.fromEntries(
  */
 /** The InsanityV women (tools/import-insanity.mjs): tamed with their treats by their own entities. */
 export const INSANITY_FAMILIES = Object.fromEntries(
-  ['insanityv:molten', 'insanityv:daisy', 'insanityv:oxy', 'insanityv:stella', 'insanityv:enny'].map((id) => [
+  // the InsanityV women (tools/import-insanity.mjs) and Skelly (tools/import-skelly.mjs)
+  ['insanityv:molten', 'insanityv:daisy', 'insanityv:oxy', 'insanityv:stella', 'insanityv:enny', 'minepreggo:skelly'].map((id) => [
     id,
     /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: 'minepreggo:baby_human' }),
   ])
 );
+/**
+ * World Alliance's women (tools/import-wa-women.mjs): its peoples stay one mob type for both sexes
+ * (its kingdoms know their units by type), so she is found by her minepreggo:female property
+ * (mobs/system.js familyOf), not by her type.
+ */
+export const WORLDBOX_WOMAN = /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: 'minepreggo:baby_human' });
 export const GOBLIN_FAMILIES = Object.fromEntries(
   ['expandable_goblins:goblin_girl', 'expandable_goblins:imp_girl', 'expandable_goblins:bloatberry_girl'].map((id) => [
     id,
