@@ -220,4 +220,4 @@ for (const file of readdirSync(join(RP, 'texts')).filter((f) => f.endsWith('.lan
   const path = join(RP, 'texts', file);
   writeFileSync(path, readFileSync(path, 'utf8').replace(/\n*$/, '\n') + [LANG_HEADER, ...out.lang].join('\n') + '\n');
 }
-console.log(`Skelly: ${ID} (${bones.length} bones), ${out.poses} pregnancy and scene poses, a belly-burst birth`);
+console.log(`Skelly: ${ID} (${bones.length} bones), ${out.poses} pregnancy and scene poses, a ${out.style} belly, a belly-burst birth`);

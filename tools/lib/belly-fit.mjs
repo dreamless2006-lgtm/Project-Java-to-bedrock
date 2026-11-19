@@ -120,6 +120,38 @@ const SKIN = { size: 128, radius: 52 };
 export const EGG_PATCH = { uv: [1, 1], size: [10, 10] };
 const texel = (/** @type {number} */ f) => Math.round((SKIN.size / 2 + Math.max(-1, Math.min(1, f)) * SKIN.radius) * 100) / 100;
 
+/** The blocky belly (roundBelly) of a character drawn in big boxes: four rows of two steps, a box with a rounded front. */
+export const CUBE_BELLY = { rows: 4, steps: 2 };
+/** An angle off the model's axes by more than 20 degrees. */
+const turned = (/** @type {number[] | undefined} */ r) => (r ?? []).some((a) => {
+  const m = Math.abs(a) % 90;
+  return Math.min(m, 90 - m) > 20;
+});
+/**
+ * Her art style, read from her chest: breasts of big boxes square to her body ('cube': a blocky
+ * belly suits her, roundBelly with CUBE_BELLY) or of turned or small pieces that make a curve
+ * ('round': the smooth belly, smoothBelly), by the share of the chest's volume in round pieces.
+ * Undefined when she has no breast bones to tell by.
+ * @param {{ bones: any[] }} geometry
+ * @returns {'cube' | 'round' | undefined}
+ */
+export function chestStyle(geometry) {
+  const CHEST = /breast|boob|bust/i;
+  const children = (/** @type {string} */ n) => geometry.bones.filter((b) => b.parent === n);
+  let total = 0, curved = 0;
+  const visit = (/** @type {any} */ bone, /** @type {boolean} */ bent) => {
+    const t = bent || turned(bone.rotation);
+    for (const cube of bone.cubes ?? []) {
+      const volume = cube.size[0] * cube.size[1] * cube.size[2];
+      total += volume;
+      if (t || turned(cube.rotation) || Math.min(...cube.size) < 1.5) curved += volume;
+    }
+    for (const child of children(bone.name)) visit(child, t);
+  };
+  for (const bone of geometry.bones) if (CHEST.test(bone.name) && !CHEST.test(bone.parent ?? '')) visit(bone, false);
+  return total ? (curved / total < 0.5 ? 'cube' : 'round') : undefined;
+}
+
 /**
  * Turns a fitted belly (fitBelly) into a round one: the mod's boxes make way for a stepped
  * half-ellipsoid shell of axis-aligned cubes (rows of height, steps of depth), each mapped onto the

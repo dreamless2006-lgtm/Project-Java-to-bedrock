@@ -1,12 +1,12 @@
 // One woman of another mod brought into the pregnancy system on the Jenny rig (head, upperBody with
 // a torso, armL/armR, legL/legR and a hip): her outfits, a round belly fitted to her waist for every
-// size (tools/lib/belly-fit.mjs) in her skin tone, kicks in her own style, the pregnancy and scene
+// size (tools/lib/belly-fit.mjs) in her skin tone and her art style (blocky or smooth), kicks in her own style, the pregnancy and scene
 // poses solved onto her rig (tools/lib/scene-poses.mjs), a birth of her own (tools/lib/girl-births.mjs)
 // with her baby crowning, her client entity, her behaviour (tamed with her treats) and spawn rule.
 // Used by tools/import-insanity.mjs and tools/import-skelly.mjs.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { addNewborn, babyScale, fitBelly, measureBody, smoothBelly } from './belly-fit.mjs';
+import { CUBE_BELLY, addNewborn, babyScale, chestStyle, fitBelly, measureBody, roundBelly, smoothBelly } from './belly-fit.mjs';
 import { bellyTexture, skinTone } from './belly-skin.mjs';
 import { BELLY_ANIMATIONS, FAMILY_TAG, MINEPREGGO_PROPERTIES, MOD, PHASES, bellyPreAnimation, initializers, kickPulseAnimations, kickRoomLines, kickShareLines, phaseEvents } from './belly-render.mjs';
 import { FETUS_SCALE, crowningLines } from './crowning.mjs';
@@ -74,7 +74,7 @@ export function poseController(/** @type {string[]} */ poses, /** @type {Record<
  * @param {ReturnType<typeof girlSources>} sources
  * @param {{ BP: string, RP: string, port: string, ns: string }} where
  * @param {Girl} girl
- * @returns {{ controllers: Record<string, unknown>, renderControllers: Record<string, unknown>, lang: string[], poses: number }}
+ * @returns {{ controllers: Record<string, unknown>, renderControllers: Record<string, unknown>, lang: string[], poses: number, style: 'cube' | 'round' }}
  */
 export function portGirl(sources, { BP, RP, port, ns }, girl) {
   const { playerBodies, creeper, swells } = sources;
@@ -100,7 +100,10 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
   const tone = skinTone(decodePng(outfits[0].texture), main);
   const skin = bellyTexture(tone);
   write(join(RP, 'textures', port, `${girl.key}_belly.png`), encodePng(girl.bellySkin ? girl.bellySkin(skin) : skin));
-  const bellies = PHASES.map((p) => addNewborn(smoothBelly(fitBelly(playerBodies[p], `geometry.${MOD}.${girl.key}_belly_p${p}`, body), body), body, {}));
+  // in her art style: blocky for a girl of boxes (cube breasts), smooth for a rounded one
+  const style = chestStyle(main) ?? 'round';
+  const shell = (/** @type {any} */ fitted) => (style === 'cube' ? roundBelly(fitted, CUBE_BELLY) : smoothBelly(fitted, body));
+  const bellies = PHASES.map((p) => addNewborn(shell(fitBelly(playerBodies[p], `geometry.${MOD}.${girl.key}_belly_p${p}`, body)), body, {}));
   PHASES.forEach((p) => writeJson(join(RP, 'models/entity', port, `${girl.key}_belly_p${p}.geo.json`), bellies[p]));
 
   // her everyday animations, her babies' movements, her walk jiggle
@@ -264,5 +267,5 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
       }],
     },
   });
-  return { controllers, renderControllers, lang: [`entity.${id}.name=${girl.name}`, `item.spawn_egg.entity.${id}.name=${girl.name} Spawn Egg`], poses: poseNames.length };
+  return { controllers, renderControllers, lang: [`entity.${id}.name=${girl.name}`, `item.spawn_egg.entity.${id}.name=${girl.name} Spawn Egg`], poses: poseNames.length, style };
 }

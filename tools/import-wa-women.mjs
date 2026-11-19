@@ -7,7 +7,7 @@
 //
 // Each rig the add-on's people use (its own models, and the vanilla ones it borrows) gets two
 // overlays the client draws over the unit with her own texture: a chest (cut from her shirt's front,
-// so it wears her outfit) and a round belly fitted to her waist for every size (tools/lib/belly-fit.mjs)
+// so it wears her outfit) and a blocky belly, like her people's boxes, fitted to her waist for every size (tools/lib/belly-fit.mjs)
 // in her skin tone, with the kicks, swelling and walk jiggle of our other women. Both hang from copies
 // of her rig's bones (same names and pivots), so her own animations move them with her.
 // Animals, vehicles, blobs, golems, dragons and tiny folk (pixies) are left as they are.
@@ -15,7 +15,7 @@
 // Run: node tools/import-wa-women.mjs (part of npm run import; after tools/import-worldalliance.mjs).
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fitBelly, measureBody, smoothBelly } from './lib/belly-fit.mjs';
+import { CUBE_BELLY, fitBelly, measureBody, roundBelly } from './lib/belly-fit.mjs';
 import { bellyTexture, skinTone } from './lib/belly-skin.mjs';
 import { BELLY_ANIMATIONS, FAMILY_TAG, MINEPREGGO_PROPERTIES, MOD, PHASES, bellyPreAnimation, initializers, kickRoomLines, phaseEvents } from './lib/belly-render.mjs';
 import { decodePng, encodePng } from './lib/png.mjs';
@@ -187,7 +187,8 @@ function bellyGeometries(/** @type {Rig} */ rig) {
   const grow = Math.max(1, Math.min(8, rig.torso.size[0] / 8));
   const [[x0, x1], [y0, y1], [z0, z1]] = measured.box;
   const fitted = { ...measured, box: [[x0 * grow, x1 * grow], [y0, y0 + (y1 - y0) * grow], [z0, z0 + (z1 - z0) * grow]] };
-  return PHASES.map((p) => smoothBelly(fitBelly(sources[p], `geometry.${MOD}.worldbox_${rig.key}_belly_p${p}`, fitted), fitted));
+  // her people are drawn in big boxes, so is her belly (tools/lib/belly-fit.mjs chestStyle 'cube')
+  return PHASES.map((p) => roundBelly(fitBelly(sources[p], `geometry.${MOD}.worldbox_${rig.key}_belly_p${p}`, fitted), CUBE_BELLY));
 }
 
 // ---- the people -------------------------------------------------------------------------------------

@@ -151,6 +151,8 @@ const controllers = {};
 const renderControllers = {};
 const lang = [LANG_HEADER];
 let poseCount = 0;
+/** @type {string[]} */
+const styles = [];
 for (const girl of GIRLS) {
   // her outfits on the Jenny rig, her everyday animations, her birth (a Jenny girl's, her own)
   const outfits = girl.outfits.filter((o) => jar[`${ASSETS}geo/${o}.geo.json`] && jar[`${ASSETS}textures/entities/${o}.png`])
@@ -171,6 +173,7 @@ for (const girl of GIRLS) {
   Object.assign(renderControllers, out.renderControllers);
   lang.push(...out.lang);
   poseCount += out.poses;
+  styles.push(`${girl.name} ${out.style}`);
 }
 writeJson(join(RP, 'animation_controllers', PORT, 'insanity.animation_controllers.json'), { format_version: '1.10.0', animation_controllers: controllers });
 writeJson(join(RP, 'render_controllers', PORT, 'insanity.render_controllers.json'), { format_version: '1.8.0', render_controllers: renderControllers });
@@ -178,4 +181,4 @@ for (const file of readdirSync(join(RP, 'texts')).filter((f) => f.endsWith('.lan
   const path = join(RP, 'texts', file);
   writeFileSync(path, readFileSync(path, 'utf8').replace(/\n*$/, '\n') + lang.join('\n') + '\n');
 }
-console.log(`InsanityV: ${GIRLS.length} women, ${poseCount} pregnancy and scene poses`);
+console.log(`InsanityV: ${GIRLS.length} women, ${poseCount} pregnancy and scene poses; bellies ${styles.join(', ')}`);
