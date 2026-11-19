@@ -29,3 +29,8 @@ import './items/babies.js';
 // packs are in vendor/jenny/ (a build without them simply has no Jenny girls).
 const PORT_SCRIPTS = './jenny_port/main.js';
 import(PORT_SCRIPTS).catch((error) => console.warn(`[minepreggo] Jenny Mod Java Port scripts not loaded: ${error}`));
+
+// World Alliance's scripts (its god powers, kingdoms and simulation), merged by
+// tools/import-worldalliance.mjs when its add-on is in vendor/worldalliance/.
+const WORLD_ALLIANCE_SCRIPTS = './worldalliance_port/main.js';
+import(WORLD_ALLIANCE_SCRIPTS).catch((error) => console.warn(`[minepreggo] World Alliance scripts not loaded: ${error}`));

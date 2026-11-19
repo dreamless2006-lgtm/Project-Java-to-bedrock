@@ -18,6 +18,7 @@
   ],
   "exclude": [
     "packs/behavior/scripts/jenny_port/**",
-    "packs/behavior/scripts/mca_port/**"
+    "packs/behavior/scripts/mca_port/**",
+    "packs/behavior/scripts/worldalliance_port/**"
   ]
 }

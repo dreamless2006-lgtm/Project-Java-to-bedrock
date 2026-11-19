@@ -26,3 +26,17 @@ packs/resource/**/goblins_port/
 # Minecraft Comes Alive (vendor/mca/, merged by tools/import-mca.mjs)
 packs/behavior/**/mca_port/
 packs/resource/**/mca_port/
+# World Alliance (vendor/worldalliance/, merged by tools/import-worldalliance.mjs): its identifier-found
+# files under worldalliance_port/, its path-found ones under worldbox/ folders or with worldbox names
+packs/behavior/**/worldalliance_port/
+packs/resource/**/worldalliance_port/
+packs/behavior/worldalliance_port/
+packs/resource/worldalliance_port/
+packs/behavior/**/worldbox/
+packs/resource/**/worldbox/
+packs/behavior/loot_tables/blocks/worldbox_*
+packs/resource/textures/particle/
+packs/resource/textures/models/
+# The Skelly skeleton model (vendor/skelly/, converted by tools/import-skelly.mjs)
+packs/resource/**/skelly_port/
+packs/resource/textures/entity/skeleton/

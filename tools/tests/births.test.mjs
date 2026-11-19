@@ -222,8 +222,10 @@ test('A: molang-lite reads Molang the way the game does', () => {
     if (!existsSync(dir)) return;
     for (const f of readdirSync(dir)) {
       const p = join(dir, f);
-      if (statSync(p).isDirectory()) walk(p);
-      else if (p.endsWith('.json')) {
+      // (World Alliance's Molang is its own, and uses vanilla's newest functions this reader lacks)
+      if (statSync(p).isDirectory()) {
+        if (f !== 'worldalliance_port') walk(p);
+      } else if (p.endsWith('.json')) {
         try {
           visit(JSON.parse(readFileSync(p, 'utf8')));
         } catch {

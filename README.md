@@ -245,6 +245,9 @@ npm install
 cp /path/to/minepreggo-official-1.3.2-mc1.20.1.jar vendor/   # or pass the path to `npm run import`
 mkdir -p vendor/jenny                                         # optional: the Jenny add-ons to merge in
 cp "/path/to/Jenny-Mod-Java-Port-v2.7.2.mcaddon" /path/to/jenny*.mcpack vendor/jenny/
+mkdir -p vendor/worldalliance vendor/skelly                   # optional: World Alliance and the Skelly skeleton
+cp /path/to/World_Alliance_20.mcaddon vendor/worldalliance/
+cp /path/to/skelly.zip vendor/skelly/
 npm run import   # extracts textures, sounds, translations, models, animations and icon into packs/,
                  # then merges the Jenny add-ons (tools/import-jenny.mjs) when vendor/jenny/ has them
 npm run check    # type-checks scripts, validates JSON against Mojang's schemas and cross-references

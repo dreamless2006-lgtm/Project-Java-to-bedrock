@@ -97,9 +97,20 @@ const OVERLAYS = [
     if (add.individual_event_sounds?.events) Object.assign(((base.individual_event_sounds ??= {}).events ??= {}), add.individual_event_sounds.events);
   }],
   ['Minepreggo_RP/textures/item_texture.json', 'Minepreggo_RP/textures/jenny_port/item_texture.json', (/** @type {any} */ base, /** @type {any} */ add) => Object.assign(base.texture_data, add.texture_data ?? {})],
+  // World Alliance's (tools/import-worldalliance.mjs): its texture atlases, blocks and entity materials
+  ['Minepreggo_RP/textures/item_texture.json', 'Minepreggo_RP/textures/worldalliance_port/item_texture.json', (/** @type {any} */ base, /** @type {any} */ add) => Object.assign(base.texture_data, add.texture_data ?? {})],
+  ['Minepreggo_RP/textures/terrain_texture.json', 'Minepreggo_RP/textures/worldalliance_port/terrain_texture.json', (/** @type {any} */ base, /** @type {any} */ add) => Object.assign(base.texture_data, add.texture_data ?? {})],
+  ['Minepreggo_RP/blocks.json', 'Minepreggo_RP/worldalliance_port/blocks.json', (/** @type {any} */ base, /** @type {any} */ add) => Object.assign(base, add)],
+  ['Minepreggo_RP/materials/entity.material', 'Minepreggo_RP/worldalliance_port/entity.material', (/** @type {any} */ base, /** @type {any} */ add) => Object.assign(base.materials, add.materials ?? {})],
 ];
 for (const [target, overlay, merge] of OVERLAYS) {
   if (!entries[overlay]) continue;
+  // (a file of ours the overlay adds to may not exist: the overlay is then the file)
+  if (!entries[target]) {
+    entries[target] = entries[overlay];
+    delete entries[overlay];
+    continue;
+  }
   const base = JSON.parse(strFromU8(entries[target]));
   merge(base, JSON.parse(strFromU8(entries[overlay])));
   entries[target] = strToU8(JSON.stringify(base, null, 2) + '\n');
