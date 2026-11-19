@@ -90,6 +90,7 @@ const GROWN = `q.property('${MOD}:female') == 2 && !q.is_baby`;
  * @property {number} femaleDefault the minepreggo:female property's default (0: the script rolls it)
  * @property {boolean} build a woman's build (slimmer arms, bust, hips) on her model
  * @property {'cube' | 'round'} bellyStyle @property {Set<string>} skipRigs
+ * @property {boolean} [merge] the add-on itself goes into our packs, under our files: one add-on to install instead of two
  * @property {boolean} [armless] its girls may have no arms (the creeper: her belly, kicks and burst, poses if they solve)
  * @property {(id: string) => boolean} skip mob types left as they are
  * @property {(rig: { key: string }, id: string) => { birth: string, type: 'normal' | 'navel' | 'burst' | 'breast', shape: keyof typeof SHAPES }} women how they carry and give birth
@@ -106,7 +107,7 @@ const ADDONS = {
     women: (rig) => ({ birth: /** @type {string} */ (BIRTHS.find(([re]) => re.test(rig.key))?.[1]), type: 'normal', shape: 'round' }),
   },
   girlmob: {
-    title: 'Girl Mob', name: 'Minepreggo × Girl Mob', description: "Girl Mob's girls get pregnant in Minepreggo's pregnancy system, each in her own way. Needs Minepreggo and Girl Mob; put it above Girl Mob.",
+    title: 'Girl Mob', name: 'Girl Mob + Minepreggo', description: "AntiGM's Girl Mob (v0.4.7), its girls pregnant in Minepreggo's pregnancy system, each in her own way. Needs Minepreggo; use it instead of Girl Mob.", merge: true,
     vendor: 'vendor/girlmob', dir: 'minepreggo_girlmob', prefix: 'girlmob',
     ids: { bp: '07598f2c-d0b0-4c7d-889c-e742806b6089', bpData: '5e748bbb-4a63-4b0f-87f7-4e2f2d38ea52', rp: 'dbda3fe3-4dc1-45ee-99de-5006a256f65d', rpResources: 'df822d24-9290-4ce8-b496-368d35603a06' },
     female: GROWN, male: `!(${GROWN})`, femaleDefault: 2, build: false, bellyStyle: 'round', armless: true,
@@ -719,9 +720,20 @@ writeJson(join(ORP, 'animations', DIR, 'walk_jiggle.animation.json'), { format_v
 const version = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version.split('.').map(Number);
 const ours = { bp: JSON.parse(readFileSync(join(BP, 'manifest.json'), 'utf8')).header, rp: JSON.parse(readFileSync(join(RP, 'manifest.json'), 'utf8')).header };
 const { name, description } = addon;
+// a merged add-on: its own files under ours (its manifests, ours instead), on its own engine version
+// (its files were written for it)
+if (addon.merge) {
+  for (const [kind, out] of /** @type {const} */ ([['behavior', OBP], ['resource', ORP]])) {
+    for (const [path, data] of Object.entries(packs[kind].files)) {
+      if (path === 'manifest.json' || existsSync(join(out, path))) continue;
+      writeBytes(join(out, path), data);
+    }
+  }
+}
+const engine = addon.merge ? packs.behavior.manifest.header.min_engine_version : ours.bp.min_engine_version;
 writeJson(join(OBP, 'manifest.json'), {
   format_version: 2,
-  header: { name, description, uuid: IDS.bp, version, min_engine_version: ours.bp.min_engine_version },
+  header: { name, description, uuid: IDS.bp, version, min_engine_version: engine },
   modules: [{ type: 'data', uuid: IDS.bpData, version }],
   // (only its own resource pack: one on Minepreggo's or the add-on's exact versions is refused as a
   // missing dependency whenever the player has another; the description says what it needs)
@@ -729,7 +741,7 @@ writeJson(join(OBP, 'manifest.json'), {
 });
 writeJson(join(ORP, 'manifest.json'), {
   format_version: 2,
-  header: { name, description, uuid: IDS.rp, version, min_engine_version: ours.bp.min_engine_version },
+  header: { name, description, uuid: IDS.rp, version, min_engine_version: engine },
   modules: [{ type: 'resources', uuid: IDS.rpResources, version }],
 });
 for (const [file, out] of [['pack_icon.png', OBP], ['pack_icon.png', ORP]]) if (existsSync(join(BP, file))) writeBytes(join(out, file), new Uint8Array(readFileSync(join(BP, file))));
