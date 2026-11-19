@@ -195,7 +195,9 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
           look_at_target: 'animation.common.look_at_target',
           ...(girl.extra?.ids ?? {}),
         },
-        ...(spec || girl.extra?.effects ? { sound_effects, particle_effects } : {}),
+        // (the game refuses an empty map of either)
+        ...(Object.keys(sound_effects).length ? { sound_effects } : {}),
+        ...(Object.keys(particle_effects).length ? { particle_effects } : {}),
         scripts: {
           initialize: initializers(pre, []),
           pre_animation: pre,
@@ -210,7 +212,8 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
   // the behaviour: a woman who can be tamed with her treats, in the mob system
   const variants = Object.fromEntries(outfits.map((_, i) => [`${ns}:variant_${i}`, { 'minecraft:variant': { value: i } }]));
   const height = Math.round((Math.max(...main.bones.flatMap((/** @type {any} */ b) => (b.cubes ?? []).map((/** @type {any} */ c) => c.origin[1] + c.size[1]))) / 16) * 100) / 100;
-  writeJson(join(BP, 'entities', port, `${girl.key}.json`), JSON.parse(stringifyEntity({
+  // (written as stringifyEntity writes it: a float property's 0.0 must stay 0.0, or the game drops every property)
+  write(join(BP, 'entities', port, `${girl.key}.json`), stringifyEntity({
     format_version: '1.21.0',
     'minecraft:entity': {
       description: { identifier: id, is_spawnable: true, is_summonable: true, properties: { ...MINEPREGGO_PROPERTIES } },
@@ -260,7 +263,7 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
         ...phaseEvents(),
       },
     },
-  })));
+  }));
   writeJson(join(BP, 'spawn_rules', port, `${girl.key}.json`), {
     format_version: '1.8.0',
     'minecraft:spawn_rules': {

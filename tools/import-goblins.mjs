@@ -535,7 +535,7 @@ for (const girl of GIRLS) {
           ],
         },
         render_controllers: rcs,
-        ...(Object.values(animations).some((a) => a.sound_effects) ? { sound_effects: Object.fromEntries(Object.entries(SOUNDS).map(([name, event]) => [name, { effect: event }])) } : {}),
+        ...(Object.values(animations).some((a) => a.sound_effects) ? { sound_effects: Object.fromEntries(Object.entries(SOUNDS).map(([name, event]) => [name, event])) } : {}),
         spawn_egg: { base_color: girl.egg[0], overlay_color: girl.egg[1] },
       },
     },

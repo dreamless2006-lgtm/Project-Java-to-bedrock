@@ -35,6 +35,7 @@ import { BELLY_ANIMATIONS, FAMILY_TAG, MINEPREGGO_PROPERTIES, MOD, PHASES, SPAWN
 import { FETUS_SCALE, crowningLines } from './lib/crowning.mjs';
 import { GIRL_BIRTHS, girlBirthExit, girlEffects } from './lib/girl-births.mjs';
 import { girlSources, poseController } from './lib/girl-port.mjs';
+import { stringifyEntity } from './lib/entity-json.mjs';
 import { decodePng, encodePng } from './lib/png.mjs';
 import { girlPoseAnimations } from './lib/scene-poses.mjs';
 import { walkJiggleAnimation } from './lib/walk-jiggle.mjs';
@@ -558,7 +559,8 @@ function womenOf(/** @type {Rig} */ rig, /** @type {Women['opts']} */ opts) {
     animate.push({ mp_belly_burst: "v.mp_female && v.pose == 'birth'" }, 'mp_burst_controller');
   }
 
-  writeJson(join(ORP, 'models/entity', DIR, `${key}_female.geo.json`), { format_version: '1.12.0', 'minecraft:geometry': [female] });
+  // (1.16.0: the add-ons' rigs write locators as objects, which 1.12.0 refuses, losing the whole model)
+  writeJson(join(ORP, 'models/entity', DIR, `${key}_female.geo.json`), { format_version: '1.16.0', 'minecraft:geometry': [female] });
   const bellies = onJenny.map((doc, p) => {
     const mine = renameBones(doc, jenny.back);
     writeJson(join(ORP, 'models/entity', DIR, `${key}_belly_p${p}.geo.json`), mine);
@@ -671,6 +673,19 @@ for (const { path, doc } of theirs('resource', 'entity')) {
     ],
   };
   d.render_controllers = [...list, { [RC_BELLY]: `${FEMALE} && v.bp >= 0` }];
+  // (the game refuses an empty map of effects)
+  for (const key of ['sound_effects', 'particle_effects']) if (d[key] && !Object.keys(d[key]).length) delete d[key];
+  // conditions on render controllers and scripts.animate need the 1.10.0 format: an older file's
+  // animation controllers (1.8.0's list) become animations it plays always
+  if (Number(String(doc.format_version ?? '1.8.0').split('.')[1]) < 10) {
+    doc.format_version = '1.10.0';
+    const legacy = /** @type {Record<string, string>[]} */ (d.animation_controllers ?? []);
+    for (const entry of legacy) for (const [short, id] of Object.entries(entry)) {
+      d.animations[short] = id;
+      d.scripts.animate.unshift(short);
+    }
+    delete d.animation_controllers;
+  }
   writeJson(join(ORP, path), doc);
 
   // the behaviour: the pregnancy's properties and events, and the family our mob system looks for
@@ -685,7 +700,8 @@ for (const { path, doc } of theirs('resource', 'entity')) {
   // (some come into the world pregnant: their spawn event, then ours)
   const spawned = e.events['minecraft:entity_spawned'];
   e.events['minecraft:entity_spawned'] = spawned ? { sequence: [spawned, SPAWN_PREGNANT] } : SPAWN_PREGNANT;
-  writeJson(join(OBP, behavior.path), behavior.doc);
+  // (a float property's 0.0 must stay 0.0, or the game drops every property: stringifyEntity)
+  writeBytes(join(OBP, behavior.path), new TextEncoder().encode(stringifyEntity(behavior.doc)));
   peoples++;
 }
 writeJson(join(ORP, 'render_controllers', `${DIR}.render_controllers.json`), { format_version: '1.8.0', render_controllers: renderControllers });

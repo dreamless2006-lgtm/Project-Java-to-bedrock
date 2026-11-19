@@ -92,10 +92,17 @@ const sources = girlSources(RP);
  * GeckoLib keyframes hold {vector, easing, lerp_mode}; Bedrock takes the vector, eased linearly, or
  * catmull-rom when constant (the mod's eased keyframes, the curve Bedrock has closest to them).
  */
+/** MCreator writes "linear" into some keyframe values (its easing, where a number belongs): it is 0. */
+const unlinear = (/** @type {any} */ c) => {
+  if (typeof c !== 'string' || !/\blinear\b/.test(c)) return c;
+  const s = c.replace(/\blinear\b/g, '0');
+  return /^[\d.+\-\s]+$/.test(s) ? Number(Function(`return (${s})`)()) : s;
+};
 function frame(/** @type {any} */ value) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+  if (Array.isArray(value)) return value.map(unlinear);
+  if (!value || typeof value !== 'object') return unlinear(value);
   if ('vector' in value) {
-    const v = value.vector;
+    const v = [value.vector].flat().map(unlinear);
     const constant = [v].flat().every((c) => typeof c === 'number');
     return (value.lerp_mode === 'catmullrom' || /^easeInOut/.test(value.easing ?? '')) && constant ? { post: v, lerp_mode: 'catmullrom' } : v;
   }
