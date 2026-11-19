@@ -13,12 +13,12 @@ import { syncBody } from './body.js';
 /** @param {Player} player */
 export function promptGender(player, attempt = 0) {
   const form = new ActionFormData()
-    .title({ translate: 'gui.minepreggo.player_main_menu.label.title' })
+    .title({ translate: 'minepreggo.gender.title' })
     .body({ translate: 'minepreggo.gender.body' })
     .button({ translate: 'minepreggo.gender.female_custom' })
     .button({ translate: 'minepreggo.gender.female_alex' })
     .button({ translate: 'minepreggo.gender.female_steve' })
-    .button({ translate: 'gui.minepreggo.player_main_menu.checkbox.male' });
+    .button({ translate: 'minepreggo.gender.male' });
 
   form.show(player).then((response) => {
     if (response.canceled) {

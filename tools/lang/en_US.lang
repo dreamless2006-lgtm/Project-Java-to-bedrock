@@ -138,3 +138,5 @@ minepreggo.egg.all_laid=%s has laid all of her eggs.
 minepreggo.egg.caught=%s hands you her egg!
 minepreggo.egg.more=More of %s's eggs are coming: tap sneak to help her push, jump to stop.
 minepreggo.egg.hatched=A kobold egg hatched!
+minepreggo.gender.title=Minepreggo
+minepreggo.gender.male=Male

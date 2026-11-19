@@ -54,7 +54,7 @@ Requires Bedrock **1.26.30** or newer. No experimental toggles are needed.
 A world keeps the pack versions it was created with, and Bedrock keeps older imports next to the
 new one. After importing a newer `.mcaddon`, open the world's settings and, under **Behavior
 Packs** *and* **Resource Packs**, remove Minepreggo from the active packs and add it again. The
-join message shows both versions (`[Minepreggo 0.9.3, resources 0.9.3]`); while the resources
+join message shows both versions (`[Minepreggo 0.10.0, resources 0.10.0]`); while the resources
 version lags behind, the models, bellies and animations are the old ones, whatever the scripts do.
 Old versions can be deleted in Settings → Storage.
 
@@ -242,7 +242,7 @@ Requires Node.js 20+.
 
 ```sh
 npm install
-cp /path/to/minepreggo-official-1.3.2-mc1.20.1.jar vendor/   # or pass the path to `npm run import`
+cp /path/to/minepreggo-official-1.3.9-mc1.20.1.jar vendor/   # or 1.3.2; or pass the path to `npm run import`
 mkdir -p vendor/jenny                                         # optional: the Jenny add-ons to merge in
 cp "/path/to/Jenny-Mod-Java-Port-v2.7.2.mcaddon" /path/to/jenny*.mcpack vendor/jenny/
 mkdir -p vendor/worldalliance vendor/skelly                   # optional: World Alliance and the Skelly skeleton

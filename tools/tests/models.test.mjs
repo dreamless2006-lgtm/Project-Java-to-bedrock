@@ -6,9 +6,10 @@ import assert from 'node:assert/strict';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { unzipSync } from 'fflate';
+import { strFromU8, unzipSync } from 'fflate';
 import { parameterTypes } from '../lib/java-class.mjs';
 import { createModelRunner, toBedrockAnimation, toBedrockGeometry } from '../lib/java-models.mjs';
+import { modJar } from '../lib/mod-jar.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const jar = process.env.MINEPREGGO_JAR ??
@@ -16,6 +17,12 @@ const jar = process.env.MINEPREGGO_JAR ??
 const files = jar ? unzipSync(new Uint8Array(readFileSync(jar))) : null;
 const needsJar = { skip: files ? false : 'mod jar not found (vendor/*.jar or $MINEPREGGO_JAR)' };
 const PKG = 'dev/dixmk/minepreggo/client/model/entity/preggo/';
+const version = files ? (strFromU8(files['META-INF/mods.toml'] ?? new Uint8Array()).match(/^version="([^"]+)"/m)?.[1] ?? '') : '';
+/** The jar read by readable names, whether or not it is obfuscated (tools/lib/mod-jar.mjs). */
+const jarOf = () => {
+  const runner = createModelRunner(/** @type {any} */ (files), 'dev/dixmk/minepreggo/');
+  return { runner, jar: modJar(/** @type {any} */ (files), runner, version) };
+};
 
 test('method descriptors split into parameter types', () => {
   assert.deepEqual(parameterTypes('()V'), []);
@@ -26,8 +33,8 @@ test('method descriptors split into parameter types', () => {
 });
 
 test('the zombie girl model converts to Bedrock coordinates', needsJar, () => {
-  const runner = createModelRunner(/** @type {any} */ (files), 'dev/dixmk/minepreggo/');
-  const layer = runner.layer(`${PKG}zombie/AbstractZombieGirlModel`, 'createP0BodyLayer');
+  const { jar } = jarOf();
+  const layer = jar.layer(`${PKG}zombie/AbstractZombieGirlModel`, 'createP0BodyLayer', 'pregnant_zombie_girl_p0');
   assert.equal(layer.textureWidth, 128);
   const bones = toBedrockGeometry(layer, 'geometry.test', { reparent: { hat: 'head' } })['minecraft:geometry'][0].bones;
   const bone = (/** @type {string} */ name) => bones.find((b) => b.name === name);
@@ -50,18 +57,18 @@ test('the zombie girl model converts to Bedrock coordinates', needsJar, () => {
 });
 
 test('every mob model layer converts into a valid bone tree', needsJar, () => {
-  const runner = createModelRunner(/** @type {any} */ (files), 'dev/dixmk/minepreggo/');
+  const { jar } = jarOf();
   const families = [
-    ['zombie/AbstractZombieGirlModel', 'createBodyLayer'],
-    ['creeper/AbstractHumanoidCreeperGirlModel', 'createBodyLayer'],
-    ['creeper/AbstractMonsterCreeperGirlModel', 'createBasicBodyLayer'],
-    ['ender/AbstractMonsterEnderWomanModel', 'createBodyLayer'],
-    ['slime/AbstractHumanoidSlimeGirlModel', 'createNonPregBodyLayer'],
-    ['slime/AbstractMonsterSlimeGirlModel', 'createNonPregBodyLayer'],
+    ['zombie/AbstractZombieGirlModel', 'createBodyLayer', 'zombie_girl'],
+    ['creeper/AbstractHumanoidCreeperGirlModel', 'createBodyLayer', 'humanoid_creeper_girl'],
+    ['creeper/AbstractMonsterCreeperGirlModel', 'createBasicBodyLayer', 'monster_creeper_girl'],
+    ['ender/AbstractMonsterEnderWomanModel', 'createBodyLayer', 'monster_ender_woman'],
+    ['slime/AbstractHumanoidSlimeGirlModel', 'createNonPregBodyLayer', 'humanoid_slime_girl'],
+    ['slime/AbstractMonsterSlimeGirlModel', 'createNonPregBodyLayer', 'monster_slime_girl'],
   ];
-  for (const [javaClass, base] of families) {
-    for (const method of [base, ...Array.from({ length: 10 }, (_, p) => `createP${p}BodyLayer`)]) {
-      const geometry = toBedrockGeometry(runner.layer(PKG + javaClass, method), 'geometry.test');
+  for (const [javaClass, base, registered] of families) {
+    for (const [method, name] of [[base, registered], ...Array.from({ length: 10 }, (_, p) => [`createP${p}BodyLayer`, `pregnant_${registered}_p${p}`])]) {
+      const geometry = toBedrockGeometry(jar.layer(PKG + javaClass, method, name), 'geometry.test');
       const { bones, description } = geometry['minecraft:geometry'][0];
       const names = bones.map((b) => b.name.toLowerCase());
       assert.equal(new Set(names).size, names.length, `${javaClass}.${method}: duplicate bone names`);
@@ -77,8 +84,8 @@ test('every mob model layer converts into a valid bone tree', needsJar, () => {
 });
 
 test('keyframe animations convert back to the values in the Java source', needsJar, () => {
-  const runner = createModelRunner(/** @type {any} */ (files), 'dev/dixmk/minepreggo/');
-  const zombie = runner.animations('dev/dixmk/minepreggo/client/animation/preggo/ZombieGirlAnimations');
+  const { jar } = jarOf();
+  const zombie = jar.animations('ZombieGirlAnimations');
   // IDLE: 4 s loop, right_arm rotation degreeVec(-2.5, 0, 0) at 1 s, linear.
   const idle = toBedrockAnimation(zombie.IDLE);
   assert.equal(idle.loop, true);
@@ -89,17 +96,18 @@ test('keyframe animations convert back to the values in the Java source', needsJ
   assert.equal(toBedrockAnimation(zombie.ATTACK).loop, 'hold_on_last_frame');
 
   // BellyAnimation.LOW_BELLY_INFLATION: scaleVec(1.01, 1.0, 1.065) at 2 s, Catmull-Rom.
-  const belly = toBedrockAnimation(runner.animations('dev/dixmk/minepreggo/client/animation/preggo/BellyAnimation').LOW_BELLY_INFLATION);
+  const belly = toBedrockAnimation(jar.animations('BellyAnimation').LOW_BELLY_INFLATION);
   assert.deepEqual(belly.bones.belly.scale['2.0'], { post: [1.01, 1, 1.065], lerp_mode: 'catmullrom' });
 
   // posVec keeps the source's argument (Java stores y negated; Bedrock's y points up): RIDING
   // lowers the upper body with posVec(0, -8, 0).
   assert.deepEqual(toBedrockAnimation(zombie.RIDING).bones.body.position['0.0'], [0, -8, 0]);
   assert.ok(toBedrockAnimation(zombie.RIDING).bones.right_arm.rotation, 'rotation and position channels of one bone are merged');
-  const slime = runner.animations('dev/dixmk/minepreggo/client/animation/preggo/HumanoidSlimeGirlAnimations');
+  const slime = jar.animations('HumanoidSlimeGirlAnimations');
   for (const animation of Object.values(slime)) toBedrockAnimation(animation);
   const all = ['ZombieGirlAnimations', 'HumanoidCreeperGirlAnimations', 'MonsterCreeperGirlAnimations', 'MonsterEnderWomanAnimations',
     'HumanoidSlimeGirlAnimations', 'MonsterSlimeGirlAnimations', 'BellyAnimation'];
-  const count = all.reduce((n, c) => n + Object.keys(runner.animations(`dev/dixmk/minepreggo/client/animation/preggo/${c}`)).length, 0);
-  assert.equal(count, 126);
+  const count = all.reduce((n, c) => n + Object.keys(jar.animations(c)).length, 0);
+  // (1.3.2's classes hold 126; the 1.3.9 table names the 128 the port plays, its new ones left out)
+  assert.equal(count, jar.obfuscated ? 128 : 126);
 });

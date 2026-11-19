@@ -171,12 +171,12 @@ export function crowningAnimations() {
 
 /** The mod's fetus for a mother of each kind (FetusLayer: the baby's species and her creature type). */
 export const FETUS_MODELS = {
-  humanoid: ['HumanoidFetusModel', 'createDefaultLayer'],
-  villager: ['HumanoidFetusModel', 'createVillagerLayer'],
-  ender: ['HumanoidFetusModel', 'createEnderLayer'],
-  humanoid_slime: ['HumanoidFetusModel', 'createSlimeLayer'],
-  creeper: ['CreeperFetusModel', 'createBodyLayer'],
-  slime: ['SlimeFetusModel', 'createBodyLayer'],
+  humanoid: ['HumanoidFetusModel', 'createDefaultLayer', 'human_fetus'],
+  villager: ['HumanoidFetusModel', 'createVillagerLayer', 'villager_fetus'],
+  ender: ['HumanoidFetusModel', 'createEnderLayer', 'ender_fetus'],
+  humanoid_slime: ['HumanoidFetusModel', 'createSlimeLayer', 'humanoid_slime_fetus'],
+  creeper: ['CreeperFetusModel', 'createBodyLayer', 'creeper_fetus'],
+  slime: ['SlimeFetusModel', 'createBodyLayer', 'monster_slime_fetus'],
 };
 
 /**

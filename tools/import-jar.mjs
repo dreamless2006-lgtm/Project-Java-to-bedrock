@@ -16,6 +16,7 @@ import { unzipSync, strFromU8 } from 'fflate';
 import { createModelRunner, toBedrockAnimation, toBedrockGeometry } from './lib/java-models.mjs';
 import { mergeBellies } from './lib/belly-merge.mjs';
 import { clampKicks, linearWhereExpressions } from './lib/kick-clamp.mjs';
+import { modJar } from './lib/mod-jar.mjs';
 import { headOffFloor } from './lib/labor-floor.mjs';
 import { FAMILY_CROWNING, FETUS_MODELS, PLAYER_BABIES, chainOf, crowningGeometry, fetusBones, openingOf } from './lib/crowning.mjs';
 import { decodePng, encodePng } from './lib/png.mjs';
@@ -94,6 +95,8 @@ if (!modsToml || !strFromU8(modsToml).includes(`modId="${MOD_ID}"`)) {
 }
 const modVersion = strFromU8(modsToml).match(/^version="([^"]+)"/m)?.[1] ?? 'unknown';
 
+/** Textures 1.3.9 renamed (its path -> the name the port knows them by). */
+const TEXTURES_RENAMED = /** @type {Record<string, string>} */ ({ 'item/hot_chicken.png': 'item/spicy_chicken.png' });
 // Textures: copied 1:1 under textures/minepreggo/ so Java paths map predictably.
 const textureOut = join(RP, 'textures', MOD_ID);
 rmSync(textureOut, { recursive: true, force: true });
@@ -102,7 +105,15 @@ let textureCount = 0;
 for (const [name, data] of Object.entries(files)) {
   if (!name.startsWith(texturePrefix) || !name.endsWith('.png')) continue;
   // Mob textures move from entity/preggo/ to mobs/ to keep paths short (some devices refuse long ones).
-  writeFile(join(textureOut, name.slice(texturePrefix.length).replace(/^entity\/preggo\/ender\/monster\//, 'mobs/ender/').replace(/^entity\/preggo\//, 'mobs/')), data);
+  const path = name.slice(texturePrefix.length).replace(/^entity\/preggo(?:mob)?\/ender\/monster\//, 'mobs/ender/').replace(/^entity\/preggo(?:mob)?\//, 'mobs/');
+  writeFile(join(textureOut, path), data);
+  // 1.3.9 renamed the player's predefined skins (alex/alex_p5_extra -> alex/dressed_extra_p5): the
+  // dressed ones keep their old names too
+  const renamed = path.match(/^(entity\/player\/predefined\/(alex|steve))\/dressed(_extra)?(_p\d+)?\.png$/);
+  if (renamed) writeFile(join(textureOut, `${renamed[1]}/${renamed[2]}${renamed[4] ?? ''}${renamed[3] ?? ''}.png`), data);
+  // ... as do the others it renamed or moved
+  const old = TEXTURES_RENAMED[path] ?? path.replace(/^mobs\/ender\/expressions\/eye\//, 'mobs/ender/expressions/');
+  if (old !== path) writeFile(join(textureOut, old), data);
   textureCount++;
 }
 
@@ -140,15 +151,16 @@ if (undeclared.length) console.warn(`warning: add ${undeclared.join(', ')} to pa
 // Entity models: the mod builds them in code, so they are converted by running the jar's model
 // factories (tools/lib/java-models.mjs) instead of being copied.
 const MODEL_PACKAGE = 'dev/dixmk/minepreggo/client/model/entity/preggo/';
-const withPhases = (id, javaClass, baseMethod) => [
-  [id, javaClass, baseMethod],
-  ...Array.from({ length: 10 }, (_, p) => [`${id}_p${p}`, javaClass, `createP${p}BodyLayer`]),
+// (the last of each entry: the name the jar registers the layer under, how an obfuscated jar is read)
+const withPhases = (id, javaClass, baseMethod, registered = id) => [
+  [id, javaClass, baseMethod, registered],
+  ...Array.from({ length: 10 }, (_, p) => [`${id}_p${p}`, javaClass, `createP${p}BodyLayer`, `pregnant_${registered}_p${p}`]),
 ];
 const MODELS = [
   ...withPhases('zombie_girl', 'zombie/AbstractZombieGirlModel', 'createBodyLayer'),
   ...withPhases('humanoid_creeper_girl', 'creeper/AbstractHumanoidCreeperGirlModel', 'createBodyLayer'),
   ...withPhases('monster_creeper_girl', 'creeper/AbstractMonsterCreeperGirlModel', 'createBasicBodyLayer'),
-  ...withPhases('ender_woman', 'ender/AbstractMonsterEnderWomanModel', 'createBodyLayer'),
+  ...withPhases('ender_woman', 'ender/AbstractMonsterEnderWomanModel', 'createBodyLayer', 'monster_ender_woman'),
   ...withPhases('humanoid_slime_girl', 'slime/AbstractHumanoidSlimeGirlModel', 'createNonPregBodyLayer'),
   ...withPhases('monster_slime_girl', 'slime/AbstractMonsterSlimeGirlModel', 'createNonPregBodyLayer'),
 ];
@@ -159,16 +171,19 @@ const MODELS = [
 const PLAYER_PACKAGE = 'dev/dixmk/minepreggo/client/model/entity/player/';
 const PLAYER_OPTIONS = { rename: { right_leg: 'rightLeg', left_leg: 'leftLeg' }, stripCubes: ['body'] };
 const PLAYER_MODELS = [
-  ['player_boobs_custom', 'CustomBoobsModel', 'createBodyLayer'],
-  ['player_boobs_predefined', 'PredefinedBoobsModel', 'createBodyLayer'],
-  ...Array.from({ length: 10 }, (_, p) => [`player_body_custom_p${p}`, 'CustomPregnantBodyModel', `createBodyP${p}Layer`]),
-  ...Array.from({ length: 10 }, (_, p) => [`player_body_predefined_p${p}`, 'PredefinedPregnantBodyModel', `createBodyP${p}Layer`]),
+  ['player_boobs_custom', 'CustomBoobsModel', 'createBodyLayer', 'default_boobs'],
+  ['player_boobs_predefined', 'PredefinedBoobsModel', 'createBodyLayer', 'predefined_boobs'],
+  ...Array.from({ length: 10 }, (_, p) => [`player_body_custom_p${p}`, 'CustomPregnantBodyModel', `createBodyP${p}Layer`, `default_pregnant_body_p${p}`]),
+  ...Array.from({ length: 10 }, (_, p) => [`player_body_predefined_p${p}`, 'PredefinedPregnantBodyModel', `createBodyP${p}Layer`, `predefined_pregnant_body_p${p}`]),
 ];
 const modelOut = join(RP, 'models/entity', MOD_ID);
 rmSync(modelOut, { recursive: true, force: true });
 const models = createModelRunner(files, 'dev/dixmk/minepreggo/');
-for (const [id, javaClass, method] of PLAYER_MODELS) {
-  const layer = models.layer(PLAYER_PACKAGE + javaClass, method);
+// (an obfuscated release is read through the names it registers its layers under: tools/lib/mod-jar.mjs)
+const jar = modJar(files, models, modVersion);
+const layerOf = jar.layer;
+for (const [id, javaClass, method, registered] of PLAYER_MODELS) {
+  const layer = layerOf(PLAYER_PACKAGE + javaClass, method, registered);
   const geometry = toBedrockGeometry(layer, `geometry.${MOD_ID}.${id}`, PLAYER_OPTIONS);
   // Vanilla's player model hangs her body from waist > root and her legs from root
   // (geometry.humanoid.custom), and its sneaking, swimming, crawling, sleeping and riding animations
@@ -179,8 +194,8 @@ for (const [id, javaClass, method] of PLAYER_MODELS) {
   bones.unshift({ name: 'root', pivot: [0, 0, 0] }, { name: 'waist', parent: 'root', pivot: [0, 12, 0] });
   writeFile(join(modelOut, `${id}.geo.json`), JSON.stringify(geometry, null, 2) + '\n');
 }
-for (const [id, javaClass, method] of MODELS) {
-  const layer = models.layer(MODEL_PACKAGE + javaClass, method);
+for (const [id, javaClass, method, registered] of MODELS) {
+  const layer = layerOf(MODEL_PACKAGE + javaClass, method, registered);
   const parts = new Set();
   const collect = (part) => part.children.forEach((child, name) => { parts.add(name); collect(child); });
   collect(layer.root);
@@ -205,8 +220,8 @@ const crowningOut = join(modelOut, 'crowning');
 const readModel = (/** @type {string} */ id) => JSON.parse(readFileSync(join(modelOut, `${id}.geo.json`), 'utf8'))['minecraft:geometry'][0];
 /** @type {Record<string, { bones: any[], size: number[] }>} */
 const fetuses = {};
-for (const [kind, [javaClass, method]] of Object.entries(FETUS_MODELS)) {
-  const g = toBedrockGeometry(models.layer(`dev/dixmk/minepreggo/client/model/fetus/${javaClass}`, method), `geometry.${MOD_ID}.fetus_${kind}`, {})['minecraft:geometry'][0];
+for (const [kind, [javaClass, method, registered]] of Object.entries(FETUS_MODELS)) {
+  const g = toBedrockGeometry(layerOf(`dev/dixmk/minepreggo/client/model/fetus/${javaClass}`, method, registered), `geometry.${MOD_ID}.fetus_${kind}`, {})['minecraft:geometry'][0];
   fetuses[kind] = { bones: fetusBones(g), size: [g.description.texture_width, g.description.texture_height] };
 }
 let crowningCount = 0;
@@ -408,7 +423,7 @@ let animationCount = 0;
 let humanoidAnimations = {};
 for (const [javaClass, id] of Object.entries(ANIMATIONS)) {
   const animations = {};
-  for (const [field, animation] of Object.entries(models.animations(ANIMATION_PACKAGE + javaClass))) {
+  for (const [field, animation] of Object.entries(jar.animations(javaClass))) {
     const bedrock = toBedrockAnimation(animation);
     // Java plays walk cycles with HierarchicalModel.animateWalk, which advances them by distance
     // walked (limbSwing * 50 ms) instead of time; Bedrock's equivalent of limbSwing is

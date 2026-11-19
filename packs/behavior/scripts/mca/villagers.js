@@ -6,7 +6,8 @@ import { world } from '@minecraft/server';
 const WOMAN = 'mca:villager_woman';
 /** @type {string[]} */
 let names = [];
-import('../mca_port/names.js').then((m) => (names = m.NAMES)).catch(() => {});
+const NAMES = '../mca_port/names.js';
+import(NAMES).then((m) => (names = m.NAMES)).catch(() => {});
 
 function name(/** @type {import('@minecraft/server').Entity} */ entity) {
   if (entity.typeId !== WOMAN || !names.length || entity.nameTag) return;

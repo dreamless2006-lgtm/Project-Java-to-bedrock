@@ -10,7 +10,7 @@
 /**
  * @typedef {{ tag: number, value?: any, a?: number, b?: number }} CpEntry
  * @typedef {{ name: string, descriptor: string, access: number, code: Uint8Array | null, maxLocals: number }} MethodInfo
- * @typedef {{ name: string, superName: string | null, cp: CpEntry[], methods: MethodInfo[] }} ClassFile
+ * @typedef {{ name: string, superName: string | null, cp: CpEntry[], methods: MethodInfo[], bootstrapMethods?: { method: number, args: number[] }[] }} ClassFile
  */
 
 const ACC_STATIC = 0x0008;
@@ -85,7 +85,24 @@ export function parseClass(bytes) {
     }
     methods.push({ name: methodName, descriptor, access, code, maxLocals });
   }
-  return { name: /** @type {string} */ (name), superName, cp, methods };
+  // the class's own attributes: only the lambdas' bootstrap methods are kept (tools/lib/java-layers.mjs)
+  /** @type {{ method: number, args: number[] }[]} */
+  const bootstrapMethods = [];
+  for (let a = pos < bytes.length ? u2() : 0; a > 0; a--) {
+    const attrName = utf8(u2());
+    const len = u4();
+    const end = pos + len;
+    if (attrName === 'BootstrapMethods') {
+      for (let n = u2(); n > 0; n--) {
+        const method = u2();
+        const args = [];
+        for (let k = u2(); k > 0; k--) args.push(u2());
+        bootstrapMethods.push({ method, args });
+      }
+    }
+    pos = end;
+  }
+  return { name: /** @type {string} */ (name), superName, cp, methods, bootstrapMethods };
 }
 
 /** Splits a method descriptor into its parameter types, e.g. "(FLjava/lang/String;[I)V" -> ["F", "Ljava/lang/String;", "[I"]. */
