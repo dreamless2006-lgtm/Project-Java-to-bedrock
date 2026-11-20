@@ -53,11 +53,12 @@ const TYPE_BIRTHS = { normal: 'girlmob:standing', navel: 'girlmob:arched', burst
  * for most; through the navel for the strange ones (the enderman, the evoker, the witch, the golem);
  * a belly burst for the fierce (the blaze, the warden, the brute, the wither skeleton); a breast
  * pregnancy for the milk-giving farm girls. Every undead girl and the enderman burst.
- * @type {Record<string, { type: 'normal' | 'navel' | 'burst' | 'breast', shape: keyof typeof SHAPES, tone?: number[] }>}
+ * The skeletons, who have no flesh, carry in a cage of their ribs (ribs).
+ * @type {Record<string, { type: 'normal' | 'navel' | 'burst' | 'breast', shape: keyof typeof SHAPES, tone?: number[], ribs?: boolean }>}
  */
 const GIRL_MOB = {
   creeper: { type: 'burst', shape: 'round' }, zombie: { type: 'burst', shape: 'round' }, husk: { type: 'burst', shape: 'low' }, drowned: { type: 'burst', shape: 'pointed' },
-  skeleton: { type: 'burst', shape: 'high' }, stray: { type: 'burst', shape: 'high' }, wither_skeleton: { type: 'burst', shape: 'pointed' },
+  skeleton: { type: 'burst', shape: 'high', ribs: true }, stray: { type: 'burst', shape: 'high', ribs: true }, wither_skeleton: { type: 'burst', shape: 'pointed', ribs: true },
   pillager: { type: 'normal', shape: 'wide' }, vindicator: { type: 'normal', shape: 'round' }, evocation_illager: { type: 'navel', shape: 'high' },
   witch: { type: 'navel', shape: 'low' }, wandering_trader: { type: 'normal', shape: 'wide' }, villager_v2: { type: 'normal', shape: 'round' },
   piglin: { type: 'normal', shape: 'wide' }, piglin_brute: { type: 'burst', shape: 'wide' }, enderman: { type: 'burst', shape: 'round', tone: [38, 28, 48] },
@@ -634,6 +635,21 @@ const renderControllers = {
     geometry: 'Array.mp_bellies[math.clamp(v.bp, 0, 9)]', materials: [{ '*': 'Material.default' }], textures: ['Texture.mp_belly'],
   },
 };
+/**
+ * A skeleton's belly: her ribs, bands of bone with gaps between them (the cutout material shows her
+ * through them), the edge of each band shaded.
+ */
+function ribcage(/** @type {{ width: number, height: number, data: Uint8Array }} */ image) {
+  for (let y = 0; y < image.height; y++) {
+    const band = y % 6;
+    for (let x = 0; x < image.width; x++) {
+      const i = (y * image.width + x) * 4;
+      if (band >= 4) image.data[i + 3] = 0;
+      else if (band === 0 || band === 3) for (let k = 0; k < 3; k++) image.data[i + k] = Math.round(image.data[i + k] * 0.78);
+    }
+  }
+  return image;
+}
 /** @type {Map<string, string>} belly textures by skin tone */
 const bellySkins = new Map();
 const both = (/** @type {string | undefined} */ a, /** @type {string} */ b) => (a ? `(${a}) && ${b}` : b);
@@ -675,10 +691,11 @@ for (const { path, doc } of theirs('resource', 'entity')) {
   const png = texturePath && packs.resource.files[`${texturePath}.png`];
   // (a girl whose face is no guide to her skin has hers given)
   const tone = GIRL_MOB[d.identifier.replace(/^(minecraft|girlmob):/, '')]?.tone ?? (png ? skinTone(decodePng(png), rig.geometry) : [224, 188, 160]);
-  const toneKey = tone.map((c) => c.toString(16).padStart(2, '0')).join('');
+  const ribs = GIRL_MOB[d.identifier.replace(/^(minecraft|girlmob):/, '')]?.ribs && !addon.build;
+  const toneKey = tone.map((c) => c.toString(16).padStart(2, '0')).join('') + (ribs ? '_ribs' : '');
   if (!bellySkins.has(toneKey)) {
     const skin = `textures/${DIR}/belly_${toneKey}`;
-    writeBytes(join(ORP, `${skin}.png`), encodePng(bellyTexture(tone)));
+    writeBytes(join(ORP, `${skin}.png`), encodePng(ribs ? ribcage(bellyTexture(tone)) : bellyTexture(tone)));
     bellySkins.set(toneKey, skin);
   }
 
