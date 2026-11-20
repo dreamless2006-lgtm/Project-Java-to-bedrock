@@ -210,6 +210,23 @@ function mcaddon(files) {
   return zipSync(out, { level: 0 });
 }
 
+// The resource pack's JSON written compactly: the generated models and animations are most of its
+// size pretty-printed (387 MB unpacked, which phones fail to import). Not the behavior pack: its actor
+// files keep their float literals (tools/lib/entity-json.mjs). Files only the game's lenient parser
+// reads (comments) stay as they are.
+/** @param {Record<string, Uint8Array>} files */
+function compactResources(files) {
+  for (const [key, data] of Object.entries(files)) {
+    if (!/_RP\/.*\.json$/.test(key) || /manifest\.json$/.test(key)) continue;
+    try {
+      files[key] = strToU8(JSON.stringify(JSON.parse(strFromU8(data).replace(/^\uFEFF/, ''))));
+    } catch {
+      // kept as written
+    }
+  }
+}
+compactResources(entries);
+
 const out = join(ROOT, 'dist', `minepreggo-${version}.mcaddon`);
 mkdirSync(dirname(out), { recursive: true });
 writeFileSync(out, mcaddon(entries));
@@ -242,6 +259,7 @@ for (const addon of existsSync(COMPATS) ? readdirSync(COMPATS) : []) {
       compat[`Minepreggo_${addon}_${kind}/${inner}`] = data;
     }
   }
+  compactResources(compat);
   const compatOut = join(ROOT, 'dist', `minepreggo-${addon}-${version}.mcaddon`);
   writeFileSync(compatOut, mcaddon(compat));
   console.log(`Wrote ${relative(ROOT, compatOut)} (${Object.keys(compat).length} files)`);
