@@ -18,7 +18,7 @@ const out = (/** @type {string} */ path, /** @type {string | Uint8Array} */ body
 };
 const json = (/** @type {string} */ path, /** @type {any} */ doc) => out(path, JSON.stringify(doc, null, 2) + '\n');
 const shade = (/** @type {number[]} */ c, /** @type {number} */ f) => c.map((v) => Math.max(0, Math.min(255, Math.round(v * f))));
-const TRAITS = /** @type {Record<string, import('../lib/baby-icon.mjs').Trait>} */ ({ imp_girl: 'horns', jenny_slime_girl: 'slime', goblin_girl: 'cat_ears', daisy: 'flower', enny: 'streak' });
+const TRAITS = /** @type {Record<string, import('../lib/baby-icon.mjs').Trait>} */ ({ imp_girl: 'horns', jenny_slime_girl: 'slime', jenny_monster_slime_girl: 'slime', goblin_girl: 'cat_ears', daisy: 'flower', enny: 'streak' });
 
 // ---- the baby items ---------------------------------------------------------------------------------
 const textures = JSON.parse(readFileSync(join(RP, 'textures/item_texture.json'), 'utf8'));

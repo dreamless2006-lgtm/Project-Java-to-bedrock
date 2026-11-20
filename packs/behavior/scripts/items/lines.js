@@ -7,6 +7,7 @@
  * @property {string} item the baby item's id after minepreggo:baby_
  * @property {string} name whose child (Daisy's Child)
  * @property {number[]} skin @property {number[]} hair @property {number[]} shirt @property {number[]} trim
+ * @property {boolean} [kind] one of Minepreggo's own kinds, matched by the kind a baby's id names
  * @property {boolean} [made] its baby item is made by tools/gen/children.mjs (the others come with their mother's import)
  */
 
@@ -31,10 +32,12 @@ export const LINES = [
   { item: 'girl_mob', name: 'Mob Girl', skin: [240, 202, 182], hair: [200, 120, 172], shirt: [220, 120, 160], trim: [120, 60, 100], made: true },
   { item: 'world_alliance', name: 'Alliance Woman', skin: [226, 186, 152], hair: [92, 72, 52], shirt: [160, 50, 50], trim: [230, 200, 80], made: true },
   // the babies of Minepreggo's own kinds, by their kind
-  { item: 'zombie', name: 'Zombie Girl', skin: [112, 168, 100], hair: [50, 90, 50], shirt: [70, 110, 160], trim: [40, 60, 100] },
-  { item: 'creeper', name: 'Creeper Girl', skin: [120, 200, 110], hair: [40, 120, 40], shirt: [60, 150, 60], trim: [30, 30, 30] },
-  { item: 'ender', name: 'Ender Woman', skin: [44, 38, 54], hair: [22, 22, 28], shirt: [30, 26, 36], trim: [200, 100, 240] },
-  { item: 'slime', name: 'Slime Girl', skin: [140, 220, 120], hair: [90, 180, 80], shirt: [110, 200, 100], trim: [60, 140, 60] },
+  { item: 'zombie', kind: true, name: 'Zombie Girl', skin: [112, 168, 100], hair: [50, 90, 50], shirt: [70, 110, 160], trim: [40, 60, 100] },
+  { item: 'creeper', kind: true, name: 'Creeper Girl', skin: [120, 200, 110], hair: [40, 120, 40], shirt: [60, 150, 60], trim: [30, 30, 30] },
+  { item: 'ender', kind: true, name: 'Ender Woman', skin: [44, 38, 54], hair: [22, 22, 28], shirt: [30, 26, 36], trim: [200, 100, 240] },
+  { item: 'slime', kind: true, name: 'Slime Girl', skin: [140, 220, 120], hair: [90, 180, 80], shirt: [110, 200, 100], trim: [60, 140, 60] },
+  // (new lines go last: a grown child keeps its line's number)
+  { item: 'jenny_monster_slime_girl', name: "Jenny's Monster Slime Girl", skin: [118, 214, 110], hair: [70, 170, 70], shirt: [40, 36, 54], trim: [250, 110, 170], made: true },
 ];
 
 /** A baby's line: by its item exactly, else by the kind its id names, else a human's. */
@@ -42,6 +45,6 @@ export function lineOf(/** @type {string} */ typeId) {
   const item = typeId.replace(/^minepreggo:baby_/, '');
   const exact = LINES.findIndex((l) => l.item === item);
   if (exact >= 0) return exact;
-  const kind = LINES.findIndex((l, i) => i >= LINES.length - 4 && item.includes(l.item));
+  const kind = LINES.findIndex((l) => l.kind && item.includes(l.item));
   return kind >= 0 ? kind : 0;
 }

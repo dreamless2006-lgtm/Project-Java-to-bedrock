@@ -23,6 +23,7 @@ import { CRAVING_ITEMS } from '../pregnancy/data.js';
  * @property {number} [hungerP0] ticks per fullness point in P0, when not the P1 value
  * @property {boolean} [clothes] her clothes come off (the minepreggo:undressed property: the Wahoo menu, and for her scenes)
  * @property {'navel'} [special] a scene of her own in the Wahoo menu (at her navel)
+ * @property {boolean} [navelBirth] at term or in labor her navel scene becomes her navel birth (jenny/bed.js)
  * @property {boolean} [scenes] an external girl who has the scenes all the same (the Wahoo menu, the Jenny Bed)
  * @property {boolean} [external] a girl of another add-on (the Jenny Mod Java Port): her own taming, no hunger or savage state of ours
  */
@@ -218,8 +219,10 @@ export const JENNY_PREGGO_FAMILIES = Object.fromEntries(
     /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, scenes: true, ...HUMAN, babyItem: `minepreggo:baby_${id.split(':')[1]}` }),
   ])
 );
-// the monster creeper girl: her clothes come off, and she has a scene of her own (at her navel)
-JENNY_PREGGO_FAMILIES['minepreggo:jenny_monster_creeper_girl'] = /** @type {Family} */ ({ ...JENNY_PREGGO_FAMILIES['minepreggo:jenny_zombie_girl'], babyItem: 'minepreggo:baby_jenny_monster_creeper_girl', clothes: true, special: 'navel' });
+// the monster creeper girl: her clothes come off, and she has a scene of her own (at her navel) that
+// late in her pregnancy becomes her navel birth; the monster slime girl the same, but no navel birth
+JENNY_PREGGO_FAMILIES['minepreggo:jenny_monster_creeper_girl'] = /** @type {Family} */ ({ ...JENNY_PREGGO_FAMILIES['minepreggo:jenny_zombie_girl'], babyItem: 'minepreggo:baby_jenny_monster_creeper_girl', clothes: true, special: 'navel', navelBirth: true });
+JENNY_PREGGO_FAMILIES['minepreggo:jenny_monster_slime_girl'] = /** @type {Family} */ ({ ...JENNY_PREGGO_FAMILIES['minepreggo:jenny_zombie_girl'], babyItem: 'minepreggo:baby_jenny_monster_slime_girl', clothes: true, special: 'navel' });
 export const GOBLIN_FAMILIES = Object.fromEntries(
   ['expandable_goblins:goblin_girl', 'expandable_goblins:imp_girl', 'expandable_goblins:bloatberry_girl'].map((id) => [
     id,

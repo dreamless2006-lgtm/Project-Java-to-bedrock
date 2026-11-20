@@ -160,7 +160,7 @@ export function chooseAction(player, target, item) {
   // help with the birth): one of your own tamed females, or any of the Jenny port's girls.
   // Jenny's Preggo Mobs: crouching with an empty hand on one you tamed, not yet pregnant, opens her
   // Wahoo menu (her positions, jenny/bed.js)
-  if (!id && player.isSneaking && family.scenes && isTamed(target) && (!data.pregnancy || (family.special === 'navel' && ripe(record)))) {
+  if (!id && player.isSneaking && family.scenes && isTamed(target) && (!data.pregnancy || (!!family.navelBirth && ripe(record)))) {
     return () => void openWahooMenu(player, record).catch((error) => console.warn(`[minepreggo] wahoo menu: ${error}`));
   }
   if (!id && player.isSneaking && data.pregnancy && (family.external || isTamed(target))) {

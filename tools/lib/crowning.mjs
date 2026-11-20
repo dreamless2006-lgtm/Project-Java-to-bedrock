@@ -143,7 +143,7 @@ export function crowningLines({ when, scale = FETUS_SCALE, strain = false, head 
  * How far out the baby is now: its depth, less a little between pushes (the player's own pushes, or
  * a push every three seconds for a mob).
  */
-const DEPTH = '(v.crown - math.min(1.2, 0.45 * v.crown) * (1.0 - (v.strain >= 0.0 ? v.strain : math.pow(math.max(0.0, math.sin(q.anim_time * 120.0)), 2.0))))';
+export const CROWN_DEPTH = '(v.crown - math.min(1.2, 0.45 * v.crown) * (1.0 - (v.strain >= 0.0 ? v.strain : math.pow(math.max(0.0, math.sin(q.anim_time * 120.0)), 2.0))))';
 
 /**
  * The crowning animations: `crowning` for the mod's birth on her back, whose legs close for a moment
@@ -152,7 +152,7 @@ const DEPTH = '(v.crown - math.min(1.2, 0.45 * v.crown) * (1.0 - (v.strain >= 0.
  */
 export function crowningAnimations() {
   const show = { scale: 'v.crowning ? v.crown_scale : 0.0' };
-  const out = (/** @type {number} */ k) => [0, k === 1 ? `-${DEPTH}` : `-${DEPTH} * (v.push >= 0.8 ? 1.0 : ${k})`, 0];
+  const out = (/** @type {number} */ k) => [0, k === 1 ? `-${CROWN_DEPTH}` : `-${CROWN_DEPTH} * (v.push >= 0.8 ? 1.0 : ${k})`, 0];
   return {
     [`animation.${MOD}.crowning`]: {
       loop: true,
@@ -164,7 +164,7 @@ export function crowningAnimations() {
     },
     [`animation.${MOD}.crowning_free`]: {
       loop: true,
-      bones: { crowning: show, crowning_slide: { position: [0, `-${DEPTH}`, 0] } },
+      bones: { crowning: show, crowning_slide: { position: [0, `-${CROWN_DEPTH}`, 0] } },
     },
   };
 }

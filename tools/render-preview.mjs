@@ -71,7 +71,7 @@ function allGeometries() {
 
 /** The client entity file of a girl (by slug) or of one of our females. */
 function clientEntity(/** @type {string} */ slug) {
-  for (const path of [join(RP, 'entity/jenny_port', `${slug}.json`), join(RP, 'entity', `${slug}.entity.json`)]) {
+  for (const path of [join(RP, 'entity/jenny_port', `${slug}.json`), join(RP, 'entity/jennypreggo_port', `${slug}.entity.json`), join(RP, 'entity', `${slug}.entity.json`)]) {
     if (existsSync(path)) return JSON.parse(readFileSync(path, 'utf8'))['minecraft:client_entity'].description;
   }
   throw new Error(`no client entity for ${slug}`);
@@ -87,11 +87,12 @@ const texture = decodePng(new Uint8Array(readFileSync(join(RP, `${d.textures[tex
 /** @type {Parameters<typeof renderParts>[0]} */
 const parts = [{ geometry: body, texture }];
 if (phase >= 0) {
-  const bellyId = d.geometry[`minepreggo_belly_0_p${phase}`] ?? d.geometry[`minepreggo_body_predefined_p${phase}`];
+  const bellyId = d.geometry[`minepreggo_belly_0_p${phase}`] ?? d.geometry[`minepreggo_body_predefined_p${phase}`] ?? d.geometry[`belly_p${phase}`];
   const belly = bellyId ? geometries.get(bellyId) : undefined;
   if (!belly) console.warn(`no belly geometry for phase ${phase} on ${who}`);
   else {
-    const bellyTexture = d.textures.minepreggo_belly ? decodePng(new Uint8Array(readFileSync(join(RP, `${d.textures.minepreggo_belly}.png`)))) : texture;
+    const bellyPath = d.textures.minepreggo_belly ?? d.textures.belly;
+    const bellyTexture = bellyPath ? decodePng(new Uint8Array(readFileSync(join(RP, `${bellyPath}.png`)))) : texture;
     parts.push({ geometry: belly, texture: bellyTexture });
   }
 }

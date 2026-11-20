@@ -75,6 +75,8 @@ export function poseController(/** @type {string[]} */ poses, /** @type {Record<
  * @property {'cube' | 'round'} [bellyStyle] her belly's style, instead of the one her chest suggests (tools/lib/belly-fit.mjs chestStyle)
  * @property {(image: any) => any} [bellySkin] changes her belly texture (given her skin-tone one)
  * @property {(body: import('./belly-fit.mjs').Body) => number[]} [opening] where her baby comes out instead of between her legs
+ * @property {string[]} [stillBones] bones her poses and moves leave alone (a slime's jelly, which has no legs to bend)
+ * @property {string} [material] her material, if not entity_alphatest (a slime's see-through jelly)
  * @property {{ animations?: Record<string, any>, ids?: Record<string, string>, pre?: string[], initialize?: string[], animate?: any[], controllers?: Record<string, any>, effects?: { sound_effects?: Record<string, any>, particle_effects?: Record<string, any> } }} [extra] more of her client entity
  */
 
@@ -126,10 +128,17 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
   /** @type {Record<string, any>} */
   const animations = {};
   const moveIds = /** @type {Record<string, string>} */ ({});
+  // (a copy without her still bones: the moves are shared between girls)
+  // (an animation left with nothing to move keeps a still channel: the game refuses an empty one)
+  const still = (/** @type {any} */ a) => {
+    if (!girl.stillBones || !a?.bones) return a;
+    const bones = Object.fromEntries(Object.entries(a.bones).filter(([b]) => !girl.stillBones?.includes(b)));
+    return { ...a, bones: Object.keys(bones).length ? bones : { body: { rotation: [0, 0, 0] } } };
+  };
   for (const [move, animation] of Object.entries(girl.moves)) {
     if (!animation) continue;
     moveIds[move] = `${prefix}.${move}`;
-    animations[moveIds[move]] = animation;
+    animations[moveIds[move]] = still(animation);
   }
   Object.assign(animations, kickPulseAnimations(girl.kicks));
   animations[`${prefix}.walk_jiggle`] = walkJiggleAnimation(girl.jiggle);
@@ -139,6 +148,8 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
   const poses = girlPoseAnimations({ id, geometry: main, idle: moveIds.idle ? animations[moveIds.idle] : undefined, sourceGeometry: creeper.geometry, sourceAnimations: creeper.animations, prefix, bellies: Object.fromEntries(PHASES.map((p) => [p, bellies[p]['minecraft:geometry'][0]])), swells });
   if (!poses) throw new Error(`${id}: no poses could be solved onto her rig`);
   const extras = poses.birthExtras;
+  for (const [name, pose] of Object.entries(poses)) if (name !== 'birthExtras' && pose?.animation) pose.animation = still(pose.animation);
+  if (extras) for (const extra of [extras.flair, extras.crowning]) extra.animation = still(extra.animation);
   for (const [, { id: poseId, animation }] of Object.entries(poses)) if (poseId) animations[poseId] = animation;
   if (extras) for (const { id: extraId, animation } of [extras.flair, extras.crowning]) animations[extraId] = animation;
   const crownScale = FETUS_SCALE * babyScale(body);
@@ -190,7 +201,7 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
     'minecraft:client_entity': {
       description: {
         identifier: id,
-        materials: { default: 'entity_alphatest' },
+        materials: { default: girl.material ?? 'entity_alphatest' },
         textures: { ...Object.fromEntries(outfits.map((o, i) => [`o${i}`, `textures/${port}/${o.name}`])), belly: `textures/${port}/${girl.key}_belly`, ...Object.fromEntries(Object.keys(girl.extraTextures ?? {}).map((n) => [n, `textures/${port}/${girl.key}_${n}`])) },
         geometry: { ...Object.fromEntries(outfits.map((o, i) => [`o${i}`, o.geometry['minecraft:geometry'][0].description.identifier])), ...Object.fromEntries(PHASES.map((p) => [`belly_p${p}`, `geometry.${MOD}.${girl.key}_belly_p${p}`])), ...Object.fromEntries(Object.entries(girl.extraGeometries ?? {}).map(([name, doc]) => [name, doc['minecraft:geometry'][0].description.identifier])) },
         animations: {

@@ -50,7 +50,9 @@
         "s40": "textures/port/children/skins/ender_son",
         "s41": "textures/port/children/skins/ender_daughter",
         "s42": "textures/port/children/skins/slime_son",
-        "s43": "textures/port/children/skins/slime_daughter"
+        "s43": "textures/port/children/skins/slime_daughter",
+        "s44": "textures/port/children/skins/jenny_monster_slime_girl_son",
+        "s45": "textures/port/children/skins/jenny_monster_slime_girl_daughter"
       },
       "geometry": {
         "son": "geometry.minepreggo.grown_son",

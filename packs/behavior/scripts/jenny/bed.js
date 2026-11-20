@@ -3,7 +3,7 @@
 
 import { system, world } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
-import { FAMILY_TAG, deliverNext, duplicateBabies, enterBirth, familyOf, getRecord, nameOf, particles, playSound, refreshClient, startLaying } from '../mobs/system.js';
+import { FAMILY_TAG, duplicateBabies, enterBirth, familyOf, getRecord, nameOf, particles, playSound, refreshClient, startLaying } from '../mobs/system.js';
 import { openPregnancyMenu } from './belly_scenes.js';
 import { canStartScene, requestScene, sceneOf } from './scenes.js';
 
@@ -90,6 +90,7 @@ const dress = (/** @type {import('@minecraft/server').Entity} */ entity, /** @ty
 
 const NAVEL_SCENE = 'minepreggo:navel_scene';
 const NAVEL_BURST = 'minepreggo:navel_burst';
+const NAVEL_BIRTH = 'minepreggo:navel_birth';
 const LABOR = new Set(['WATER_BREAKING', 'PREBIRTH', 'BIRTH']);
 /** Late enough for her navel scene to end in a birth: full term (P9), or in labor. */
 export const ripe = (/** @type {import('../mobs/state.js').MobRecord} */ record) => {
@@ -98,26 +99,32 @@ export const ripe = (/** @type {import('../mobs/state.js').MobRecord} */ record)
 };
 
 /**
- * Her navel birth, the fusion of her navel scene and a belly burst: her belly bursts open at her
- * navel (gone at once, in a blast of smoke and hearts) and every baby comes out of it together.
+ * Her navel birth, the fusion of her navel scene and a belly burst: her labor comes on at once and
+ * each baby crowns out of her navel (not between her legs), her navel opening wide with every push;
+ * with her last baby her belly bursts open at her navel, gone at once in a blast of smoke and hearts.
  * @param {import('../mobs/state.js').MobRecord} record
  */
 function navelBirth(record) {
   const { entity } = record;
-  flag(entity, NAVEL_BURST, true);
-  particles(entity, 'minecraft:large_explosion', 2);
-  particles(entity, 'minecraft:heart_particle', 8);
-  playSound(entity, 'random.explode', 0.4);
-  playSound(entity, 'random.pop', 1);
-  system.runTimeout(() => {
-    if (!entity.isValid) return;
-    if (startLaying(record)) {
-      if (record.data.pregnancy?.pain?.type !== 'BIRTH') enterBirth(record);
-      while (record.data.pregnancy?.birth) if (deliverNext(record)) break;
-      refreshClient(record);
-    }
+  if (!startLaying(record)) return;
+  if (record.data.pregnancy?.pain?.type !== 'BIRTH') enterBirth(record);
+  flag(entity, NAVEL_BIRTH, true);
+  particles(entity, 'minecraft:heart_particle', 4);
+  refreshClient(record);
+  const run = system.runInterval(() => {
+    if (!entity.isValid) return system.clearRun(run);
+    const p = record.data.pregnancy;
+    if (p?.birth && p.pain?.type === 'BIRTH') return;
+    // her last baby is out: the burst
+    system.clearRun(run);
+    flag(entity, NAVEL_BIRTH, false);
+    flag(entity, NAVEL_BURST, true);
+    particles(entity, 'minecraft:large_explosion', 2);
+    particles(entity, 'minecraft:heart_particle', 8);
+    playSound(entity, 'random.explode', 0.4);
+    playSound(entity, 'random.pop', 1);
     system.runTimeout(() => entity.isValid && flag(entity, NAVEL_BURST, false), 60);
-  }, 10);
+  }, 5);
 }
 const flag = (/** @type {import('@minecraft/server').Entity} */ entity, /** @type {string} */ property, /** @type {boolean} */ value) => {
   try {
@@ -173,7 +180,7 @@ export async function openWahooMenu(player, record) {
   const { entity } = record;
   const family = familyOf(entity);
   // at term or in labor (the monster creeper girl): her navel scene becomes her navel birth
-  const late = family?.special === 'navel' && ripe(record);
+  const late = !!family?.navelBirth && ripe(record);
   /** @type {{ label: string, pose?: string, special?: string, placement?: 'side', toggle?: boolean, menu?: boolean }[]} */
   const buttons = late ? [] : POSITIONS.map(([label, pose]) => ({ label, pose }));
   if (family?.special === 'navel') buttons.push({ label: late ? 'Navel Birth' : 'Navel', pose: 'scene_back', special: 'navel', placement: 'side' });
