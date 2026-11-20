@@ -64,6 +64,10 @@ export function poseController(/** @type {string[]} */ poses, /** @type {Record<
  * @property {boolean} [fireproof]
  * @property {string} family her own type family
  * @property {{ base_color: string, overlay_color: string }} [egg] her spawn egg's colours
+ * @property {(doc: any, phase: number) => void} [bellyHook] changes each of her belly geometries before it is written
+ * @property {Record<string, Uint8Array>} [extraTextures] more textures of hers (her undressed one), as Texture.<name>
+ * @property {string} [textureExpression] which texture her body is drawn with, instead of her outfit's
+ * @property {Record<string, any>} [properties] more actor properties of hers
  * @property {number} [grow] how much bigger than a player's her belly is (else by how tall she is: a thin, long-legged girl's stays smaller)
  * @property {number[]} [tone] her belly's skin tone, where her face is no guide to it
  * @property {'cube' | 'round'} [bellyStyle] her belly's style, instead of the one her chest suggests (tools/lib/belly-fit.mjs chestStyle)
@@ -111,7 +115,9 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
   const style = girl.bellyStyle ?? chestStyle(main) ?? 'round';
   const shell = (/** @type {any} */ fitted) => (style === 'cube' ? roundBelly(fitted, CUBE_BELLY) : smoothBelly(fitted, body));
   const bellies = PHASES.map((p) => addNewborn(shell(fitBelly(playerBodies[p], `geometry.${MOD}.${girl.key}_belly_p${p}`, body)), body, {}));
+  if (girl.bellyHook) bellies.forEach((doc, p) => girl.bellyHook?.(doc, p));
   PHASES.forEach((p) => writeJson(join(RP, 'models/entity', port, `${girl.key}_belly_p${p}.geo.json`), bellies[p]));
+  for (const [name, data] of Object.entries(girl.extraTextures ?? {})) write(join(RP, 'textures', port, `${girl.key}_${name}.png`), data);
 
   // her everyday animations, her babies' movements, her walk jiggle
   /** @type {Record<string, any>} */
@@ -161,7 +167,7 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
   const renderControllers = {
     [rcBody]: {
       arrays: { geometries: { 'Array.outfits': outfits.map((_, i) => `Geometry.o${i}`) }, textures: { 'Array.skins': outfits.map((_, i) => `Texture.o${i}`) } },
-      geometry: `Array.outfits[math.clamp(q.variant, 0, ${outfits.length - 1})]`, materials: [{ '*': 'Material.default' }], textures: [`Array.skins[math.clamp(q.variant, 0, ${outfits.length - 1})]`],
+      geometry: `Array.outfits[math.clamp(q.variant, 0, ${outfits.length - 1})]`, materials: [{ '*': 'Material.default' }], textures: [girl.textureExpression ?? `Array.skins[math.clamp(q.variant, 0, ${outfits.length - 1})]`],
     },
     [rcBelly]: {
       arrays: { geometries: { 'Array.bellies': PHASES.map((p) => `Geometry.belly_p${p}`) } },
@@ -181,7 +187,7 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
       description: {
         identifier: id,
         materials: { default: 'entity_alphatest' },
-        textures: { ...Object.fromEntries(outfits.map((o, i) => [`o${i}`, `textures/${port}/${o.name}`])), belly: `textures/${port}/${girl.key}_belly` },
+        textures: { ...Object.fromEntries(outfits.map((o, i) => [`o${i}`, `textures/${port}/${o.name}`])), belly: `textures/${port}/${girl.key}_belly`, ...Object.fromEntries(Object.keys(girl.extraTextures ?? {}).map((n) => [n, `textures/${port}/${girl.key}_${n}`])) },
         geometry: { ...Object.fromEntries(outfits.map((o, i) => [`o${i}`, o.geometry['minecraft:geometry'][0].description.identifier])), ...Object.fromEntries(PHASES.map((p) => [`belly_p${p}`, `geometry.${MOD}.${girl.key}_belly_p${p}`])) },
         animations: {
           ...Object.fromEntries(Object.entries(moveIds).map(([move, animId]) => [move, animId])),
@@ -218,7 +224,7 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
   write(join(BP, 'entities', port, `${girl.key}.json`), stringifyEntity({
     format_version: '1.21.0',
     'minecraft:entity': {
-      description: { identifier: id, is_spawnable: true, is_summonable: true, properties: { ...MINEPREGGO_PROPERTIES } },
+      description: { identifier: id, is_spawnable: true, is_summonable: true, properties: { ...MINEPREGGO_PROPERTIES, ...(girl.properties ?? {}) } },
       component_groups: {
         ...variants,
         [`${ns}:wild`]: {

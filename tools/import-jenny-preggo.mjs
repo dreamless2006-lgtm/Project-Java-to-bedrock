@@ -11,6 +11,7 @@
 import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { facesOf, part } from './lib/box-uv.mjs';
+import { decodePng, encodePng } from './lib/png.mjs';
 import { MOD } from './lib/belly-render.mjs';
 import { GIRL_BIRTHS } from './lib/girl-births.mjs';
 import { girlSources, portGirl } from './lib/girl-port.mjs';
@@ -38,9 +39,20 @@ const GIRLS = [
     treats: ['minecraft:chorus_fruit', 'minecraft:ender_pearl', 'minecraft:cake'], biomes: ['plains', 'desert', 'the_end'], egg: { base_color: '#161616', overlay_color: '#cc66ff' },
     // her body is thin for all her height, her skin black (her face shows her eyes)
     grow: 1.05, tone: [34, 28, 40] },
+  // the most curvaceous of them: her own clothes to take off, a navel that pops with every kick under
+  // ripples across her belly, and a scene of her own (scripts: jenny/bed.js)
+  { source: 'monster_creeper_girl', key: 'jenny_monster_creeper_girl', name: "Jenny's Monster Creeper Girl", birth: 'kum:bia',
+    kicks: { name: 'jp_monster_creeper', order: [3, 2, 0, 1, 4], rate: 1.4, emphasis: [1.5, 1.0, 1.2, 1.4, 0.8] },
+    treats: ['minecraft:gunpowder', 'minecraft:tnt', 'minecraft:cake'], biomes: ['plains', 'forest', 'meadow'], egg: { base_color: '#3da33a', overlay_color: '#ff66aa' },
+    curves: 'most', clothes: true, navel: true },
 ];
+/** How curvy: [bust growth, hips' slices across, hips' slices deep, waist, thighs' slices across, thighs' slices deep]. */
+const CURVES = {
+  curvy: { bust: 1.32, hips: [1.08, 1.18, 1.26, 1.3], hipsDeep: [1.04, 1.12, 1.18, 1.18], waist: 0.94, thighs: [1.3, 1.2, 1.1, 1.02], thighsDeep: [1.24, 1.16, 1.08, 1.0] },
+  most: { bust: 1.55, hips: [1.14, 1.3, 1.42, 1.48], hipsDeep: [1.08, 1.2, 1.3, 1.32], waist: 0.84, thighs: [1.42, 1.3, 1.16, 1.04], thighsDeep: [1.32, 1.22, 1.1, 1.0] },
+};
 /** Her bones -> the Jenny rig's (her own belly bone keeps out of the fitted belly's way). */
-const RENAME = /** @type {Record<string, string>} */ ({ body: 'upperBody', left_arm: 'armL', right_arm: 'armR', left_leg: 'legL', right_leg: 'legR', belly: 'tummy' });
+const RENAME = /** @type {Record<string, string>} */ ({ body: 'upperBody', left_arm: 'armL', right_arm: 'armR', left_leg: 'legL', right_leg: 'legR', left_front_leg: 'legL', right_front_leg: 'legR', belly: 'tummy' });
 
 const write = (/** @type {string} */ file, /** @type {string | Uint8Array} */ data) => {
   mkdirSync(dirname(file), { recursive: true });
@@ -81,8 +93,10 @@ function onJennyRig(/** @type {any} */ source, /** @type {string} */ id) {
   const byName = new Map(g.bones.map((/** @type {any} */ b) => [b.name, b]));
   const upper = byName.get('upperBody');
   const legTop = Math.max(byName.get('legL').pivot[1], byName.get('legR').pivot[1]);
-  for (const name of ['head', 'armL', 'armR']) if (!byName.get(name).parent) byName.get(name).parent = 'upperBody';
+  for (const name of ['head', 'armL', 'armR', 'flat_body']) if (byName.get(name) && !byName.get(name).parent) byName.get(name).parent = 'upperBody';
   for (const name of ['upperBody', 'legL', 'legR']) byName.get(name).parent = 'body';
+  // (anything else loose, a creeper's hind legs, hangs from her root)
+  for (const bone of g.bones) if (!bone.parent) bone.parent = 'body';
   g.bones.push({ name: 'torso', parent: 'upperBody', pivot: [...upper.pivot], cubes: upper.cubes ?? [] });
   delete upper.cubes;
   g.bones.unshift({ name: 'body', pivot: [0, legTop, 0] });
@@ -126,26 +140,77 @@ function taper(/** @type {any} */ cube, /** @type {any} */ bone, /** @type {numb
  * waist drawn in, hips flaring out over her seat, thighs full at the top and slimming to the knee,
  * each in her own texture.
  */
-function curvy(/** @type {any} */ g, /** @type {Map<string, any>} */ byName) {
+function curvy(/** @type {any} */ g, /** @type {Map<string, any>} */ byName, /** @type {typeof CURVES.curvy} */ k, /** @type {number} */ legTop) {
   const under = (/** @type {string} */ n) => [n, ...g.bones.filter((/** @type {any} */ b) => b.parent === n).flatMap((/** @type {any} */ b) => under(b.name))];
   for (const bone of byName.has('boobs') ? under('boobs').map((n) => byName.get(n)) : []) {
     bone.cubes = (bone.cubes ?? []).flatMap((/** @type {any} */ cube) => {
-      grow(cube, bone, [1.32, 1.32, 1.32], bone.pivot);
+      grow(cube, bone, [k.bust, k.bust, k.bust], bone.pivot);
       return taper(cube, bone, [0.82, 1, 1, 0.88], [0.7, 0.96, 1, 0.82]);
     });
   }
   const torso = byName.get('torso');
   if (torso?.cubes?.length) {
     const byHeight = [...torso.cubes].sort((a, b) => a.origin[1] - b.origin[1]);
-    const hips = byHeight[0], waist = byHeight[1];
+    // her hips: the lowest piece, and any other as low (a creeper's two); her waist the next above
+    const hips = byHeight.filter((c, i) => i === 0 || c.origin[1] < legTop + 2.5);
+    const waist = byHeight[hips.length];
     torso.cubes = torso.cubes.flatMap((/** @type {any} */ cube) =>
-      cube === hips ? taper(cube, torso, [1.08, 1.18, 1.26, 1.3], [1.04, 1.12, 1.18, 1.18], true)
-        : cube === waist && waist.size[1] <= 3 ? taper(cube, torso, [0.94], [1])
+      hips.includes(cube) ? taper(cube, torso, k.hips, k.hipsDeep, true)
+        : cube === waist && waist.size[1] <= 3 ? taper(cube, torso, [k.waist], [1])
         : [cube]);
   }
   for (const bone of ['legL', 'legR'].map((n) => byName.get(n)).filter(Boolean)) {
-    bone.cubes = (bone.cubes ?? []).flatMap((/** @type {any} */ cube) => (cube.size[1] >= 6 ? taper(cube, bone, [1.3, 1.2, 1.1, 1.02], [1.24, 1.16, 1.08, 1.0]) : [cube]));
+    bone.cubes = (bone.cubes ?? []).flatMap((/** @type {any} */ cube) => (cube.size[1] >= 5 ? taper(cube, bone, k.thighs, k.thighsDeep) : [cube]));
   }
+}
+
+/**
+ * Her clothes, painted over her own texture (she wore none): a dark crop top over her chest and bust,
+ * a short skirt over her hips, each keeping a little of her skin's pattern, with a lighter hem.
+ * @param {Uint8Array} png her texture @param {any} source her model (box UVs)
+ */
+function clothed(png, source) {
+  const image = decodePng(png);
+  const byName = new Map(source.bones.map((/** @type {any} */ b) => [b.name, b]));
+  const under = (/** @type {string} */ n) => [n, ...source.bones.filter((/** @type {any} */ b) => b.parent === n).flatMap((/** @type {any} */ b) => under(b.name))];
+  const body = byName.get('body');
+  const legTop = Math.max(...source.bones.filter((/** @type {any} */ b) => /leg/.test(b.name)).map((/** @type {any} */ b) => b.pivot[1]));
+  const paint = (/** @type {any} */ cube, /** @type {any} */ bone, /** @type {number[]} */ colour) => {
+    for (const face of Object.values(facesOf(cube, bone.mirror))) {
+      const u0 = Math.min(face.uv[0], face.uv[0] + face.uv_size[0]), v0 = Math.min(face.uv[1], face.uv[1] + face.uv_size[1]);
+      const w = Math.abs(face.uv_size[0]), h = Math.abs(face.uv_size[1]);
+      for (let y = Math.floor(v0); y < Math.ceil(v0 + h); y++) for (let x = Math.floor(u0); x < Math.ceil(u0 + w); x++) {
+        if (x < 0 || y < 0 || x >= image.width || y >= image.height) continue;
+        const i = (y * image.width + x) * 4;
+        const shade = 0.75 + 0.25 * ((image.data[i] + image.data[i + 1] + image.data[i + 2]) / 765);
+        const hem = y === Math.floor(v0) || y === Math.ceil(v0 + h) - 1 ? 1.6 : 1;
+        for (let c = 0; c < 3; c++) image.data[i + c] = Math.min(255, Math.round(colour[c] * shade * hem));
+        image.data[i + 3] = 255;
+      }
+    }
+  };
+  for (const cube of body?.cubes ?? []) paint(cube, body, cube.origin[1] < legTop + 2.5 ? [40, 34, 58] : [34, 34, 40]);
+  for (const name of byName.has('boobs') ? under('boobs') : []) for (const cube of byName.get(name).cubes ?? []) paint(cube, byName.get(name), [34, 34, 40]);
+  return encodePng(image);
+}
+
+/**
+ * Her navel: a little knot on the front of each belly, at its middle a little below, in the belly's
+ * skin (the navel the belly texture draws), that pops out with every kick.
+ */
+function withNavel(/** @type {any} */ doc) {
+  const g = doc['minecraft:geometry'][0];
+  const belly = g.bones.find((/** @type {any} */ b) => b.name === 'belly');
+  const cubes = belly?.cubes ?? [];
+  if (!cubes.length) return;
+  const lo = Math.min(...cubes.map((/** @type {any} */ c) => c.origin[1])), hi = Math.max(...cubes.map((/** @type {any} */ c) => c.origin[1] + c.size[1]));
+  const y = lo + (hi - lo) * 0.42;
+  const front = Math.min(...cubes.filter((/** @type {any} */ c) => c.origin[0] <= 0 && c.origin[0] + c.size[0] >= 0 && c.origin[1] <= y && c.origin[1] + c.size[1] >= y).map((/** @type {any} */ c) => c.origin[2]));
+  if (!Number.isFinite(front)) return;
+  const size = g.description.texture_width;
+  const spot = { uv: [round(size / 2 - 1), round(size * 0.6)], uv_size: [2, 2] };
+  g.bones.push({ name: 'mp_navel', parent: 'belly', pivot: [0, round(y), round(front)],
+    cubes: [{ origin: [-0.6, round(y - 0.6), round(front - 0.45)], size: [1.2, 1.2, 0.6], uv: { north: spot, south: spot, east: spot, west: spot, up: spot, down: spot } }] });
 }
 
 const jennyFile = join(RP, 'animations/jenny_port/jenny.animation.json');
@@ -168,11 +233,29 @@ for (const girl of GIRLS) {
   const client = JSON.parse(readFileSync(join(RP, 'entity', `${girl.source}.entity.json`), 'utf8'))['minecraft:client_entity'].description;
   const texturePath = Object.values(client.textures).find((t) => !/expression|_p\d|ill_|_all/.test(String(t))) ?? Object.values(client.textures)[0];
   const { g, byName, legTop } = onJennyRig(source, `geometry.${MOD}.${girl.key}`);
-  curvy(g, byName);
+  curvy(g, byName, CURVES[girl.curves ?? 'curvy'], legTop);
   GIRL_BIRTHS[`${MOD}:${girl.key}`] = { ...GIRL_BIRTHS[girl.birth], name: girl.key };
+  const skin = new Uint8Array(readFileSync(join(RP, `${texturePath}.png`)));
+  const prefix = `animation.${MOD}.${PORT.replace('_port', '')}_${girl.key}`;
+  // her navel's pop and the ripples over her belly while her babies kick
+  const navel = girl.navel ? {
+    animations: { [`${prefix}.navel`]: { loop: true, bones: {
+      mp_navel: { scale: '1.0 + v.kick_w * 0.9 * math.pow(math.max(0.0, math.sin(q.life_time * 300.0)), 4.0)', position: [0, 0, '-v.kick_w * 0.7 * math.pow(math.max(0.0, math.sin(q.life_time * 300.0)), 4.0)'] },
+      belly: { scale: ['1.0 + 0.035 * v.kick_w * math.sin(q.life_time * 170.0)', '1.0 + 0.035 * v.kick_w * math.sin(q.life_time * 170.0 + 90.0)', 1.0] },
+    } } },
+    ids: { mp_navel: `${prefix}.navel` },
+    animate: [{ mp_navel: 'v.bp >= 0' }],
+  } : undefined;
   const out = portGirl(sources, { BP, RP, port: PORT, ns: MOD }, {
     key: girl.key, name: girl.name,
-    outfits: [{ name: girl.key, geometry: { format_version: '1.16.0', 'minecraft:geometry': [g] }, texture: new Uint8Array(readFileSync(join(RP, `${texturePath}.png`))) }],
+    outfits: [{ name: girl.key, geometry: { format_version: '1.16.0', 'minecraft:geometry': [g] }, texture: girl.clothes ? clothed(skin, source) : skin }],
+    ...(girl.clothes ? {
+      // dressed, or her own skin once undressed (the Wahoo menu, scripts: jenny/bed.js)
+      extraTextures: { nude: skin },
+      textureExpression: `q.property('${MOD}:undressed') ? Texture.nude : Texture.o0`,
+      properties: { [`${MOD}:undressed`]: { type: 'bool', default: false, client_sync: true } },
+    } : {}),
+    ...(girl.navel ? { bellyHook: withNavel, extra: navel } : {}),
     moves, jiggle: { chest: ['boobs'], belly: ['belly'] },
     birth: `${MOD}:${girl.key}`, kicks: girl.kicks, treats: girl.treats, biomes: girl.biomes,
     family: 'jenny_preggo_mob', egg: girl.egg, bellyStyle: 'round', ...(girl.grow ? { grow: girl.grow } : {}), ...(girl.tone ? { tone: girl.tone } : {}),

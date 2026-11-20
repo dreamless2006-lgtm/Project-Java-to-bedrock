@@ -3,8 +3,8 @@
 
 import { system, world } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
-import { FAMILY_TAG, familyOf, getRecord, nameOf } from '../mobs/system.js';
-import { canStartScene, requestScene } from './scenes.js';
+import { FAMILY_TAG, duplicateBabies, familyOf, getRecord, nameOf, particles, playSound } from '../mobs/system.js';
+import { canStartScene, requestScene, sceneOf } from './scenes.js';
 
 /** @typedef {import('@minecraft/server').Block} Block */
 /** @typedef {import('@minecraft/server').Player} Player */
@@ -71,6 +71,53 @@ export { world };
 /** The Wahoo menu's positions: her pose (tools/lib/scene-poses.mjs), as the Jenny girls' scenes offer. */
 const POSITIONS = /** @type {[string, string][]} */ ([['Doggy', 'scene'], ['Missionary', 'scene_back'], ['Sitting', 'scene_sit']]);
 
+const UNDRESSED = 'minepreggo:undressed';
+const undressedNow = (/** @type {import('@minecraft/server').Entity} */ entity) => {
+  try {
+    return entity.getProperty(UNDRESSED) === true;
+  } catch {
+    return false;
+  }
+};
+const dress = (/** @type {import('@minecraft/server').Entity} */ entity, /** @type {boolean} */ undressed) => {
+  try {
+    entity.setProperty(UNDRESSED, undressed);
+  } catch {
+    // gone
+  }
+};
+
+/**
+ * Watches her scene to its end: she undresses for it (and dresses again after, as she was), and the
+ * monster creeper girl's own (special) hisses like a lit fuse through it and ends in a harmless blast
+ * of smoke, leaving her with a baby more.
+ * @param {import('../mobs/state.js').MobRecord} record @param {boolean} clothes @param {string | undefined} special
+ */
+function watchScene(record, clothes, special) {
+  const { entity } = record;
+  const wasUndressed = undressedNow(entity);
+  if (clothes) dress(entity, true);
+  let ticks = 0;
+  const run = system.runInterval(() => {
+    ticks += 20;
+    if (!entity.isValid) return system.clearRun(run);
+    if (sceneOf(entity)) {
+      if (special && ticks % 160 === 0) {
+        playSound(entity, 'random.fuse', 0.6);
+        particles(entity, 'minecraft:villager_happy', 3);
+      }
+      return;
+    }
+    system.clearRun(run);
+    if (special && record.data.pregnancy) {
+      particles(entity, 'minecraft:large_explosion', 2);
+      playSound(entity, 'random.explode', 0.35);
+      duplicateBabies(record, 0);
+    }
+    if (clothes && !wasUndressed) dress(entity, false);
+  }, 20);
+}
+
 /**
  * The Wahoo menu (Jenny's Preggo Mobs, crouching with an empty hand on one you tamed): her positions,
  * like the Jenny girls' scenes; the scene plays where she stands, no bed needed, and she comes out of
@@ -78,18 +125,25 @@ const POSITIONS = /** @type {[string, string][]} */ ([['Doggy', 'scene'], ['Miss
  * @param {import('@minecraft/server').Player} player @param {import('../mobs/state.js').MobRecord} record
  */
 export async function openWahooMenu(player, record) {
+  const { entity } = record;
+  const family = familyOf(entity);
+  /** @type {{ label: string, pose?: string, special?: string, toggle?: boolean }[]} */
+  const buttons = POSITIONS.map(([label, pose]) => ({ label, pose }));
+  if (family?.special === 'creeper') buttons.push({ label: 'Creeper Special', pose: 'scene_back', special: 'creeper' });
+  if (family?.clothes) buttons.push({ label: undressedNow(entity) ? 'Dress her' : 'Undress her', toggle: true });
+  const menu = new ActionFormData().title('Wahoo').body('Choose a position.');
+  for (const { label } of buttons) menu.button(label);
+  const answer = await menu.show(/** @type {any} */ (player));
+  if (answer.canceled || answer.selection === undefined || !entity.isValid) return;
+  const chosen = buttons[answer.selection];
+  if (chosen.toggle) return dress(entity, !undressedNow(entity));
   const busy = canStartScene(record, player);
   if (busy) {
-    player.onScreenDisplay.setActionBar({ translate: busy, with: { rawtext: [nameOf(record.entity)] } });
+    player.onScreenDisplay.setActionBar({ translate: busy, with: { rawtext: [nameOf(entity)] } });
     return;
   }
-  const menu = new ActionFormData().title('Wahoo').body('Choose a position.');
-  for (const [label] of POSITIONS) menu.button(label);
-  const answer = await menu.show(/** @type {any} */ (player));
-  const { entity } = record;
-  if (answer.canceled || answer.selection === undefined || !entity.isValid || canStartScene(record, player)) return;
   const at = entity.location;
   // (where she stands, as if on a bed there: the scene sets her 9/16 above a bed's block)
   const bed = { location: { x: Math.floor(at.x), y: Math.floor(at.y) - 0.5625, z: Math.floor(at.z) }, facing: facingFromYaw(player.getRotation().y) };
-  requestScene(record, player, bed, POSITIONS[answer.selection][1]);
+  if (requestScene(record, player, bed, chosen.pose) === 'now') watchScene(record, !!family?.clothes, chosen.special);
 }
