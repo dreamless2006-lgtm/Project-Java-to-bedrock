@@ -1,7 +1,8 @@
 // Jenny's Preggo Mobs: curvy versions of Minepreggo's own girls (the zombie, creeper and slime girls
 // and the ender woman, from the models tools/import-jar.mjs converts), as mobs of their own beside the
-// originals, built like the Jenny Mod's and InsanityV's women: wider hips and a rounded seat, thicker
-// thighs, a fuller bust rounded off instead of a box, all of it jiggling as she walks, Jenny's own
+// originals, built like the Jenny Mod's and InsanityV's women: her pieces tapered instead of boxed (a
+// drawn-in waist, hips flaring over her seat, full thighs slimming to the knee, a fuller bust rounded
+// at top and bottom), her chest and belly jiggling as she walks, Jenny's own
 // idle and walk, and the whole pregnancy of the imported girls (tools/lib/girl-port.mjs: a round belly
 // fitted to her, kicks, the pregnancy and scene poses, a Jenny girl's birth). Made at import time from
 // the imported models; nothing of them is committed.
@@ -96,50 +97,54 @@ function grow(/** @type {any} */ cube, /** @type {any} */ bone, /** @type {numbe
   cube.origin = cube.origin.map((/** @type {number} */ o, /** @type {number} */ i) => round(about[i] + (o - about[i]) * k[i]));
   cube.size = cube.size.map((/** @type {number} */ s, /** @type {number} */ i) => round(s * k[i]));
 }
-/** A smaller cube on one side of a cube, in the same texture (for rounding a box off). */
-function cap(/** @type {any} */ cube, /** @type {number[]} */ size, /** @type {number[]} */ origin, /** @type {string} */ face) {
-  const f = cube.uv[face] ?? cube.uv.north;
-  const p = part(f, 0.15, 0.85, 0.15, 0.85);
-  return { origin: origin.map(round), size: size.map(round), uv: { north: p, south: p, east: p, west: p, up: p, down: p } };
+/**
+ * A cube cut into horizontal slices (top first), each `widths[i]` as wide and `depths[i]` as deep,
+ * about the cube's middle (or, `back`, keeping its front where it is and growing behind), each with
+ * its own band of the cube's texture: a curve instead of a box.
+ */
+function taper(/** @type {any} */ cube, /** @type {any} */ bone, /** @type {number[]} */ widths, /** @type {number[]} */ depths, back = false) {
+  const faces = Array.isArray(cube.uv) ? facesOf(cube, bone.mirror) : cube.uv;
+  const [x, y, z] = cube.origin, [w, h, d] = cube.size;
+  const n = widths.length;
+  return widths.map((wk, i) => {
+    const band = (/** @type {string} */ side) => (faces[side] ? part(faces[side], 0, 1, i / n, (i + 1) / n) : undefined);
+    const sw = w * wk, sd = d * depths[i];
+    /** @type {Record<string, any>} */
+    const uv = { north: band('north'), south: band('south'), east: band('east'), west: band('west'), up: faces.up ?? band('north'), down: faces.down ?? band('north') };
+    for (const k of Object.keys(uv)) if (!uv[k]) delete uv[k];
+    return {
+      ...(cube.inflate ? { inflate: cube.inflate } : {}),
+      origin: [round(x + w / 2 - sw / 2), round(y + h - (h * (i + 1)) / n), round(back ? z : z + d / 2 - sd / 2)],
+      size: [round(sw), round(h / n), round(sd)],
+      uv,
+    };
+  });
 }
 
 /**
- * Her curves: a fuller bust rounded off (each breast's box grown, with a smaller cap on its front and
- * one under it), wider hips (her torso's lowest piece), a rounded seat behind them, thicker thighs
- * (her legs, and a fuller piece at their top), each in her own texture.
+ * Her curves, each piece tapered rather than boxed: a fuller bust rounded at its top and bottom, a
+ * waist drawn in, hips flaring out over her seat, thighs full at the top and slimming to the knee,
+ * each in her own texture.
  */
-function curvy(/** @type {any} */ g, /** @type {Map<string, any>} */ byName, /** @type {number} */ legTop) {
+function curvy(/** @type {any} */ g, /** @type {Map<string, any>} */ byName) {
   const under = (/** @type {string} */ n) => [n, ...g.bones.filter((/** @type {any} */ b) => b.parent === n).flatMap((/** @type {any} */ b) => under(b.name))];
   for (const bone of byName.has('boobs') ? under('boobs').map((n) => byName.get(n)) : []) {
-    const caps = [];
-    for (const cube of bone.cubes ?? []) {
-      grow(cube, bone, [1.42, 1.42, 1.42], bone.pivot);
-      const [x, y, z] = cube.origin, [w, h, d] = cube.size;
-      caps.push(cap(cube, [w * 0.72, h * 0.72, d * 0.3], [x + w * 0.14, y + h * 0.12, z - d * 0.26], 'north'));
-      caps.push(cap(cube, [w * 0.8, h * 0.28, d * 0.8], [x + w * 0.1, y - h * 0.2, z + d * 0.08], 'down'));
-    }
-    bone.cubes = [...(bone.cubes ?? []), ...caps];
+    bone.cubes = (bone.cubes ?? []).flatMap((/** @type {any} */ cube) => {
+      grow(cube, bone, [1.32, 1.32, 1.32], bone.pivot);
+      return taper(cube, bone, [0.82, 1, 1, 0.88], [0.7, 0.96, 1, 0.82]);
+    });
   }
   const torso = byName.get('torso');
-  const hips = [...(torso?.cubes ?? [])].sort((a, b) => a.origin[1] - b.origin[1])[0];
-  if (hips) {
-    grow(hips, torso, [1.38, 1, 1.18], [0, hips.origin[1], hips.origin[2] + hips.size[2] / 2]);
-    // her seat: a rounded piece behind her hips, cut from their back
-    const [x, y, z] = hips.origin, [w, h, d] = hips.size;
-    const back = hips.uv.south ?? hips.uv.north;
-    const seat = part(back, 0.1, 0.9, 0.2, 1);
-    g.bones.push({ name: 'mp_seat', parent: 'upperBody', pivot: [0, round(legTop), round(z + d)],
-      cubes: [{ origin: [round(x + w * 0.08), round(y - 1.2), round(z + d - 0.4)], size: [round(w * 0.84), round(Math.max(3, h + 1)), 1.8], uv: { north: seat, south: seat, east: seat, west: seat, up: seat, down: seat } }] });
+  if (torso?.cubes?.length) {
+    const byHeight = [...torso.cubes].sort((a, b) => a.origin[1] - b.origin[1]);
+    const hips = byHeight[0], waist = byHeight[1];
+    torso.cubes = torso.cubes.flatMap((/** @type {any} */ cube) =>
+      cube === hips ? taper(cube, torso, [1.08, 1.18, 1.26, 1.3], [1.04, 1.12, 1.18, 1.18], true)
+        : cube === waist && waist.size[1] <= 3 ? taper(cube, torso, [0.94], [1])
+        : [cube]);
   }
   for (const bone of ['legL', 'legR'].map((n) => byName.get(n)).filter(Boolean)) {
-    const main = [...(bone.cubes ?? [])].sort((a, b) => b.size[1] - a.size[1])[0];
-    for (const cube of bone.cubes ?? []) grow(cube, bone, [1.22, 1, 1.2], [cube.origin[0] + cube.size[0] / 2, cube.origin[1], cube.origin[2] + cube.size[2] / 2]);
-    if (!main) continue;
-    // a fuller thigh: the top of her leg, wider still
-    const [x, y, z] = main.origin, [w, h, d] = main.size;
-    const front = part(main.uv.north, 0, 1, 0, 0.4);
-    const top = Math.min(5, h * 0.45);
-    bone.cubes.push({ origin: [round(x - w * 0.16), round(y + h - top), round(z - d * 0.12)], size: [round(w * 1.32), round(top), round(d * 1.24)], uv: { north: front, south: front, east: front, west: front, up: front, down: front } });
+    bone.cubes = (bone.cubes ?? []).flatMap((/** @type {any} */ cube) => (cube.size[1] >= 6 ? taper(cube, bone, [1.3, 1.2, 1.1, 1.02], [1.24, 1.16, 1.08, 1.0]) : [cube]));
   }
 }
 
@@ -163,12 +168,12 @@ for (const girl of GIRLS) {
   const client = JSON.parse(readFileSync(join(RP, 'entity', `${girl.source}.entity.json`), 'utf8'))['minecraft:client_entity'].description;
   const texturePath = Object.values(client.textures).find((t) => !/expression|_p\d|ill_|_all/.test(String(t))) ?? Object.values(client.textures)[0];
   const { g, byName, legTop } = onJennyRig(source, `geometry.${MOD}.${girl.key}`);
-  curvy(g, byName, legTop);
+  curvy(g, byName);
   GIRL_BIRTHS[`${MOD}:${girl.key}`] = { ...GIRL_BIRTHS[girl.birth], name: girl.key };
   const out = portGirl(sources, { BP, RP, port: PORT, ns: MOD }, {
     key: girl.key, name: girl.name,
     outfits: [{ name: girl.key, geometry: { format_version: '1.16.0', 'minecraft:geometry': [g] }, texture: new Uint8Array(readFileSync(join(RP, `${texturePath}.png`))) }],
-    moves, jiggle: { chest: ['boobs'], belly: ['belly'], buttRoot: ['mp_seat'] },
+    moves, jiggle: { chest: ['boobs'], belly: ['belly'] },
     birth: `${MOD}:${girl.key}`, kicks: girl.kicks, treats: girl.treats, biomes: girl.biomes,
     family: 'jenny_preggo_mob', egg: girl.egg, bellyStyle: 'round', ...(girl.grow ? { grow: girl.grow } : {}), ...(girl.tone ? { tone: girl.tone } : {}),
   });
