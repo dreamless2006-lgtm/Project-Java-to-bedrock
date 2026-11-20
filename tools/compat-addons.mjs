@@ -90,6 +90,7 @@ const GROWN = `q.property('${MOD}:female') == 2 && !q.is_baby`;
  * @property {number} femaleDefault the minepreggo:female property's default (0: the script rolls it)
  * @property {boolean} build a woman's build (slimmer arms, bust, hips) on her model
  * @property {'cube' | 'round'} bellyStyle @property {Set<string>} skipRigs
+ * @property {string} [separate] its mobs replace vanilla ones: give them their own ids in this namespace instead (the vanilla mobs stay as they are)
  * @property {boolean} [merge] the add-on itself goes into our packs, under our files: one add-on to install instead of two
  * @property {boolean} [armless] its girls may have no arms (the creeper: her belly, kicks and burst, poses if they solve)
  * @property {(id: string) => boolean} skip mob types left as they are
@@ -108,12 +109,12 @@ const ADDONS = {
   },
   girlmob: {
     title: 'Girl Mob', name: 'Girl Mob + Minepreggo', description: "AntiGM's Girl Mob (v0.4.7), its girls pregnant in Minepreggo's pregnancy system, each in her own way. Needs Minepreggo; use it instead of Girl Mob.", merge: true,
-    vendor: 'vendor/girlmob', dir: 'minepreggo_girlmob', prefix: 'girlmob',
+    vendor: 'vendor/girlmob', dir: 'minepreggo_girlmob', prefix: 'girlmob', separate: 'girlmob',
     ids: { bp: '07598f2c-d0b0-4c7d-889c-e742806b6089', bpData: '5e748bbb-4a63-4b0f-87f7-4e2f2d38ea52', rp: 'dbda3fe3-4dc1-45ee-99de-5006a256f65d', rpResources: 'df822d24-9290-4ce8-b496-368d35603a06' },
     female: GROWN, male: `!(${GROWN})`, femaleDefault: 2, build: false, bellyStyle: 'round', armless: true,
-    skipRigs: new Set(), skip: (id) => !id.startsWith('minecraft:') || CHILD_SIZED.has(id) || id === 'minecraft:player',
+    skipRigs: new Set(), skip: (id) => !id.startsWith('girlmob:') || CHILD_SIZED.has(id.replace(/^girlmob:/, 'minecraft:')),
     women: (_, id) => {
-      const girl = GIRL_MOB[id.replace(/^minecraft:/, '')] ?? { type: 'normal', shape: 'round' };
+      const girl = GIRL_MOB[id.replace(/^(minecraft|girlmob):/, '')] ?? { type: 'normal', shape: 'round' };
       return { ...girl, birth: TYPE_BIRTHS[girl.type] };
     },
   },
@@ -228,6 +229,31 @@ function packsOf(zip) {
 }
 const packs = packsOf(unzipSync(new Uint8Array(readFileSync(join(VENDOR, archive)))));
 if (!packs.behavior || !packs.resource) throw new Error(`${archive}: expected a behavior and a resource pack`);
+
+// ---- its own mobs, apart from the vanilla ones they replaced (separate) ---------------------------------
+// Each vanilla mob it redefines becomes a mob of its own (minecraft:zombie -> girlmob:zombie), throughout
+// its files: definitions, transformations, commands' selectors, translations. It keeps the vanilla
+// mob's built-in behaviour (runtime_identifier), and gets a spawn rule and a spawn egg.
+/** @type {Map<string, string>} vanilla id -> its own */
+const renamed = new Map();
+if (addon.separate) {
+  for (const [path, data] of Object.entries(packs.behavior.files)) {
+    if (!path.startsWith('entities/') || !path.endsWith('.json')) continue;
+    const id = parse(strFromU8(data))['minecraft:entity']?.description?.identifier;
+    if (id?.startsWith('minecraft:') && id !== 'minecraft:player') renamed.set(id, `${addon.separate}:${id.slice(10)}`);
+  }
+  const names = [...renamed.keys()].map((id) => id.slice(10)).sort((a, b) => b.length - a.length).join('|');
+  const ids = new RegExp(`(^|[^a-z_:])minecraft:(${names})(?![a-z_0-9])`, 'g');
+  const types = new RegExp(`(type\\s*=\\s*!?)(${names})(?![a-z_0-9:])`, 'g');
+  for (const kind of /** @type {const} */ (['behavior', 'resource'])) {
+    for (const [path, data] of Object.entries(packs[kind].files)) {
+      if (!/\.(json|lang|mcfunction)$/.test(path) || path === 'manifest.json') continue;
+      const text = strFromU8(data);
+      const out = text.replace(ids, `$1${addon.separate}:$2`).replace(types, `$1${addon.separate}:$2`);
+      if (out !== text) packs[kind].files[path] = new TextEncoder().encode(out);
+    }
+  }
+}
 const theirs = (/** @type {'behavior' | 'resource'} */ kind, /** @type {string} */ top) => Object.entries(packs[kind].files).filter(([path]) => path.startsWith(`${top}/`) && path.endsWith('.json')).map(([path, data]) => ({ path, doc: parse(strFromU8(data)) }));
 
 // ---- the geometries: the add-on's own and the vanilla ones it borrows ------------------------------
@@ -629,7 +655,7 @@ for (const { path, doc } of theirs('resource', 'entity')) {
   const texturePath = /** @type {string | undefined} */ (d.textures?.default ?? Object.values(d.textures ?? {})[0]);
   const png = texturePath && packs.resource.files[`${texturePath}.png`];
   // (a girl whose face is no guide to her skin has hers given)
-  const tone = GIRL_MOB[d.identifier.replace(/^minecraft:/, '')]?.tone ?? (png ? skinTone(decodePng(png), rig.geometry) : [224, 188, 160]);
+  const tone = GIRL_MOB[d.identifier.replace(/^(minecraft|girlmob):/, '')]?.tone ?? (png ? skinTone(decodePng(png), rig.geometry) : [224, 188, 160]);
   const toneKey = tone.map((c) => c.toString(16).padStart(2, '0')).join('');
   if (!bellySkins.has(toneKey)) {
     const skin = `textures/${DIR}/belly_${toneKey}`;
@@ -698,6 +724,8 @@ for (const { path, doc } of theirs('resource', 'entity')) {
 
   // the behaviour: the pregnancy's properties and events, and the family our mob system looks for
   const e = behavior.doc['minecraft:entity'];
+  const vanilla = [...renamed].find(([, own]) => own === d.identifier)?.[0];
+  if (vanilla) e.description.runtime_identifier = vanilla;
   e.description.properties = { ...(e.description.properties ?? {}), ...MINEPREGGO_PROPERTIES, [`${MOD}:female`]: { type: 'int', range: [0, 2], default: addon.femaleDefault, client_sync: true } };
   for (const group of [e.components, ...Object.values(e.component_groups ?? {})]) {
     const family = group?.['minecraft:type_family'];
@@ -726,11 +754,73 @@ if (addon.merge) {
   for (const [kind, out] of /** @type {const} */ ([['behavior', OBP], ['resource', ORP]])) {
     for (const [path, data] of Object.entries(packs[kind].files)) {
       if (path === 'manifest.json' || existsSync(join(out, path))) continue;
+      // (apart from the vanilla mobs: its client entities of vanilla ones are left out; the player's
+      // is ours, with her belly. Its player behaviour stays: its scenes run through it)
+      if (addon.separate && kind === 'resource' && path.startsWith('entity/') && /"identifier"\s*:\s*"minecraft:/.test(strFromU8(data))) continue;
       writeBytes(join(out, path), data);
     }
   }
 }
 const engine = addon.merge ? packs.behavior.manifest.header.min_engine_version : ours.bp.min_engine_version;
+// her own mobs' finishing (separate): the vanilla mob's built-in behaviour, a spawn rule, a spawn egg,
+// a name ("Zombie Girl")
+if (addon.separate) {
+  /** Where each spawns: [biome tags, monster (dark) or animal (daylight), weight]; none: not on its own (summoned, like the vex). */
+  const WHERE = /** @type {Record<string, [string[], 'monster' | 'animal', number] | undefined>} */ ({
+    zombie: [['monster'], 'monster', 15], skeleton: [['monster'], 'monster', 15], spider: [['monster'], 'monster', 12], creeper: [['monster'], 'monster', 12],
+    enderman: [['monster', 'the_end'], 'monster', 6], witch: [['monster'], 'monster', 4], husk: [['desert'], 'monster', 15], stray: [['frozen'], 'monster', 15],
+    drowned: [['ocean', 'river'], 'monster', 10], cave_spider: [['monster'], 'monster', 4], slime: [['swamp'], 'monster', 6],
+    pillager: [['taiga', 'roofed'], 'monster', 4], vindicator: [['roofed', 'taiga'], 'monster', 3], evocation_illager: [['roofed'], 'monster', 2],
+    blaze: [['nether'], 'monster', 8], piglin: [['nether'], 'monster', 10], piglin_brute: [['nether'], 'monster', 3], wither_skeleton: [['nether'], 'monster', 6],
+    cow: [['animal'], 'animal', 8], pig: [['animal'], 'animal', 8], sheep: [['animal'], 'animal', 8], chicken: [['animal'], 'animal', 8],
+    horse: [['plains', 'savanna'], 'animal', 6], fox: [['taiga'], 'animal', 8], wolf: [['forest', 'taiga'], 'animal', 6], bee: [['flower_forest', 'plains'], 'animal', 4],
+    villager_v2: [['plains', 'desert', 'savanna', 'taiga'], 'animal', 4], wandering_trader: [['plains', 'savanna'], 'animal', 2],
+    iron_golem: [['plains'], 'animal', 2], snow_golem: [['frozen'], 'animal', 2],
+  });
+  const title = (/** @type {string} */ n) => n.replace(/_v2$/, '').replace('evocation_illager', 'evoker').split('_').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+  const lang = [`## ${addon.title}'s girls, their own mobs (tools/compat-addons.mjs)`];
+  for (const file of walk(join(OBP, 'entities')).filter((f) => f.endsWith('.json'))) {
+    const doc = parse(readFileSync(join(OBP, 'entities', file), 'utf8'));
+    const e = doc['minecraft:entity'];
+    const vanilla = [...renamed].find(([, own]) => own === e?.description?.identifier)?.[0];
+    if (!vanilla) continue;
+    if (!e.description.runtime_identifier) {
+      e.description.runtime_identifier = vanilla;
+      writeBytes(join(OBP, 'entities', file), new TextEncoder().encode(stringifyEntity(doc)));
+    }
+    const name = vanilla.slice(10);
+    lang.push(`entity.${e.description.identifier}.name=${title(name)} Girl`, `item.spawn_egg.entity.${e.description.identifier}.name=${title(name)} Girl Spawn Egg`);
+    const where = WHERE[name];
+    const hasRule = walk(join(OBP, 'spawn_rules')).some((f) => readFileSync(join(OBP, 'spawn_rules', f), 'utf8').includes(`"${e.description.identifier}"`));
+    if (!where || hasRule) continue;
+    const [biomes, kind, weight] = where;
+    writeJson(join(OBP, 'spawn_rules', DIR, `${name}.json`), {
+      format_version: '1.8.0',
+      'minecraft:spawn_rules': {
+        description: { identifier: e.description.identifier, population_control: kind },
+        conditions: [{
+          ...(name === 'drowned' ? { 'minecraft:spawns_underwater': {} } : { 'minecraft:spawns_on_surface': {} }),
+          ...(kind === 'monster' && name !== 'drowned' ? { 'minecraft:spawns_underground': {} } : {}),
+          'minecraft:brightness_filter': kind === 'monster' && !biomes.includes('nether') ? { min: 0, max: 7, adjust_for_weather: true } : { min: 0, max: 15, adjust_for_weather: false },
+          ...(kind === 'monster' ? { 'minecraft:difficulty_filter': { min: 'easy', max: 'hard' } } : {}),
+          'minecraft:weight': { default: weight },
+          'minecraft:herd': { min_size: 1, max_size: 2 },
+          'minecraft:biome_filter': { any_of: biomes.map((b) => ({ test: 'has_biome_tag', value: b })) },
+        }],
+      },
+    });
+  }
+  // a spawn egg for each, where its client entity has none
+  for (const file of walk(join(ORP, 'entity')).filter((f) => f.endsWith('.json'))) {
+    const doc = parse(readFileSync(join(ORP, 'entity', file), 'utf8'));
+    const d = doc['minecraft:client_entity']?.description;
+    if (!d || !/^[a-z_]+:/.test(d.identifier) || !d.identifier.startsWith(`${addon.separate}:`) || d.spawn_egg) continue;
+    d.spawn_egg = { base_color: '#f2b8c6', overlay_color: '#7a3b52' };
+    writeJson(join(ORP, 'entity', file), doc);
+  }
+  const langFile = join(ORP, 'texts/en_US.lang');
+  writeBytes(langFile, new TextEncoder().encode((existsSync(langFile) ? readFileSync(langFile, 'utf8').replace(/\n*$/, '\n') : '') + lang.join('\n') + '\n'));
+}
 writeJson(join(OBP, 'manifest.json'), {
   format_version: 2,
   header: { name, description, uuid: IDS.bp, version, min_engine_version: engine },
