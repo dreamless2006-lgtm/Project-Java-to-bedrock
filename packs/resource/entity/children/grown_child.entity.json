@@ -1,0 +1,116 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "minepreggo:grown_child",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "s0": "textures/port/children/skins/human_son",
+        "s1": "textures/port/children/skins/human_daughter",
+        "s2": "textures/port/children/skins/molten_son",
+        "s3": "textures/port/children/skins/molten_daughter",
+        "s4": "textures/port/children/skins/daisy_son",
+        "s5": "textures/port/children/skins/daisy_daughter",
+        "s6": "textures/port/children/skins/oxy_son",
+        "s7": "textures/port/children/skins/oxy_daughter",
+        "s8": "textures/port/children/skins/stella_son",
+        "s9": "textures/port/children/skins/stella_daughter",
+        "s10": "textures/port/children/skins/enny_son",
+        "s11": "textures/port/children/skins/enny_daughter",
+        "s12": "textures/port/children/skins/skelly_son",
+        "s13": "textures/port/children/skins/skelly_daughter",
+        "s14": "textures/port/children/skins/jenny_zombie_girl_son",
+        "s15": "textures/port/children/skins/jenny_zombie_girl_daughter",
+        "s16": "textures/port/children/skins/jenny_creeper_girl_son",
+        "s17": "textures/port/children/skins/jenny_creeper_girl_daughter",
+        "s18": "textures/port/children/skins/jenny_slime_girl_son",
+        "s19": "textures/port/children/skins/jenny_slime_girl_daughter",
+        "s20": "textures/port/children/skins/jenny_ender_woman_son",
+        "s21": "textures/port/children/skins/jenny_ender_woman_daughter",
+        "s22": "textures/port/children/skins/jenny_monster_creeper_girl_son",
+        "s23": "textures/port/children/skins/jenny_monster_creeper_girl_daughter",
+        "s24": "textures/port/children/skins/goblin_girl_son",
+        "s25": "textures/port/children/skins/goblin_girl_daughter",
+        "s26": "textures/port/children/skins/imp_girl_son",
+        "s27": "textures/port/children/skins/imp_girl_daughter",
+        "s28": "textures/port/children/skins/bloatberry_girl_son",
+        "s29": "textures/port/children/skins/bloatberry_girl_daughter",
+        "s30": "textures/port/children/skins/villager_woman_son",
+        "s31": "textures/port/children/skins/villager_woman_daughter",
+        "s32": "textures/port/children/skins/girl_mob_son",
+        "s33": "textures/port/children/skins/girl_mob_daughter",
+        "s34": "textures/port/children/skins/world_alliance_son",
+        "s35": "textures/port/children/skins/world_alliance_daughter",
+        "s36": "textures/port/children/skins/zombie_son",
+        "s37": "textures/port/children/skins/zombie_daughter",
+        "s38": "textures/port/children/skins/creeper_son",
+        "s39": "textures/port/children/skins/creeper_daughter",
+        "s40": "textures/port/children/skins/ender_son",
+        "s41": "textures/port/children/skins/ender_daughter",
+        "s42": "textures/port/children/skins/slime_son",
+        "s43": "textures/port/children/skins/slime_daughter",
+        "s44": "textures/port/children/skins/jenny_monster_slime_girl_son",
+        "s45": "textures/port/children/skins/jenny_monster_slime_girl_daughter",
+        "s46": "textures/port/children/skins/jenny_son",
+        "s47": "textures/port/children/skins/jenny_daughter",
+        "s48": "textures/port/children/skins/bia_son",
+        "s49": "textures/port/children/skins/bia_daughter",
+        "s50": "textures/port/children/skins/slime_girl_son",
+        "s51": "textures/port/children/skins/slime_girl_daughter",
+        "s52": "textures/port/children/skins/luna_son",
+        "s53": "textures/port/children/skins/luna_daughter",
+        "s54": "textures/port/children/skins/galath_son",
+        "s55": "textures/port/children/skins/galath_daughter",
+        "s56": "textures/port/children/skins/allie_son",
+        "s57": "textures/port/children/skins/allie_daughter",
+        "s58": "textures/port/children/skins/manglelie_son",
+        "s59": "textures/port/children/skins/manglelie_daughter",
+        "s60": "textures/port/children/skins/bee_son",
+        "s61": "textures/port/children/skins/bee_daughter",
+        "s62": "textures/port/children/skins/kobold_son",
+        "s63": "textures/port/children/skins/kobold_daughter",
+        "s64": "textures/port/children/skins/ellie_son",
+        "s65": "textures/port/children/skins/ellie_daughter"
+      },
+      "geometry": {
+        "son": "geometry.minepreggo.grown_son",
+        "daughter": "geometry.minepreggo.grown_daughter"
+      },
+      "animations": {
+        "move": "animation.minepreggo.grown_child.move",
+        "look": "animation.minepreggo.grown_child.look",
+        "idle": "animation.minepreggo.grown_child.idle",
+        "attack": "animation.minepreggo.grown_child.attack",
+        "sit": "animation.minepreggo.grown_child.sit"
+      },
+      "scripts": {
+        "pre_animation": [
+          "v.swing = math.cos(q.modified_distance_moved * 38.17) * math.min(q.modified_move_speed, 1.0) * 57.3;"
+        ],
+        "animate": [
+          "look",
+          "idle",
+          {
+            "move": "!q.is_sitting"
+          },
+          {
+            "attack": "v.attack_time > 0.0"
+          },
+          {
+            "sit": "q.is_sitting"
+          }
+        ]
+      },
+      "render_controllers": [
+        "controller.render.minepreggo.grown_child"
+      ],
+      "enable_attachables": true,
+      "spawn_egg": {
+        "base_color": "#5d8ac9",
+        "overlay_color": "#f2c9a5"
+      }
+    }
+  }
+}

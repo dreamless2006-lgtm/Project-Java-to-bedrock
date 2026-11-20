@@ -1,0 +1,29 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "minepreggo:lemon_drop"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "item": "minepreggo:lemon",
+        "count": 3
+      },
+      {
+        "item": "minecraft:sugar"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "minepreggo:lemon"
+      }
+    ],
+    "result": {
+      "item": "minepreggo:lemon_drop",
+      "count": 3
+    }
+  }
+}

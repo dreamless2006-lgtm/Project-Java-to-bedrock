@@ -1,0 +1,18 @@
+{
+  "format_version": "1.26.30",
+  "minecraft:item": {
+    "description": {
+      "identifier": "minepreggo:baby_jenny_ender_woman",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "minepreggo_baby_jenny_ender_woman",
+      "minecraft:display_name": {
+        "value": "item.minepreggo.baby_jenny_ender_woman"
+      },
+      "minecraft:max_stack_size": 1
+    }
+  }
+}

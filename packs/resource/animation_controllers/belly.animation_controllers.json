@@ -1,0 +1,1411 @@
+{
+  "format_version": "1.10.0",
+  "animation_controllers": {
+    "controller.animation.minepreggo.belly": {
+      "initial_state": "none",
+      "states": {
+        "none": {
+          "transitions": [
+            {
+              "p0": "v.bp == 0"
+            },
+            {
+              "p1": "v.bp == 1"
+            },
+            {
+              "p2": "v.bp == 2"
+            },
+            {
+              "p3": "v.bp == 3"
+            },
+            {
+              "p4": "v.bp == 4"
+            },
+            {
+              "p5": "v.bp == 5"
+            },
+            {
+              "p6": "v.bp == 6"
+            },
+            {
+              "p7": "v.bp == 7"
+            },
+            {
+              "p8": "v.bp == 8"
+            },
+            {
+              "p9": "v.bp == 9"
+            }
+          ]
+        },
+        "p0": {
+          "animations": [
+            "belly_growth",
+            {
+              "belly_low": "true"
+            },
+            {
+              "fetal_push": "v.kick_w"
+            },
+            {
+              "birth_push": "v.pose == 'birth'"
+            },
+            {
+              "belly_hidden": "v.pose == 'postbirth'"
+            }
+          ],
+          "transitions": [
+            {
+              "none": "v.bp < 0"
+            },
+            {
+              "p1": "v.bp == 1"
+            },
+            {
+              "p2": "v.bp == 2"
+            },
+            {
+              "p3": "v.bp == 3"
+            },
+            {
+              "p4": "v.bp == 4"
+            },
+            {
+              "p5": "v.bp == 5"
+            },
+            {
+              "p6": "v.bp == 6"
+            },
+            {
+              "p7": "v.bp == 7"
+            },
+            {
+              "p8": "v.bp == 8"
+            },
+            {
+              "p9": "v.bp == 9"
+            }
+          ],
+          "blend_transition": 0.35
+        },
+        "p1": {
+          "animations": [
+            "belly_growth",
+            {
+              "belly_low": "true"
+            },
+            {
+              "fetal_push": "v.kick_w"
+            },
+            {
+              "birth_push": "v.pose == 'birth'"
+            },
+            {
+              "belly_hidden": "v.pose == 'postbirth'"
+            }
+          ],
+          "transitions": [
+            {
+              "none": "v.bp < 0"
+            },
+            {
+              "p0": "v.bp == 0"
+            },
+            {
+              "p2": "v.bp == 2"
+            },
+            {
+              "p3": "v.bp == 3"
+            },
+            {
+              "p4": "v.bp == 4"
+            },
+            {
+              "p5": "v.bp == 5"
+            },
+            {
+              "p6": "v.bp == 6"
+            },
+            {
+              "p7": "v.bp == 7"
+            },
+            {
+              "p8": "v.bp == 8"
+            },
+            {
+              "p9": "v.bp == 9"
+            }
+          ],
+          "blend_transition": 0.35
+        },
+        "p2": {
+          "animations": [
+            "belly_growth",
+            {
+              "belly_low": "true"
+            },
+            "contraction_wave",
+            {
+              "fetal_push": "v.kick_w"
+            },
+            {
+              "birth_push": "v.pose == 'birth'"
+            },
+            {
+              "belly_hidden": "v.pose == 'postbirth'"
+            }
+          ],
+          "transitions": [
+            {
+              "none": "v.bp < 0"
+            },
+            {
+              "p0": "v.bp == 0"
+            },
+            {
+              "p1": "v.bp == 1"
+            },
+            {
+              "p3": "v.bp == 3"
+            },
+            {
+              "p4": "v.bp == 4"
+            },
+            {
+              "p5": "v.bp == 5"
+            },
+            {
+              "p6": "v.bp == 6"
+            },
+            {
+              "p7": "v.bp == 7"
+            },
+            {
+              "p8": "v.bp == 8"
+            },
+            {
+              "p9": "v.bp == 9"
+            }
+          ],
+          "blend_transition": 0.35
+        },
+        "p3": {
+          "animations": [
+            "belly_growth",
+            {
+              "belly_medium": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
+            },
+            {
+              "fetal_p3_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "fetal_p3_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "fetal_p3_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            {
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            "contraction_wave",
+            {
+              "fetal_push": "v.kick_w"
+            },
+            {
+              "birth_push": "v.pose == 'birth'"
+            },
+            {
+              "belly_hidden": "v.pose == 'postbirth'"
+            }
+          ],
+          "transitions": [
+            {
+              "none": "v.bp < 0"
+            },
+            {
+              "p0": "v.bp == 0"
+            },
+            {
+              "p1": "v.bp == 1"
+            },
+            {
+              "p2": "v.bp == 2"
+            },
+            {
+              "p4": "v.bp == 4"
+            },
+            {
+              "p5": "v.bp == 5"
+            },
+            {
+              "p6": "v.bp == 6"
+            },
+            {
+              "p7": "v.bp == 7"
+            },
+            {
+              "p8": "v.bp == 8"
+            },
+            {
+              "p9": "v.bp == 9"
+            }
+          ],
+          "blend_transition": 0.35
+        },
+        "p4": {
+          "animations": [
+            "belly_growth",
+            {
+              "belly_medium": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
+            },
+            {
+              "fetal_p4_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "fetal_p4_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "fetal_p4_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            {
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            "contraction_wave",
+            {
+              "fetal_push": "v.kick_w"
+            },
+            {
+              "birth_push": "v.pose == 'birth'"
+            },
+            {
+              "belly_hidden": "v.pose == 'postbirth'"
+            }
+          ],
+          "transitions": [
+            {
+              "none": "v.bp < 0"
+            },
+            {
+              "p0": "v.bp == 0"
+            },
+            {
+              "p1": "v.bp == 1"
+            },
+            {
+              "p2": "v.bp == 2"
+            },
+            {
+              "p3": "v.bp == 3"
+            },
+            {
+              "p5": "v.bp == 5"
+            },
+            {
+              "p6": "v.bp == 6"
+            },
+            {
+              "p7": "v.bp == 7"
+            },
+            {
+              "p8": "v.bp == 8"
+            },
+            {
+              "p9": "v.bp == 9"
+            }
+          ],
+          "blend_transition": 0.35
+        },
+        "p5": {
+          "animations": [
+            "belly_growth",
+            {
+              "belly_medium": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
+            },
+            {
+              "fetal_p5_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "fetal_p5_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "fetal_p5_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            {
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            "contraction_wave",
+            {
+              "fetal_push": "v.kick_w"
+            },
+            {
+              "birth_push": "v.pose == 'birth'"
+            },
+            {
+              "belly_hidden": "v.pose == 'postbirth'"
+            }
+          ],
+          "transitions": [
+            {
+              "none": "v.bp < 0"
+            },
+            {
+              "p0": "v.bp == 0"
+            },
+            {
+              "p1": "v.bp == 1"
+            },
+            {
+              "p2": "v.bp == 2"
+            },
+            {
+              "p3": "v.bp == 3"
+            },
+            {
+              "p4": "v.bp == 4"
+            },
+            {
+              "p6": "v.bp == 6"
+            },
+            {
+              "p7": "v.bp == 7"
+            },
+            {
+              "p8": "v.bp == 8"
+            },
+            {
+              "p9": "v.bp == 9"
+            }
+          ],
+          "blend_transition": 0.35
+        },
+        "p6": {
+          "animations": [
+            "belly_growth",
+            {
+              "belly_medium": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
+            },
+            {
+              "fetal_p6_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "fetal_p6_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "fetal_p6_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            {
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            "contraction_wave",
+            {
+              "fetal_push": "v.kick_w"
+            },
+            {
+              "birth_push": "v.pose == 'birth'"
+            },
+            {
+              "belly_hidden": "v.pose == 'postbirth'"
+            }
+          ],
+          "transitions": [
+            {
+              "none": "v.bp < 0"
+            },
+            {
+              "p0": "v.bp == 0"
+            },
+            {
+              "p1": "v.bp == 1"
+            },
+            {
+              "p2": "v.bp == 2"
+            },
+            {
+              "p3": "v.bp == 3"
+            },
+            {
+              "p4": "v.bp == 4"
+            },
+            {
+              "p5": "v.bp == 5"
+            },
+            {
+              "p7": "v.bp == 7"
+            },
+            {
+              "p8": "v.bp == 8"
+            },
+            {
+              "p9": "v.bp == 9"
+            }
+          ],
+          "blend_transition": 0.35
+        },
+        "p7": {
+          "animations": [
+            "belly_growth",
+            {
+              "belly_high": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
+            },
+            {
+              "fetal_p7_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "fetal_p7_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "fetal_p7_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            {
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            "contraction_wave",
+            {
+              "fetal_push": "v.kick_w"
+            },
+            {
+              "birth_push": "v.pose == 'birth'"
+            },
+            {
+              "belly_hidden": "v.pose == 'postbirth'"
+            }
+          ],
+          "transitions": [
+            {
+              "none": "v.bp < 0"
+            },
+            {
+              "p0": "v.bp == 0"
+            },
+            {
+              "p1": "v.bp == 1"
+            },
+            {
+              "p2": "v.bp == 2"
+            },
+            {
+              "p3": "v.bp == 3"
+            },
+            {
+              "p4": "v.bp == 4"
+            },
+            {
+              "p5": "v.bp == 5"
+            },
+            {
+              "p6": "v.bp == 6"
+            },
+            {
+              "p8": "v.bp == 8"
+            },
+            {
+              "p9": "v.bp == 9"
+            }
+          ],
+          "blend_transition": 0.35
+        },
+        "p8": {
+          "animations": [
+            "belly_growth",
+            {
+              "belly_high": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
+            },
+            {
+              "fetal_p8_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "fetal_p8_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "fetal_p8_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            {
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            "contraction_wave",
+            {
+              "fetal_push": "v.kick_w"
+            },
+            {
+              "birth_push": "v.pose == 'birth'"
+            },
+            {
+              "belly_hidden": "v.pose == 'postbirth'"
+            }
+          ],
+          "transitions": [
+            {
+              "none": "v.bp < 0"
+            },
+            {
+              "p0": "v.bp == 0"
+            },
+            {
+              "p1": "v.bp == 1"
+            },
+            {
+              "p2": "v.bp == 2"
+            },
+            {
+              "p3": "v.bp == 3"
+            },
+            {
+              "p4": "v.bp == 4"
+            },
+            {
+              "p5": "v.bp == 5"
+            },
+            {
+              "p6": "v.bp == 6"
+            },
+            {
+              "p7": "v.bp == 7"
+            },
+            {
+              "p9": "v.bp == 9"
+            }
+          ],
+          "blend_transition": 0.35
+        },
+        "p9": {
+          "animations": [
+            "belly_growth",
+            {
+              "belly_high": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
+            },
+            {
+              "fetal_p9_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "fetal_p9_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "fetal_p9_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            {
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            "contraction_wave",
+            {
+              "fetal_push": "v.kick_w"
+            },
+            {
+              "birth_push": "v.pose == 'birth'"
+            },
+            {
+              "belly_hidden": "v.pose == 'postbirth'"
+            }
+          ],
+          "transitions": [
+            {
+              "none": "v.bp < 0"
+            },
+            {
+              "p0": "v.bp == 0"
+            },
+            {
+              "p1": "v.bp == 1"
+            },
+            {
+              "p2": "v.bp == 2"
+            },
+            {
+              "p3": "v.bp == 3"
+            },
+            {
+              "p4": "v.bp == 4"
+            },
+            {
+              "p5": "v.bp == 5"
+            },
+            {
+              "p6": "v.bp == 6"
+            },
+            {
+              "p7": "v.bp == 7"
+            },
+            {
+              "p8": "v.bp == 8"
+            }
+          ],
+          "blend_transition": 0.35
+        }
+      }
+    },
+    "controller.animation.minepreggo.belly_navel": {
+      "initial_state": "none",
+      "states": {
+        "none": {
+          "transitions": [
+            {
+              "p0": "v.bp == 0"
+            },
+            {
+              "p1": "v.bp == 1"
+            },
+            {
+              "p2": "v.bp == 2"
+            },
+            {
+              "p3": "v.bp == 3"
+            },
+            {
+              "p4": "v.bp == 4"
+            },
+            {
+              "p5": "v.bp == 5"
+            },
+            {
+              "p6": "v.bp == 6"
+            },
+            {
+              "p7": "v.bp == 7"
+            },
+            {
+              "p8": "v.bp == 8"
+            },
+            {
+              "p9": "v.bp == 9"
+            }
+          ]
+        },
+        "p0": {
+          "animations": [
+            "belly_growth",
+            {
+              "belly_low": "true"
+            },
+            {
+              "fetal_push": "v.kick_w"
+            },
+            {
+              "birth_push": "v.pose == 'birth'"
+            },
+            {
+              "navel_prebirth": "v.pose == 'prebirth'"
+            },
+            {
+              "navel_birth": "v.pose == 'birth'"
+            },
+            {
+              "belly_hidden": "v.pose == 'postbirth'"
+            }
+          ],
+          "transitions": [
+            {
+              "none": "v.bp < 0"
+            },
+            {
+              "p1": "v.bp == 1"
+            },
+            {
+              "p2": "v.bp == 2"
+            },
+            {
+              "p3": "v.bp == 3"
+            },
+            {
+              "p4": "v.bp == 4"
+            },
+            {
+              "p5": "v.bp == 5"
+            },
+            {
+              "p6": "v.bp == 6"
+            },
+            {
+              "p7": "v.bp == 7"
+            },
+            {
+              "p8": "v.bp == 8"
+            },
+            {
+              "p9": "v.bp == 9"
+            }
+          ],
+          "blend_transition": 0.35
+        },
+        "p1": {
+          "animations": [
+            "belly_growth",
+            {
+              "belly_low": "true"
+            },
+            {
+              "fetal_push": "v.kick_w"
+            },
+            {
+              "birth_push": "v.pose == 'birth'"
+            },
+            {
+              "navel_prebirth": "v.pose == 'prebirth'"
+            },
+            {
+              "navel_birth": "v.pose == 'birth'"
+            },
+            {
+              "belly_hidden": "v.pose == 'postbirth'"
+            }
+          ],
+          "transitions": [
+            {
+              "none": "v.bp < 0"
+            },
+            {
+              "p0": "v.bp == 0"
+            },
+            {
+              "p2": "v.bp == 2"
+            },
+            {
+              "p3": "v.bp == 3"
+            },
+            {
+              "p4": "v.bp == 4"
+            },
+            {
+              "p5": "v.bp == 5"
+            },
+            {
+              "p6": "v.bp == 6"
+            },
+            {
+              "p7": "v.bp == 7"
+            },
+            {
+              "p8": "v.bp == 8"
+            },
+            {
+              "p9": "v.bp == 9"
+            }
+          ],
+          "blend_transition": 0.35
+        },
+        "p2": {
+          "animations": [
+            "belly_growth",
+            {
+              "belly_low": "true"
+            },
+            "contraction_wave",
+            {
+              "fetal_push": "v.kick_w"
+            },
+            {
+              "birth_push": "v.pose == 'birth'"
+            },
+            {
+              "navel_prebirth": "v.pose == 'prebirth'"
+            },
+            {
+              "navel_birth": "v.pose == 'birth'"
+            },
+            {
+              "belly_hidden": "v.pose == 'postbirth'"
+            }
+          ],
+          "transitions": [
+            {
+              "none": "v.bp < 0"
+            },
+            {
+              "p0": "v.bp == 0"
+            },
+            {
+              "p1": "v.bp == 1"
+            },
+            {
+              "p3": "v.bp == 3"
+            },
+            {
+              "p4": "v.bp == 4"
+            },
+            {
+              "p5": "v.bp == 5"
+            },
+            {
+              "p6": "v.bp == 6"
+            },
+            {
+              "p7": "v.bp == 7"
+            },
+            {
+              "p8": "v.bp == 8"
+            },
+            {
+              "p9": "v.bp == 9"
+            }
+          ],
+          "blend_transition": 0.35
+        },
+        "p3": {
+          "animations": [
+            "belly_growth",
+            {
+              "belly_medium": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
+            },
+            {
+              "fetal_p3_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "fetal_p3_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "fetal_p3_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            {
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            "contraction_wave",
+            {
+              "fetal_push": "v.kick_w"
+            },
+            {
+              "birth_push": "v.pose == 'birth'"
+            },
+            {
+              "navel_prebirth": "v.pose == 'prebirth'"
+            },
+            {
+              "navel_birth": "v.pose == 'birth'"
+            },
+            {
+              "belly_hidden": "v.pose == 'postbirth'"
+            }
+          ],
+          "transitions": [
+            {
+              "none": "v.bp < 0"
+            },
+            {
+              "p0": "v.bp == 0"
+            },
+            {
+              "p1": "v.bp == 1"
+            },
+            {
+              "p2": "v.bp == 2"
+            },
+            {
+              "p4": "v.bp == 4"
+            },
+            {
+              "p5": "v.bp == 5"
+            },
+            {
+              "p6": "v.bp == 6"
+            },
+            {
+              "p7": "v.bp == 7"
+            },
+            {
+              "p8": "v.bp == 8"
+            },
+            {
+              "p9": "v.bp == 9"
+            }
+          ],
+          "blend_transition": 0.35
+        },
+        "p4": {
+          "animations": [
+            "belly_growth",
+            {
+              "belly_medium": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
+            },
+            {
+              "fetal_p4_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "fetal_p4_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "fetal_p4_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            {
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            "contraction_wave",
+            {
+              "fetal_push": "v.kick_w"
+            },
+            {
+              "birth_push": "v.pose == 'birth'"
+            },
+            {
+              "navel_prebirth": "v.pose == 'prebirth'"
+            },
+            {
+              "navel_birth": "v.pose == 'birth'"
+            },
+            {
+              "belly_hidden": "v.pose == 'postbirth'"
+            }
+          ],
+          "transitions": [
+            {
+              "none": "v.bp < 0"
+            },
+            {
+              "p0": "v.bp == 0"
+            },
+            {
+              "p1": "v.bp == 1"
+            },
+            {
+              "p2": "v.bp == 2"
+            },
+            {
+              "p3": "v.bp == 3"
+            },
+            {
+              "p5": "v.bp == 5"
+            },
+            {
+              "p6": "v.bp == 6"
+            },
+            {
+              "p7": "v.bp == 7"
+            },
+            {
+              "p8": "v.bp == 8"
+            },
+            {
+              "p9": "v.bp == 9"
+            }
+          ],
+          "blend_transition": 0.35
+        },
+        "p5": {
+          "animations": [
+            "belly_growth",
+            {
+              "belly_medium": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
+            },
+            {
+              "fetal_p5_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "fetal_p5_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "fetal_p5_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            {
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            "contraction_wave",
+            {
+              "fetal_push": "v.kick_w"
+            },
+            {
+              "birth_push": "v.pose == 'birth'"
+            },
+            {
+              "navel_prebirth": "v.pose == 'prebirth'"
+            },
+            {
+              "navel_birth": "v.pose == 'birth'"
+            },
+            {
+              "belly_hidden": "v.pose == 'postbirth'"
+            }
+          ],
+          "transitions": [
+            {
+              "none": "v.bp < 0"
+            },
+            {
+              "p0": "v.bp == 0"
+            },
+            {
+              "p1": "v.bp == 1"
+            },
+            {
+              "p2": "v.bp == 2"
+            },
+            {
+              "p3": "v.bp == 3"
+            },
+            {
+              "p4": "v.bp == 4"
+            },
+            {
+              "p6": "v.bp == 6"
+            },
+            {
+              "p7": "v.bp == 7"
+            },
+            {
+              "p8": "v.bp == 8"
+            },
+            {
+              "p9": "v.bp == 9"
+            }
+          ],
+          "blend_transition": 0.35
+        },
+        "p6": {
+          "animations": [
+            "belly_growth",
+            {
+              "belly_medium": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
+            },
+            {
+              "fetal_p6_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "fetal_p6_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "fetal_p6_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            {
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            "contraction_wave",
+            {
+              "fetal_push": "v.kick_w"
+            },
+            {
+              "birth_push": "v.pose == 'birth'"
+            },
+            {
+              "navel_prebirth": "v.pose == 'prebirth'"
+            },
+            {
+              "navel_birth": "v.pose == 'birth'"
+            },
+            {
+              "belly_hidden": "v.pose == 'postbirth'"
+            }
+          ],
+          "transitions": [
+            {
+              "none": "v.bp < 0"
+            },
+            {
+              "p0": "v.bp == 0"
+            },
+            {
+              "p1": "v.bp == 1"
+            },
+            {
+              "p2": "v.bp == 2"
+            },
+            {
+              "p3": "v.bp == 3"
+            },
+            {
+              "p4": "v.bp == 4"
+            },
+            {
+              "p5": "v.bp == 5"
+            },
+            {
+              "p7": "v.bp == 7"
+            },
+            {
+              "p8": "v.bp == 8"
+            },
+            {
+              "p9": "v.bp == 9"
+            }
+          ],
+          "blend_transition": 0.35
+        },
+        "p7": {
+          "animations": [
+            "belly_growth",
+            {
+              "belly_high": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
+            },
+            {
+              "fetal_p7_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "fetal_p7_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "fetal_p7_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            {
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            "contraction_wave",
+            {
+              "fetal_push": "v.kick_w"
+            },
+            {
+              "birth_push": "v.pose == 'birth'"
+            },
+            {
+              "navel_prebirth": "v.pose == 'prebirth'"
+            },
+            {
+              "navel_birth": "v.pose == 'birth'"
+            },
+            {
+              "belly_hidden": "v.pose == 'postbirth'"
+            }
+          ],
+          "transitions": [
+            {
+              "none": "v.bp < 0"
+            },
+            {
+              "p0": "v.bp == 0"
+            },
+            {
+              "p1": "v.bp == 1"
+            },
+            {
+              "p2": "v.bp == 2"
+            },
+            {
+              "p3": "v.bp == 3"
+            },
+            {
+              "p4": "v.bp == 4"
+            },
+            {
+              "p5": "v.bp == 5"
+            },
+            {
+              "p6": "v.bp == 6"
+            },
+            {
+              "p8": "v.bp == 8"
+            },
+            {
+              "p9": "v.bp == 9"
+            }
+          ],
+          "blend_transition": 0.35
+        },
+        "p8": {
+          "animations": [
+            "belly_growth",
+            {
+              "belly_high": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
+            },
+            {
+              "fetal_p8_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "fetal_p8_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "fetal_p8_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            {
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            "contraction_wave",
+            {
+              "fetal_push": "v.kick_w"
+            },
+            {
+              "birth_push": "v.pose == 'birth'"
+            },
+            {
+              "navel_prebirth": "v.pose == 'prebirth'"
+            },
+            {
+              "navel_birth": "v.pose == 'birth'"
+            },
+            {
+              "belly_hidden": "v.pose == 'postbirth'"
+            }
+          ],
+          "transitions": [
+            {
+              "none": "v.bp < 0"
+            },
+            {
+              "p0": "v.bp == 0"
+            },
+            {
+              "p1": "v.bp == 1"
+            },
+            {
+              "p2": "v.bp == 2"
+            },
+            {
+              "p3": "v.bp == 3"
+            },
+            {
+              "p4": "v.bp == 4"
+            },
+            {
+              "p5": "v.bp == 5"
+            },
+            {
+              "p6": "v.bp == 6"
+            },
+            {
+              "p7": "v.bp == 7"
+            },
+            {
+              "p9": "v.bp == 9"
+            }
+          ],
+          "blend_transition": 0.35
+        },
+        "p9": {
+          "animations": [
+            "belly_growth",
+            {
+              "belly_high": "q.is_tamed ? 1.0 : 1.0 - v.kick_w"
+            },
+            {
+              "fetal_p9_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "fetal_p9_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "fetal_p9_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            {
+              "kick_i": "v.kick_w * (v.kick_shown == 0)"
+            },
+            {
+              "kick_ii": "v.kick_w * (v.kick_shown == 1)"
+            },
+            {
+              "kick_iii": "v.kick_w * (v.kick_shown == 2)"
+            },
+            "contraction_wave",
+            {
+              "fetal_push": "v.kick_w"
+            },
+            {
+              "birth_push": "v.pose == 'birth'"
+            },
+            {
+              "navel_prebirth": "v.pose == 'prebirth'"
+            },
+            {
+              "navel_birth": "v.pose == 'birth'"
+            },
+            {
+              "belly_hidden": "v.pose == 'postbirth'"
+            }
+          ],
+          "transitions": [
+            {
+              "none": "v.bp < 0"
+            },
+            {
+              "p0": "v.bp == 0"
+            },
+            {
+              "p1": "v.bp == 1"
+            },
+            {
+              "p2": "v.bp == 2"
+            },
+            {
+              "p3": "v.bp == 3"
+            },
+            {
+              "p4": "v.bp == 4"
+            },
+            {
+              "p5": "v.bp == 5"
+            },
+            {
+              "p6": "v.bp == 6"
+            },
+            {
+              "p7": "v.bp == 7"
+            },
+            {
+              "p8": "v.bp == 8"
+            }
+          ],
+          "blend_transition": 0.35
+        }
+      }
+    }
+  }
+}

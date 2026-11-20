@@ -1,0 +1,290 @@
+// Tests for the preggo mob systems (packs/behavior/scripts/mobs) against the mocked game API.
+
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { Mob, Player, ItemStack, system, world } from './mock-server.mjs';
+import { BELLY_SCENE_TICKS, bellySceneOf } from '../../packs/behavior/scripts/jenny/belly_scenes.js';
+import { STEP, accelerate, getRecord, induceFetalMovement, onDeath, onHurt, setPhase, startPregnancy, tickMob } from '../../packs/behavior/scripts/mobs/system.js';
+import { chooseAction } from '../../packs/behavior/scripts/mobs/interact.js';
+import { birthTicks, FAMILIES } from '../../packs/behavior/scripts/mobs/families.js';
+import { PHASES } from '../../packs/behavior/scripts/pregnancy/data.js';
+
+/** Runs `n` mob updates (STEP ticks each). */
+function run(/** @type {Mob} */ mob, n) {
+  for (let i = 0; i < n; i++) {
+    system.currentTick += STEP;
+    tickMob(/** @type {any} */ (mob));
+  }
+}
+
+test('a tamed zombie girl carries one baby from P0 to an automatic birth', () => {
+  const mob = new Mob('minepreggo:zombie_girl', { tamed: true });
+  const record = getRecord(/** @type {any} */ (mob));
+  assert.ok(startPregnancy(record, 1));
+  assert.equal(mob.getProperty('minepreggo:phase'), 0);
+  const p = /** @type {any} */ (record.data.pregnancy);
+  record.data.fullness = 30;
+
+  for (let phase = 0; phase < 4; phase++) {
+    p.daysPassed = p.daysByPhase[phase];
+    run(mob, 1);
+  }
+  assert.equal(mob.getProperty('minepreggo:phase'), 4, 'the phase property follows the pregnancy');
+  assert.ok(mob.events.includes('minepreggo:set_phase_4'));
+
+  p.daysPassed = p.daysByPhase[4];
+  run(mob, 1);
+  assert.equal(p.pain.type, 'WATER_BREAKING');
+  assert.equal(mob.getProperty('minepreggo:pose'), 'water_breaking');
+  run(mob, 1200 / STEP + 1);
+  assert.equal(p.pain.type, 'PREBIRTH');
+  assert.ok(mob.effects.get('slowness')?.amplifier === 255, 'labor keeps her in place');
+  run(mob, PHASES[4].preBirthTicks / STEP + 1);
+  assert.equal(p.pain.type, 'BIRTH');
+  run(mob, birthTicks(FAMILIES['minepreggo:zombie_girl']) / STEP + 1);
+  assert.deepEqual(mob.dropped, ['minepreggo:baby_zombie']);
+  run(mob, 2);
+  assert.equal(p.pain.type, 'POSTBIRTH');
+  run(mob, 150 / STEP + 1);
+  assert.equal(record.data.pregnancy, null);
+  assert.equal(record.data.post?.type, 'PARTUM');
+  assert.ok(record.data.lactation);
+  assert.equal(mob.getProperty('minepreggo:phase'), -1);
+  assert.equal(startPregnancy(record, 1), false, 'no new pregnancy while recovering');
+});
+
+test('a naturally pregnant hostile mob gets fixed pregnancy data and drops fetuses on death', () => {
+  const mob = new Mob('minepreggo:zombie_girl', { phase: 5 });
+  run(mob, 1);
+  const record = getRecord(/** @type {any} */ (mob));
+  const wild = /** @type {any} */ (record.data.wild);
+  assert.ok(wild);
+  assert.ok(wild.lastPhase >= 5 && wild.lastPhase <= 9);
+  assert.ok([2, 3, 4, 5, 6, 7, 8, 9, 10].includes(wild.babies));
+  assert.equal(wild.cooldown, 160);
+  assert.ok(mob.events.includes('minepreggo:hostile_pregnant_init'), 'she is made untamable');
+  assert.equal(startPregnancy(record, 1), false);
+
+  wild.painProbability = 1;
+  onHurt(/** @type {any} */ (mob), { damage: 2, cause: 'entityAttack' });
+  run(mob, 1);
+  assert.equal(mob.getProperty('minepreggo:pose'), 'incapacitated');
+  run(mob, 160 / STEP + 1);
+  assert.equal(mob.getProperty('minepreggo:pose'), 'none');
+
+  onDeath(/** @type {any} */ (mob));
+  assert.equal(mob.dropped.length, wild.babies);
+  assert.ok(mob.dropped.every((id) => id === 'minepreggo:dead_zombie_fetus'));
+});
+
+test('hunger makes a tamed mob savage and her food calms her down again', () => {
+  const mob = new Mob('minepreggo:zombie_girl', { tamed: true });
+  const owner = new Player('Owner');
+  const record = getRecord(/** @type {any} */ (mob));
+  record.data.owner = owner.id;
+  record.data.fullness = 1;
+  record.data.hungerTimer = 8400;
+  run(mob, 1);
+  assert.equal(record.data.savage, true);
+  assert.ok(mob.events.includes('minepreggo:become_savage'));
+
+  const action = chooseAction(/** @type {any} */ (owner), /** @type {any} */ (mob), /** @type {any} */ (new ItemStack('minepreggo:villager_brain')));
+  assert.ok(action, 'her food is accepted while savage');
+  action();
+  assert.equal(record.data.fullness, 12);
+  assert.equal(record.data.savage, false);
+  assert.ok(mob.events.includes('minepreggo:calm_down'));
+});
+
+test('cravings want the matching food; milking and belly rubs relieve their needs', async () => {
+  const mob = new Mob('minepreggo:zombie_girl', { tamed: true });
+  const owner = new Player('Mom');
+  const record = getRecord(/** @type {any} */ (mob));
+  record.data.owner = owner.id;
+  startPregnancy(record, 2);
+  const p = /** @type {any} */ (record.data.pregnancy);
+  p.phase = 3;
+  p.craving = 16;
+  p.milking = 12;
+  p.bellyRubs = 12;
+  run(mob, 3);
+  assert.ok(p.symptoms.CRAVING !== undefined && p.symptoms.MILKING !== undefined && p.symptoms.BELLY_RUBS !== undefined);
+
+  p.cravingType = 'SWEET';
+  chooseAction(/** @type {any} */ (owner), /** @type {any} */ (mob), /** @type {any} */ (new ItemStack('minepreggo:brain_with_chocolate')))?.();
+  assert.equal(p.symptoms.CRAVING, undefined, 'a chocolate brain (16) satisfies a sweet craving');
+
+  chooseAction(/** @type {any} */ (owner), /** @type {any} */ (mob), /** @type {any} */ (new ItemStack('minecraft:glass_bottle')))?.();
+  assert.ok(owner.inventory.includes('minepreggo:zombie_breast_milk_bottle'));
+  assert.equal(p.milking, 7);
+
+  // Crouching with an empty hand opens her pregnancy menu; rubbing her belly is a scene that eases the need.
+  owner.isSneaking = true;
+  owner.formSelections = [0];
+  world.players.push(owner);
+  world.getDimension('minecraft:overworld').entities.push(mob);
+  chooseAction(/** @type {any} */ (owner), /** @type {any} */ (mob), undefined)?.();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(owner.forms.at(-1).buttons.length, 3, 'rub her belly, feel the baby, OK');
+  assert.ok(bellySceneOf(/** @type {any} */ (mob)), 'the rub begins');
+  assert.equal(p.bellyRubs, 10);
+  system.tick(BELLY_SCENE_TICKS.rub + 20);
+  assert.ok(!bellySceneOf(/** @type {any} */ (mob)));
+  assert.ok(p.bellyRubs <= 8);
+  assert.equal(p.symptoms.BELLY_RUBS, undefined);
+  world.players.pop();
+  mob.isValid = false;
+});
+
+test('only the owner can care for a tamed mob, but anyone can give a wild one the potion', () => {
+  const mob = new Mob('minepreggo:zombie_girl', { tamed: true });
+  const record = getRecord(/** @type {any} */ (mob));
+  record.data.owner = 'player-Owner';
+  const stranger = new Player('Stranger');
+  assert.equal(chooseAction(/** @type {any} */ (stranger), /** @type {any} */ (mob), /** @type {any} */ (new ItemStack('minepreggo:villager_brain'))), undefined);
+
+  const wild = new Mob('minepreggo:zombie_girl');
+  const potion = chooseAction(/** @type {any} */ (stranger), /** @type {any} */ (wild), /** @type {any} */ (new ItemStack('minepreggo:impregnation_potion_2')));
+  assert.ok(potion);
+  potion();
+  run(wild, 300 / STEP + 1);
+  const p = getRecord(/** @type {any} */ (wild)).data.pregnancy;
+  assert.ok(p && p.womb.length >= 3, 'potion level III means 3-4 babies');
+  assert.equal(wild.getProperty('minepreggo:phase'), 0);
+});
+
+test('losing all pregnancy health makes her miscarry, dropping dead fetuses', () => {
+  const mob = new Mob('minepreggo:zombie_girl', { tamed: true });
+  const record = getRecord(/** @type {any} */ (mob));
+  startPregnancy(record, 2);
+  const p = /** @type {any} */ (record.data.pregnancy);
+  p.phase = 2;
+  p.health = 1;
+  mob.components['minecraft:health'].currentValue = 5;
+  onHurt(/** @type {any} */ (mob), { damage: 4, cause: 'entityAttack' });
+  assert.equal(p.pain?.type, 'MISCARRIAGE');
+  run(mob, 800 / STEP + 1);
+  assert.equal(record.data.pregnancy, null);
+  assert.equal(record.data.post?.type, 'MISCARRIAGE');
+  assert.deepEqual(mob.dropped, ['minepreggo:dead_zombie_fetus', 'minepreggo:dead_zombie_fetus']);
+});
+
+test('every family in the scripts has an entity, and every item it names exists', async () => {
+  const { readdirSync, readFileSync } = await import('node:fs');
+  const root = new URL('../../packs/behavior/', import.meta.url);
+  // Our files plus the imported Jenny port's (jenny_port/ sub-folders), whose girls are families too.
+  const ids = (/** @type {URL} */ dir, /** @type {string} */ key, /** @type {Set<string>} */ out = new Set()) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory()) ids(new URL(`${entry.name}/`, dir), key, out);
+      else if (entry.name.endsWith('.json')) out.add(JSON.parse(readFileSync(new URL(entry.name, dir), 'utf8'))[key].description.identifier);
+    }
+    return out;
+  };
+  const entities = ids(new URL('entities/', root), 'minecraft:entity');
+  const items = ids(new URL('items/', root), 'minecraft:item');
+  for (const [id, family] of Object.entries(FAMILIES)) {
+    if (family.external && !entities.has(id)) continue; // the Jenny port is only there once vendor/jenny/ is imported
+    assert.ok(entities.has(id), `${id} has no entity file`);
+    const named = [...family.tamingItems, ...Object.keys(family.foods), ...Object.keys(family.cravings), family.babyItem, family.deadFetusItem, family.milkItem];
+    for (const item of named) assert.ok(item.startsWith('minecraft:') || items.has(item), `${id}: ${item} is not an item`);
+  }
+});
+
+test('an acceleration potion moves a mob pregnancy forward and can start labor', () => {
+  const mob = new Mob('minepreggo:zombie_girl', { tamed: true });
+  const owner = new Player('Potion');
+  const record = getRecord(/** @type {any} */ (mob));
+  record.data.owner = owner.id;
+  startPregnancy(record, 1);
+  const p = /** @type {any} */ (record.data.pregnancy);
+  const action = chooseAction(/** @type {any} */ (owner), /** @type {any} */ (mob), /** @type {any} */ (new ItemStack('minepreggo:pregnancy_acceleration_potion_4')));
+  assert.ok(action, 'the owner can give the potion');
+  action();
+  assert.equal(p.phase, 2, '17 days from P0 of [3, 10, 10, 13, 15] lands in P2');
+  assert.equal(p.daysPassed, 4);
+  assert.equal(mob.getProperty('minepreggo:phase'), 2);
+  p.phase = 4;
+  p.daysPassed = 15;
+  assert.ok(accelerate(record, 0));
+  assert.equal(p.pain?.type, 'WATER_BREAKING');
+});
+
+test('the fetal movement inducer works on a pregnant mob through the interaction and shows on her', () => {
+  const mob = new Mob('minepreggo:ender_woman', { tamed: true });
+  const record = getRecord(/** @type {any} */ (mob));
+  const player = new Player('Owner');
+  record.data.owner = player.id;
+  assert.ok(startPregnancy(record, 1));
+  assert.equal(chooseAction(/** @type {any} */ (player), /** @type {any} */ (mob), new ItemStack('minepreggo:fetal_movement_inducer_potion_2')) !== undefined, true, 'the potion is accepted while pregnant');
+  assert.equal(induceFetalMovement(record, 4), false, 'nothing to feel before P3');
+  assert.ok(setPhase(record, 4));
+  const action = chooseAction(/** @type {any} */ (player), /** @type {any} */ (mob), new ItemStack('minepreggo:fetal_movement_inducer_potion_1'));
+  assert.ok(action);
+  action();
+  const p = /** @type {any} */ (record.data.pregnancy);
+  assert.equal(p.pain.type, 'FETAL_MOVEMENT');
+  assert.equal(p.pain.severity, 2, 'level II is severity 2');
+  assert.equal(p.pain.duration, Math.round(PHASES[4].fetalMovementTicks * 1.5));
+  assert.equal(mob.getProperty('minepreggo:pose'), 'fetal_movement', 'synced to the client at once');
+  assert.equal(mob.getProperty('minepreggo:kick'), 1);
+  run(mob, 1);
+  assert.equal(mob.getProperty('minepreggo:pose'), 'fetal_movement');
+  assert.equal(chooseAction(/** @type {any} */ (player), /** @type {any} */ (mob), new ItemStack('minepreggo:fetal_movement_inducer_potion_0')) !== undefined, true);
+});
+
+test('the inducer makes a wild pregnant mob double over with a kick of the potion\'s strength', () => {
+  const mob = new Mob('minepreggo:humanoid_slime_girl', { phase: 5 });
+  run(mob, 1); // initWild
+  const record = getRecord(/** @type {any} */ (mob));
+  assert.ok(record.data.wild);
+  const player = new Player('Passerby');
+  const action = chooseAction(/** @type {any} */ (player), /** @type {any} */ (mob), new ItemStack('minepreggo:fetal_movement_inducer_potion_2'));
+  assert.ok(action, 'works on hostile pregnant mobs too');
+  action();
+  assert.equal(record.data.wild.incapacitated, true);
+  assert.equal(mob.getProperty('minepreggo:pose'), 'incapacitated');
+  assert.equal(mob.getProperty('minepreggo:kick'), 2, 'level III is the strongest kick');
+  run(mob, record.data.wild.cooldown / STEP + 2);
+  assert.equal(record.data.wild.incapacitated, false, 'she gets up after her pain cooldown');
+  assert.equal(mob.getProperty('minepreggo:pose'), 'none');
+});
+
+test('the phase property is written by the script, wild spawns are read from the variant, birth drives the belly', () => {
+  const mob = new Mob('minepreggo:ender_woman', { variant: 6 }); // spawned with the phase_5 group only
+  run(mob, 1);
+  const record = getRecord(/** @type {any} */ (mob));
+  assert.equal(record.data.wild?.lastPhase >= 5, true, 'a mob spawned with the phase_5 group is wild pregnant');
+  assert.equal(mob.getProperty('minepreggo:phase'), 5, 'the client-visible phase comes from the script');
+
+  const tamed = new Mob('minepreggo:ender_woman', { tamed: true });
+  const t = getRecord(/** @type {any} */ (tamed));
+  assert.ok(startPregnancy(t, 1));
+  assert.equal(tamed.getProperty('minepreggo:phase'), 0);
+  assert.ok(setPhase(t, 4));
+  assert.equal(tamed.getProperty('minepreggo:phase'), 4);
+  assert.equal(tamed.variant, 5, 'the component group variant follows');
+  const p = /** @type {any} */ (t.data.pregnancy);
+  p.daysPassed = p.daysByPhase[4];
+  t.data.fullness = 30;
+  run(tamed, 1);
+  assert.equal(p.pain.type, 'WATER_BREAKING');
+  run(tamed, 1200 / STEP + 1);
+  run(tamed, PHASES[4].preBirthTicks / STEP + 1);
+  assert.equal(p.pain.type, 'BIRTH');
+  assert.equal(tamed.getProperty('minepreggo:kick'), 2, 'the hardest kicks during birth');
+  const before = tamed.getProperty('minepreggo:growth');
+  run(tamed, 5);
+  assert.ok(tamed.getProperty('minepreggo:growth') > before, 'the growth property carries the birth progress');
+});
+
+test('a failing entity event never stops the pregnancy or the client-facing phase', () => {
+  const mob = new Mob('minepreggo:humanoid_slime_girl', { tamed: true });
+  mob.triggerEvent = () => {
+    throw new Error('event rejected by the game');
+  };
+  const record = getRecord(/** @type {any} */ (mob));
+  assert.ok(startPregnancy(record, 1));
+  assert.equal(mob.getProperty('minepreggo:phase'), 0, 'the phase reaches the client through the script');
+  assert.ok(setPhase(record, 4));
+  assert.equal(mob.getProperty('minepreggo:phase'), 4);
+});

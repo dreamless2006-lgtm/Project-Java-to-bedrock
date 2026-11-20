@@ -1,0 +1,118 @@
+{
+  "format_version": "1.20.20",
+  "sound_definitions": {
+    "minepreggo.belly_touch": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/minepreggo/belly_touch"
+        }
+      ]
+    },
+    "minepreggo.pregnancy_pain": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/minepreggo/pregnancy_pain1"
+        },
+        {
+          "name": "sounds/minepreggo/pregnancy_pain2"
+        },
+        {
+          "name": "sounds/minepreggo/pregnancy_pain3"
+        },
+        {
+          "name": "sounds/minepreggo/pregnancy_pain4"
+        }
+      ]
+    },
+    "minepreggo.player_birth": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/minepreggo/player_birth_1"
+        },
+        {
+          "name": "sounds/minepreggo/player_birth_2"
+        }
+      ]
+    },
+    "minepreggo.player_contraction": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/minepreggo/player_contraction"
+        }
+      ]
+    },
+    "minepreggo.player_miscarriage": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/minepreggo/player_miscarriage"
+        }
+      ]
+    },
+    "minepreggo.player_push": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/minepreggo/player_push_1"
+        },
+        {
+          "name": "sounds/minepreggo/player_push_2"
+        },
+        {
+          "name": "sounds/minepreggo/player_push_3"
+        }
+      ]
+    },
+    "minepreggo.stomach_growls": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/minepreggo/stomach_growls_1"
+        },
+        {
+          "name": "sounds/minepreggo/stomach_growls_2"
+        },
+        {
+          "name": "sounds/minepreggo/stomach_growls_3"
+        },
+        {
+          "name": "sounds/minepreggo/stomach_growls_4"
+        },
+        {
+          "name": "sounds/minepreggo/stomach_growls_5"
+        },
+        {
+          "name": "sounds/minepreggo/stomach_growls_6"
+        }
+      ]
+    },
+    "minepreggo.splash": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/minepreggo/splash"
+        }
+      ]
+    },
+    "minepreggo.pregnant_preggo_mob_death": {
+      "category": "hostile",
+      "sounds": [
+        {
+          "name": "sounds/minepreggo/pregnant_preggo_mob_death"
+        }
+      ]
+    },
+    "minepreggo.jenny_scene": {
+      "category": "neutral",
+      "sounds": [
+        {
+          "name": "sounds/minepreggo/jenny_bed/scene"
+        }
+      ]
+    }
+  }
+}

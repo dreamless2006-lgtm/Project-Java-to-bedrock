@@ -1,0 +1,280 @@
+{
+  "format_version": "1.26.30",
+  "minecraft:block": {
+    "description": {
+      "identifier": "minepreggo:chili_peppers",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "minepreggo:age": {
+          "values": {
+            "min": 0,
+            "max": 7
+          }
+        }
+      }
+    },
+    "components": {
+      "minepreggo:crop": {},
+      "minecraft:display_name": "item.minepreggo.chili_pepper",
+      "minecraft:geometry": "geometry.minepreggo.crop",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "minepreggo_chili_peppers_stage0",
+          "render_method": "alpha_test",
+          "face_dimming": false,
+          "ambient_occlusion": 0
+        }
+      },
+      "minecraft:collision_box": false,
+      "minecraft:selection_box": {
+        "origin": [
+          -8,
+          0,
+          -8
+        ],
+        "size": [
+          16,
+          2,
+          16
+        ]
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0
+      },
+      "minecraft:light_dampening": 0,
+      "minecraft:map_color": "#007c00",
+      "minecraft:placement_filter": {
+        "conditions": [
+          {
+            "allowed_faces": [
+              "up"
+            ],
+            "block_filter": [
+              "minecraft:farmland"
+            ]
+          }
+        ]
+      },
+      "minecraft:liquid_detection": {
+        "detection_rules": [
+          {
+            "liquid_type": "water",
+            "on_liquid_touches": "popped"
+          }
+        ]
+      },
+      "minecraft:movable": {
+        "movement_type": "popped"
+      },
+      "minecraft:loot": "loot_tables/blocks/chili_peppers.json"
+    },
+    "permutations": [
+      {
+        "condition": "query.block_state('minepreggo:age') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              2,
+              16
+            ]
+          },
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "minepreggo_chili_peppers_stage0",
+              "render_method": "alpha_test",
+              "face_dimming": false,
+              "ambient_occlusion": 0
+            }
+          }
+        }
+      },
+      {
+        "condition": "query.block_state('minepreggo:age') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              4,
+              16
+            ]
+          },
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "minepreggo_chili_peppers_stage0",
+              "render_method": "alpha_test",
+              "face_dimming": false,
+              "ambient_occlusion": 0
+            }
+          }
+        }
+      },
+      {
+        "condition": "query.block_state('minepreggo:age') == 2",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              6,
+              16
+            ]
+          },
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "minepreggo_chili_peppers_stage1",
+              "render_method": "alpha_test",
+              "face_dimming": false,
+              "ambient_occlusion": 0
+            }
+          }
+        }
+      },
+      {
+        "condition": "query.block_state('minepreggo:age') == 3",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              8,
+              16
+            ]
+          },
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "minepreggo_chili_peppers_stage1",
+              "render_method": "alpha_test",
+              "face_dimming": false,
+              "ambient_occlusion": 0
+            }
+          }
+        }
+      },
+      {
+        "condition": "query.block_state('minepreggo:age') == 4",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              10,
+              16
+            ]
+          },
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "minepreggo_chili_peppers_stage2",
+              "render_method": "alpha_test",
+              "face_dimming": false,
+              "ambient_occlusion": 0
+            }
+          }
+        }
+      },
+      {
+        "condition": "query.block_state('minepreggo:age') == 5",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              12,
+              16
+            ]
+          },
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "minepreggo_chili_peppers_stage2",
+              "render_method": "alpha_test",
+              "face_dimming": false,
+              "ambient_occlusion": 0
+            }
+          }
+        }
+      },
+      {
+        "condition": "query.block_state('minepreggo:age') == 6",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              14,
+              16
+            ]
+          },
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "minepreggo_chili_peppers_stage2",
+              "render_method": "alpha_test",
+              "face_dimming": false,
+              "ambient_occlusion": 0
+            }
+          }
+        }
+      },
+      {
+        "condition": "query.block_state('minepreggo:age') == 7",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          },
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "minepreggo_chili_peppers_stage3",
+              "render_method": "alpha_test",
+              "face_dimming": false,
+              "ambient_occlusion": 0
+            }
+          },
+          "minecraft:loot": "loot_tables/blocks/chili_peppers_mature.json"
+        }
+      }
+    ]
+  }
+}

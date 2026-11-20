@@ -1,0 +1,66 @@
+{
+  "format_version": "1.10.0",
+  "animation_controllers": {
+    "controller.animation.minepreggo.monster_slime_girl.hop": {
+      "initial_state": "ground",
+      "states": {
+        "ground": {
+          "on_entry": [
+            "v.hop = 0;"
+          ],
+          "transitions": [
+            {
+              "airborne": "!q.is_on_ground && !q.is_riding"
+            }
+          ],
+          "blend_transition": 0.1
+        },
+        "airborne": {
+          "on_entry": [
+            "v.hop = 1;",
+            "v.squish_age = 0.0;",
+            "v.squish_amp = 0.33;"
+          ],
+          "animations": [
+            "launch"
+          ],
+          "sound_effects": [
+            {
+              "effect": "jump"
+            }
+          ],
+          "transitions": [
+            {
+              "landing": "q.is_on_ground || q.is_riding"
+            }
+          ],
+          "blend_transition": 0.1
+        },
+        "landing": {
+          "on_entry": [
+            "v.hop = 2;",
+            "v.squish_age = 0.0;",
+            "v.squish_amp = -0.165;"
+          ],
+          "animations": [
+            "landing"
+          ],
+          "sound_effects": [
+            {
+              "effect": "squish"
+            }
+          ],
+          "transitions": [
+            {
+              "airborne": "!q.is_on_ground && !q.is_riding"
+            },
+            {
+              "ground": "q.all_animations_finished"
+            }
+          ],
+          "blend_transition": 0.1
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "format_version": "1.26.30",
+  "minecraft:item": {
+    "description": {
+      "identifier": "minepreggo:ender_breast_milk_bottle",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "minepreggo_ender_breast_milk_bottle",
+      "minecraft:display_name": {
+        "value": "item.minepreggo.ender_breast_milk_bottle"
+      },
+      "minecraft:max_stack_size": 16,
+      "minecraft:rarity": "uncommon"
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "minepreggo:brain_with_hot_sauce"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "tag": "minepreggo:brain"
+      },
+      {
+        "item": "minepreggo:hot_sauce"
+      }
+    ],
+    "unlock": [
+      {
+        "tag": "minepreggo:brain"
+      }
+    ],
+    "result": {
+      "item": "minepreggo:brain_with_hot_sauce"
+    }
+  }
+}

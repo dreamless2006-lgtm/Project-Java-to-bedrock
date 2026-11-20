@@ -1,0 +1,107 @@
+{
+  "format_version": "1.26.30",
+  "minecraft:block": {
+    "description": {
+      "identifier": "minepreggo:kobold_egg",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "minepreggo:eggs": {
+          "values": {
+            "min": 1,
+            "max": 4
+          }
+        },
+        "minepreggo:cracks": {
+          "values": {
+            "min": 0,
+            "max": 2
+          }
+        }
+      }
+    },
+    "components": {
+      "minepreggo:kobold_egg": {},
+      "minecraft:display_name": "item.minepreggo.kobold_egg",
+      "minecraft:geometry": {
+        "identifier": "geometry.minepreggo.kobold_egg",
+        "bone_visibility": {
+          "egg2": "q.block_state('minepreggo:eggs') >= 2",
+          "egg3": "q.block_state('minepreggo:eggs') >= 3",
+          "egg4": "q.block_state('minepreggo:eggs') >= 4"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "minepreggo_kobold_egg_c0",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": {
+        "origin": [
+          -6,
+          0,
+          -6
+        ],
+        "size": [
+          12,
+          7,
+          12
+        ]
+      },
+      "minecraft:selection_box": {
+        "origin": [
+          -6,
+          0,
+          -6
+        ],
+        "size": [
+          12,
+          7,
+          12
+        ]
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.4
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0.5
+      },
+      "minecraft:light_dampening": 0,
+      "minecraft:map_color": "#ffecb1",
+      "minecraft:loot": "loot_tables/empty.json",
+      "minecraft:tick": {
+        "interval_range": [
+          1200,
+          1200
+        ],
+        "looping": true
+      }
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('minepreggo:cracks') == 1",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "minepreggo_kobold_egg_c1",
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('minepreggo:cracks') == 2",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "minepreggo_kobold_egg_c2",
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      }
+    ]
+  }
+}
