@@ -52,15 +52,15 @@ const TYPE_BIRTHS = { normal: 'girlmob:standing', navel: 'girlmob:arched', burst
  * Girl Mob's girls, by their mob: how she carries and gives birth, her belly's shape. Normal births
  * for most; through the navel for the strange ones (the enderman, the evoker, the witch, the golem);
  * a belly burst for the fierce (the blaze, the warden, the brute, the wither skeleton); a breast
- * pregnancy for the milk-giving farm girls.
+ * pregnancy for the milk-giving farm girls. Every undead girl and the enderman burst.
  * @type {Record<string, { type: 'normal' | 'navel' | 'burst' | 'breast', shape: keyof typeof SHAPES, tone?: number[] }>}
  */
 const GIRL_MOB = {
-  creeper: { type: 'burst', shape: 'round' }, zombie: { type: 'normal', shape: 'round' }, husk: { type: 'normal', shape: 'low' }, drowned: { type: 'normal', shape: 'pointed' },
-  skeleton: { type: 'normal', shape: 'high' }, stray: { type: 'normal', shape: 'high' }, wither_skeleton: { type: 'burst', shape: 'pointed' },
+  creeper: { type: 'burst', shape: 'round' }, zombie: { type: 'burst', shape: 'round' }, husk: { type: 'burst', shape: 'low' }, drowned: { type: 'burst', shape: 'pointed' },
+  skeleton: { type: 'burst', shape: 'high' }, stray: { type: 'burst', shape: 'high' }, wither_skeleton: { type: 'burst', shape: 'pointed' },
   pillager: { type: 'normal', shape: 'wide' }, vindicator: { type: 'normal', shape: 'round' }, evocation_illager: { type: 'navel', shape: 'high' },
   witch: { type: 'navel', shape: 'low' }, wandering_trader: { type: 'normal', shape: 'wide' }, villager_v2: { type: 'normal', shape: 'round' },
-  piglin: { type: 'normal', shape: 'wide' }, piglin_brute: { type: 'burst', shape: 'wide' }, enderman: { type: 'navel', shape: 'round', tone: [38, 28, 48] },
+  piglin: { type: 'normal', shape: 'wide' }, piglin_brute: { type: 'burst', shape: 'wide' }, enderman: { type: 'burst', shape: 'round', tone: [38, 28, 48] },
   warden: { type: 'burst', shape: 'wide' }, iron_golem: { type: 'navel', shape: 'wide' }, blaze: { type: 'burst', shape: 'round' },
   spider: { type: 'normal', shape: 'low' }, fox: { type: 'normal', shape: 'pointed' }, wolf: { type: 'normal', shape: 'pointed' }, horse: { type: 'normal', shape: 'low' },
   cow: { type: 'breast', shape: 'low' }, pig: { type: 'breast', shape: 'round' }, sheep: { type: 'breast', shape: 'wide' }, chicken: { type: 'breast', shape: 'high' },
