@@ -91,6 +91,19 @@ export const CHAPTERS = [
       'The Kobold lays eggs. Late in her pregnancy her Mating scene becomes an egg-laying scene: her belly hardens, and once her partner pulls back an egg slides out between her legs and she hands it to you; a second one follows, and any left come as you help her push. Place Kobold Eggs as a clutch (up to four, use an egg on it to add one): they crack over the next minutes, faster with a kobold nearby, and hatch into her baby.',
   },
   {
+    title: "Jenny's Preggo Mobs",
+    body:
+      "Jenny's Zombie Girl, Jenny's Creeper Girl, Jenny's Slime Girl and Jenny's Ender Woman are curvy mobs of their own, beside the Preggo mobs: wider hips, thicker thighs, a fuller rounded bust that jiggles as she walks, and Jenny's own idle and walk. They spawn by day (the zombie and creeper girls in plains and forests, the slime girl in swamps and jungles, the ender woman in plains, deserts and the End), and three in ten are already pregnant.\n\n" +
+      'Tame one with her treat (rotten flesh, gunpowder, a slime ball, chorus fruit or an ender pearl; any of them likes cake). Use a Potion of Impregnation on her and she is pregnant 15 seconds later: her round belly grows, her babies kick, and she gives birth the way one of the Jenny girls does. Crouch and use an empty hand on her while she is pregnant for her pregnancy menu.',
+  },
+  {
+    title: 'Other girls',
+    body:
+      'InsanityV women (Molten in the Nether, Daisy, Oxy, Stella, Enny): tamed with their treats, pregnant through the potions, each with her own kicks and a Jenny girl\'s birth. Skelly, the skeleton girl, carries a ribbed bone belly and gives birth by belly burst. The goblin, imp and bloatberry girls and the Minecraft Comes Alive women join the pregnancy system too. Three in ten of them spawn pregnant.\n\n' +
+      "Girl Mob's girls are mobs of their own (Zombie Girl, Cow Girl, ...), the vanilla mobs untouched. Each has her belly shape and her way of giving birth: normally (standing, braced on her knees), through her navel (the enderman's kin, the evoker, the witch, the iron golem), by belly burst (the undead, the enderman, the creeper, the warden, the brute), or a breast pregnancy (the cow, pig, sheep and chicken girls: their breasts swell, the baby comes at the chest). Skeleton girls carry in a cage of their ribs. Late in it she waddles, a hand at her back and one on her belly.\n\n" +
+      "Girl Mob's scene: hit an adult girl until a blow would kill her; she is defeated instead and lies on her back. Use her (On Board, not crouching) for the scene; crouch to get off and she gets up pregnant, at the strongest gradual acceleration. The bee, vex, cave spider and slime girls and babies never get pregnant.",
+  },
+  {
     title: 'Commands',
     body:
       'Operators can test everything with /scriptevent:\n' +

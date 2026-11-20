@@ -45,5 +45,8 @@ packs/resource/**/insanity_port/
 # Skelly, her own mob (vendor/skelly/, converted by tools/import-skelly.mjs); the skeleton texture
 # an earlier import replaced
 packs/behavior/**/skelly_port/
+# Jenny's Preggo Mobs (made from the imported models by tools/import-jenny-preggo.mjs)
+packs/behavior/**/jennypreggo_port/
+packs/resource/**/jennypreggo_port/
 packs/resource/**/skelly_port/
 packs/resource/textures/entity/skeleton/

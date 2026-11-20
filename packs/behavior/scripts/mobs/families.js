@@ -192,8 +192,10 @@ export const PORT_GIRL_FAMILIES = Object.fromEntries(
  */
 /** The InsanityV women (tools/import-insanity.mjs): tamed with their treats by their own entities. */
 export const INSANITY_FAMILIES = Object.fromEntries(
-  // the InsanityV women (tools/import-insanity.mjs) and Skelly (tools/import-skelly.mjs)
-  ['insanityv:molten', 'insanityv:daisy', 'insanityv:oxy', 'insanityv:stella', 'insanityv:enny', 'minepreggo:skelly'].map((id) => [
+  // the InsanityV women (tools/import-insanity.mjs), Skelly (tools/import-skelly.mjs) and Jenny's
+  // Preggo Mobs (tools/import-jenny-preggo.mjs)
+  ['insanityv:molten', 'insanityv:daisy', 'insanityv:oxy', 'insanityv:stella', 'insanityv:enny', 'minepreggo:skelly',
+    'minepreggo:jenny_zombie_girl', 'minepreggo:jenny_creeper_girl', 'minepreggo:jenny_slime_girl', 'minepreggo:jenny_ender_woman'].map((id) => [
     id,
     /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: 'minepreggo:baby_human' }),
   ])

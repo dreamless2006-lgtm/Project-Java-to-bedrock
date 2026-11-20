@@ -36,6 +36,7 @@ import { FETUS_SCALE, crowningLines } from './lib/crowning.mjs';
 import { GIRL_BIRTHS, girlBirthExit, girlEffects } from './lib/girl-births.mjs';
 import { girlSources, poseController } from './lib/girl-port.mjs';
 import { stringifyEntity } from './lib/entity-json.mjs';
+import { facesOf, part } from './lib/box-uv.mjs';
 import { decodePng, encodePng } from './lib/png.mjs';
 import { girlPoseAnimations } from './lib/scene-poses.mjs';
 import { walkJiggleAnimation } from './lib/walk-jiggle.mjs';
@@ -300,31 +301,6 @@ for (const file of walk(join(VANILLA, 'render_controllers')).filter((f) => f.end
 for (const { doc } of theirs('resource', 'render_controllers')) Object.assign(controllers, doc.render_controllers ?? {});
 
 // ---- a woman's build ----------------------------------------------------------------------------------
-/** Box UV as per-face UVs (Blockbench's Bedrock layout), mirrored when the cube or its bone is. */
-function facesOf(/** @type {any} */ cube, /** @type {boolean} */ boneMirror = false) {
-  if (!Array.isArray(cube.uv)) return cube.uv ?? {};
-  const [u, v] = cube.uv;
-  const [w, h, d] = cube.size;
-  const face = (/** @type {number} */ fu, /** @type {number} */ fv, /** @type {number} */ su, /** @type {number} */ sv) => ({ uv: [round(fu), round(fv)], uv_size: [round(su), round(sv)] });
-  if (cube.mirror ?? boneMirror) {
-    return {
-      north: face(u + d + w, v + d, -w, h), south: face(u + 2 * d + 2 * w, v + d, -w, h),
-      east: face(u + 2 * d + w, v + d, -d, h), west: face(u + d, v + d, -d, h),
-      up: face(u + d + w, v, -w, d), down: face(u + d + 2 * w, v + d, -w, -d),
-    };
-  }
-  return {
-    north: face(u + d, v + d, w, h), south: face(u + 2 * d + w, v + d, w, h),
-    east: face(u, v + d, d, h), west: face(u + d + w, v + d, d, h),
-    up: face(u + d, v, w, d), down: face(u + d + w, v + d, w, -d),
-  };
-}
-/** Part of a face (fractions across and down it). */
-const part = (/** @type {any} */ face, /** @type {number} */ x0, /** @type {number} */ x1, /** @type {number} */ y0, /** @type {number} */ y1) => ({
-  uv: [round(face.uv[0] + face.uv_size[0] * x0), round(face.uv[1] + face.uv_size[1] * y0)],
-  uv_size: [round(face.uv_size[0] * (x1 - x0)), round(face.uv_size[1] * (y1 - y0))],
-});
-
 /**
  * @typedef {object} Rig a people's body
  * @property {string} key short name for files and ids
