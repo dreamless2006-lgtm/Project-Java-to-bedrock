@@ -140,9 +140,9 @@ export const isWalking = (/** @type {Entity} */ entity) => walking.has(entity.id
 /**
  * Why she cannot lie down now (a translation key with her name as %s), or null when she can.
  * Only the player's own tamed Minepreggo females can; a pregnant one still can (the scene then changes nothing).
- * @param {MobRecord} record @param {Player} player
+ * @param {MobRecord} record @param {Player} player @param {boolean} [labor] in labor she still can (the monster creeper girl's navel birth)
  */
-export function canStartScene(record, player) {
+export function canStartScene(record, player, labor = false) {
   const { entity, data } = record;
   const family = familyOf(entity);
   if (!family || (family.external && !family.scenes)) return 'minepreggo.bed.not_female';
@@ -155,7 +155,7 @@ export function canStartScene(record, player) {
     data.owner = player.id; // the first owner interaction records the owner, as mobs/interact.js does
     record.dirty = true;
   } else if (owner?.id !== player.id && data.owner !== player.id) return 'minepreggo.bed.not_yours';
-  if (isIncapacitated(record) || data.savage || LABOR_PAINS.has(/** @type {any} */ (data.pregnancy?.pain)?.type ?? '')) return 'minepreggo.bed.busy';
+  if (data.savage || (!labor && (isIncapacitated(record) || LABOR_PAINS.has(/** @type {any} */ (data.pregnancy?.pain)?.type ?? '')))) return 'minepreggo.bed.busy';
   return null;
 }
 

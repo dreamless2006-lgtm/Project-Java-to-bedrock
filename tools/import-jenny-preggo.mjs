@@ -274,7 +274,8 @@ for (const girl of GIRLS) {
         scale: `q.property('${MOD}:navel_scene') ? 1.25 + 0.55 * math.abs(math.sin(q.life_time * 346.0)) : 1.0 + v.kick_w * 0.9 * math.pow(math.max(0.0, math.sin(q.life_time * 300.0)), 4.0)`,
         position: [0, 0, `q.property('${MOD}:navel_scene') ? -0.5 * math.abs(math.sin(q.life_time * 346.0)) : -v.kick_w * 0.7 * math.pow(math.max(0.0, math.sin(q.life_time * 300.0)), 4.0)`],
       },
-      belly: { scale: [`q.property('${MOD}:navel_scene') ? 1.0 + 0.03 * math.sin(q.life_time * 692.0) : 1.0 + 0.035 * v.kick_w * math.sin(q.life_time * 170.0)`, `q.property('${MOD}:navel_scene') ? 1.0 - 0.03 * math.sin(q.life_time * 692.0) : 1.0 + 0.035 * v.kick_w * math.sin(q.life_time * 170.0 + 90.0)`, 1.0] },
+      // (her navel birth: her belly bursts open at her navel, gone at once)
+      belly: { scale: [`q.property('${MOD}:navel_burst') ? 0.0 : (q.property('${MOD}:navel_scene') ? 1.0 + 0.03 * math.sin(q.life_time * 692.0) : 1.0 + 0.035 * v.kick_w * math.sin(q.life_time * 170.0))`, `q.property('${MOD}:navel_burst') ? 0.0 : (q.property('${MOD}:navel_scene') ? 1.0 - 0.03 * math.sin(q.life_time * 692.0) : 1.0 + 0.035 * v.kick_w * math.sin(q.life_time * 170.0 + 90.0))`, `q.property('${MOD}:navel_burst') ? 0.0 : 1.0`] },
     } } },
     ids: { mp_navel: `${prefix}.navel` },
     animate: [{ mp_navel: 'v.bp >= 0' }],
@@ -299,7 +300,7 @@ for (const girl of GIRLS) {
       // dressed, or her own skin once undressed (the Wahoo menu, scripts: jenny/bed.js)
       extraTextures: { nude: skin, ...faceTextures },
       textureExpression: `q.property('${MOD}:undressed') ? Texture.nude : Texture.o0`,
-      properties: { [`${MOD}:undressed`]: { type: 'bool', default: false, client_sync: true }, [`${MOD}:navel_scene`]: { type: 'bool', default: false, client_sync: true } },
+      properties: { [`${MOD}:undressed`]: { type: 'bool', default: false, client_sync: true }, [`${MOD}:navel_scene`]: { type: 'bool', default: false, client_sync: true }, [`${MOD}:navel_burst`]: { type: 'bool', default: false, client_sync: true } },
     } : {}),
     ...(girl.navel ? { bellyHook: withNavel, extra: navel } : {}),
     ...face,
