@@ -38,6 +38,17 @@ export const LINES = [
   { item: 'slime', kind: true, name: 'Slime Girl', skin: [140, 220, 120], hair: [90, 180, 80], shirt: [110, 200, 100], trim: [60, 140, 60] },
   // (new lines go last: a grown child keeps its line's number)
   { item: 'jenny_monster_slime_girl', name: "Jenny's Monster Slime Girl", skin: [118, 214, 110], hair: [70, 170, 70], shirt: [40, 36, 54], trim: [250, 110, 170], made: true },
+  // the Jenny girls' babies (their items come with tools/import-jenny.mjs), in their mothers' colours
+  { item: 'jenny', name: 'Jenny', skin: [240, 202, 172], hair: [150, 90, 50], shirt: [176, 150, 214], trim: [120, 92, 168] },
+  { item: 'bia', name: 'Bia', skin: [236, 196, 170], hair: [70, 46, 34], shirt: [240, 170, 196], trim: [206, 112, 150] },
+  { item: 'slime_girl', name: 'Slime', skin: [130, 214, 120], hair: [78, 160, 70], shirt: [110, 190, 100], trim: [60, 130, 56] },
+  { item: 'luna', name: 'Luna', skin: [244, 214, 190], hair: [96, 72, 60], shirt: [244, 178, 112], trim: [200, 120, 60] },
+  { item: 'galath', name: 'Galath', skin: [214, 170, 200], hair: [60, 30, 70], shirt: [150, 96, 168], trim: [92, 52, 110] },
+  { item: 'allie', name: 'Allie', skin: [236, 200, 180], hair: [120, 210, 230], shirt: [120, 210, 230], trim: [60, 150, 186] },
+  { item: 'manglelie', name: 'Manglelie', skin: [240, 230, 230], hair: [226, 226, 232], shirt: [200, 60, 70], trim: [170, 170, 184] },
+  { item: 'bee', name: 'Bee', skin: [242, 210, 170], hair: [52, 40, 30], shirt: [246, 206, 64], trim: [52, 40, 30] },
+  { item: 'kobold', name: 'Kobold', skin: [110, 190, 176], hair: [56, 128, 118], shirt: [90, 70, 50], trim: [56, 128, 118] },
+  { item: 'ellie', name: 'Ellie', skin: [236, 206, 190], hair: [58, 52, 60], shirt: [58, 52, 60], trim: [190, 40, 52] },
 ];
 
 /** A baby's line: by its item exactly, else by the kind its id names, else a human's. */

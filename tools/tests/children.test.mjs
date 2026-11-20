@@ -19,11 +19,12 @@ test('no mother outside our own kinds gives a plain human baby; her own baby ite
 });
 
 test('a baby grows up into its line: by its item, by its kind, else human; every line has a son and a daughter skin', () => {
-  assert.ok(LINES.length <= 32, 'the line property holds 0..31');
+  assert.ok(LINES.length <= 64, 'the line property holds 0..63');
   assert.equal(LINES[lineOf('minepreggo:baby_daisy')].item, 'daisy');
   assert.equal(LINES[lineOf('minepreggo:baby_humanoid_creeper')].item, 'creeper');
   assert.equal(LINES[lineOf('minepreggo:baby_humanoid_ender')].item, 'ender');
-  assert.equal(lineOf('minepreggo:baby_jenny'), 0);
+  assert.equal(LINES[lineOf('minepreggo:baby_jenny')].item, 'jenny');
+  assert.equal(lineOf('minepreggo:baby_villager'), 0);
   const client = JSON.parse(readFileSync(new URL('../../packs/resource/entity/children/grown_child.entity.json', import.meta.url), 'utf8'));
   assert.equal(Object.keys(client['minecraft:client_entity'].description.textures).length, LINES.length * 2);
   const server = JSON.parse(readFileSync(new URL('../../packs/behavior/entities/children/grown_child.json', import.meta.url), 'utf8'))['minecraft:entity'];

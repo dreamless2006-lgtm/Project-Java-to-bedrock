@@ -208,7 +208,7 @@ json(join(BP, 'entities/children/grown_child.json'), {
     description: {
       identifier: 'minepreggo:grown_child', is_spawnable: true, is_summonable: true,
       properties: {
-        'minepreggo:line': { type: 'int', range: [0, 31], default: 0, client_sync: true },
+        'minepreggo:line': { type: 'int', range: [0, 63], default: 0, client_sync: true },
         'minepreggo:daughter': { type: 'bool', default: false, client_sync: true },
       },
     },
