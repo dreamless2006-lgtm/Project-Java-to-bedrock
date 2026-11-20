@@ -143,6 +143,9 @@ function onJennyRig(/** @type {any} */ doc, /** @type {string} */ id) {
   delete upper.cubes;
   const legTop = Math.max(...legs.map((/** @type {any} */ l) => l.pivot[1]));
   g.bones.push({ name: 'hip', parent: 'upperBody', pivot: [0, legTop + 1, upper.pivot[2]] });
+  // her upper body turns at her waist, like a Jenny girl's (the mod's Body turns at her neck, which
+  // swung her hips and belly out of place in every pose that bends her)
+  upper.pivot = [upper.pivot[0], legTop, upper.pivot[2]];
   return { format_version: '1.12.0', 'minecraft:geometry': [g] };
 }
 

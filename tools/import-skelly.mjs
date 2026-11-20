@@ -144,6 +144,8 @@ bones.unshift({ name: 'body', pivot: [0, legTop, 0] });
 // where her belly bursts: the middle of her waist, a hand in front of it
 bones.push({ name: 'torso', parent: 'upperBody', pivot: [...upper.pivot], cubes: trunk, locators: { burst: [0, round((legTop + top) / 2), round(front - 5)] } });
 bones.push({ name: 'hip', parent: 'upperBody', pivot: [0, legTop + 1, upper.pivot[2]] });
+// her upper body turns at her waist, like a Jenny girl's (the skeleton's body turns at the neck)
+upper.pivot = [upper.pivot[0], legTop, upper.pivot[2]];
 const geometry = {
   format_version: '1.12.0',
   'minecraft:geometry': [{ description: { identifier: 'geometry.skelly.skelly', texture_width: width, texture_height: height, visible_bounds_width: 3, visible_bounds_height: 3, visible_bounds_offset: [0, 1.5, 0] }, bones }],
