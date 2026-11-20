@@ -9,7 +9,7 @@ export const MOD = 'minepreggo';
 export const FAMILY_TAG = 'minepreggo_preggo_mob';
 export const PHASES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 export const BELLY_VALUES = ['none', ...PHASES.map((p) => `p${p}`)];
-export const POSES = ['none', 'morning_sickness', 'fetal_movement', 'kicking_sit', 'contraction', 'back_pain', 'water_breaking', 'prebirth', 'birth', 'postbirth', 'miscarriage', 'belly_rubs', 'incapacitated', 'scene', 'scene_sit'];
+export const POSES = ['none', 'morning_sickness', 'fetal_movement', 'kicking_sit', 'contraction', 'back_pain', 'water_breaking', 'prebirth', 'birth', 'postbirth', 'miscarriage', 'belly_rubs', 'incapacitated', 'scene', 'scene_sit', 'scene_back'];
 /**
  * What her belly does during a scene (the Jenny Bed's, a belly scene, or one of the Jenny port
  * girls' own): nothing special, calm, a burst of kicks, or a contraction tightening it. The scripts

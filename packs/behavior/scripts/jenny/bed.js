@@ -31,7 +31,7 @@ function femalesNear(/** @type {Block} */ block) {
   const center = block.center();
   /** @type {Entity[]} */
   const found = block.dimension.getEntities({ families: [FAMILY_TAG], location: center, maxDistance: RANGE });
-  return found.filter((entity) => familyOf(entity) && !familyOf(entity)?.external);
+  return found.filter((entity) => familyOf(entity) && (!familyOf(entity)?.external || familyOf(entity)?.scenes));
 }
 
 async function openBedMenu(/** @type {Player} */ player, /** @type {Block} */ block) {
@@ -67,3 +67,29 @@ system.beforeEvents.startup.subscribe(({ blockComponentRegistry }) => {
 });
 
 export { world };
+
+/** The Wahoo menu's positions: her pose (tools/lib/scene-poses.mjs), as the Jenny girls' scenes offer. */
+const POSITIONS = /** @type {[string, string][]} */ ([['Doggy', 'scene'], ['Missionary', 'scene_back'], ['Sitting', 'scene_sit']]);
+
+/**
+ * The Wahoo menu (Jenny's Preggo Mobs, crouching with an empty hand on one you tamed): her positions,
+ * like the Jenny girls' scenes; the scene plays where she stands, no bed needed, and she comes out of
+ * it pregnant, as from the Jenny Bed.
+ * @param {import('@minecraft/server').Player} player @param {import('../mobs/state.js').MobRecord} record
+ */
+export async function openWahooMenu(player, record) {
+  const busy = canStartScene(record, player);
+  if (busy) {
+    player.onScreenDisplay.setActionBar({ translate: busy, with: { rawtext: [nameOf(record.entity)] } });
+    return;
+  }
+  const menu = new ActionFormData().title('Wahoo').body('Choose a position.');
+  for (const [label] of POSITIONS) menu.button(label);
+  const answer = await menu.show(/** @type {any} */ (player));
+  const { entity } = record;
+  if (answer.canceled || answer.selection === undefined || !entity.isValid || canStartScene(record, player)) return;
+  const at = entity.location;
+  // (where she stands, as if on a bed there: the scene sets her 9/16 above a bed's block)
+  const bed = { location: { x: Math.floor(at.x), y: Math.floor(at.y) - 0.5625, z: Math.floor(at.z) }, facing: facingFromYaw(player.getRotation().y) };
+  requestScene(record, player, bed, POSITIONS[answer.selection][1]);
+}

@@ -94,7 +94,8 @@ export const CHAPTERS = [
     title: "Jenny's Preggo Mobs",
     body:
       "Jenny's Zombie Girl, Jenny's Creeper Girl, Jenny's Slime Girl and Jenny's Ender Woman are curvy mobs of their own, beside the Preggo mobs: wider hips, thicker thighs, a fuller rounded bust that jiggles as she walks, and Jenny's own idle and walk. They spawn by day (the zombie and creeper girls in plains and forests, the slime girl in swamps and jungles, the ender woman in plains, deserts and the End), and three in ten are already pregnant.\n\n" +
-      'Tame one with her treat (rotten flesh, gunpowder, a slime ball, chorus fruit or an ender pearl; any of them likes cake). Use a Potion of Impregnation on her and she is pregnant 15 seconds later: her round belly grows, her babies kick, and she gives birth the way one of the Jenny girls does. Crouch and use an empty hand on her while she is pregnant for her pregnancy menu.',
+      'Tame one with her treat (rotten flesh, gunpowder, a slime ball, chorus fruit or an ender pearl; any of them likes cake). Use a Potion of Impregnation on her and she is pregnant 15 seconds later: her round belly grows, her babies kick, and she gives birth the way one of the Jenny girls does. Crouch and use an empty hand on her while she is pregnant for her pregnancy menu.\n\n' +
+      'Wahoo: crouch and use an empty hand on one you tamed (not yet pregnant) and choose a position, like the Jenny girls\' scenes: Doggy (on all fours, you behind her), Missionary (on her back, legs raised, you between them) or Sitting (sat back on her hands, you in front). The scene plays where she stands for 50 seconds and she comes out of it pregnant. She also takes the Jenny Bed.',
   },
   {
     title: 'Other girls',

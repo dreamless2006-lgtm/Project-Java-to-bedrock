@@ -64,6 +64,8 @@ export function poseController(/** @type {string[]} */ poses, /** @type {Record<
  * @property {boolean} [fireproof]
  * @property {string} family her own type family
  * @property {{ base_color: string, overlay_color: string }} [egg] her spawn egg's colours
+ * @property {number} [grow] how much bigger than a player's her belly is (else by how tall she is: a thin, long-legged girl's stays smaller)
+ * @property {number[]} [tone] her belly's skin tone, where her face is no guide to it
  * @property {'cube' | 'round'} [bellyStyle] her belly's style, instead of the one her chest suggests (tools/lib/belly-fit.mjs chestStyle)
  * @property {(image: any) => any} [bellySkin] changes her belly texture (given her skin-tone one)
  * @property {(body: import('./belly-fit.mjs').Body) => number[]} [opening] where her baby comes out instead of between her legs
@@ -92,7 +94,7 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
   // the fitter's limits are a player-sized girl's: a taller girl (legs reaching higher) gets as much
   // bigger a belly, from the same waist bottom
   const legTop = Math.max(...main.bones.filter((/** @type {any} */ b) => b.name === 'legL' || b.name === 'legR').map((/** @type {any} */ b) => b.pivot[1]));
-  const grow = Math.min(1.5, Math.max(1, legTop / 16));
+  const grow = girl.grow ?? Math.min(1.5, Math.max(1, legTop / 16));
   // and a girl wider than a player (her torso's main box) as much wider and deeper a belly
   const trunk = [...(main.bones.find((/** @type {any} */ b) => b.name === 'torso')?.cubes ?? [])].sort((a, b) => b.size[0] * b.size[1] * b.size[2] - a.size[0] * a.size[1] * a.size[2])[0];
   const wide = Math.min(1.6, Math.max(grow, trunk ? (trunk.size[0] + 2 * (trunk.inflate ?? 0)) / 8 : 1));
@@ -101,7 +103,7 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
   const body = girl.opening ? { ...sized, opening: girl.opening(sized) } : sized;
 
   // her belly of each size, in her skin tone, with the crowning mount
-  const tone = skinTone(decodePng(outfits[0].texture), main);
+  const tone = girl.tone ?? skinTone(decodePng(outfits[0].texture), main);
   const skin = bellyTexture(tone);
   write(join(RP, 'textures', port, `${girl.key}_belly.png`), encodePng(girl.bellySkin ? girl.bellySkin(skin) : skin));
   // in her art style: blocky for a girl of boxes (cube breasts), smooth for a rounded one, unless

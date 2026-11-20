@@ -104,6 +104,7 @@ export const SOLVED_POSES = /** @type {Record<string, { source?: string, authore
   ...LABOR_POSES,
   scene: { authored: 'scene' },
   scene_sit: { authored: 'scene_sit' },
+  scene_back: { authored: 'scene_back' },
   belly_hold: { authored: 'belly_hold' },
 });
 const AUTHORED_POSES = /** @type {Record<string, any>} */ ({ ...AUTHORED_LABOR, ...AUTHORED, belly_hold: BELLY_HOLD });

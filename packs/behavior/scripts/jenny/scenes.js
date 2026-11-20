@@ -145,7 +145,7 @@ export const isWalking = (/** @type {Entity} */ entity) => walking.has(entity.id
 export function canStartScene(record, player) {
   const { entity, data } = record;
   const family = familyOf(entity);
-  if (!family || family.external) return 'minepreggo.bed.not_female';
+  if (!family || (family.external && !family.scenes)) return 'minepreggo.bed.not_female';
   if (byPlayer.has(player.id) || playerBusy(player.id)) return 'minepreggo.bed.player_busy';
   if (scenes.has(entity.id) || walking.has(entity.id) || femaleBusy(entity.id)) return 'minepreggo.bed.busy';
   if (data.wild) return 'minepreggo.bed.wild';
@@ -190,16 +190,16 @@ const distance = (/** @type {Vector3} */ a, /** @type {Vector3} */ b) => Math.hy
 /**
  * Takes her to the bed: at once when she stands next to it, else she walks there on her own and
  * the scene starts when she arrives (or she is placed on it after WALK_TICKS).
- * @param {MobRecord} record @param {Player} player @param {Bed} bed
+ * @param {MobRecord} record @param {Player} player @param {Bed} bed @param {string} [pose] her position ('scene' on all fours, 'scene_back', 'scene_sit')
  * @returns {'now' | 'walking' | 'busy' | 'bed_taken'}
  */
-export function requestScene(record, player, bed) {
+export function requestScene(record, player, bed, pose = POSE) {
   const { entity } = record;
   if (bedTaken(entity, bed)) return 'bed_taken';
   if (!claim('walk', entity.id, player.id)) return 'busy';
   const middle = { x: bed.location.x + 0.5, y: bed.location.y + 0.5, z: bed.location.z + 0.5 };
   if (distance(entity.location, middle) <= NEAR) {
-    startScene(record, player, bed);
+    startScene(record, player, bed, pose);
     return 'now';
   }
   trigger(entity, 'minepreggo:go_to_bed');
@@ -209,10 +209,11 @@ export function requestScene(record, player, bed) {
 }
 
 /**
- * Starts the scene on the bed at `bed`.
- * @param {MobRecord} record @param {Player} player @param {Bed} bed
+ * Starts the scene on the bed at `bed` (or where she stands: the Wahoo menu's, bed.js).
+ * @param {MobRecord} record @param {Player} player @param {Bed} bed @param {string} [pose] her position: on all fours he
+ *   kneels behind her, on her back or sitting he kneels in front of her, between her legs
  */
-export function startScene(record, player, bed) {
+export function startScene(record, player, bed, pose = POSE) {
   const { entity, data } = record;
   walking.delete(entity.id);
   trigger(entity, 'minepreggo:leave_bed');
@@ -224,7 +225,8 @@ export function startScene(record, player, bed) {
   const facing = FACINGS[bed.facing] ?? FACINGS[2];
   const top = bed.location.y + 0.5625; // the bed is 9/16 high
   const her = { x: bed.location.x + 0.5 + facing.x * 0.75, y: top, z: bed.location.z + 0.5 + facing.z * 0.75 };
-  const him = { x: her.x - facing.x, y: top, z: her.z - facing.z };
+  const front = pose === POSE ? -1 : 1;
+  const him = { x: her.x + front * facing.x, y: top, z: her.z + front * facing.z };
   // The camera stands beside the bed, a little behind the pair, and looks at the two of them.
   const side = { x: -facing.z, z: facing.x };
   const camera = { x: her.x - facing.x * 0.9 + side.x * 2.4, y: top + 1.7, z: her.z - facing.z * 0.9 + side.z * 2.4 };
@@ -248,7 +250,7 @@ export function startScene(record, player, bed) {
   };
   scenes.set(entity.id, scene);
   byPlayer.set(player.id, entity.id);
-  setScenePose(record, POSE);
+  setScenePose(record, pose);
   try {
     entity.teleport(her, { rotation: { x: 0, y: facing.yaw }, keepVelocity: false });
   } catch {

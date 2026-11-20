@@ -15,6 +15,7 @@ import { CRAVING_LANG } from '../pregnancy/data.js';
 import { clampLevel } from '../pregnancy/state.js';
 import { FULLNESS } from './families.js';
 import { openPregnancyMenu } from '../jenny/belly_scenes.js';
+import { openWahooMenu } from '../jenny/bed.js';
 import { accelerate, accelerateGradually, calmDown, delayPregnancy, duplicateBabies, familyOf, getRecord, harmPregnancy, healPregnancy, induceFetalMovement, isIncapacitated, isTamed, nameOf, onEatSpicyFood, particles, playSound } from './system.js';
 
 /** @typedef {import('@minecraft/server').Player} Player */
@@ -157,6 +158,11 @@ export function chooseAction(player, target, item) {
 
   // Crouching with an empty hand on a pregnant female opens her pregnancy menu (the belly scenes,
   // help with the birth): one of your own tamed females, or any of the Jenny port's girls.
+  // Jenny's Preggo Mobs: crouching with an empty hand on one you tamed, not yet pregnant, opens her
+  // Wahoo menu (her positions, jenny/bed.js)
+  if (!id && player.isSneaking && !data.pregnancy && family.scenes && isTamed(target)) {
+    return () => void openWahooMenu(player, record).catch((error) => console.warn(`[minepreggo] wahoo menu: ${error}`));
+  }
   if (!id && player.isSneaking && data.pregnancy && (family.external || isTamed(target))) {
     return () => void openPregnancyMenu(player, record).catch((error) => console.warn(`[minepreggo] pregnancy menu: ${error}`));
   }

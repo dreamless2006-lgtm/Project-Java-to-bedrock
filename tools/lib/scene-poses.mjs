@@ -40,6 +40,8 @@ const ease = (/** @type {number[]} */ v) => ({ post: v, lerp_mode: 'catmullrom' 
  * `scene`: on all fours on the bed, her back level, head up, rocking back and forth to the 0.52 s
  * beat of the older Jenny pack's player animation. `scene_sit`: sitting on the ground, leaning back
  * on her hands with her legs out in front and apart, looking down at her belly, breathing.
+ * `scene_back`: lying on her back, her legs raised and apart toward her partner kneeling between them,
+ * her arms up beside her head, rocked to the same 0.52 s beat.
  */
 export const AUTHORED = {
   scene: {
@@ -66,10 +68,22 @@ export const AUTHORED = {
       left_leg: { rotation: [-88, -14, 0], position: [0, -9.8, 0] },
     },
   },
+  scene_back: {
+    loop: true,
+    animation_length: 0.52,
+    bones: {
+      body: { rotation: { '0.0': ease([-88, 0, 0]), '0.26': ease([-84, 0, 0]), '0.52': ease([-88, 0, 0]) } },
+      head: { rotation: { '0.0': ease([-62, 0, 0]), '0.26': ease([-56, 0, 0]), '0.52': ease([-62, 0, 0]) } },
+      right_arm: { rotation: [-165, 0, 22] },
+      left_arm: { rotation: [-165, 0, -22] },
+      right_leg: { rotation: [-128, 22, 0], position: { '0.0': ease([0, -10.4, 0]), '0.26': ease([0, -10.4, -0.6]), '0.52': ease([0, -10.4, 0]) } },
+      left_leg: { rotation: [-128, -22, 0], position: { '0.0': ease([0, -10.4, 0]), '0.26': ease([0, -10.4, -0.6]), '0.52': ease([0, -10.4, 0]) } },
+    },
+  },
 };
 
 /** The scene poses every female gets (ours too); the other authored poses are the Jenny girls' labor. */
-export const SCENE_POSES = ['scene', 'scene_sit'];
+export const SCENE_POSES = ['scene', 'scene_sit', 'scene_back'];
 
 /**
  * The labor poses written here for the Jenny girls (the creeper girl's own contraction only throws

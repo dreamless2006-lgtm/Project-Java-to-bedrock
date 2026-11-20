@@ -32,7 +32,8 @@
             "belly_rubs",
             "incapacitated",
             "scene",
-            "scene_sit"
+            "scene_sit",
+            "scene_back"
           ],
           "default": "none",
           "client_sync": true

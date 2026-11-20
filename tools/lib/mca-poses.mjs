@@ -37,6 +37,7 @@ export const CREEPER_POSES = { morning_sickness: 'morning_sickness', contraction
 export const SOLVED_POSES = /** @type {Record<string, { authored: any, step: number, headFree?: boolean, floor?: number }>} */ ({
   scene: { authored: AUTHORED.scene, step: 0.13, floor: -1 },
   scene_sit: { authored: AUTHORED.scene_sit, step: 0.13, floor: -1.5 },
+  scene_back: { authored: AUTHORED.scene_back, step: 0.13, floor: -1.5 },
   sit: { authored: AUTHORED.scene_sit, step: 0.13, headFree: true, floor: -1.5 },
 });
 

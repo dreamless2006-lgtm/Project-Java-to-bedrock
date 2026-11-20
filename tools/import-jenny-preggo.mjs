@@ -34,7 +34,9 @@ const GIRLS = [
     treats: ['minecraft:slime_ball', 'minecraft:cake'], biomes: ['swamp', 'jungle'], egg: { base_color: '#7cc46a', overlay_color: '#b8f0a8' } },
   { source: 'ender_woman', key: 'jenny_ender_woman', name: "Jenny's Ender Woman", birth: 'jhelliedev:ellie',
     kicks: { name: 'jp_ender', order: [2, 4, 1, 0, 3], rate: 1.15, emphasis: [1.0, 1.1, 1.3, 0.9, 1.0] },
-    treats: ['minecraft:chorus_fruit', 'minecraft:ender_pearl', 'minecraft:cake'], biomes: ['plains', 'desert', 'the_end'], egg: { base_color: '#161616', overlay_color: '#cc66ff' } },
+    treats: ['minecraft:chorus_fruit', 'minecraft:ender_pearl', 'minecraft:cake'], biomes: ['plains', 'desert', 'the_end'], egg: { base_color: '#161616', overlay_color: '#cc66ff' },
+    // her body is thin for all her height, her skin black (her face shows her eyes)
+    grow: 1.05, tone: [34, 28, 40] },
 ];
 /** Her bones -> the Jenny rig's (her own belly bone keeps out of the fitted belly's way). */
 const RENAME = /** @type {Record<string, string>} */ ({ body: 'upperBody', left_arm: 'armL', right_arm: 'armR', left_leg: 'legL', right_leg: 'legR', belly: 'tummy' });
@@ -168,7 +170,7 @@ for (const girl of GIRLS) {
     outfits: [{ name: girl.key, geometry: { format_version: '1.16.0', 'minecraft:geometry': [g] }, texture: new Uint8Array(readFileSync(join(RP, `${texturePath}.png`))) }],
     moves, jiggle: { chest: ['boobs'], belly: ['belly'], buttRoot: ['mp_seat'] },
     birth: `${MOD}:${girl.key}`, kicks: girl.kicks, treats: girl.treats, biomes: girl.biomes,
-    family: 'jenny_preggo_mob', egg: girl.egg, bellyStyle: 'round',
+    family: 'jenny_preggo_mob', egg: girl.egg, bellyStyle: 'round', ...(girl.grow ? { grow: girl.grow } : {}), ...(girl.tone ? { tone: girl.tone } : {}),
   });
   Object.assign(controllers, out.controllers);
   Object.assign(renderControllers, out.renderControllers);

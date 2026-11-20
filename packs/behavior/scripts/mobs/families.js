@@ -21,6 +21,7 @@ import { CRAVING_ITEMS } from '../pregnancy/data.js';
  * @property {string} deadFetusItem
  * @property {string} milkItem
  * @property {number} [hungerP0] ticks per fullness point in P0, when not the P1 value
+ * @property {boolean} [scenes] an external girl who has the scenes all the same (the Wahoo menu, the Jenny Bed)
  * @property {boolean} [external] a girl of another add-on (the Jenny Mod Java Port): her own taming, no hunger or savage state of ours
  */
 
@@ -192,10 +193,8 @@ export const PORT_GIRL_FAMILIES = Object.fromEntries(
  */
 /** The InsanityV women (tools/import-insanity.mjs): tamed with their treats by their own entities. */
 export const INSANITY_FAMILIES = Object.fromEntries(
-  // the InsanityV women (tools/import-insanity.mjs), Skelly (tools/import-skelly.mjs) and Jenny's
-  // Preggo Mobs (tools/import-jenny-preggo.mjs)
-  ['insanityv:molten', 'insanityv:daisy', 'insanityv:oxy', 'insanityv:stella', 'insanityv:enny', 'minepreggo:skelly',
-    'minepreggo:jenny_zombie_girl', 'minepreggo:jenny_creeper_girl', 'minepreggo:jenny_slime_girl', 'minepreggo:jenny_ender_woman'].map((id) => [
+  // the InsanityV women (tools/import-insanity.mjs) and Skelly (tools/import-skelly.mjs)
+  ['insanityv:molten', 'insanityv:daisy', 'insanityv:oxy', 'insanityv:stella', 'insanityv:enny', 'minepreggo:skelly'].map((id) => [
     id,
     /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: 'minepreggo:baby_human' }),
   ])
@@ -207,6 +206,16 @@ export const INSANITY_FAMILIES = Object.fromEntries(
  * (mobs/system.js familyOf), not by her type.
  */
 export const COMPAT_WOMAN = /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: 'minepreggo:baby_human' });
+/**
+ * Jenny's Preggo Mobs (tools/import-jenny-preggo.mjs): curvy girls of ours, tamed with their treats;
+ * like the Jenny girls they have their scenes (the Wahoo menu, jenny/scenes.js), the Jenny Bed's too.
+ */
+export const JENNY_PREGGO_FAMILIES = Object.fromEntries(
+  ['minepreggo:jenny_zombie_girl', 'minepreggo:jenny_creeper_girl', 'minepreggo:jenny_slime_girl', 'minepreggo:jenny_ender_woman'].map((id) => [
+    id,
+    /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, scenes: true, ...HUMAN, babyItem: 'minepreggo:baby_human' }),
+  ])
+);
 export const GOBLIN_FAMILIES = Object.fromEntries(
   ['expandable_goblins:goblin_girl', 'expandable_goblins:imp_girl', 'expandable_goblins:bloatberry_girl'].map((id) => [
     id,
@@ -287,6 +296,7 @@ export const FAMILIES = {
   ...GOBLIN_FAMILIES,
   ...MCA_FAMILIES,
   ...INSANITY_FAMILIES,
+  ...JENNY_PREGGO_FAMILIES,
 };
 
 /** Tamed mobs: fullness points per meal are capped like Java's DataHungry (0-30, eats below 20). */
