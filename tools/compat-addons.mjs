@@ -466,6 +466,23 @@ function onJennyNames(/** @type {Rig} */ rig, /** @type {any} */ female) {
   g.bones.push({ name: 'torso', parent: 'trunk', pivot: [...trunk.pivot], cubes: [rig.torso] }, { name: 'hip', parent: 'trunk', pivot: [0, legTop + 1, trunk.pivot[2]] });
   return { geometry: g, back };
 }
+/**
+ * A client entity in the 1.10.0 format, which conditions on render controllers and scripts.animate
+ * need: an older file's animation controllers (1.8.0's list) become animations it plays always.
+ */
+function toFormat110(/** @type {any} */ doc) {
+  const d = doc['minecraft:client_entity'].description;
+  if (Number(String(doc.format_version ?? '1.8.0').split('.')[1]) >= 10) return;
+  doc.format_version = '1.10.0';
+  d.animations ??= {};
+  d.scripts ??= {};
+  d.scripts.animate ??= [];
+  for (const entry of /** @type {Record<string, string>[]} */ (d.animation_controllers ?? [])) for (const [short, id] of Object.entries(entry)) {
+    d.animations[short] = id;
+    d.scripts.animate.unshift(short);
+  }
+  delete d.animation_controllers;
+}
 const renameBones = (/** @type {any} */ doc, /** @type {Record<string, string>} */ back) => {
   for (const bone of doc['minecraft:geometry'][0].bones) {
     bone.name = back[bone.name] ?? bone.name;
@@ -621,6 +638,8 @@ const renderControllers = {
 const bellySkins = new Map();
 const both = (/** @type {string | undefined} */ a, /** @type {string} */ b) => (a ? `(${a}) && ${b}` : b);
 let peoples = 0;
+/** @type {Set<string>} the mobs with women */
+const withWomen = new Set();
 for (const { path, doc } of theirs('resource', 'entity')) {
   const d = doc['minecraft:client_entity']?.description;
   const behavior = d && behaviors.get(d.identifier);
@@ -709,17 +728,7 @@ for (const { path, doc } of theirs('resource', 'entity')) {
   d.render_controllers = [...list, { [RC_BELLY]: `${FEMALE} && v.bp >= 0` }];
   // (the game refuses an empty map of effects)
   for (const key of ['sound_effects', 'particle_effects']) if (d[key] && !Object.keys(d[key]).length) delete d[key];
-  // conditions on render controllers and scripts.animate need the 1.10.0 format: an older file's
-  // animation controllers (1.8.0's list) become animations it plays always
-  if (Number(String(doc.format_version ?? '1.8.0').split('.')[1]) < 10) {
-    doc.format_version = '1.10.0';
-    const legacy = /** @type {Record<string, string>[]} */ (d.animation_controllers ?? []);
-    for (const entry of legacy) for (const [short, id] of Object.entries(entry)) {
-      d.animations[short] = id;
-      d.scripts.animate.unshift(short);
-    }
-    delete d.animation_controllers;
-  }
+  toFormat110(doc);
   writeJson(join(ORP, path), doc);
 
   // the behaviour: the pregnancy's properties and events, and the family our mob system looks for
@@ -733,12 +742,67 @@ for (const { path, doc } of theirs('resource', 'entity')) {
   }
   e.components['minecraft:type_family'] ??= { family: ['mob', FAMILY_TAG] };
   e.events = { ...(e.events ?? {}), ...phaseEvents() };
+  // (back from a scene, tagged for the script to make her pregnant: scripts/mobs/compat_women.js)
+  if (addon.separate) e.events[`${MOD}:after_scene`] = { queue_command: { command: ['tag @s add minepreggo_after_scene'] } };
+  withWomen.add(d.identifier);
   // (some come into the world pregnant: their spawn event, then ours)
   const spawned = e.events['minecraft:entity_spawned'];
   e.events['minecraft:entity_spawned'] = spawned ? { sequence: [spawned, SPAWN_PREGNANT] } : SPAWN_PREGNANT;
   // (a float property's 0.0 must stay 0.0, or the game drops every property: stringifyEntity)
   writeBytes(join(OBP, behavior.path), new TextEncoder().encode(stringifyEntity(behavior.doc)));
   peoples++;
+}
+// ---- its scenes (separate): the defeated girl it turns a girl into lies on her back, and when the
+// player gets off her she turns back into her girl, pregnant (scripts/mobs/compat_women.js)
+let scenes = 0;
+if (addon.separate) {
+  /** @type {Map<string, string>} the defeated girl -> the girl she was */
+  const sceneOf = new Map();
+  for (const { doc } of theirs('behavior', 'entities')) {
+    const id = doc['minecraft:entity']?.description?.identifier;
+    if (!withWomen.has(id)) continue;
+    for (const m of JSON.stringify(doc).matchAll(/"into":"([a-z_]+:[a-z_0-9]+)</g)) if (!m[1].startsWith(`${addon.separate}:`)) sceneOf.set(m[1], id);
+  }
+  const LIE = `animation.${MOD}.${WOMAN}.lie`;
+  /** @type {Set<string>} */
+  const lying = new Set();
+  for (const { path, doc } of theirs('behavior', 'entities')) {
+    const e = doc['minecraft:entity'];
+    const girl = sceneOf.get(e?.description?.identifier);
+    if (!girl || !e.events?.no_ride) continue;
+    e.component_groups ??= {};
+    e.component_groups['mp_after_scene'] = { 'minecraft:transformation': { into: `${girl}<${MOD}:after_scene>`, delay: { value: 0.5 }, drop_equipment: false } };
+    const add = (e.events.no_ride.add ??= {});
+    add.component_groups = [...(add.component_groups ?? []), 'mp_after_scene'];
+    // the rider sits astride her hips, she lying on her back
+    for (const group of [e.components, ...Object.values(e.component_groups)]) {
+      const seats = group?.['minecraft:rideable']?.seats;
+      if (Array.isArray(seats)) for (const seat of seats) seat.position = [0, 0.4, -0.75];
+    }
+    writeBytes(join(OBP, path), new TextEncoder().encode(stringifyEntity(doc)));
+    lying.add(e.description.identifier);
+    scenes++;
+  }
+  // her model under a root that lays her on her back
+  for (const { path, doc } of theirs('resource', 'entity')) {
+    const d = doc['minecraft:client_entity']?.description;
+    if (!d || !lying.has(d.identifier)) continue;
+    for (const [key, id] of Object.entries(d.geometry ?? {})) {
+      const g = geometryOf(/** @type {string} */ (id));
+      if (!g) continue;
+      const lain = structuredClone(g);
+      lain.description = { ...lain.description, identifier: `geometry.${MOD}.${addon.prefix}_lying_${String(id).replace(/^geometry\./, '').replace(/[^a-z0-9]+/gi, '_')}` };
+      for (const bone of lain.bones) if (!bone.parent) bone.parent = 'mp_lie';
+      lain.bones.unshift({ name: 'mp_lie', pivot: [0, 0, 0] });
+      writeJson(join(ORP, 'models/entity', DIR, `${lain.description.identifier.replace(/^geometry\./, '')}.geo.json`), { format_version: '1.16.0', 'minecraft:geometry': [lain] });
+      d.geometry[key] = lain.description.identifier;
+    }
+    toFormat110(doc);
+    d.animations = { ...(d.animations ?? {}), mp_lie: LIE };
+    d.scripts = { ...(d.scripts ?? {}), animate: [...(d.scripts?.animate ?? []), 'mp_lie'] };
+    writeJson(join(ORP, path), doc);
+  }
+  writeJson(join(ORP, 'animations', DIR, 'lie.animation.json'), { format_version: '1.8.0', animations: { [LIE]: { loop: true, bones: { mp_lie: { rotation: [-90, 0, 0], position: [0, 3, 0] } } } } });
 }
 writeJson(join(ORP, 'render_controllers', `${DIR}.render_controllers.json`), { format_version: '1.8.0', render_controllers: renderControllers });
 writeJson(join(ORP, 'animation_controllers', `${DIR}.animation_controllers.json`), { format_version: '1.10.0', animation_controllers: animationControllers });
@@ -836,4 +900,4 @@ writeJson(join(ORP, 'manifest.json'), {
 });
 for (const [file, out] of [['pack_icon.png', OBP], ['pack_icon.png', ORP]]) if (existsSync(join(BP, file))) writeBytes(join(out, file), new Uint8Array(readFileSync(join(BP, file))));
 const usable = [...made.values()].filter(Boolean);
-console.log(`${addon.title} compatibility: ${peoples} ${addon.build ? 'peoples' : 'mobs'} with women, on ${usable.length} rigs (${usable.filter((w) => w?.poses.length).length} with poses, ${poseCount} poses), ${bellySkins.size} belly skin tones`);
+console.log(`${addon.title} compatibility: ${scenes ? `${scenes} scenes leading to pregnancy, ` : ''}${peoples} ${addon.build ? 'peoples' : 'mobs'} with women, on ${usable.length} rigs (${usable.filter((w) => w?.poses.length).length} with poses, ${poseCount} poses), ${bellySkins.size} belly skin tones`);

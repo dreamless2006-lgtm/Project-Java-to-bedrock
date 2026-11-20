@@ -4,9 +4,10 @@
 // (0 not yet, 1 a man, 2 a woman; written here, because the client sees only properties the script API
 // writes); Girl Mob's girls are women from the start. Their hurt, death and removal reach the mob
 // system like our own mobs' (whose events filter by our types).
-import { world } from '@minecraft/server';
+import { system, world } from '@minecraft/server';
+import { babiesFromPotion } from '../pregnancy/math.js';
 import { FAMILIES } from './families.js';
-import { familyOf, forgetRecord, onDeath, onHurt } from './system.js';
+import { accelerateGradually, familyOf, forgetRecord, getRecord, onDeath, onHurt, startPregnancy } from './system.js';
 
 const PROPERTY = 'minepreggo:female';
 
@@ -23,7 +24,26 @@ function roll(/** @type {import('@minecraft/server').Entity} */ entity) {
   }
 }
 
-world.afterEvents.entitySpawn.subscribe(({ entity }) => roll(entity));
+// Girl Mob's scenes: a defeated girl ridden by a player turns back into her girl when he gets off
+// (tools/compat-addons.mjs), tagged: she comes out of it pregnant, at the strongest gradual
+// acceleration (the Potion of Gradual Pregnancy Acceleration IV's)
+const AFTER_SCENE = 'minepreggo_after_scene';
+const MAX_GRADUAL = 4;
+function afterScene(/** @type {import('@minecraft/server').Entity} */ entity) {
+  if (!entity.isValid || !entity.hasTag(AFTER_SCENE)) return;
+  entity.removeTag(AFTER_SCENE);
+  if (!familyOf(entity)) return;
+  const record = getRecord(entity);
+  if (record.data.pregnancy) return;
+  startPregnancy(record, babiesFromPotion(1));
+  accelerateGradually(record, MAX_GRADUAL);
+}
+
+world.afterEvents.entitySpawn.subscribe(({ entity, cause }) => {
+  roll(entity);
+  // (the transformation's own command tags her at the end of the tick)
+  if (cause === 'Transformed') system.runTimeout(() => afterScene(entity), 2);
+});
 world.afterEvents.entityLoad.subscribe(({ entity }) => roll(entity));
 
 // (any other add-on's mob of ours: our own mobs' events are wired in mobs/index.js)
