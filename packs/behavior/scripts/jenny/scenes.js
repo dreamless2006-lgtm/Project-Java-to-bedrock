@@ -191,15 +191,16 @@ const distance = (/** @type {Vector3} */ a, /** @type {Vector3} */ b) => Math.hy
  * Takes her to the bed: at once when she stands next to it, else she walks there on her own and
  * the scene starts when she arrives (or she is placed on it after WALK_TICKS).
  * @param {MobRecord} record @param {Player} player @param {Bed} bed @param {string} [pose] her position ('scene' on all fours, 'scene_back', 'scene_sit')
+ * @param {'side'} [placement] the player kneels at her side, over her belly, instead
  * @returns {'now' | 'walking' | 'busy' | 'bed_taken'}
  */
-export function requestScene(record, player, bed, pose = POSE) {
+export function requestScene(record, player, bed, pose = POSE, placement = undefined) {
   const { entity } = record;
   if (bedTaken(entity, bed)) return 'bed_taken';
   if (!claim('walk', entity.id, player.id)) return 'busy';
   const middle = { x: bed.location.x + 0.5, y: bed.location.y + 0.5, z: bed.location.z + 0.5 };
   if (distance(entity.location, middle) <= NEAR) {
-    startScene(record, player, bed, pose);
+    startScene(record, player, bed, pose, placement);
     return 'now';
   }
   trigger(entity, 'minepreggo:go_to_bed');
@@ -212,8 +213,9 @@ export function requestScene(record, player, bed, pose = POSE) {
  * Starts the scene on the bed at `bed` (or where she stands: the Wahoo menu's, bed.js).
  * @param {MobRecord} record @param {Player} player @param {Bed} bed @param {string} [pose] her position: on all fours he
  *   kneels behind her, on her back or sitting he kneels in front of her, between her legs
+ * @param {'side'} [placement] he kneels at her side over her belly (her navel scene)
  */
-export function startScene(record, player, bed, pose = POSE) {
+export function startScene(record, player, bed, pose = POSE, placement = undefined) {
   const { entity, data } = record;
   walking.delete(entity.id);
   trigger(entity, 'minepreggo:leave_bed');
@@ -226,7 +228,10 @@ export function startScene(record, player, bed, pose = POSE) {
   const top = bed.location.y + 0.5625; // the bed is 9/16 high
   const her = { x: bed.location.x + 0.5 + facing.x * 0.75, y: top, z: bed.location.z + 0.5 + facing.z * 0.75 };
   const front = pose === POSE ? -1 : 1;
-  const him = { x: her.x + front * facing.x, y: top, z: her.z + front * facing.z };
+  // (at her side: across from her belly, which lies toward her feet of her middle)
+  const him = placement === 'side'
+    ? { x: her.x - facing.z * 0.85 + facing.x * 0.2, y: top, z: her.z + facing.x * 0.85 + facing.z * 0.2 }
+    : { x: her.x + front * facing.x, y: top, z: her.z + front * facing.z };
   // The camera stands beside the bed, a little behind the pair, and looks at the two of them.
   const side = { x: -facing.z, z: facing.x };
   const camera = { x: her.x - facing.x * 0.9 + side.x * 2.4, y: top + 1.7, z: her.z - facing.z * 0.9 + side.z * 2.4 };

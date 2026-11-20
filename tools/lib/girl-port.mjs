@@ -67,13 +67,15 @@ export function poseController(/** @type {string[]} */ poses, /** @type {Record<
  * @property {(doc: any, phase: number) => void} [bellyHook] changes each of her belly geometries before it is written
  * @property {Record<string, Uint8Array>} [extraTextures] more textures of hers (her undressed one), as Texture.<name>
  * @property {string} [textureExpression] which texture her body is drawn with, instead of her outfit's
+ * @property {Record<string, any>} [extraGeometries] more models of hers, as Geometry.<name> (her face layer)
+ * @property {{ id: string, def: any, when: string }[]} [extraRenderControllers] more of her layers, drawn while `when`
  * @property {Record<string, any>} [properties] more actor properties of hers
  * @property {number} [grow] how much bigger than a player's her belly is (else by how tall she is: a thin, long-legged girl's stays smaller)
  * @property {number[]} [tone] her belly's skin tone, where her face is no guide to it
  * @property {'cube' | 'round'} [bellyStyle] her belly's style, instead of the one her chest suggests (tools/lib/belly-fit.mjs chestStyle)
  * @property {(image: any) => any} [bellySkin] changes her belly texture (given her skin-tone one)
  * @property {(body: import('./belly-fit.mjs').Body) => number[]} [opening] where her baby comes out instead of between her legs
- * @property {{ animations?: Record<string, any>, ids?: Record<string, string>, pre?: string[], animate?: any[], controllers?: Record<string, any>, effects?: { sound_effects?: Record<string, any>, particle_effects?: Record<string, any> } }} [extra] more of her client entity
+ * @property {{ animations?: Record<string, any>, ids?: Record<string, string>, pre?: string[], initialize?: string[], animate?: any[], controllers?: Record<string, any>, effects?: { sound_effects?: Record<string, any>, particle_effects?: Record<string, any> } }} [extra] more of her client entity
  */
 
 /**
@@ -118,6 +120,7 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
   if (girl.bellyHook) bellies.forEach((doc, p) => girl.bellyHook?.(doc, p));
   PHASES.forEach((p) => writeJson(join(RP, 'models/entity', port, `${girl.key}_belly_p${p}.geo.json`), bellies[p]));
   for (const [name, data] of Object.entries(girl.extraTextures ?? {})) write(join(RP, 'textures', port, `${girl.key}_${name}.png`), data);
+  for (const [name, doc] of Object.entries(girl.extraGeometries ?? {})) writeJson(join(RP, 'models/entity', port, `${girl.key}_${name}.geo.json`), doc);
 
   // her everyday animations, her babies' movements, her walk jiggle
   /** @type {Record<string, any>} */
@@ -165,6 +168,7 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
   const rcBelly = `controller.render.${ns}.${girl.key}_belly`;
   /** @type {Record<string, unknown>} */
   const renderControllers = {
+    ...Object.fromEntries((girl.extraRenderControllers ?? []).map(({ id: rc, def }) => [rc, def])),
     [rcBody]: {
       arrays: { geometries: { 'Array.outfits': outfits.map((_, i) => `Geometry.o${i}`) }, textures: { 'Array.skins': outfits.map((_, i) => `Texture.o${i}`) } },
       geometry: `Array.outfits[math.clamp(q.variant, 0, ${outfits.length - 1})]`, materials: [{ '*': 'Material.default' }], textures: [girl.textureExpression ?? `Array.skins[math.clamp(q.variant, 0, ${outfits.length - 1})]`],
@@ -188,7 +192,7 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
         identifier: id,
         materials: { default: 'entity_alphatest' },
         textures: { ...Object.fromEntries(outfits.map((o, i) => [`o${i}`, `textures/${port}/${o.name}`])), belly: `textures/${port}/${girl.key}_belly`, ...Object.fromEntries(Object.keys(girl.extraTextures ?? {}).map((n) => [n, `textures/${port}/${girl.key}_${n}`])) },
-        geometry: { ...Object.fromEntries(outfits.map((o, i) => [`o${i}`, o.geometry['minecraft:geometry'][0].description.identifier])), ...Object.fromEntries(PHASES.map((p) => [`belly_p${p}`, `geometry.${MOD}.${girl.key}_belly_p${p}`])) },
+        geometry: { ...Object.fromEntries(outfits.map((o, i) => [`o${i}`, o.geometry['minecraft:geometry'][0].description.identifier])), ...Object.fromEntries(PHASES.map((p) => [`belly_p${p}`, `geometry.${MOD}.${girl.key}_belly_p${p}`])), ...Object.fromEntries(Object.entries(girl.extraGeometries ?? {}).map(([name, doc]) => [name, doc['minecraft:geometry'][0].description.identifier])) },
         animations: {
           ...Object.fromEntries(Object.entries(moveIds).map(([move, animId]) => [move, animId])),
           move_controller: moveController,
@@ -207,11 +211,11 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
         ...(Object.keys(sound_effects).length ? { sound_effects } : {}),
         ...(Object.keys(particle_effects).length ? { particle_effects } : {}),
         scripts: {
-          initialize: initializers(pre, []),
+          initialize: [...initializers(pre, []), ...(girl.extra?.initialize ?? [])],
           pre_animation: pre,
           animate: [{ look_at_target: "v.pose == 'none'" }, 'move_controller', 'walk_jiggle', 'mp_pose_controller', { newborn: "v.pose == 'birth' && !v.crowning" }, 'belly_controller', ...(girl.extra?.animate ?? [])],
         },
-        render_controllers: [rcBody, { [rcBelly]: 'v.bp >= 0' }],
+        render_controllers: [rcBody, { [rcBelly]: 'v.bp >= 0' }, ...(girl.extraRenderControllers ?? []).map(({ id: rc, when }) => ({ [rc]: when }))],
         spawn_egg: girl.egg ?? { base_color: '#d06a2c', overlay_color: '#f2c6a0' },
       },
     },

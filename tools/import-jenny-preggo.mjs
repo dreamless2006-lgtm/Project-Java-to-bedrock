@@ -44,7 +44,7 @@ const GIRLS = [
   { source: 'monster_creeper_girl', key: 'jenny_monster_creeper_girl', name: "Jenny's Monster Creeper Girl", birth: 'kum:bia',
     kicks: { name: 'jp_monster_creeper', order: [3, 2, 0, 1, 4], rate: 1.4, emphasis: [1.5, 1.0, 1.2, 1.4, 0.8] },
     treats: ['minecraft:gunpowder', 'minecraft:tnt', 'minecraft:cake'], biomes: ['plains', 'forest', 'meadow'], egg: { base_color: '#3da33a', overlay_color: '#ff66aa' },
-    curves: 'most', clothes: true, navel: true },
+    curves: 'most', clothes: true, navel: true, face: 'textures/minepreggo/mobs/creeper/monster/expressions/monster_creeper_girl' },
 ];
 /** How curvy: [bust growth, hips' slices across, hips' slices deep, waist, thighs' slices across, thighs' slices deep]. */
 const CURVES = {
@@ -213,6 +213,35 @@ function withNavel(/** @type {any} */ doc) {
     cubes: [{ origin: [-0.6, round(y - 0.6), round(front - 0.45)], size: [1.2, 1.2, 0.6], uv: { north: spot, south: spot, east: spot, west: spot, up: spot, down: spot } }] });
 }
 
+/** Her faces (Minepreggo's expression textures, each only her face), by the index v.face picks. */
+const FACES = ['closed_eyes', 'face_horny1', 'face_horny2', 'face_pain1', 'face_pain2', 'face_pain3', 'face_pain4', 'face_post_partum', 'face_sad1', 'face_surprised1', 'face_angry1'];
+/**
+ * Her face, alive: which of FACES she wears (-1: her own), from what she is doing. She blinks every
+ * few seconds (her own moment, so no two blink together); in a scene her face turns lustful, its two
+ * looks alternating with the beat; pains in labor (the hardest while she gives birth), worn out after
+ * it, sad after a loss, surprised by a hard kick, angry when savage.
+ */
+const FACE_LINES = [
+  'v.mp_blink = math.mod(q.life_time + v.mp_blink_at, 4.3) < 0.16;',
+  "v.mp_lust = v.pose == 'scene' || v.pose == 'scene_back' || v.pose == 'scene_sit';",
+  "v.mp_pain = v.pose == 'prebirth' || v.pose == 'contraction' || v.pose == 'water_breaking' || v.pose == 'back_pain' || v.pose == 'morning_sickness' || v.pose == 'incapacitated' || v.pose == 'kicking_sit';",
+  "v.face = v.mp_lust ? 1 + math.mod(math.floor(q.life_time * 1.92), 2) : (v.pose == 'birth' ? 5 + math.mod(math.floor(q.life_time * 1.5), 2) : (v.mp_pain ? 3 + math.mod(math.floor(q.life_time * 0.8), 2) : (v.pose == 'postbirth' ? 7 : (v.pose == 'miscarriage' ? 8 : (q.property('minepreggo:savage') ? 10 : (v.kick_w > 0.6 ? 9 : (v.mp_blink ? 0 : -1)))))));",
+];
+/** Her face's layer: her head again, a hair larger, drawn in the face she wears (transparent but her face). */
+function faceLayer(/** @type {any} */ g, /** @type {string} */ id) {
+  const head = g.bones.find((/** @type {any} */ b) => b.name === 'head');
+  const chain = [];
+  for (let bone = head; bone; bone = bone.parent ? g.bones.find((/** @type {any} */ b) => b.name === bone.parent) : undefined) chain.unshift(bone);
+  return {
+    format_version: '1.16.0',
+    'minecraft:geometry': [{
+      description: { ...g.description, identifier: id },
+      bones: chain.map((/** @type {any} */ b) => ({ name: b.name, ...(b.parent ? { parent: b.parent } : {}), pivot: b.pivot, ...(b.rotation ? { rotation: b.rotation } : {}),
+        ...(b === head ? { cubes: [{ ...head.cubes[0], inflate: (head.cubes[0].inflate ?? 0) + 0.06 }] } : {}) })),
+    }],
+  };
+}
+
 const jennyFile = join(RP, 'animations/jenny_port/jenny.animation.json');
 const jenny = existsSync(jennyFile) ? JSON.parse(readFileSync(jennyFile, 'utf8')).animations : {};
 const swing = (/** @type {number} */ k) => [`math.cos(q.modified_distance_moved * 38.17) * ${k}`, 0, 0];
@@ -240,22 +269,40 @@ for (const girl of GIRLS) {
   // her navel's pop and the ripples over her belly while her babies kick
   const navel = girl.navel ? {
     animations: { [`${prefix}.navel`]: { loop: true, bones: {
-      mp_navel: { scale: '1.0 + v.kick_w * 0.9 * math.pow(math.max(0.0, math.sin(q.life_time * 300.0)), 4.0)', position: [0, 0, '-v.kick_w * 0.7 * math.pow(math.max(0.0, math.sin(q.life_time * 300.0)), 4.0)'] },
-      belly: { scale: ['1.0 + 0.035 * v.kick_w * math.sin(q.life_time * 170.0)', '1.0 + 0.035 * v.kick_w * math.sin(q.life_time * 170.0 + 90.0)', 1.0] },
+      // (in her navel scene, its pulse and her belly's ripples keep the scene's 0.52 s beat)
+      mp_navel: {
+        scale: `q.property('${MOD}:navel_scene') ? 1.25 + 0.55 * math.abs(math.sin(q.life_time * 346.0)) : 1.0 + v.kick_w * 0.9 * math.pow(math.max(0.0, math.sin(q.life_time * 300.0)), 4.0)`,
+        position: [0, 0, `q.property('${MOD}:navel_scene') ? -0.5 * math.abs(math.sin(q.life_time * 346.0)) : -v.kick_w * 0.7 * math.pow(math.max(0.0, math.sin(q.life_time * 300.0)), 4.0)`],
+      },
+      belly: { scale: [`q.property('${MOD}:navel_scene') ? 1.0 + 0.03 * math.sin(q.life_time * 692.0) : 1.0 + 0.035 * v.kick_w * math.sin(q.life_time * 170.0)`, `q.property('${MOD}:navel_scene') ? 1.0 - 0.03 * math.sin(q.life_time * 692.0) : 1.0 + 0.035 * v.kick_w * math.sin(q.life_time * 170.0 + 90.0)`, 1.0] },
     } } },
     ids: { mp_navel: `${prefix}.navel` },
     animate: [{ mp_navel: 'v.bp >= 0' }],
+    pre: girl.face ? FACE_LINES : [],
+    // (each her own moment to blink)
+    initialize: girl.face ? ['v.mp_blink_at = math.random(0.0, 4.3);'] : [],
   } : undefined;
+  // her face's layer and its looks
+  const faceRc = `controller.render.${MOD}.${girl.key}_face`;
+  const face = girl.face ? {
+    extraGeometries: { face: faceLayer(g, `geometry.${MOD}.${girl.key}_face`) },
+    extraRenderControllers: [{ id: faceRc, when: 'v.face >= 0', def: {
+      arrays: { textures: { 'Array.faces': FACES.map((f) => `Texture.${f}`) } },
+      geometry: 'Geometry.face', materials: [{ '*': 'Material.default' }], textures: ['Array.faces[math.clamp(v.face, 0, ' + (FACES.length - 1) + ')]'],
+    } }],
+  } : {};
+  const faceTextures = girl.face ? Object.fromEntries(FACES.map((f) => [f, new Uint8Array(readFileSync(join(RP, `${girl.face}_${f}.png`)))])) : {};
   const out = portGirl(sources, { BP, RP, port: PORT, ns: MOD }, {
     key: girl.key, name: girl.name,
     outfits: [{ name: girl.key, geometry: { format_version: '1.16.0', 'minecraft:geometry': [g] }, texture: girl.clothes ? clothed(skin, source) : skin }],
     ...(girl.clothes ? {
       // dressed, or her own skin once undressed (the Wahoo menu, scripts: jenny/bed.js)
-      extraTextures: { nude: skin },
+      extraTextures: { nude: skin, ...faceTextures },
       textureExpression: `q.property('${MOD}:undressed') ? Texture.nude : Texture.o0`,
-      properties: { [`${MOD}:undressed`]: { type: 'bool', default: false, client_sync: true } },
+      properties: { [`${MOD}:undressed`]: { type: 'bool', default: false, client_sync: true }, [`${MOD}:navel_scene`]: { type: 'bool', default: false, client_sync: true } },
     } : {}),
     ...(girl.navel ? { bellyHook: withNavel, extra: navel } : {}),
+    ...face,
     moves, jiggle: { chest: ['boobs'], belly: ['belly'] },
     birth: `${MOD}:${girl.key}`, kicks: girl.kicks, treats: girl.treats, biomes: girl.biomes,
     family: 'jenny_preggo_mob', egg: girl.egg, bellyStyle: 'round', ...(girl.grow ? { grow: girl.grow } : {}), ...(girl.tone ? { tone: girl.tone } : {}),

@@ -87,31 +87,39 @@ const dress = (/** @type {import('@minecraft/server').Entity} */ entity, /** @ty
   }
 };
 
+const NAVEL_SCENE = 'minepreggo:navel_scene';
+const flag = (/** @type {import('@minecraft/server').Entity} */ entity, /** @type {string} */ property, /** @type {boolean} */ value) => {
+  try {
+    entity.setProperty(property, value);
+  } catch {
+    // gone
+  }
+};
+
 /**
  * Watches her scene to its end: she undresses for it (and dresses again after, as she was), and the
- * monster creeper girl's own (special) hisses like a lit fuse through it and ends in a harmless blast
- * of smoke, leaving her with a baby more.
+ * monster creeper girl's own (special: at her navel, which pulses to the scene's beat, her belly
+ * rippling) ends with a pop and hearts, leaving her with a baby more.
  * @param {import('../mobs/state.js').MobRecord} record @param {boolean} clothes @param {string | undefined} special
  */
 function watchScene(record, clothes, special) {
   const { entity } = record;
   const wasUndressed = undressedNow(entity);
   if (clothes) dress(entity, true);
+  if (special === 'navel') flag(entity, NAVEL_SCENE, true);
   let ticks = 0;
   const run = system.runInterval(() => {
     ticks += 20;
     if (!entity.isValid) return system.clearRun(run);
     if (sceneOf(entity)) {
-      if (special && ticks % 160 === 0) {
-        playSound(entity, 'random.fuse', 0.6);
-        particles(entity, 'minecraft:villager_happy', 3);
-      }
+      if (special && ticks % 200 === 0) particles(entity, 'minecraft:heart_particle', 2);
       return;
     }
     system.clearRun(run);
+    if (special) flag(entity, NAVEL_SCENE, false);
     if (special && record.data.pregnancy) {
-      particles(entity, 'minecraft:large_explosion', 2);
-      playSound(entity, 'random.explode', 0.35);
+      particles(entity, 'minecraft:heart_particle', 6);
+      playSound(entity, 'random.pop', 0.8);
       duplicateBabies(record, 0);
     }
     if (clothes && !wasUndressed) dress(entity, false);
@@ -127,9 +135,9 @@ function watchScene(record, clothes, special) {
 export async function openWahooMenu(player, record) {
   const { entity } = record;
   const family = familyOf(entity);
-  /** @type {{ label: string, pose?: string, special?: string, toggle?: boolean }[]} */
+  /** @type {{ label: string, pose?: string, special?: string, placement?: 'side', toggle?: boolean }[]} */
   const buttons = POSITIONS.map(([label, pose]) => ({ label, pose }));
-  if (family?.special === 'creeper') buttons.push({ label: 'Creeper Special', pose: 'scene_back', special: 'creeper' });
+  if (family?.special === 'navel') buttons.push({ label: 'Navel', pose: 'scene_back', special: 'navel', placement: 'side' });
   if (family?.clothes) buttons.push({ label: undressedNow(entity) ? 'Dress her' : 'Undress her', toggle: true });
   const menu = new ActionFormData().title('Wahoo').body('Choose a position.');
   for (const { label } of buttons) menu.button(label);
@@ -145,5 +153,5 @@ export async function openWahooMenu(player, record) {
   const at = entity.location;
   // (where she stands, as if on a bed there: the scene sets her 9/16 above a bed's block)
   const bed = { location: { x: Math.floor(at.x), y: Math.floor(at.y) - 0.5625, z: Math.floor(at.z) }, facing: facingFromYaw(player.getRotation().y) };
-  if (requestScene(record, player, bed, chosen.pose) === 'now') watchScene(record, !!family?.clothes, chosen.special);
+  if (requestScene(record, player, bed, chosen.pose, chosen.placement) === 'now') watchScene(record, !!family?.clothes, chosen.special);
 }

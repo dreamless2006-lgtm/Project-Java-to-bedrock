@@ -22,7 +22,7 @@ import { CRAVING_ITEMS } from '../pregnancy/data.js';
  * @property {string} milkItem
  * @property {number} [hungerP0] ticks per fullness point in P0, when not the P1 value
  * @property {boolean} [clothes] her clothes come off (the minepreggo:undressed property: the Wahoo menu, and for her scenes)
- * @property {'creeper'} [special] a scene of her own in the Wahoo menu
+ * @property {'navel'} [special] a scene of her own in the Wahoo menu (at her navel)
  * @property {boolean} [scenes] an external girl who has the scenes all the same (the Wahoo menu, the Jenny Bed)
  * @property {boolean} [external] a girl of another add-on (the Jenny Mod Java Port): her own taming, no hunger or savage state of ours
  */
@@ -218,8 +218,8 @@ export const JENNY_PREGGO_FAMILIES = Object.fromEntries(
     /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, scenes: true, ...HUMAN, babyItem: 'minepreggo:baby_human' }),
   ])
 );
-// the monster creeper girl: her clothes come off, and she has a scene of her own
-JENNY_PREGGO_FAMILIES['minepreggo:jenny_monster_creeper_girl'] = /** @type {Family} */ ({ ...JENNY_PREGGO_FAMILIES['minepreggo:jenny_zombie_girl'], clothes: true, special: 'creeper' });
+// the monster creeper girl: her clothes come off, and she has a scene of her own (at her navel)
+JENNY_PREGGO_FAMILIES['minepreggo:jenny_monster_creeper_girl'] = /** @type {Family} */ ({ ...JENNY_PREGGO_FAMILIES['minepreggo:jenny_zombie_girl'], clothes: true, special: 'navel' });
 export const GOBLIN_FAMILIES = Object.fromEntries(
   ['expandable_goblins:goblin_girl', 'expandable_goblins:imp_girl', 'expandable_goblins:bloatberry_girl'].map((id) => [
     id,
