@@ -1,0 +1,248 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "minepreggo:grown_child",
+      "is_spawnable": true,
+      "is_summonable": true,
+      "properties": {
+        "minepreggo:line": {
+          "type": "int",
+          "range": [
+            0,
+            31
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "minepreggo:daughter": {
+          "type": "bool",
+          "default": false,
+          "client_sync": true
+        }
+      }
+    },
+    "component_groups": {
+      "minepreggo:tamed": {
+        "minecraft:is_tamed": {},
+        "minecraft:sittable": {},
+        "minecraft:behavior.stay_while_sitting": {
+          "priority": 3
+        },
+        "minecraft:behavior.owner_hurt_by_target": {
+          "priority": 1
+        },
+        "minecraft:behavior.owner_hurt_target": {
+          "priority": 2
+        },
+        "minecraft:behavior.follow_owner": {
+          "priority": 5,
+          "speed_multiplier": 1.15,
+          "start_distance": 9,
+          "stop_distance": 3
+        }
+      }
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": [
+          "minepreggo_child",
+          "mob"
+        ]
+      },
+      "minecraft:health": {
+        "value": 40,
+        "max": 40
+      },
+      "minecraft:attack": {
+        "damage": 5
+      },
+      "minecraft:movement": {
+        "value": 0.32
+      },
+      "minecraft:navigation.walk": {
+        "can_path_over_water": true,
+        "can_open_doors": true,
+        "can_pass_doors": true,
+        "avoid_damage_blocks": true,
+        "avoid_water": true
+      },
+      "minecraft:movement.basic": {},
+      "minecraft:jump.static": {},
+      "minecraft:can_climb": {},
+      "minecraft:collision_box": {
+        "width": 0.6,
+        "height": 1.8
+      },
+      "minecraft:physics": {},
+      "minecraft:pushable": {
+        "is_pushable": true,
+        "is_pushable_by_piston": true
+      },
+      "minecraft:breathable": {
+        "total_supply": 15,
+        "suffocate_time": 0
+      },
+      "minecraft:nameable": {
+        "always_show": true,
+        "allow_name_tag_renaming": true
+      },
+      "minecraft:persistent": {},
+      "minecraft:experience_reward": {
+        "on_death": "0"
+      },
+      "minecraft:tameable": {
+        "probability": 1,
+        "tame_items": "minecraft:golden_apple",
+        "tame_event": {
+          "event": "minepreggo:tamed",
+          "target": "self"
+        }
+      },
+      "minecraft:healable": {
+        "items": [
+          {
+            "item": "minecraft:bread",
+            "heal_amount": 6
+          },
+          {
+            "item": "minecraft:cooked_beef",
+            "heal_amount": 8
+          },
+          {
+            "item": "minecraft:cooked_porkchop",
+            "heal_amount": 8
+          },
+          {
+            "item": "minecraft:cooked_chicken",
+            "heal_amount": 6
+          },
+          {
+            "item": "minecraft:cooked_mutton",
+            "heal_amount": 6
+          },
+          {
+            "item": "minecraft:baked_potato",
+            "heal_amount": 5
+          },
+          {
+            "item": "minecraft:golden_apple",
+            "heal_amount": 20
+          },
+          {
+            "item": "minecraft:apple",
+            "heal_amount": 4
+          },
+          {
+            "item": "minecraft:cookie",
+            "heal_amount": 2
+          }
+        ]
+      },
+      "minecraft:equipment": {
+        "table": "loot_tables/entities/grown_child_gear.json",
+        "slot_drop_chance": [
+          {
+            "slot": "slot.weapon.mainhand",
+            "drop_chance": 0
+          }
+        ]
+      },
+      "minecraft:damage_sensor": {
+        "triggers": [
+          {
+            "on_damage": {
+              "filters": {
+                "test": "is_owner",
+                "subject": "other"
+              }
+            },
+            "deals_damage": "no"
+          },
+          {
+            "cause": "fall",
+            "damage_multiplier": 0.5
+          }
+        ]
+      },
+      "minecraft:behavior.float": {
+        "priority": 0
+      },
+      "minecraft:behavior.hurt_by_target": {
+        "priority": 1,
+        "entity_types": {
+          "filters": {
+            "test": "is_family",
+            "subject": "other",
+            "operator": "!=",
+            "value": "player"
+          }
+        }
+      },
+      "minecraft:behavior.melee_attack": {
+        "priority": 2,
+        "speed_multiplier": 1.25,
+        "track_target": true
+      },
+      "minecraft:behavior.nearest_attackable_target": {
+        "priority": 3,
+        "must_see": true,
+        "reselect_targets": true,
+        "within_radius": 16,
+        "entity_types": [
+          {
+            "filters": {
+              "all_of": [
+                {
+                  "test": "is_family",
+                  "subject": "other",
+                  "value": "monster"
+                },
+                {
+                  "test": "is_family",
+                  "subject": "other",
+                  "operator": "!=",
+                  "value": "creeper"
+                },
+                {
+                  "test": "has_tag",
+                  "subject": "other",
+                  "operator": "!=",
+                  "value": "minepreggo_preggo_mob"
+                },
+                {
+                  "test": "is_family",
+                  "subject": "other",
+                  "operator": "!=",
+                  "value": "minepreggo_child"
+                }
+              ]
+            },
+            "max_dist": 16
+          }
+        ]
+      },
+      "minecraft:behavior.random_stroll": {
+        "priority": 7,
+        "speed_multiplier": 0.8
+      },
+      "minecraft:behavior.look_at_player": {
+        "priority": 8,
+        "look_distance": 8,
+        "probability": 0.02
+      },
+      "minecraft:behavior.random_look_around": {
+        "priority": 9
+      }
+    },
+    "events": {
+      "minepreggo:tamed": {
+        "add": {
+          "component_groups": [
+            "minepreggo:tamed"
+          ]
+        }
+      }
+    }
+  }
+}

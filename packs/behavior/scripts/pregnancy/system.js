@@ -19,6 +19,7 @@ import {
 } from './data.js';
 import { accelerationDays, advancePhases, babiesFromPotion, createCommonPain, gradualAccelerationSpeed, randomCraving, symptomSeverity } from './math.js';
 import { PlayerRecord, clampLevel, newPregnancy } from './state.js';
+import { stampBirth } from '../items/babies.js';
 
 /** @typedef {import('@minecraft/server').Player} Player */
 /** @typedef {import('./state.js').Pregnancy} Pregnancy */
@@ -503,7 +504,7 @@ function evaluateBirth(/** @type {PlayerRecord} */ record) {
       tryHurt(record);
       const view = player.getViewDirection();
       const { x, y, z } = player.location;
-      player.dimension.spawnItem(new ItemStack(SPECIES[birth.baby].babyItem, 1), { x: x + view.x * 0.4, y: y + 0.5, z: z + view.z * 0.4 });
+      player.dimension.spawnItem(stampBirth(new ItemStack(SPECIES[birth.baby].babyItem, 1)), { x: x + view.x * 0.4, y: y + 0.5, z: z + view.z * 0.4 });
       for (let i = 0; i < 5; i++) particle(player, 'minecraft:redstone_ore_dust_particle', 0.35);
       playSound(player, 'minepreggo.player_birth');
       playSound(player, 'minepreggo.splash', 0.3);

@@ -198,7 +198,7 @@ export const INSANITY_FAMILIES = Object.fromEntries(
   // the InsanityV women (tools/import-insanity.mjs) and Skelly (tools/import-skelly.mjs)
   ['insanityv:molten', 'insanityv:daisy', 'insanityv:oxy', 'insanityv:stella', 'insanityv:enny', 'minepreggo:skelly'].map((id) => [
     id,
-    /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: 'minepreggo:baby_human' }),
+    /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: `minepreggo:baby_${id.split(':')[1]}` }),
   ])
 );
 /**
@@ -215,15 +215,15 @@ export const COMPAT_WOMAN = /** @type {Family} */ ({ species: 'HUMAN', creature:
 export const JENNY_PREGGO_FAMILIES = Object.fromEntries(
   ['minepreggo:jenny_zombie_girl', 'minepreggo:jenny_creeper_girl', 'minepreggo:jenny_slime_girl', 'minepreggo:jenny_ender_woman'].map((id) => [
     id,
-    /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, scenes: true, ...HUMAN, babyItem: 'minepreggo:baby_human' }),
+    /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, scenes: true, ...HUMAN, babyItem: `minepreggo:baby_${id.split(':')[1]}` }),
   ])
 );
 // the monster creeper girl: her clothes come off, and she has a scene of her own (at her navel)
-JENNY_PREGGO_FAMILIES['minepreggo:jenny_monster_creeper_girl'] = /** @type {Family} */ ({ ...JENNY_PREGGO_FAMILIES['minepreggo:jenny_zombie_girl'], clothes: true, special: 'navel' });
+JENNY_PREGGO_FAMILIES['minepreggo:jenny_monster_creeper_girl'] = /** @type {Family} */ ({ ...JENNY_PREGGO_FAMILIES['minepreggo:jenny_zombie_girl'], babyItem: 'minepreggo:baby_jenny_monster_creeper_girl', clothes: true, special: 'navel' });
 export const GOBLIN_FAMILIES = Object.fromEntries(
   ['expandable_goblins:goblin_girl', 'expandable_goblins:imp_girl', 'expandable_goblins:bloatberry_girl'].map((id) => [
     id,
-    /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: 'minepreggo:baby_human' }),
+    /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: `minepreggo:baby_${id.split(':')[1]}` }),
   ])
 );
 /**
@@ -232,10 +232,12 @@ export const GOBLIN_FAMILIES = Object.fromEntries(
  * @type {Record<string, Family>}
  */
 export const MCA_FAMILIES = {
-  'mca:villager_woman': { species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: 'minepreggo:baby_human' },
+  'mca:villager_woman': { species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, ...HUMAN, babyItem: 'minepreggo:baby_villager_woman' },
 };
 /** What each birth of hers yields: her eggs if she lays them, else her baby. */
-export const birthItemOf = (/** @type {Family} */ family) => family.eggItem ?? family.babyItem;
+/** What she gives birth to: her egg, else her baby (a compat woman's by her add-on: a Girl Mob or a World Alliance baby). */
+export const birthItemOf = (/** @type {Family} */ family, typeId = '') =>
+  family.eggItem ?? (family === COMPAT_WOMAN ? (typeId.startsWith('girlmob:') ? 'minepreggo:baby_girl_mob' : 'minepreggo:baby_world_alliance') : family.babyItem);
 export const COURTING_TICKS = 60;
 export const COURTING_RANGE = 2;
 

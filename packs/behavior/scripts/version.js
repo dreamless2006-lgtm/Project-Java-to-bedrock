@@ -1,2 +1,2 @@
 // Kept equal to package.json's version by tools/validate.mjs.
-export const VERSION = '0.19.2';
+export const VERSION = '0.20.0';

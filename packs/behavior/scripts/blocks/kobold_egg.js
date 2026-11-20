@@ -5,6 +5,7 @@
 // clutch gives its eggs back.
 
 import { GameMode, ItemStack, system } from '@minecraft/server';
+import { stampBirth } from '../items/babies.js';
 
 /** @typedef {import('@minecraft/server').Block} Block */
 /** @typedef {import('@minecraft/server').Player} Player */
@@ -51,7 +52,7 @@ export function tickClutch(/** @type {Block} */ block, random = Math.random) {
   }
   // the egg hatches: the baby comes out as her baby item, and the rest of the clutch waits
   const eggs = state(block, 'eggs');
-  block.dimension.spawnItem(babyStack(), center);
+  block.dimension.spawnItem(stampBirth(babyStack()), center);
   block.dimension.playSound('block.turtle_egg.hatch', center);
   try {
     block.dimension.spawnParticle('minecraft:crop_growth_emitter', center);

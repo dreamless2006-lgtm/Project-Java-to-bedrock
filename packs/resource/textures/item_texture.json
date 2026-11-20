@@ -286,6 +286,57 @@
     },
     "minepreggo_belly": {
       "textures": "textures/port/belly"
+    },
+    "minepreggo_baby_molten": {
+      "textures": "textures/port/children/baby_molten"
+    },
+    "minepreggo_baby_daisy": {
+      "textures": "textures/port/children/baby_daisy"
+    },
+    "minepreggo_baby_oxy": {
+      "textures": "textures/port/children/baby_oxy"
+    },
+    "minepreggo_baby_stella": {
+      "textures": "textures/port/children/baby_stella"
+    },
+    "minepreggo_baby_enny": {
+      "textures": "textures/port/children/baby_enny"
+    },
+    "minepreggo_baby_skelly": {
+      "textures": "textures/port/children/baby_skelly"
+    },
+    "minepreggo_baby_jenny_zombie_girl": {
+      "textures": "textures/port/children/baby_jenny_zombie_girl"
+    },
+    "minepreggo_baby_jenny_creeper_girl": {
+      "textures": "textures/port/children/baby_jenny_creeper_girl"
+    },
+    "minepreggo_baby_jenny_slime_girl": {
+      "textures": "textures/port/children/baby_jenny_slime_girl"
+    },
+    "minepreggo_baby_jenny_ender_woman": {
+      "textures": "textures/port/children/baby_jenny_ender_woman"
+    },
+    "minepreggo_baby_jenny_monster_creeper_girl": {
+      "textures": "textures/port/children/baby_jenny_monster_creeper_girl"
+    },
+    "minepreggo_baby_goblin_girl": {
+      "textures": "textures/port/children/baby_goblin_girl"
+    },
+    "minepreggo_baby_imp_girl": {
+      "textures": "textures/port/children/baby_imp_girl"
+    },
+    "minepreggo_baby_bloatberry_girl": {
+      "textures": "textures/port/children/baby_bloatberry_girl"
+    },
+    "minepreggo_baby_villager_woman": {
+      "textures": "textures/port/children/baby_villager_woman"
+    },
+    "minepreggo_baby_girl_mob": {
+      "textures": "textures/port/children/baby_girl_mob"
+    },
+    "minepreggo_baby_world_alliance": {
+      "textures": "textures/port/children/baby_world_alliance"
     }
   }
 }

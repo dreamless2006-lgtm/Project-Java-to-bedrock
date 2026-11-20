@@ -14,6 +14,7 @@ import { accelerationDays, advancePhases, babiesFromPotion, clampBabies, createC
 import { clampLevel, newPregnancy } from '../pregnancy/state.js';
 import { COURTERS, COURTING_RANGE, COURTING_TICKS, FAMILIES, FULLNESS, COMPAT_WOMAN, birthItemOf, birthTicks, hungerTicks, postBirthTicks } from './families.js';
 import { MobRecord } from './state.js';
+import { stampBirth } from '../items/babies.js';
 
 /** @typedef {import('@minecraft/server').Entity} Entity */
 /** @typedef {import('@minecraft/server').Player} Player */
@@ -162,11 +163,11 @@ function tryHurtByCooldown(/** @type {MobRecord} */ record) {
 }
 
 /** Drops an item at the mob, or slightly in front of her. */
-export function dropItem(/** @type {Entity} */ entity, /** @type {string} */ item, inFront = false) {
+export function dropItem(/** @type {Entity} */ entity, /** @type {string | ItemStack} */ item, inFront = false) {
   const { x, y, z } = entity.location;
   const view = entity.getViewDirection();
   const at = inFront ? { x: x + view.x * 0.8, y: y + 0.8, z: z + view.z * 0.8 } : { x, y: y + 0.5, z };
-  entity.dimension.spawnItem(stackOf(item), at);
+  entity.dimension.spawnItem(typeof item === 'string' ? stackOf(item) : item, at);
 }
 
 /** An item stack, or a human baby when the item is not in this build (a Jenny girl's baby without the import). */
@@ -189,7 +190,7 @@ function deliverBaby(record, item) {
   if (helper?.isValid && helper.typeId === 'minecraft:player' && helper.dimension.id === entity.dimension.id) {
     const d = Math.hypot(helper.location.x - entity.location.x, helper.location.y - entity.location.y, helper.location.z - entity.location.z);
     if (d <= 8) {
-      const stack = stackOf(item);
+      const stack = stampBirth(stackOf(item));
       const leftover = /** @type {any} */ (helper.getComponent('minecraft:inventory'))?.container?.addItem(stack);
       if (leftover) helper.dimension.spawnItem(leftover, helper.location);
       /** @type {Player} */ (helper).sendMessage({ translate: egg ? 'minepreggo.egg.caught' : 'minepreggo.birth.caught', with: { rawtext: [nameOf(entity)] } });
@@ -197,7 +198,7 @@ function deliverBaby(record, item) {
       return;
     }
   }
-  dropItem(entity, item, true);
+  dropItem(entity, stampBirth(stackOf(item)), true);
 }
 
 /**
@@ -688,7 +689,7 @@ export function deliverNext(record) {
   const p = /** @type {Pregnancy} */ (record.data.pregnancy);
   const family = /** @type {Family} */ (familyOf(entity));
   const birth = /** @type {{ remaining: number, babiesBorn: number }} */ (/** @type {unknown} */ (p.birth));
-  deliverBaby(record, birthItemOf(family));
+  deliverBaby(record, birthItemOf(family, record.entity.typeId));
   particles(entity, 'minecraft:redstone_ore_dust_particle', 10, 0.4);
   playSound(entity, 'minepreggo.splash', 0.3);
   const next = p.womb.shift();

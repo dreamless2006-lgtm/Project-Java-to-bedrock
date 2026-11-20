@@ -106,6 +106,12 @@ export const CHAPTERS = [
       "Girl Mob's scene: hit an adult girl until a blow would kill her; she is defeated instead and lies on her back. Use her (On Board, not crouching) for the scene; crouch to get off and she gets up pregnant, at the strongest gradual acceleration. The bee, vex, cave spider and slime girls and babies never get pregnant.",
   },
   {
+    title: 'Your children',
+    body:
+      "Every mother's babies are her own: Daisy's Baby, Skelly's Baby, the goblin girls', Jenny's Preggo Mobs', the villagers', a Mob Girl's, an Alliance Woman's... Use a baby to cuddle it.\n\n" +
+      'Babies grow up. A Minecraft day after its birth, crouch and use the baby: it has grown up into your son or daughter, an adult in their mother\'s colours, with a name of their own, already tamed to you. Your grown children follow you (and catch up when you go far), defend you, attack what you attack and hunt the monsters around you with an iron sword. Use one to tell them to stay or follow, feed them bread or cooked food to heal them, and name them with a name tag. They are companions only: never pregnant, never in a scene.',
+  },
+  {
     title: 'Commands',
     body:
       'Operators can test everything with /scriptevent:\n' +
