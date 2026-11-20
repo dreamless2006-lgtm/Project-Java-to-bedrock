@@ -108,7 +108,7 @@ const JENNY = /** @type {Rhythm} */ ({ length: 6, pushes: [[0.5, 2.6], [3.4, 5.5
 const BIA = /** @type {Rhythm} */ ({ length: 4, pushes: [[0.4, 1.6], [2.4, 3.6]] });
 // ---- Slime: kneeling back on her heels -------------------------------------------------------------
 const SLIME = /** @type {Rhythm} */ ({ length: 3.5, pushes: [[0.3, 2.3]] });
-// ---- Luna: knee-chest --------------------------------------------------------------------------------
+// ---- Luna: kneeling up, arched back --------------------------------------------------------------
 const LUNA = /** @type {Rhythm} */ ({ length: 4.5, pushes: [[0.4, 2.0], [2.6, 4.2]] });
 // ---- Galath: half-kneeling ---------------------------------------------------------------------------
 const GALATH = /** @type {Rhythm} */ ({ length: 7.5, pushes: [[0.8, 3.2], [4.6, 6.8]] });
@@ -206,16 +206,16 @@ export const GIRL_BIRTHS = /** @type {Record<string, GirlBirth>} */ ({
   'kum:luna': {
     name: 'luna',
     rhythm: LUNA,
-    authored: authored(LUNA, { knee: 95, elbow: -65 }, {
-      // knee-chest: on her knees and forearms, her hips above her chest, rocking back and forth
-      body: { rotation: restPush(LUNA, [105, 0, 0], [100, 0, 0]) },
-      head: { rotation: restPush(LUNA, [0, 0, 0], [25, 0, 0]) },
-      ...arms(LUNA, [-25, 0, 8]),
-      // knees wide, so her belly can come down between them
-      ...legs(LUNA, [-5, 0, 25], [-5, 0, 25], vec(0, -4.6, wave(LUNA.length, 0, 0.7, 2))),
+    authored: authored(LUNA, { knee: 95, elbow: { rest: -60, push: -80 } }, {
+      // kneeling up, knees apart, leaning back with her back arched and her belly pushed out, her
+      // hands resting on top of it; on each push she sinks onto her heels, presses on her belly and
+      // her head falls back
+      body: { rotation: restPush(LUNA, [-12, 0, 0], [-22, 0, 0]) },
+      head: { rotation: restPush(LUNA, [8, 0, 0], [-28, 0, 0]) },
+      ...arms(LUNA, [-38, 18, 22], [-48, 22, 22]),
+      ...legs(LUNA, [-5, 0, 22], [-5, 0, 26], pelvis(LUNA, -5.2, -6.4)),
     }),
-    bellyHang: [-0.3, 1],
-    exitWant: [0, -0.5, 0.87],
+    exitWant: [0, -1, 0],
     sounds: { mp_contraction: { event: 'minepreggo.player_contraction', at: [0.4] }, mp_hiss: { event: 'mob.cat.hiss', at: [1.4] } },
     particles: {},
   },
