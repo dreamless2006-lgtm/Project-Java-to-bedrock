@@ -61,6 +61,7 @@ const GIRLS = [
 const CURVES = {
   curvy: { bust: 1.32, hips: [1.08, 1.18, 1.26, 1.3], hipsDeep: [1.04, 1.12, 1.18, 1.18], waist: 0.94, thighs: [1.3, 1.2, 1.1, 1.02], thighsDeep: [1.24, 1.16, 1.08, 1.0] },
   // (the Pokémon girls: a fuller bust, hips and thighs still)
+  thick: { bust: 2, bustShape: [1.35, 1.75, 2.35], hips: [1.2, 1.42, 1.62, 1.76], hipsDeep: [1.12, 1.28, 1.42, 1.5], waist: 0.78, thighs: [1.72, 1.56, 1.34, 1.12], thighsDeep: [1.55, 1.42, 1.24, 1.08] },
   lush: { bust: 1.85, bustShape: [1.3, 1.65, 2.2], hips: [1.16, 1.34, 1.5, 1.58], hipsDeep: [1.1, 1.24, 1.36, 1.42], waist: 0.8, thighs: [1.5, 1.38, 1.22, 1.08], thighsDeep: [1.4, 1.3, 1.16, 1.04] },
   most: { bust: 1.55, hips: [1.14, 1.3, 1.42, 1.48], hipsDeep: [1.08, 1.2, 1.3, 1.32], waist: 0.84, thighs: [1.42, 1.3, 1.16, 1.04], thighsDeep: [1.32, 1.22, 1.1, 1.0] },
 };
@@ -365,6 +366,7 @@ for (const girl of GIRLS) {
     birth: `${MOD}:${girl.key}`, kicks: girl.kicks, treats: girl.treats, biomes: girl.biomes,
     ...(jelly ? { opening: () => [0, round(jelly.origin[1] + jelly.size[1] * 0.7), round(jelly.origin[2])], stillBones: ['legL', 'legR'], material: 'entity_alphablend' } : {}),
     ...('minWidth' in girl ? { minWidth: girl.minWidth } : {}),
+    ...('weights' in girl ? { weights: girl.weights } : {}),
     family: 'jenny_preggo_mob', egg: girl.egg, bellyStyle: 'round', ...(girl.grow ? { grow: girl.grow } : {}), ...(girl.tone ? { tone: girl.tone } : {}),
   });
   Object.assign(controllers, out.controllers);

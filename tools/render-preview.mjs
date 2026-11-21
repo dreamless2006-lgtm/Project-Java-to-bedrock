@@ -82,7 +82,7 @@ const d = clientEntity(who);
 const bodyKey = geometryKey || ['default', 'normal', 'dressed'].find((k) => d.geometry?.[k]) || Object.keys(d.geometry)[0];
 const body = geometries.get(d.geometry[bodyKey]);
 if (!body) throw new Error(`geometry ${d.geometry[bodyKey]} of ${who} not found`);
-const textureKey = ['default', 'normal', 'dressed'].find((k) => d.textures?.[k]) || Object.keys(d.textures)[0];
+const textureKey = flag('texture', '') || ['default', 'normal', 'dressed'].find((k) => d.textures?.[k]) || Object.keys(d.textures)[0];
 const texture = decodePng(new Uint8Array(readFileSync(join(RP, `${d.textures[textureKey]}.png`))));
 /** @type {Parameters<typeof renderParts>[0]} */
 const parts = [{ geometry: body, texture }];

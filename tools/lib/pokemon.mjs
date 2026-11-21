@@ -142,7 +142,7 @@ const over = (/** @type {Paint} */ base, /** @type {Colour} */ c, /** @type {(fa
  * Her head goes on top at y 27 (the head bone's pivot is her neck, at 26.5).
  * @param {ReturnType<typeof builder>} b
  * @param {{ chest: Paint, waist: Paint, hips: Paint, bust: Paint, upperArm: Paint, forearm: Paint, thigh: Paint, calf: Paint, foot: Paint, neck: Paint }} p bare
- * @param {{ bust?: Paint, chest?: Paint, hips?: Paint, waist?: Paint, upperArm?: Paint }} [d] dressed, where it differs
+ * @param {{ bust?: Paint, chest?: Paint, hips?: Paint, waist?: Paint, upperArm?: Paint, thigh?: Paint, calf?: Paint, foot?: Paint }} [d] dressed, where it differs
  */
 function curvyBody(b, p, d = {}) {
   b.bone('body', undefined, [0, 26, 0]);
@@ -163,9 +163,9 @@ function curvyBody(b, p, d = {}) {
   }
   for (const [leg, x, s] of /** @type {const} */ ([['right_leg', -2.1, -1], ['left_leg', 2.1, 1]])) {
     b.bone(leg, undefined, [x, 14, 0]);
-    b.cube(leg, [s < 0 ? -4.2 : 0, 7.5, -2.1], [4.2, 6.5, 4.2], p.thigh);
-    b.cube(leg, [s < 0 ? -3.75 : 0.45, 3, -1.7], [3.3, 4.5, 3.4], p.calf);
-    b.cube(leg, [s < 0 ? -3.6 : 0.6, 0, -2.3], [3, 3, 3.6], p.foot);
+    b.cube(leg, [s < 0 ? -4.2 : 0, 7.5, -2.1], [4.2, 6.5, 4.2], p.thigh, d.thigh);
+    b.cube(leg, [s < 0 ? -3.75 : 0.45, 3, -1.7], [3.3, 4.5, 3.4], p.calf, d.calf);
+    b.cube(leg, [s < 0 ? -3.6 : 0.6, 0, -2.3], [3, 3, 3.6], p.foot, d.foot);
   }
 }
 /** A bikini: its top over her bust (a halter at her chest) and its bottoms over her hips, a lighter edge. */
@@ -184,7 +184,7 @@ const ZIP = new URL('../../vendor/pokedrock/pokedrock.zip', import.meta.url);
 let pokedrock;
 /** A Pokédrock geometry and its texture, or nothing without Pokédrock. */
 function pokedrockModel(/** @type {string} */ id, /** @type {string} */ texture) {
-  pokedrock ??= existsSync(ZIP) ? unzipSync(new Uint8Array(readFileSync(ZIP)), { filter: (f) => f.name.startsWith('R/models/') || f.name.startsWith('R/textures/entity/normal/') }) : null;
+  pokedrock ??= existsSync(ZIP) ? unzipSync(new Uint8Array(readFileSync(ZIP)), { filter: (f) => f.name.startsWith('R/models/') || f.name.startsWith('R/textures/entity/normal/') || f.name.startsWith('R/textures/entity/shiny/') }) : null;
   const png = pokedrock?.[`R/${texture}.png`];
   if (!pokedrock || !png) return undefined;
   for (const [name, data] of Object.entries(pokedrock)) {
@@ -205,39 +205,55 @@ function pokedrockHead(/** @type {ReturnType<typeof builder>} */ b, /** @type {{
   b.bone('head_neck', 'head', [0, 26.5, 0]);
 }
 
-// ---- Gardevoir: white, green arms, the red fins at her chest and back, her flowing gown open at the
-// front; dressed, a green top over her bust (her bare bust white) ---------------------------------------
+// ---- Gardevoir: white, her bob over one eye, green arms, the red horn rising between her breasts and a
+// fin at her back, her long gown flaring from her hips, green within, open at the front over her thick
+// thighs; dressed, a crop top and black leggings torn open at her thighs. Shiny (one in eight): blue -----
 function gardevoir() {
-  const W = [246, 246, 250], G = [122, 212, 132], DG = [40, 92, 56], R = [230, 74, 96];
-  const b = builder('gardevoir');
-  const pd = pokedrockModel('geometry.serpgardevoir', 'textures/entity/normal/gardevoir');
-  const top = solid(G);
-  curvyBody(b, {
-    chest: solid(W), waist: solid(W), hips: solid(W), bust: solid(W), neck: solid(W),
-    upperArm: solid(G), forearm: solid(G), thigh: solid(W), calf: solid(W), foot: solid(W),
-  }, { bust: top, chest: over(solid(W), G, (face, _x, y) => face !== 'up' && y > 0.15) });
-  if (pd) pokedrockHead(b, pd, 1.35);
-  else {
-    b.bone('head', undefined, [0, 26.5, 0]);
-    b.cube('head', [-3.5, 27, -3.5], [7, 7, 7], (f, _x, _y, i, j) => (f === 'north' && j === 3 && (i === 2 || i === 4) ? [214, 28, 40] : W));
-    b.cube('head', [-4, 30, -4], [8, 4.5, 8], solid(G));
-    b.cube('head', [-4.4, 26, -3], [1, 6, 6], solid(G));
-    b.cube('head', [3.4, 26, -3], [1, 6, 6], solid(G));
-  }
-  b.bone('fin_front', 'body', [0, 23.5, -3], [-30, 0, 0]);
-  b.cube('fin_front', [-0.5, 23, -8], [1, 2.4, 5.5], solid(R));
-  b.bone('fin_back', 'body', [0, 23, 2], [32, 0, 0]);
-  b.cube('fin_back', [-0.5, 22, 2], [1, 3, 4.5], solid(R));
-  // her gown: two side panels and a back, flaring from her hips to her ankles, green within; open at
-  // the front over her thighs
-  const lined = (/** @type {string} */ inner) => /** @type {Paint} */ ((f) => (f === inner ? DG : W));
-  b.bone('gown_r', 'body', [-5.6, 16, 0], [0, 0, -8]);
-  b.cube('gown_r', [-7, 1, -3.4], [1.4, 15, 7], lined('west'));
-  b.bone('gown_l', 'body', [5.6, 16, 0], [0, 0, 8]);
-  b.cube('gown_l', [5.6, 1, -3.4], [1.4, 15, 7], lined('east'));
-  b.bone('gown_b', 'body', [0, 16, 3.4], [10, 0, 0]);
-  b.cube('gown_b', [-6.5, 1, 3.4], [13, 15, 1.4], lined('north'));
-  return [b.done()];
+  const W = [246, 246, 250], R = [230, 74, 96];
+  return [
+    { arms: [122, 212, 132], inner: [40, 92, 56], tex: 'textures/entity/normal/gardevoir' },
+    { arms: [96, 162, 232], inner: [38, 78, 140], tex: 'textures/entity/shiny/gardevoir' },
+  ].map(({ arms: G, inner: DG, tex }, n) => {
+    const b = builder(`gardevoir_${n}`);
+    const pd = pokedrockModel('geometry.serpgardevoir', tex);
+    // (dressed: a pale crop top over her bust; leggings to her ankles, torn open on her thighs and calves)
+    const TOP = [236, 226, 242], LEG = [54, 46, 62];
+    const torn = (/** @type {number} */ cx, /** @type {number} */ cy, /** @type {number} */ r) => /** @type {Paint} */ ((face, x, y) =>
+      face !== 'up' && face !== 'down' && (face === 'north' || face === 'east' || face === 'west') && ((x - cx) ** 2) / (r * r) + ((y - cy) ** 2) / (r * r * 1.4) < 1 ? W : LEG);
+    curvyBody(b, {
+      chest: solid(W), waist: solid(W), hips: solid(W), bust: solid(W), neck: solid(W),
+      upperArm: solid(G), forearm: solid(G), thigh: solid(W), calf: solid(W), foot: solid(W),
+    }, {
+      bust: solid(TOP), chest: over(solid(W), TOP, (face, _x, y) => face !== 'up' && y > 0.2),
+      hips: over(solid(W), LEG, (face, x, y) => face !== 'up' && (face !== 'north' || y > 0.3 || Math.abs(x - 0.5) > 0.3)),
+      thigh: torn(0.5, 0.42, 0.3), calf: torn(0.45, 0.5, 0.26), foot: solid(LEG),
+    });
+    if (pd) pokedrockHead(b, pd, 1.35);
+    else {
+      b.bone('head', undefined, [0, 26.5, 0]);
+      b.cube('head', [-3.5, 27, -3.5], [7, 7, 7], (f, _x, _y, i, j) => (f === 'north' && j === 3 && (i === 2 || i === 4) ? [214, 28, 40] : W));
+      b.cube('head', [-4, 30, -4], [8, 4.5, 8], solid(G));
+      b.cube('head', [-4.4, 26, -3], [1, 6, 6], solid(G));
+      b.cube('head', [3.4, 26, -3], [1, 6, 6], solid(G));
+    }
+    // her horn: a red blade from her breastbone between her breasts, up toward her chin
+    b.bone('fin_front', 'body', [0, 23.4, -2.6], [-42, 0, 0]);
+    b.cube('fin_front', [-0.6, 22.6, -8.4], [1.2, 3.2, 6], (f, _x, y) => (f === 'up' ? [244, 120, 136] : R));
+    b.bone('fin_back', 'body', [0, 23, 2], [34, 0, 0]);
+    b.cube('fin_back', [-0.6, 21.6, 2], [1.2, 3.6, 5], solid(R));
+    // her gown: long panels from the sides of her hips, two at her sides and two trailing behind her,
+    // flaring to the ground, lined within; between them her thighs and her seat show
+    const lined = (/** @type {string} */ inner) => /** @type {Paint} */ ((f) => (f === inner || f === 'down' ? DG : W));
+    b.bone('gown_r', 'body', [-6, 15.5, -0.5], [0, 0, -12]);
+    b.cube('gown_r', [-7.2, 0.3, -3.6], [1.2, 15.2, 6.4], lined('west'));
+    b.bone('gown_l', 'body', [6, 15.5, -0.5], [0, 0, 12]);
+    b.cube('gown_l', [6, 0.3, -3.6], [1.2, 15.2, 6.4], lined('east'));
+    b.bone('gown_br', 'body', [-4, 15, 3], [16, 28, 0]);
+    b.cube('gown_br', [-7, 0, 3], [5.5, 15, 1.2], lined('north'));
+    b.bone('gown_bl', 'body', [4, 15, 3], [16, -28, 0]);
+    b.cube('gown_bl', [1.5, 0, 3], [5.5, 15, 1.2], lined('north'));
+    return b.done();
+  });
 }
 
 // ---- Lucario: blue, a cream chest and belly front, black forearms and paws, black calves and feet, white
@@ -340,7 +356,8 @@ export const POKEMON = [
   { made: gardevoir, key: 'gardevoir', name: 'Gardevoir', birth: 'kum:luna',
     kicks: { name: 'jp_gardevoir', order: [2, 0, 4, 1, 3], rate: 0.9, emphasis: [1.0, 1.2, 0.9, 1.1, 1.3] },
     treats: ['minecraft:amethyst_shard', 'minecraft:sweet_berries', 'minecraft:cake'], biomes: ['meadow', 'forest', 'plains'], egg: { base_color: '#f4f4f8', overlay_color: '#5ad46a' },
-    curves: 'lush', navel: true, clothes: true, tone: [246, 246, 250] },
+    // (her shiny form one in eight; thicker still, and a bigger belly)
+    curves: 'thick', navel: true, clothes: true, tone: [246, 246, 250], weights: [7, 1], grow: 1.25 },
   { made: lucario, key: 'lucario', name: 'Lucario', birth: 'fapcraft:jenny',
     kicks: { name: 'jp_lucario', order: [3, 1, 0, 4, 2], rate: 1.3, emphasis: [1.4, 1.2, 1.0, 1.3, 0.9] },
     treats: ['minecraft:cooked_beef', 'minecraft:bone', 'minecraft:cake'], biomes: ['taiga', 'extreme_hills', 'forest'], egg: { base_color: '#3e8ad6', overlay_color: '#26262e' },

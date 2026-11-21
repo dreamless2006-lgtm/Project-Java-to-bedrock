@@ -76,6 +76,7 @@ export function poseController(/** @type {string[]} */ poses, /** @type {Record<
  * @property {(image: any) => any} [bellySkin] changes her belly texture (given her skin-tone one)
  * @property {(body: import('./belly-fit.mjs').Body) => number[]} [opening] where her baby comes out instead of between her legs
  * @property {number} [minWidth] her belly at least this wide (a slim body's)
+ * @property {number[]} [weights] how often she spawns in each of her outfits (else as often)
  * @property {string[]} [stillBones] bones her poses and moves leave alone (a slime's jelly, which has no legs to bend)
  * @property {string} [material] her material, if not entity_alphatest (a slime's see-through jelly)
  * @property {{ animations?: Record<string, any>, ids?: Record<string, string>, pre?: string[], initialize?: string[], animate?: any[], controllers?: Record<string, any>, effects?: { sound_effects?: Record<string, any>, particle_effects?: Record<string, any> } }} [extra] more of her client entity
@@ -283,7 +284,7 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
         'minecraft:entity_spawned': {
           sequence: [
             { add: { component_groups: [`${ns}:wild`] } },
-            { randomize: outfits.map((_, i) => ({ weight: 1, add: { component_groups: [`${ns}:variant_${i}`] } })) },
+            { randomize: outfits.map((_, i) => ({ weight: girl.weights?.[i] ?? 1, add: { component_groups: [`${ns}:variant_${i}`] } })) },
             SPAWN_PREGNANT,
           ],
         },
