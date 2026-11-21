@@ -284,30 +284,57 @@ function lucario() {
   return [b.done()];
 }
 
-// ---- Lopunny: brown, red eyes on black, a pink nose, long ears up and drooping, pink inside and
-// cream-tufted, cream fluff at her wrists and from her knees down, a cream tail puff; a pink bikini --------
+// ---- Lopunny: brown, red eyes on black, a pink nose on a little muzzle, cream brow fins; her long ears
+// up and hanging down her back into big cream clouds; cream cuffs of fluff at her wrists and cream fluff
+// from her knees down; a cream tail puff. Dressed: a white crop top and jeans. Shiny (one in eight): pink
+// fluff, in a black crop top and black leggings torn open -------------------------------------------------------
 function lopunny() {
-  const Br = [162, 108, 74], Cr = [248, 230, 176], Pk = [242, 150, 172], EYE = [226, 52, 74], K = [24, 20, 22], BK = [240, 110, 160];
-  const b = builder('lopunny');
-  const chest = solid(Br), hips = solid(Br);
-  curvyBody(b, {
-    chest, waist: solid(Br), hips, bust: solid(Br), neck: solid(Br),
-    upperArm: solid(Br), forearm: solid(Br), thigh: solid(Br), calf: solid(Cr), foot: solid(Cr),
-  }, bikini(BK, chest, hips));
-  b.bone('head', undefined, [0, 26.5, 0]);
-  const face = /** @type {Record<string, Colour>} */ ({ '1,3': K, '2,3': EYE, '4,3': EYE, '5,3': K, '1,2': K, '5,2': K, '3,4': Pk, '3,5': [124, 80, 56] });
-  b.cube('head', [-3.5, 27, -3.5], [7, 7, 7], (f, _x, _y, i, j) => (f === 'north' ? face[`${i},${j}`] ?? Br : Br));
-  for (const [side, x, turn] of /** @type {const} */ ([['r', -2.2, 10], ['l', 2.2, -10]])) {
-    b.bone(`ear_${side}`, 'head', [x, 33.5, 0.5], [-6, 0, turn]);
-    b.cube(`ear_${side}`, [x - 1.4, 33.5, 0], [2.8, 9, 1], (f, x2, y) => (y < 0.25 && f !== 'down' ? Cr : f === 'north' && x2 > 0.2 && x2 < 0.8 ? Pk : Br));
-    b.bone(`ear_${side}_droop`, `ear_${side}`, [x, 42.5, 0.5], [-150, 0, side === 'r' ? 10 : -10]);
-    b.cube(`ear_${side}_droop`, [x - 1.4, 42.5, 0], [2.8, 13, 1], (f, _x, y) => (f === 'up' || y > 0.78 ? Cr : Br));
-  }
-  for (const [arm, x] of /** @type {const} */ ([['right_arm', -6.8], ['left_arm', 3.6]])) b.cube(arm, [x, 13.6, -1.6], [3.2, 2.6, 3.2], solid(Cr));
-  for (const [leg, x] of /** @type {const} */ ([['right_leg', -4.3], ['left_leg', 0.1]])) b.cube(leg, [x, 3.4, -2.2], [4.2, 3.6, 4.2], solid(Cr));
-  b.bone('tail', 'body', [0, 15, 2.5]);
-  b.cube('tail', [-1.5, 14, 2.3], [3, 3, 2], solid(Cr));
-  return [b.done()];
+  const Br = [164, 108, 72], Pk = [242, 150, 172], EYE = [226, 52, 74], K = [26, 20, 22];
+  return [
+    { fluff: [248, 230, 176], top: [244, 244, 246], legs: [136, 176, 218], torn: false },
+    { fluff: [250, 172, 200], top: [40, 36, 40], legs: [46, 40, 46], torn: true },
+  ].map(({ fluff: Cr, top: TOP, legs: LEG, torn }, n) => {
+    const b = builder(`lopunny_${n}`);
+    const chest = solid(Br), hips = solid(Br);
+    const holes = /** @type {Paint} */ ((face, x, y) => (torn && face !== 'up' && face !== 'down' && ((x - 0.5) ** 2) / 0.07 + ((y - 0.45) ** 2) / 0.1 < 1 ? Br : LEG));
+    curvyBody(b, {
+      chest, waist: solid(Br), hips, bust: solid(Br), neck: solid(Br),
+      upperArm: solid(Br), forearm: solid(Br), thigh: solid(Br), calf: solid(Cr), foot: solid(Cr),
+    }, {
+      bust: solid(TOP), chest: over(chest, TOP, (face, _x, y) => face !== 'up' && y > 0.18),
+      // (her jeans' band a shade darker, low on her hips under her belly)
+      hips: over(hips, LEG, (face, x, y) => face !== 'up' && (face !== 'north' || y > 0.35 || Math.abs(x - 0.5) > 0.32)),
+      thigh: holes,
+    });
+    // her head: red eyes on black with lashes, blush, a muzzle with a pink nose
+    b.bone('head', undefined, [0, 26.5, 0]);
+    const face = /** @type {Record<string, Colour>} */ ({ '1,3': K, '2,3': EYE, '4,3': EYE, '5,3': K, '1,2': K, '2,2': K, '4,2': K, '5,2': K, '1,4': [206, 120, 110], '5,4': [206, 120, 110] });
+    b.cube('head', [-3.5, 27, -3.5], [7, 7, 7], (f, _x, _y, i, j) => (f === 'north' ? face[`${i},${j}`] ?? Br : Br));
+    b.cube('head', [-1.5, 27.2, -4.5], [3, 2, 1], (f, x, y) => (f === 'north' && y < 0.5 && x > 0.3 && x < 0.7 ? Pk : f === 'north' && y > 0.5 && Math.abs(x - 0.5) < 0.18 ? [110, 70, 50] : Br));
+    // her brow fins, cream, from her forehead out and up over her eyes
+    for (const [side, s] of /** @type {const} */ ([['r', -1], ['l', 1]])) {
+      b.bone(`brow_${side}`, 'head', [s * 0.8, 32.4, -3.8], [0, 0, s * 26]);
+      b.cube(`brow_${side}`, [s < 0 ? -6.2 : 0.8, 31.8, -4.6], [5.4, 1.6, 1.2], solid(Cr));
+    }
+    // her ears: up from her head, then hanging down her back, into a cloud of fluff
+    for (const [side, x, turn] of /** @type {const} */ ([['r', -2, 12], ['l', 2, -12]])) {
+      b.bone(`ear_${side}`, 'head', [x, 34, 0.5], [-8, 0, turn]);
+      b.cube(`ear_${side}`, [x - 1.4, 34, -0.1], [2.8, 10, 1.2], (f, x2) => (f === 'north' && x2 > 0.22 && x2 < 0.78 ? Pk : Br));
+      b.bone(`ear_${side}_droop`, `ear_${side}`, [x, 44, 0.5], [-168, 0, side === 'r' ? 6 : -6]);
+      b.cube(`ear_${side}_droop`, [x - 1.4, 44, -0.1], [2.8, 16, 1.2], solid(Br));
+      b.cube(`ear_${side}_droop`, [x - 2.3, 58.5, -1.2], [4.6, 10, 3.4], solid(Cr));
+      b.cube(`ear_${side}_droop`, [x - 1.6, 67.5, -0.6], [3.2, 2, 2.2], solid(Cr));
+    }
+    // her wrists' cuffs of fluff, her knees' and her lower legs' fluff, her tail
+    for (const [arm, x] of /** @type {const} */ ([['right_arm', -7], ['left_arm', 3.4]])) {
+      b.cube(arm, [x, 13.2, -1.9], [3.6, 3.4, 3.6], solid(Cr));
+      b.cube(arm, [x + 0.4, 16.4, -1.5], [2.8, 1.2, 2.8], solid(Cr));
+    }
+    for (const [leg, x] of /** @type {const} */ ([['right_leg', -4.5], ['left_leg', -0.1]])) b.cube(leg, [x, 5.6, -2.5], [4.6, 2.6, 4.6], solid(Cr));
+    b.bone('tail', 'body', [0, 15, 2.5]);
+    b.cube('tail', [-1.7, 13.6, 2.2], [3.4, 3.4, 2.4], solid(Cr));
+    return b.done();
+  });
 }
 
 // ---- Lycanroc, her three forms (one each spawns as): Midday (tan, cream front), Midnight (red, white
@@ -365,7 +392,8 @@ export const POKEMON = [
   { made: lopunny, key: 'lopunny', name: 'Lopunny', birth: 'kum:bia',
     kicks: { name: 'jp_lopunny', order: [1, 4, 2, 0, 3], rate: 1.1, emphasis: [1.1, 1.4, 1.0, 0.9, 1.2] },
     treats: ['minecraft:carrot', 'minecraft:golden_carrot', 'minecraft:cake'], biomes: ['plains', 'forest', 'meadow'], egg: { base_color: '#9e6846', overlay_color: '#f6e4ac' },
-    curves: 'lush', navel: true, clothes: true, tone: [162, 108, 74] },
+    // (her shiny form one in eight; as thick as Gardevoir, and a bigger belly)
+    curves: 'thick', navel: true, clothes: true, tone: [164, 108, 72], weights: [7, 1], grow: 1.25 },
   { made: lycanroc, key: 'lycanroc', name: 'Lycanroc', birth: 'fapcraft:jenny',
     kicks: { name: 'jp_lycanroc', order: [0, 3, 1, 4, 2], rate: 1.25, emphasis: [1.3, 1.0, 1.2, 1.1, 1.0] },
     treats: ['minecraft:cooked_beef', 'minecraft:cooked_porkchop', 'minecraft:cake'], biomes: ['plains', 'savanna', 'extreme_hills', 'taiga'], egg: { base_color: '#c94a38', overlay_color: '#f4f0ea' },
