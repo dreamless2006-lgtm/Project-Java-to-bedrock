@@ -105,6 +105,7 @@ const GROWN = `q.property('${MOD}:female') == 2 && !q.is_baby`;
  * @property {boolean} [keepArms] a woman's build leaves her arms as they are (arms held out, not hanging: slimming would shorten them)
  * @property {number} [bust] her bust this much bigger than her torso's width makes it
  * @property {number} [minWidth] her belly at least this wide (a slim body's)
+ * @property {number} [thighs] her thighs this much thicker (the top of each leg's main piece, in its texture), and a fuller seat
  * @property {boolean} [hud] its HUD adds to the root panel as ours does: its packs carry both additions
  * @property {(id: string) => boolean} skip mob types left as they are
  * @property {(rig: { key: string }, id: string) => { birth: string, type: 'normal' | 'navel' | 'burst' | 'breast', shape: keyof typeof SHAPES }} women how they carry and give birth
@@ -135,7 +136,7 @@ const ADDONS = {
     title: 'Pokédrock', name: 'Minepreggo × Pokédrock', description: "SERP's Pokédrock's Gardevoir, Lucario, Blaziken, Nidoqueen and Greninja: their females in Minepreggo's pregnancy system. Needs Minepreggo and Pokédrock (with its 3D pack); put it above both.",
     vendor: 'vendor/pokedrock', dir: 'minepreggo_pokedrock', prefix: 'pokemon',
     ids: { bp: '5b0c2d4e-7a61-4f3b-9c58-2e1d6a8f4b97', bpData: 'c3e9a1f2-6d4b-4e87-a215-9b7c3d0e5f18', rp: '8f4a6c1e-2b9d-4d73-b6e0-5a1c7f3e9d24', rpResources: 'e1d7b3a9-4c62-4f05-8e9b-36a2d5c7f810' },
-    female: `q.property('${MOD}:female') == 2`, male: `q.property('${MOD}:female') != 2`, femaleDefault: 0, build: true, keepArms: true, bust: 1.5, minWidth: 8, bellyStyle: 'round', hud: true,
+    female: `q.property('${MOD}:female') == 2`, male: `q.property('${MOD}:female') != 2`, femaleDefault: 0, build: true, keepArms: true, bust: 2.1, minWidth: 8, thighs: 1.7, bellyStyle: 'round', hud: true,
     skipRigs: new Set(), skip: (id) => !POKEMON_WOMEN[id],
     women: (_, id) => ({ birth: POKEMON_WOMEN[id].birth, type: 'normal', shape: 'round' }),
   },
@@ -431,7 +432,22 @@ function femaleGeometry(/** @type {Rig} */ rig, /** @type {Women['opts']} */ opt
     { name: 'mp_bust', parent: rig.body, pivot: [0, round(top - 1.5 * k), round(z0 - out)] },
     breast(-1), breast(1),
   );
+  // (thick thighs: around the top of each leg's main piece, in its texture; a fuller seat behind her hips)
+  for (const leg of addon.thighs ? [rig.legR, rig.legL] : []) {
+    const bone = byName.get(leg);
+    const c = [...(bone?.cubes ?? [])].filter((/** @type {any} */ x) => Array.isArray(x.size) && x.size[1] >= 3).sort((a, b) => b.size[0] * b.size[1] * b.size[2] - a.size[0] * a.size[1] * a.size[2])[0];
+    if (!c) continue;
+    const f = facesOf(c, bone.mirror), t = addon.thighs, [cx, cy, cz] = c.origin, [cw, ch, cd] = c.size, th = ch * 0.6;
+    const topOf = (/** @type {any} */ face) => (face ? part(face, 0, 1, 0, 0.6) : undefined);
+    const uv = { north: topOf(f.north), south: topOf(f.south), east: topOf(f.east), west: topOf(f.west), up: f.up, down: topOf(f.north) };
+    for (const key of Object.keys(uv)) if (!uv[/** @type {keyof typeof uv} */ (key)]) delete uv[/** @type {keyof typeof uv} */ (key)];
+    bone.cubes.push({ origin: [round(cx + cw / 2 - (cw * t) / 2), round(cy + ch - th), round(cz + cd / 2 - (cd * t) / 2)], size: [round(cw * t), round(th), round(cd * t)], uv });
+  }
   if (addon.build) g.bones.push(
+    ...(addon.thighs ? [{
+      name: 'mp_seat', parent: rig.body, pivot: [0, round(y0), round(z0 + d)],
+      cubes: [{ origin: [round(x0 - out - 0.4 * k), round(y0 - out - 1.6 * k), round(z0 + d + out - 0.6 * k)], size: [round(w + 2 * out + 0.8 * k), round(3.4 * k), round(2.4 * k)], uv: { north: low(front), south: low(faces.south), east: low(faces.east), west: low(faces.west), up: part(front, 0, 1, 0.72, 0.8), down: part(front, 0, 1, 0.92, 1) } }],
+    }] : []),
     {
       name: 'mp_hips', parent: rig.body, pivot: [0, round(y0), round(z0 + d / 2)],
       cubes: [{

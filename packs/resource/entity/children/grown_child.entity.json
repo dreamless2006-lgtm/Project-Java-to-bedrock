@@ -86,7 +86,9 @@
         "s76": "textures/port/children/skins/greninja_son",
         "s77": "textures/port/children/skins/greninja_daughter",
         "s78": "textures/port/children/skins/pokemon_son",
-        "s79": "textures/port/children/skins/pokemon_daughter"
+        "s79": "textures/port/children/skins/pokemon_daughter",
+        "s80": "textures/port/children/skins/lycanroc_son",
+        "s81": "textures/port/children/skins/lycanroc_daughter"
       },
       "geometry": {
         "son": "geometry.minepreggo.grown_son",

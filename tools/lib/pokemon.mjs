@@ -1,37 +1,60 @@
-// The Pokémon girls (Gardevoir, Lucario, Lopunny) as blocky Minecraft models of our own, built here
-// cube by cube and painted pixel by pixel, in the bone layout of Minepreggo's own girls (head, body
-// with its hips, waist and chest, boobs, arms and legs), so tools/import-jenny-preggo.mjs makes them
-// into curvy Jenny's Preggo Mobs like the others. Generated at import time into its git-ignored port
-// folder (they are fan likenesses of other people's characters).
+// The Pokémon girls (Gardevoir, Lucario, Lopunny, Lycanroc) as curvy blocky girls in the Jenny mod's
+// style: a body of our own built cube by cube (long legs, thick thighs to slim calves, wide hips and a
+// full seat, a narrow waist, a big bust, slim arms) painted pixel by pixel with soft shading, and her
+// Pokémon's own head (and tail) from Pokédrock's models where it is there (vendor/pokedrock/
+// pokedrock.zip: tools/compat-addons.mjs), else heads of our own. Each has a dressed look (a bikini,
+// Gardevoir's top) and her bare one. In the bone layout of Minepreggo's own girls (head, body with its
+// hips, waist and chest, boobs, arms and legs), so tools/import-jenny-preggo.mjs makes them into curvy
+// Jenny's Preggo Mobs like the others; generated at import time into its git-ignored port folder (they
+// are fan likenesses of other people's characters).
 import { existsSync, readFileSync } from 'node:fs';
 import { strFromU8, unzipSync } from 'fflate';
-import { blank, encodePng } from './png.mjs';
-import { facesOf, part } from './box-uv.mjs';
+import { blank, decodePng, encodePng } from './png.mjs';
+import { facesOf } from './box-uv.mjs';
 
 const TEX = 128;
 /** @typedef {number[]} Colour */
 /** @typedef {(face: string, x: number, y: number, i: number, j: number) => Colour | undefined} Paint a face's colour at (x, y) across and down it (0 to 1), at its pixel (i, j) */
 
+const r3 = (/** @type {number} */ v) => Math.round(v * 1000) / 1000;
 const hash = (/** @type {number} */ x, /** @type {number} */ y) => {
   let h = Math.imul(x, 374761393) + Math.imul(y, 668265263);
   h = Math.imul(h ^ (h >>> 13), 1274126177);
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 };
+/** Soft light from above and in front: the front brightest at its middle, the sides and back darker, the underside darkest. */
+const light = (/** @type {string} */ face, /** @type {number} */ x, /** @type {number} */ y) => {
+  if (face === 'up') return 1.06;
+  if (face === 'down') return 0.7;
+  const base = face === 'north' ? 1 : face === 'south' ? 0.86 : 0.8;
+  return base * (1.05 - 0.12 * y) * (face === 'north' || face === 'south' ? 0.94 + 0.08 * (1 - Math.abs(2 * x - 1)) : 1);
+};
 
-/** A model being built: bones, and box-UV cubes packed into one texture as they are painted. */
+/**
+ * A model being built: bones, and box-UV cubes packed into one texture as they are painted (its bare
+ * look and its dressed one), with room below for a Pokédrock texture its grafted parts use.
+ */
 function builder(/** @type {string} */ id) {
   const bones = /** @type {any[]} */ ([]);
-  const img = blank(TEX, TEX);
+  const bare = blank(TEX, TEX), dressed = blank(TEX, TEX);
   const shelf = { x: 0, y: 0, h: 0 };
   const byName = new Map();
+  /** @type {{ width: number, height: number, data: Uint8Array } | undefined} */
+  let attached;
+  /** its size as its model declares it (its image is that times its resolution) */
+  let declared = { width: 0, height: 0 };
+  const put = (/** @type {any} */ img, /** @type {number} */ x, /** @type {number} */ y, /** @type {Colour} */ c, /** @type {number} */ k) =>
+    img.data.set([...c.slice(0, 3).map((v) => Math.max(0, Math.min(255, Math.round(v * k)))), c[3] ?? 255], (y * TEX + x) * 4);
   return {
+    has: (/** @type {string} */ name) => byName.has(name),
     bone(/** @type {string} */ name, /** @type {string | undefined} */ parent, /** @type {number[]} */ pivot, /** @type {number[]} */ rotation = [0, 0, 0]) {
       const bone = { name, ...(parent ? { parent } : {}), pivot, ...(rotation.some((r) => r !== 0) ? { rotation } : {}), cubes: [] };
       bones.push(bone);
       byName.set(name, bone);
       return name;
     },
-    cube(/** @type {string} */ bone, /** @type {number[]} */ origin, /** @type {number[]} */ size, /** @type {Paint} */ paint) {
+    /** A cube painted bare by `paint` and dressed by `clothes` (else as bare). */
+    cube(/** @type {string} */ bone, /** @type {number[]} */ origin, /** @type {number[]} */ size, /** @type {Paint} */ paint, /** @type {Paint | undefined} */ clothes = undefined) {
       const [w, h, d] = size.map(Math.ceil);
       const rw = 2 * (w + d), rh = d + h;
       if (shelf.x + rw > TEX) Object.assign(shelf, { x: 0, y: shelf.y + shelf.h, h: 0 });
@@ -41,21 +64,63 @@ function builder(/** @type {string} */ id) {
       shelf.h = Math.max(shelf.h, rh);
       byName.get(bone).cubes.push(cube);
       for (const [face, f] of Object.entries(facesOf(cube))) {
-        const x0 = Math.min(f.uv[0], f.uv[0] + f.uv_size[0]), y0 = Math.min(f.uv[1], f.uv[1] + f.uv_size[1]);
+        const x0 = Math.floor(Math.min(f.uv[0], f.uv[0] + f.uv_size[0])), y0 = Math.floor(Math.min(f.uv[1], f.uv[1] + f.uv_size[1]));
         const fw = Math.abs(f.uv_size[0]), fh = Math.abs(f.uv_size[1]);
         for (let j = 0; j < Math.ceil(fh); j++) for (let i = 0; i < Math.ceil(fw); i++) {
-          const c = paint(face, (i + 0.5) / fw, (j + 0.5) / fh, i, j);
-          if (!c) continue;
-          const n = 0.95 + 0.07 * hash(x0 + i, y0 + j);
-          img.data.set([...c.slice(0, 3).map((v) => Math.min(255, Math.round(v * n))), c[3] ?? 255], ((Math.floor(y0) + j) * TEX + Math.floor(x0) + i) * 4);
+          const x = (i + 0.5) / fw, y = (j + 0.5) / fh;
+          const k = light(face, x, y) * (0.96 + 0.06 * hash(x0 + i, y0 + j));
+          const c = paint(face, x, y, i, j);
+          if (c) put(bare, x0 + i, y0 + j, c, k);
+          const cd = clothes?.(face, x, y, i, j) ?? c;
+          if (cd) put(dressed, x0 + i, y0 + j, cd, k);
         }
+      }
+      return cube;
+    },
+    /** Grafts bones of a Pokédrock model (with their texture, put below ours), moved and scaled into place. */
+    graft(/** @type {{ geometry: any, png: Uint8Array }} */ source, /** @type {{ root: string, as: string, parent?: string, from: number[], to: number[], scale?: number, rotation?: number[] }} */ o) {
+      const g = source.geometry;
+      if (!attached) {
+        attached = decodePng(source.png);
+        declared = { width: g.description.texture_width ?? attached.width, height: g.description.texture_height ?? attached.height };
+      }
+      const under = (/** @type {string} */ n) => [n, ...g.bones.filter((/** @type {any} */ b) => b.parent === n && !/closed|closet|angry/.test(b.name)).flatMap((/** @type {any} */ b) => under(b.name))];
+      const k = o.scale ?? 1;
+      const move = (/** @type {number[]} */ p) => p.map((v, i) => r3(o.to[i] + (v - o.from[i]) * k));
+      for (const name of under(o.root)) {
+        const src = g.bones.find((/** @type {any} */ b) => b.name === name);
+        const bone = {
+          name: name === o.root ? o.as : `${o.as}_${name}`,
+          ...(name === o.root ? (o.parent ? { parent: o.parent } : {}) : { parent: src.parent === o.root ? o.as : `${o.as}_${src.parent}` }),
+          pivot: move(src.pivot ?? [0, 0, 0]),
+          ...(name === o.root && o.rotation ? { rotation: o.rotation } : src.rotation ? { rotation: src.rotation } : {}),
+          cubes: (src.cubes ?? []).map((/** @type {any} */ c) => {
+            // (per-face, shifted below our texture, so it can be scaled without its texture sliding)
+            const faces = Object.fromEntries(Object.entries(facesOf(c, src.mirror)).map(([f, uv]) => [f, { uv: [uv.uv[0], uv.uv[1] + TEX], uv_size: uv.uv_size }]));
+            return { origin: move(c.origin), size: c.size.map((/** @type {number} */ s) => r3(s * k)), uv: faces, ...(c.inflate ? { inflate: r3(c.inflate * k) } : {}), ...(c.rotation ? { rotation: c.rotation, pivot: move(c.pivot ?? [0, 0, 0]) } : {}) };
+          }),
+        };
+        bones.push(bone);
+        byName.set(bone.name, bone);
       }
     },
     done() {
-      for (const b of bones) if (!b.cubes.length) delete b.cubes;
+      for (const b of bones) if (!b.cubes?.length) delete b.cubes;
+      // (ours drawn up to the grafted texture's resolution, which is finer than its model declares)
+      const res = attached ? Math.max(1, Math.round(attached.width / declared.width)) : 1;
+      const width = Math.max(TEX, declared.width), height = TEX + declared.height;
+      const sheet = (/** @type {any} */ ours) => {
+        const img = blank(width * res, height * res);
+        for (let y = 0; y < TEX * res; y++) for (let x = 0; x < TEX * res; x++) {
+          const i = (Math.floor(y / res) * TEX + Math.floor(x / res)) * 4;
+          img.data.set(ours.data.subarray(i, i + 4), (y * width * res + x) * 4);
+        }
+        if (attached) for (let y = 0; y < attached.height; y++) img.data.set(attached.data.subarray(y * attached.width * 4, (y + 1) * attached.width * 4), ((TEX * res + y) * width * res) * 4);
+        return encodePng(img);
+      };
       return {
-        geometry: { description: { identifier: `geometry.minepreggo.${id}_source`, texture_width: TEX, texture_height: TEX }, bones },
-        png: encodePng(img),
+        geometry: { description: { identifier: `geometry.minepreggo.${id}_source`, texture_width: width, texture_height: height }, bones },
+        png: sheet(bare), dressed: sheet(dressed),
       };
     },
   };
@@ -67,208 +132,225 @@ const bands = (/** @type {Colour} */ top, /** @type {Colour} */ bottom, /** @typ
   /** @type {Paint} */ ((face, _x, y) => (face === 'up' ? top : face === 'down' ? bottom : y < split ? top : bottom));
 /** A front of one colour, the rest of another. */
 const front = (/** @type {Colour} */ f, /** @type {Colour} */ rest) => /** @type {Paint} */ ((face) => (face === 'north' ? f : rest));
+/** A paint over another where `where` says. */
+const over = (/** @type {Paint} */ base, /** @type {Colour} */ c, /** @type {(face: string, x: number, y: number) => boolean} */ where) =>
+  /** @type {Paint} */ ((face, x, y, i, j) => (where(face, x, y) ? c : base(face, x, y, i, j)));
 
 /**
- * The girl's body in Minepreggo's layout: head, body (hips, waist, chest), boobs, arms and legs, each
- * painted by its own paint.
+ * Her body, the Jenny mod's way: long legs (thick thighs, slim calves, small feet), wide hips and a
+ * full seat (the import's curves flare them), a narrow waist, a chest with a big bust, slim arms.
+ * Her head goes on top at y 27 (the head bone's pivot is her neck, at 26.5).
  * @param {ReturnType<typeof builder>} b
- * @param {{ head: Paint, chest: Paint, waist: Paint, hips: Paint, bust: Paint, arm: Paint, leg: Paint }} paint
+ * @param {{ chest: Paint, waist: Paint, hips: Paint, bust: Paint, upperArm: Paint, forearm: Paint, thigh: Paint, calf: Paint, foot: Paint, neck: Paint }} p bare
+ * @param {{ bust?: Paint, chest?: Paint, hips?: Paint, waist?: Paint, upperArm?: Paint }} [d] dressed, where it differs
  */
-function body(b, paint) {
-  b.bone('head', undefined, [0, 24, 0]);
-  b.cube('head', [-4, 24, -4], [8, 8, 8], paint.head);
-  b.bone('body', undefined, [0, 24, 0]);
-  b.cube('body', [-4, 12, -2], [8, 3, 4], paint.hips);
-  b.cube('body', [-3.5, 15, -2], [7, 3, 4], paint.waist);
-  b.cube('body', [-4, 18, -2], [8, 6, 4], paint.chest);
-  b.bone('boobs', 'body', [0, 20.5, -2]);
-  b.bone('right_boob', 'boobs', [-2.2, 20.5, -2]);
-  b.cube('right_boob', [-4.2, 19, -4], [4, 3, 2], paint.bust);
-  b.bone('left_boob', 'boobs', [2.2, 20.5, -2]);
-  b.cube('left_boob', [0.2, 19, -4], [4, 3, 2], paint.bust);
-  b.bone('right_arm', undefined, [-5, 22, 0]);
-  b.cube('right_arm', [-7, 12, -1.5], [3, 12, 3], paint.arm);
-  b.bone('left_arm', undefined, [5, 22, 0]);
-  b.cube('left_arm', [4, 12, -1.5], [3, 12, 3], paint.arm);
-  b.bone('right_leg', undefined, [-2, 12, 0]);
-  b.cube('right_leg', [-4, 0, -2], [4, 12, 4], paint.leg);
-  b.bone('left_leg', undefined, [2, 12, 0]);
-  b.cube('left_leg', [0, 0, -2], [4, 12, 4], paint.leg);
-}
-
-/** A face on a head's front: eyes (by column, at a row), and whatever else is drawn on it. */
-const face = (/** @type {Colour} */ skin, /** @type {Record<string, Colour>} */ pixels, /** @type {Paint} */ rest = solid(skin)) =>
-  /** @type {Paint} */ ((f, x, y, i, j) => (f === 'north' ? pixels[`${i},${j}`] ?? skin : rest(f, x, y, i, j)));
-
-// ---- Gardevoir: white, her green bob over one eye, red eyes, the red fins at her chest and back, green
-// arms, and her white gown open at the front, lined in dark green ----------------------------------------
-function gardevoir() {
-  const W = [244, 244, 248], G = [98, 214, 112], DG = [32, 74, 46], R = [226, 62, 76], EYE = [214, 28, 40], LASH = [40, 40, 48];
-  const b = builder('gardevoir');
-  body(b, {
-    head: face(W, { '2,4': EYE, '5,4': EYE, '1,3': LASH, '2,3': LASH, '5,3': LASH, '6,3': LASH, '3,6': [210, 200, 206], '4,6': [210, 200, 206] }),
-    chest: solid(W), waist: solid(W), hips: solid(W), bust: solid(W),
-    arm: bands(G, W, 0.84), leg: solid(W),
-  });
-  b.bone('hair', 'head', [0, 24, 0]);
-  b.cube('hair', [-4.5, 29, -4.5], [9, 4, 9], solid(G));
-  b.cube('hair', [-5, 23, -3.5], [1, 7, 7], solid(G));
-  b.cube('hair', [4, 23, -3.5], [1, 7, 7], solid(G));
-  b.cube('hair', [-4.5, 23, 3.5], [9, 7, 1], solid(G));
-  b.cube('hair', [-4.6, 25.5, -5], [5, 4, 1], solid(G));
-  b.bone('fin_front', 'body', [0, 20, -3], [-32, 0, 0]);
-  b.cube('fin_front', [-0.5, 19.5, -7], [1, 2, 5], solid(R));
-  b.bone('fin_back', 'body', [0, 20, 2], [30, 0, 0]);
-  b.cube('fin_back', [-0.5, 19, 2], [1, 3, 4], solid(R));
-  // her gown: two side panels and a back flaring out from her waist to her ankles, white outside and
-  // dark green within
-  const lined = (/** @type {string} */ inner) => /** @type {Paint} */ ((f) => (f === inner ? DG : W));
-  b.bone('gown_r', 'body', [-5.5, 15, 0], [0, 0, -7]);
-  b.cube('gown_r', [-7.5, 1, -3.5], [2, 14, 7], lined('west'));
-  b.bone('gown_l', 'body', [5.5, 15, 0], [0, 0, 7]);
-  b.cube('gown_l', [5.5, 1, -3.5], [2, 14, 7], lined('east'));
-  b.bone('gown_b', 'body', [0, 15, 2.5], [9, 0, 0]);
-  b.cube('gown_b', [-6.5, 1, 2.5], [13, 14, 2], lined('north'));
-  return b.done();
-}
-
-// ---- Lucario: blue, a black mask round her red eyes and a black snout, pointed ears, the four black
-// tendrils at the back of her head, a cream chest, black paws and feet, white spikes on her chest and
-// the backs of her paws, a blue tail --------------------------------------------------------------------
-function lucario() {
-  const B = [62, 138, 214], K = [38, 38, 46], C = [238, 224, 182], S = [244, 244, 244], EYE = [222, 44, 40];
-  const b = builder('lucario');
-  const head = /** @type {Paint} */ ((f, _x, y, i, j) => {
-    if (f === 'up' || f === 'south') return B;
-    if (f === 'down') return K;
-    if (f === 'north' && j === 4 && (i === 2 || i === 5)) return EYE;
-    if (f === 'north' && j === 4 && (i === 1 || i === 6)) return S;
-    return y > 0.3 && y < 0.7 ? K : B;
-  });
-  body(b, {
-    head, chest: front(C, B), waist: front(C, B), hips: solid(B), bust: front(C, B),
-    arm: bands(B, K, 0.5), leg: bands(B, K, 0.55),
-  });
-  b.bone('snout', 'head', [0, 25, -4]);
-  b.cube('snout', [-1.5, 24.5, -6.5], [3, 2.5, 2.5], (f, _x, y) => (f === 'down' ? C : f === 'north' && y < 0.4 ? [20, 20, 24] : K));
-  for (const [side, x, turn] of /** @type {const} */ ([['r', -2.5, 12], ['l', 2.5, -12]])) {
-    b.bone(`ear_${side}`, 'head', [x, 32, 0], [0, 0, turn]);
-    b.cube(`ear_${side}`, [x - 1, 32, -0.5], [2, 5, 1], (f, x2, y) => (f === 'north' && y > 0.3 && x2 > 0.3 && x2 < 0.7 ? K : B));
+function curvyBody(b, p, d = {}) {
+  b.bone('body', undefined, [0, 26, 0]);
+  b.cube('body', [-4.2, 14, -2.1], [8.4, 3, 4.2], p.hips, d.hips);
+  b.cube('body', [-3, 17, -1.8], [6, 3, 3.6], p.waist, d.waist);
+  b.cube('body', [-3.8, 20, -2], [7.6, 6, 4], p.chest, d.chest);
+  b.cube('body', [-1.2, 26, -1.2], [2.4, 1, 2.4], p.neck);
+  b.bone('boobs', 'body', [0, 23, -2]);
+  // (each breast grows about its middle: apart, with a cleavage between)
+  b.bone('right_boob', 'boobs', [-1.9, 22.6, -3.2], [12, 6, 0]);
+  b.cube('right_boob', [-3.6, 21, -4.4], [3.4, 3.2, 2.4], p.bust, d.bust);
+  b.bone('left_boob', 'boobs', [1.9, 22.6, -3.2], [12, -6, 0]);
+  b.cube('left_boob', [0.2, 21, -4.4], [3.4, 3.2, 2.4], p.bust, d.bust);
+  for (const [arm, x, s] of /** @type {const} */ ([['right_arm', -5, -1], ['left_arm', 5, 1]])) {
+    b.bone(arm, undefined, [x, 25, 0]);
+    b.cube(arm, [s < 0 ? -6.4 : 4, 18.5, -1.2], [2.4, 7, 2.4], p.upperArm, d.upperArm);
+    b.cube(arm, [s < 0 ? -6.3 : 4.1, 13.5, -1.1], [2.2, 5, 2.2], p.forearm);
   }
-  b.bone('tendrils', 'head', [0, 28, 4], [14, 0, 0]);
-  for (const x of [-3, -1.6, 0.6, 2]) b.cube('tendrils', [x, 21, 3.6], [1, 7, 1], solid(K));
-  b.bone('spike', 'body', [0, 22.5, -2]);
-  b.cube('spike', [-0.5, 22.4, -4], [1, 1, 2], solid(S));
-  b.cube('right_arm', [-6, 13.5, 1.5], [1, 1, 2], solid(S));
-  b.cube('left_arm', [5, 13.5, 1.5], [1, 1, 2], solid(S));
-  b.bone('tail', 'body', [0, 13.5, 2], [38, 0, 0]);
-  b.cube('tail', [-1, 7.5, 1.5], [2, 6, 2], solid(B));
-  return b.done();
-}
-
-// ---- Lopunny: brown, red eyes on black, a pink nose, her long ears up and drooping, pink inside and
-// cream-tufted, cream fluff at her wrists and from her knees down, a cream tail puff ----------------------
-function lopunny() {
-  const Br = [158, 104, 70], Cr = [246, 228, 172], Pk = [242, 150, 172], EYE = [226, 52, 74], K = [24, 20, 22];
-  const b = builder('lopunny');
-  body(b, {
-    head: face(Br, { '1,4': K, '2,4': EYE, '5,4': EYE, '6,4': K, '1,3': K, '6,3': K, '3,5': Pk, '4,5': Pk, '3,6': [120, 76, 52], '4,6': [120, 76, 52] }),
-    chest: solid(Br), waist: solid(Br), hips: solid(Br), bust: solid(Br),
-    arm: solid(Br), leg: bands(Br, Cr, 0.55),
-  });
-  for (const [side, x, turn] of /** @type {const} */ ([['r', -2.5, 10], ['l', 2.5, -10]])) {
-    b.bone(`ear_${side}`, 'head', [x, 31.5, 0.5], [-6, 0, turn]);
-    b.cube(`ear_${side}`, [x - 1.5, 31.5, 0], [3, 9, 1], (f, x2, y) => (y < 0.25 && f !== 'down' ? Cr : f === 'north' && x2 > 0.2 && x2 < 0.8 ? Pk : Br));
-    // (the rest of the ear droops from its top, down behind her head to her shoulders, a cream tuft at its end)
-    b.bone(`ear_${side}_droop`, `ear_${side}`, [x, 40.5, 0.5], [-150, 0, side === 'r' ? 10 : -10]);
-    b.cube(`ear_${side}_droop`, [x - 1.5, 40.5, 0], [3, 13, 1], (f, _x, y) => (f === 'up' || y > 0.78 ? Cr : Br));
+  for (const [leg, x, s] of /** @type {const} */ ([['right_leg', -2.1, -1], ['left_leg', 2.1, 1]])) {
+    b.bone(leg, undefined, [x, 14, 0]);
+    b.cube(leg, [s < 0 ? -4.2 : 0, 7.5, -2.1], [4.2, 6.5, 4.2], p.thigh);
+    b.cube(leg, [s < 0 ? -3.75 : 0.45, 3, -1.7], [3.3, 4.5, 3.4], p.calf);
+    b.cube(leg, [s < 0 ? -3.6 : 0.6, 0, -2.3], [3, 3, 3.6], p.foot);
   }
-  for (const [arm, x] of /** @type {const} */ ([['right_arm', -7.5], ['left_arm', 3.5]])) b.cube(arm, [x, 12.5, -2], [4, 3, 4], solid(Cr));
-  for (const [leg, x] of /** @type {const} */ ([['right_leg', -4.5], ['left_leg', -0.5]])) b.cube(leg, [x, 0.5, -2.5], [5, 4, 5], solid(Cr));
-  b.bone('tail', 'body', [0, 13, 2]);
-  b.cube('tail', [-1.5, 12, 2], [3, 3, 2], solid(Cr));
-  return b.done();
 }
+/** A bikini: its top over her bust (a halter at her chest) and its bottoms over her hips, a lighter edge. */
+const bikini = (/** @type {Colour} */ c, /** @type {Paint} */ chest, /** @type {Paint} */ hips) => {
+  const edge = c.map((v) => Math.min(255, v + 40));
+  return {
+    bust: /** @type {Paint} */ ((face, _x, y) => (face === 'up' ? undefined : y < 0.12 ? edge : c)),
+    chest: over(chest, c, (face, x, y) => face === 'north' && y > 0.2 && y < 0.36 && Math.abs(x - 0.5) > 0.2 || (face === 'south' || face === 'east' || face === 'west') && y > 0.42 && y < 0.55),
+    hips: over(hips, c, (face, x, y) => face === 'down' || (face === 'north' ? y > 0.25 && Math.abs(x - 0.5) < 0.2 + 0.32 * y : face === 'south' ? y > 0.15 : y > 0.45)),
+  };
+};
 
-// ---- from Pokédrock's models (vendor/pokedrock/pokedrock.zip: tools/compat-addons.mjs), where it is there --------
+// ---- Pokédrock's models (vendor/pokedrock/pokedrock.zip), where they are there ---------------------------
 const ZIP = new URL('../../vendor/pokedrock/pokedrock.zip', import.meta.url);
-/** @type {Record<string, Uint8Array> | null | undefined} its models and textures, once read */
+/** @type {Record<string, Uint8Array> | null | undefined} */
 let pokedrock;
-const r3 = (/** @type {number} */ v) => Math.round(v * 1000) / 1000;
-/**
- * A Pokédrock Pokémon's model in our girls' layout: its grouping bones gone (her head, arms and legs
- * hang from her body or loose, as ours), head1 her head, her blinking and angry eyes left out (they
- * would show over her open ones), her arms (held out, as its Pokémon stand) hanging at her sides, and
- * a bust in her torso's texture for the import's curves to fill out.
- * @param {string} id its geometry @param {string} texture its texture
- */
-function fromPokedrock(id, texture) {
+/** A Pokédrock geometry and its texture, or nothing without Pokédrock. */
+function pokedrockModel(/** @type {string} */ id, /** @type {string} */ texture) {
   pokedrock ??= existsSync(ZIP) ? unzipSync(new Uint8Array(readFileSync(ZIP)), { filter: (f) => f.name.startsWith('R/models/') || f.name.startsWith('R/textures/entity/normal/') }) : null;
-  if (!pokedrock) return undefined;
-  const png = pokedrock[`R/${texture}.png`];
-  let source;
+  const png = pokedrock?.[`R/${texture}.png`];
+  if (!pokedrock || !png) return undefined;
   for (const [name, data] of Object.entries(pokedrock)) {
-    if (!name.endsWith('.json') || !name.startsWith('R/models/')) continue;
+    if (!name.startsWith('R/models/') || !name.endsWith('.json')) continue;
     const text = strFromU8(data);
-    if (!text.includes(id.replace('geometry.', ''))) continue;
-    source = JSON.parse(text.replace(/^\uFEFF/, ''))['minecraft:geometry']?.find((/** @type {any} */ g) => g.description?.identifier === id);
-    if (source) break;
+    if (!text.includes(`"${id}"`)) continue;
+    const geometry = JSON.parse(text.replace(/^﻿/, ''))['minecraft:geometry']?.find((/** @type {any} */ g) => g.description?.identifier === id);
+    if (geometry) return { geometry, png };
   }
-  if (!source || !png) return undefined;
-  const g = structuredClone(source);
-  const byName = new Map(g.bones.map((/** @type {any} */ b) => [b.name, b]));
-  const under = (/** @type {string} */ n) => [n, ...g.bones.filter((/** @type {any} */ b) => b.parent === n).flatMap((/** @type {any} */ b) => under(b.name))];
-  const gone = new Set(['closed_eyes', 'angry_eyes'].filter((n) => byName.has(n)).flatMap(under));
-  // (bones that only group others: no cubes, no turn)
-  for (const b of g.bones) if (!b.cubes?.length && !b.rotation && ['body_root', 'arms', 'legs'].includes(b.name) || !b.parent && !b.cubes?.length && !b.rotation) gone.add(b.name);
-  const keptParent = (/** @type {string | undefined} */ n) => { while (n && gone.has(n)) n = byName.get(n)?.parent; return n; };
-  g.bones = g.bones.filter((/** @type {any} */ b) => !gone.has(b.name));
-  for (const b of g.bones) {
-    const parent = keptParent(b.parent);
-    if (parent) b.parent = parent; else delete b.parent;
-    if (b.name === 'head1') b.name = 'head';
-    if (b.parent === 'head1') b.parent = 'head';
-  }
-  // her arms down at her sides (held out level, they would swing level in her walk and poses)
-  for (const [name, side] of /** @type {const} */ ([['right_arm', -1], ['left_arm', 1]])) {
-    const arm = g.bones.find((/** @type {any} */ b) => b.name === name);
-    const cubes = arm ? under(name).flatMap((n) => g.bones.find((/** @type {any} */ b) => b.name === n)?.cubes ?? []) : [];
-    if (!arm || !cubes.length) continue;
-    const dx = cubes.reduce((s, c) => s + c.origin[0] + c.size[0] / 2 - arm.pivot[0], 0) / cubes.length;
-    const dy = cubes.reduce((s, c) => s + c.origin[1] + c.size[1] / 2 - arm.pivot[1], 0) / cubes.length;
-    if (Math.abs(dx) > Math.abs(dy)) arm.rotation = [0, 0, r3(side * 78 + (arm.rotation?.[2] ?? 0))];
-  }
-  // her bust: two breasts from the top of her torso's front, in its texture
-  const body = g.bones.find((/** @type {any} */ b) => b.name === 'body');
-  const torso = [...(body?.cubes ?? [])].sort((a, b) => b.size[0] * b.size[1] * b.size[2] - a.size[0] * a.size[1] * a.size[2])[0];
-  if (torso) {
-    const [x0, y0, z0] = torso.origin, [w, h] = torso.size;
-    const front = facesOf(torso).north;
-    const b = r3(Math.max(1.6, w * 0.46)), top = y0 + h - h * 0.12, yb = r3(top - b);
-    const patch = part(front, 0.1, 0.9, 0.1, 0.45);
-    const uv = { north: patch, south: patch, east: patch, west: patch, up: patch, down: patch };
-    g.bones.push({ name: 'boobs', parent: 'body', pivot: [0, r3(top - b / 2), z0] });
-    for (const [side, s] of /** @type {const} */ ([['right_boob', -1], ['left_boob', 1]])) {
-      g.bones.push({ name: side, parent: 'boobs', pivot: [r3(s * b / 2), r3(top - b / 2), z0], rotation: [12, s * -6, 0],
-        cubes: [{ origin: [r3(s < 0 ? -b - 0.05 : 0.05), yb, r3(z0 - b * 0.85)], size: [b, b, r3(b * 0.95)], uv }] });
-    }
-  }
-  return { geometry: g, png };
+  return undefined;
+}
+/** Grafts a Pokédrock head (and what hangs from it) onto her neck, `scale` times its size: its main cube's bottom middle at her neck's top. */
+function pokedrockHead(/** @type {ReturnType<typeof builder>} */ b, /** @type {{ geometry: any, png: Uint8Array }} */ source, scale = 1.3) {
+  const head = source.geometry.bones.find((/** @type {any} */ x) => x.name === 'head1');
+  const main = [...(head.cubes ?? [])].sort((a, c) => c.size[0] * c.size[1] * c.size[2] - a.size[0] * a.size[1] * a.size[2])[0];
+  const from = [main.origin[0] + main.size[0] / 2, main.origin[1], main.origin[2] + main.size[2] / 2];
+  b.graft(source, { root: 'head1', as: 'head', from, to: [0, 27, 0], scale });
+  b.bone('head_neck', 'head', [0, 26.5, 0]);
 }
 
-/** Each girl's model and texture, and how she is a Jenny's Preggo Mob (tools/import-jenny-preggo.mjs). */
+// ---- Gardevoir: white, green arms, the red fins at her chest and back, her flowing gown open at the
+// front; dressed, a green top over her bust (her bare bust white) ---------------------------------------
+function gardevoir() {
+  const W = [246, 246, 250], G = [122, 212, 132], DG = [40, 92, 56], R = [230, 74, 96];
+  const b = builder('gardevoir');
+  const pd = pokedrockModel('geometry.serpgardevoir', 'textures/entity/normal/gardevoir');
+  const top = solid(G);
+  curvyBody(b, {
+    chest: solid(W), waist: solid(W), hips: solid(W), bust: solid(W), neck: solid(W),
+    upperArm: solid(G), forearm: solid(G), thigh: solid(W), calf: solid(W), foot: solid(W),
+  }, { bust: top, chest: over(solid(W), G, (face, _x, y) => face !== 'up' && y > 0.15) });
+  if (pd) pokedrockHead(b, pd, 1.35);
+  else {
+    b.bone('head', undefined, [0, 26.5, 0]);
+    b.cube('head', [-3.5, 27, -3.5], [7, 7, 7], (f, _x, _y, i, j) => (f === 'north' && j === 3 && (i === 2 || i === 4) ? [214, 28, 40] : W));
+    b.cube('head', [-4, 30, -4], [8, 4.5, 8], solid(G));
+    b.cube('head', [-4.4, 26, -3], [1, 6, 6], solid(G));
+    b.cube('head', [3.4, 26, -3], [1, 6, 6], solid(G));
+  }
+  b.bone('fin_front', 'body', [0, 23.5, -3], [-30, 0, 0]);
+  b.cube('fin_front', [-0.5, 23, -8], [1, 2.4, 5.5], solid(R));
+  b.bone('fin_back', 'body', [0, 23, 2], [32, 0, 0]);
+  b.cube('fin_back', [-0.5, 22, 2], [1, 3, 4.5], solid(R));
+  // her gown: two side panels and a back, flaring from her hips to her ankles, green within; open at
+  // the front over her thighs
+  const lined = (/** @type {string} */ inner) => /** @type {Paint} */ ((f) => (f === inner ? DG : W));
+  b.bone('gown_r', 'body', [-5.6, 16, 0], [0, 0, -8]);
+  b.cube('gown_r', [-7, 1, -3.4], [1.4, 15, 7], lined('west'));
+  b.bone('gown_l', 'body', [5.6, 16, 0], [0, 0, 8]);
+  b.cube('gown_l', [5.6, 1, -3.4], [1.4, 15, 7], lined('east'));
+  b.bone('gown_b', 'body', [0, 16, 3.4], [10, 0, 0]);
+  b.cube('gown_b', [-6.5, 1, 3.4], [13, 15, 1.4], lined('north'));
+  return [b.done()];
+}
+
+// ---- Lucario: blue, a cream chest and belly front, black forearms and paws, black calves and feet, white
+// spikes on her chest and paws, her tail; a black bikini ----------------------------------------------------
+function lucario() {
+  const B = [70, 142, 218], K = [40, 40, 48], C = [240, 226, 186], S = [246, 246, 246];
+  const b = builder('lucario');
+  const pd = pokedrockModel('geometry.serplucario', 'textures/entity/normal/lucario');
+  const chest = front(C, B), waist = front(C, B), hips = solid(B);
+  curvyBody(b, {
+    chest, waist, hips, bust: front(C, B), neck: solid(C),
+    upperArm: solid(B), forearm: solid(K), thigh: solid(B), calf: solid(K), foot: solid(K),
+  }, bikini(K, chest, hips));
+  if (pd) {
+    pokedrockHead(b, pd, 1.3);
+    const tail = pd.geometry.bones.find((/** @type {any} */ x) => x.name === 'tail');
+    if (tail) b.graft(pd, { root: 'tail', as: 'tail', parent: 'body', from: tail.pivot, to: [0, 15.5, 2.6], scale: 1.4 });
+  } else {
+    b.bone('head', undefined, [0, 26.5, 0]);
+    b.cube('head', [-3.5, 27, -3.5], [7, 7, 7], (f, _x, y) => (f === 'north' && y > 0.3 && y < 0.6 ? K : B));
+    b.bone('tail', 'body', [0, 15.5, 2.6], [38, 0, 0]);
+    b.cube('tail', [-1, 9.5, 2.1], [2, 6, 2], solid(B));
+  }
+  b.bone('spike', 'body', [0, 25, -2]);
+  b.cube('spike', [-0.5, 25, -3.8], [1, 1, 2], solid(S));
+  b.cube('right_arm', [-5.6, 15, 1.1], [1, 1, 1.6], solid(S));
+  b.cube('left_arm', [4.6, 15, 1.1], [1, 1, 1.6], solid(S));
+  return [b.done()];
+}
+
+// ---- Lopunny: brown, red eyes on black, a pink nose, long ears up and drooping, pink inside and
+// cream-tufted, cream fluff at her wrists and from her knees down, a cream tail puff; a pink bikini --------
+function lopunny() {
+  const Br = [162, 108, 74], Cr = [248, 230, 176], Pk = [242, 150, 172], EYE = [226, 52, 74], K = [24, 20, 22], BK = [240, 110, 160];
+  const b = builder('lopunny');
+  const chest = solid(Br), hips = solid(Br);
+  curvyBody(b, {
+    chest, waist: solid(Br), hips, bust: solid(Br), neck: solid(Br),
+    upperArm: solid(Br), forearm: solid(Br), thigh: solid(Br), calf: solid(Cr), foot: solid(Cr),
+  }, bikini(BK, chest, hips));
+  b.bone('head', undefined, [0, 26.5, 0]);
+  const face = /** @type {Record<string, Colour>} */ ({ '1,3': K, '2,3': EYE, '4,3': EYE, '5,3': K, '1,2': K, '5,2': K, '3,4': Pk, '3,5': [124, 80, 56] });
+  b.cube('head', [-3.5, 27, -3.5], [7, 7, 7], (f, _x, _y, i, j) => (f === 'north' ? face[`${i},${j}`] ?? Br : Br));
+  for (const [side, x, turn] of /** @type {const} */ ([['r', -2.2, 10], ['l', 2.2, -10]])) {
+    b.bone(`ear_${side}`, 'head', [x, 33.5, 0.5], [-6, 0, turn]);
+    b.cube(`ear_${side}`, [x - 1.4, 33.5, 0], [2.8, 9, 1], (f, x2, y) => (y < 0.25 && f !== 'down' ? Cr : f === 'north' && x2 > 0.2 && x2 < 0.8 ? Pk : Br));
+    b.bone(`ear_${side}_droop`, `ear_${side}`, [x, 42.5, 0.5], [-150, 0, side === 'r' ? 10 : -10]);
+    b.cube(`ear_${side}_droop`, [x - 1.4, 42.5, 0], [2.8, 13, 1], (f, _x, y) => (f === 'up' || y > 0.78 ? Cr : Br));
+  }
+  for (const [arm, x] of /** @type {const} */ ([['right_arm', -6.8], ['left_arm', 3.6]])) b.cube(arm, [x, 13.6, -1.6], [3.2, 2.6, 3.2], solid(Cr));
+  for (const [leg, x] of /** @type {const} */ ([['right_leg', -4.3], ['left_leg', 0.1]])) b.cube(leg, [x, 3.4, -2.2], [4.2, 3.6, 4.2], solid(Cr));
+  b.bone('tail', 'body', [0, 15, 2.5]);
+  b.cube('tail', [-1.5, 14, 2.3], [3, 3, 2], solid(Cr));
+  return [b.done()];
+}
+
+// ---- Lycanroc, her three forms (one each spawns as): Midday (tan, cream front), Midnight (red, white
+// front), Dusk (orange, cream front), a white mane at her chest and shoulders, her own head and tail from
+// Pokédrock; a bikini each (blue, red, black) ---------------------------------------------------------------
+function lycanroc() {
+  const FORMS = [
+    { geo: 'geometry.serplycanroc_1', tex: 'textures/entity/normal/lycanroc', fur: [206, 168, 128], belly: [242, 236, 226], suit: [60, 172, 232] },
+    { geo: 'geometry.serplycanroc_2', tex: 'textures/entity/normal/lycanroc_2', fur: [204, 44, 56], belly: [244, 242, 242], suit: [234, 72, 96] },
+    { geo: 'geometry.serplycanroc_3', tex: 'textures/entity/normal/lycanroc_3', fur: [240, 134, 44], belly: [246, 234, 212], suit: [42, 42, 46] },
+  ];
+  return FORMS.map((form, n) => {
+    const b = builder(`lycanroc_${n}`);
+    const F = form.fur, W = form.belly;
+    const chest = front(W, F), waist = front(W, F), hips = solid(F);
+    curvyBody(b, {
+      chest, waist, hips, bust: front(W, F), neck: solid(W),
+      upperArm: solid(F), forearm: solid(F), thigh: solid(F), calf: bands(F, W, 0.35), foot: solid(W),
+    }, bikini(form.suit, chest, hips));
+    // her mane: white fluff over her shoulders and the top of her chest
+    b.bone('mane', 'body', [0, 25, 0]);
+    b.cube('mane', [-4.6, 24.2, -2.6], [9.2, 2.4, 5.2], solid([250, 250, 250]));
+    b.cube('mane', [-3.2, 22.6, -3], [6.4, 1.8, 1.2], solid([250, 250, 250]));
+    const pd = pokedrockModel(form.geo, form.tex);
+    if (pd) {
+      pokedrockHead(b, pd, 1.25);
+      const tail = pd.geometry.bones.find((/** @type {any} */ x) => x.name === 'tail');
+      // (Midnight's own tail; the four-legged forms' tails are a beast's, so theirs are ours)
+      if (tail && n === 1) b.graft(pd, { root: 'tail', as: 'tail', parent: 'body', from: tail.pivot, to: [0, 15.5, 2.6], scale: 1.4, rotation: [20, 0, 0] });
+    } else {
+      b.bone('head', undefined, [0, 26.5, 0]);
+      b.cube('head', [-3.5, 27, -3.5], [7, 7, 7], solid(F));
+      b.cube('head', [-1.5, 27.5, -6], [3, 2.5, 2.6], solid(F));
+      for (const x of [-3, 1.5]) b.cube('head', [x, 34, -0.5], [1.5, 3, 1], solid(F));
+    }
+    if (!b.has('tail')) {
+      b.bone('tail', 'body', [0, 15.5, 2.6], [40, 0, 0]);
+      b.cube('tail', [-1.6, 7.5, 2.1], [3.2, 8, 3.2], bands(F, W, 0.6));
+    }
+    return b.done();
+  });
+}
+
+/** Each girl's looks (model, bare and dressed textures), and how she is a Jenny's Preggo Mob (tools/import-jenny-preggo.mjs). */
 export const POKEMON = [
-  // (Gardevoir and Lucario on Pokédrock's models, where it is there; ours otherwise)
-  { made: () => fromPokedrock('geometry.serpgardevoir', 'textures/entity/normal/gardevoir') ?? gardevoir(), minWidth: 8, key: 'gardevoir', name: 'Gardevoir', birth: 'kum:luna',
+  { made: gardevoir, key: 'gardevoir', name: 'Gardevoir', birth: 'kum:luna',
     kicks: { name: 'jp_gardevoir', order: [2, 0, 4, 1, 3], rate: 0.9, emphasis: [1.0, 1.2, 0.9, 1.1, 1.3] },
     treats: ['minecraft:amethyst_shard', 'minecraft:sweet_berries', 'minecraft:cake'], biomes: ['meadow', 'forest', 'plains'], egg: { base_color: '#f4f4f8', overlay_color: '#5ad46a' },
-    curves: 'most', navel: true, tone: [244, 244, 248] },
-  { made: () => fromPokedrock('geometry.serplucario', 'textures/entity/normal/lucario') ?? lucario(), minWidth: 8, key: 'lucario', name: 'Lucario', birth: 'fapcraft:jenny',
+    curves: 'lush', navel: true, clothes: true, tone: [246, 246, 250] },
+  { made: lucario, key: 'lucario', name: 'Lucario', birth: 'fapcraft:jenny',
     kicks: { name: 'jp_lucario', order: [3, 1, 0, 4, 2], rate: 1.3, emphasis: [1.4, 1.2, 1.0, 1.3, 0.9] },
     treats: ['minecraft:cooked_beef', 'minecraft:bone', 'minecraft:cake'], biomes: ['taiga', 'extreme_hills', 'forest'], egg: { base_color: '#3e8ad6', overlay_color: '#26262e' },
-    curves: 'most', navel: true, tone: [238, 224, 182] },
+    curves: 'lush', navel: true, clothes: true, tone: [240, 226, 186] },
   { made: lopunny, key: 'lopunny', name: 'Lopunny', birth: 'kum:bia',
     kicks: { name: 'jp_lopunny', order: [1, 4, 2, 0, 3], rate: 1.1, emphasis: [1.1, 1.4, 1.0, 0.9, 1.2] },
     treats: ['minecraft:carrot', 'minecraft:golden_carrot', 'minecraft:cake'], biomes: ['plains', 'forest', 'meadow'], egg: { base_color: '#9e6846', overlay_color: '#f6e4ac' },
-    curves: 'most', navel: true, tone: [158, 104, 70] },
+    curves: 'lush', navel: true, clothes: true, tone: [162, 108, 74] },
+  { made: lycanroc, key: 'lycanroc', name: 'Lycanroc', birth: 'fapcraft:jenny',
+    kicks: { name: 'jp_lycanroc', order: [0, 3, 1, 4, 2], rate: 1.25, emphasis: [1.3, 1.0, 1.2, 1.1, 1.0] },
+    treats: ['minecraft:cooked_beef', 'minecraft:cooked_porkchop', 'minecraft:cake'], biomes: ['plains', 'savanna', 'extreme_hills', 'taiga'], egg: { base_color: '#c94a38', overlay_color: '#f4f0ea' },
+    curves: 'lush', navel: true, clothes: true, tone: [244, 238, 230] },
 ];

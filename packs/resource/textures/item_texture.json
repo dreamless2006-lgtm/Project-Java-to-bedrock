@@ -361,6 +361,9 @@
     },
     "minepreggo_baby_pokemon": {
       "textures": "textures/port/children/baby_pokemon"
+    },
+    "minepreggo_baby_lycanroc": {
+      "textures": "textures/port/children/baby_lycanroc"
     }
   }
 }

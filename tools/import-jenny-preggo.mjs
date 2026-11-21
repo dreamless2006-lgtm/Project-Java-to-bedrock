@@ -60,6 +60,8 @@ const GIRLS = [
 /** How curvy: [bust growth, hips' slices across, hips' slices deep, waist, thighs' slices across, thighs' slices deep]. */
 const CURVES = {
   curvy: { bust: 1.32, hips: [1.08, 1.18, 1.26, 1.3], hipsDeep: [1.04, 1.12, 1.18, 1.18], waist: 0.94, thighs: [1.3, 1.2, 1.1, 1.02], thighsDeep: [1.24, 1.16, 1.08, 1.0] },
+  // (the Pokémon girls: a fuller bust, hips and thighs still)
+  lush: { bust: 1.85, bustShape: [1.3, 1.65, 2.2], hips: [1.16, 1.34, 1.5, 1.58], hipsDeep: [1.1, 1.24, 1.36, 1.42], waist: 0.8, thighs: [1.5, 1.38, 1.22, 1.08], thighsDeep: [1.4, 1.3, 1.16, 1.04] },
   most: { bust: 1.55, hips: [1.14, 1.3, 1.42, 1.48], hipsDeep: [1.08, 1.2, 1.3, 1.32], waist: 0.84, thighs: [1.42, 1.3, 1.16, 1.04], thighsDeep: [1.32, 1.22, 1.1, 1.0] },
 };
 /** Her bones -> the Jenny rig's (her own belly bone keeps out of the fitted belly's way). */
@@ -157,7 +159,8 @@ function curvy(/** @type {any} */ g, /** @type {Map<string, any>} */ byName, /**
   const under = (/** @type {string} */ n) => [n, ...g.bones.filter((/** @type {any} */ b) => b.parent === n).flatMap((/** @type {any} */ b) => under(b.name))];
   for (const bone of byName.has('boobs') ? under('boobs').map((n) => byName.get(n)) : []) {
     bone.cubes = (bone.cubes ?? []).flatMap((/** @type {any} */ cube) => {
-      grow(cube, bone, [k.bust, k.bust, k.bust], bone.pivot);
+      // (rounder and fuller forward than wide, where her curves say how)
+      grow(cube, bone, /** @type {any} */ (k).bustShape ?? [k.bust, k.bust, k.bust], bone.pivot);
       return taper(cube, bone, [0.82, 1, 1, 0.88], [0.7, 0.96, 1, 0.82]);
     });
   }
@@ -292,7 +295,9 @@ const lang = [LANG_HEADER];
 let poses = 0;
 for (const girl of GIRLS) {
   // (her model and texture: Minepreggo's, or made for her)
-  const made = 'made' in girl ? girl.made() : undefined;
+  // (her looks, made for her: one each spawns as, each bare and dressed)
+  const looks = 'made' in girl ? girl.made() : undefined;
+  const made = looks?.[0];
   const source = made ? made.geometry : JSON.parse(readFileSync(join(MODELS, `${girl.source}.geo.json`), 'utf8'))['minecraft:geometry'][0];
   const client = made ? undefined : JSON.parse(readFileSync(join(RP, 'entity', `${girl.source}.entity.json`), 'utf8'))['minecraft:client_entity'].description;
   const texturePath = client ? Object.values(client.textures).find((t) => !/expression|_p\d|ill_|_all/.test(String(t))) ?? Object.values(client.textures)[0] : '';
@@ -336,11 +341,21 @@ for (const girl of GIRLS) {
   const faceTextures = girl.face ? Object.fromEntries(FACES.map((f) => [f, new Uint8Array(readFileSync(join(RP, `${girl.face}_${f}.png`)))])) : {};
   const out = portGirl(sources, { BP, RP, port: PORT, ns: MOD }, {
     key: girl.key, name: girl.name,
-    outfits: [{ name: girl.key, geometry: { format_version: '1.16.0', 'minecraft:geometry': [g] }, texture: girl.clothes ? clothed(skin, source) : skin }],
+    outfits: [
+      { name: girl.key, geometry: { format_version: '1.16.0', 'minecraft:geometry': [g] }, texture: girl.clothes ? made?.dressed ?? clothed(skin, source) : skin },
+      // (her other looks, each on the rig and curved as her first)
+      ...(looks ?? []).slice(1).map((look, i) => {
+        const other = onJennyRig(look.geometry, `geometry.${MOD}.${girl.key}_${i + 1}`);
+        curvy(other.g, other.byName, CURVES[girl.curves ?? 'curvy'], other.legTop);
+        return { name: `${girl.key}_${i + 1}`, geometry: { format_version: '1.16.0', 'minecraft:geometry': [other.g] }, texture: girl.clothes ? look.dressed : look.png };
+      }),
+    ],
     ...(girl.clothes ? {
-      // dressed, or her own skin once undressed (the Wahoo menu, scripts: jenny/bed.js)
-      extraTextures: { nude: skin, ...faceTextures },
-      textureExpression: `q.property('${MOD}:undressed') ? Texture.nude : Texture.o0`,
+      // dressed, or her own skin once undressed (the Wahoo menu, scripts: jenny/bed.js), in the look she has
+      extraTextures: { nude: skin, ...Object.fromEntries((looks ?? []).slice(1).map((look, i) => [`nude_${i + 1}`, look.png])), ...faceTextures },
+      textureExpression: (looks?.length ?? 0) > 1
+        ? `q.property('${MOD}:undressed') ? (${(looks ?? []).slice(1).map((_, i) => `q.variant == ${i + 1} ? Texture.nude_${i + 1} : `).join('')}Texture.nude) : Array.skins[math.clamp(q.variant, 0, ${(looks ?? []).length - 1})]`
+        : `q.property('${MOD}:undressed') ? Texture.nude : Texture.o0`,
     } : {}),
     // (her navel's animation reads these, clothes or not)
     ...(girl.clothes || girl.navel ? { properties: Object.fromEntries(['undressed', 'navel_scene', 'navel_burst', 'navel_birth'].map((p) => [`${MOD}:${p}`, { type: 'bool', default: false, client_sync: true }])) } : {}),

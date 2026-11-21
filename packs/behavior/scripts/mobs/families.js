@@ -216,7 +216,7 @@ export const COMPAT_WOMAN = /** @type {Family} */ ({ species: 'HUMAN', creature:
  */
 export const JENNY_PREGGO_FAMILIES = Object.fromEntries(
   // (and the Pokémon girls, modelled by tools/lib/pokemon.mjs)
-  ['minepreggo:jenny_zombie_girl', 'minepreggo:jenny_creeper_girl', 'minepreggo:jenny_slime_girl', 'minepreggo:jenny_ender_woman', 'minepreggo:gardevoir', 'minepreggo:lucario', 'minepreggo:lopunny'].map((id) => [
+  ['minepreggo:jenny_zombie_girl', 'minepreggo:jenny_creeper_girl', 'minepreggo:jenny_slime_girl', 'minepreggo:jenny_ender_woman'].map((id) => [
     id,
     /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, scenes: true, ...HUMAN, babyItem: `minepreggo:baby_${id.split(':')[1]}` }),
   ])
@@ -224,6 +224,10 @@ export const JENNY_PREGGO_FAMILIES = Object.fromEntries(
 // the monster creeper girl: her clothes come off, and she has a scene of her own (at her navel) that
 // late in her pregnancy becomes her navel birth; the monster slime girl the same, but no navel birth
 JENNY_PREGGO_FAMILIES['minepreggo:jenny_monster_creeper_girl'] = /** @type {Family} */ ({ ...JENNY_PREGGO_FAMILIES['minepreggo:jenny_zombie_girl'], babyItem: 'minepreggo:baby_jenny_monster_creeper_girl', clothes: true, special: 'navel', navelBirth: true });
+// the Pokémon girls (tools/lib/pokemon.mjs): their bikinis (Gardevoir's top) come off
+for (const id of ['minepreggo:gardevoir', 'minepreggo:lucario', 'minepreggo:lopunny', 'minepreggo:lycanroc']) {
+  JENNY_PREGGO_FAMILIES[id] = /** @type {Family} */ ({ ...JENNY_PREGGO_FAMILIES['minepreggo:jenny_zombie_girl'], babyItem: `minepreggo:baby_${id.split(':')[1]}`, clothes: true });
+}
 JENNY_PREGGO_FAMILIES['minepreggo:jenny_monster_slime_girl'] = /** @type {Family} */ ({ ...JENNY_PREGGO_FAMILIES['minepreggo:jenny_zombie_girl'], babyItem: 'minepreggo:baby_jenny_monster_slime_girl', clothes: true, special: 'navel' });
 export const GOBLIN_FAMILIES = Object.fromEntries(
   ['expandable_goblins:goblin_girl', 'expandable_goblins:imp_girl', 'expandable_goblins:bloatberry_girl'].map((id) => [
