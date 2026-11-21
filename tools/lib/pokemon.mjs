@@ -399,3 +399,5 @@ export const POKEMON = [
     treats: ['minecraft:cooked_beef', 'minecraft:cooked_porkchop', 'minecraft:cake'], biomes: ['plains', 'savanna', 'extreme_hills', 'taiga'], egg: { base_color: '#c94a38', overlay_color: '#f4f0ea' },
     curves: 'lush', navel: true, clothes: true, tone: [244, 238, 230] },
 ];
+
+export { builder, curvyBody, solid, bands, front, over, bikini };

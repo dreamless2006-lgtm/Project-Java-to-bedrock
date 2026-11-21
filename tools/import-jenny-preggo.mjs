@@ -16,6 +16,7 @@ import { MOD } from './lib/belly-render.mjs';
 import { GIRL_BIRTHS } from './lib/girl-births.mjs';
 import { CROWN_DEPTH } from './lib/crowning.mjs';
 import { POKEMON } from './lib/pokemon.mjs';
+import { FURRY } from './lib/furry.mjs';
 import { girlSources, portGirl } from './lib/girl-port.mjs';
 
 const ROOT = new URL('../', import.meta.url).pathname;
@@ -56,6 +57,8 @@ const GIRLS = [
     curves: 'most', clothes: true, navel: true, jelly: true, face: 'textures/minepreggo/mobs/slime/monster/expressions/monster_slime_girl' },
   // the Pokémon girls, modelled and painted by tools/lib/pokemon.mjs
   ...POKEMON,
+  // the furry girls, theirs by tools/lib/furry.mjs (their babies' kicks press out as paw prints and puppy heads)
+  ...FURRY,
 ];
 /** How curvy: [bust growth, hips' slices across, hips' slices deep, waist, thighs' slices across, thighs' slices deep]. */
 const CURVES = {
@@ -212,6 +215,53 @@ function clothed(png, source) {
 }
 
 /**
+ * Her babies' kicks as marks (the furry girls'): each kick's bulge of skin gives way to a mark of the
+ * same skin pressing out where it kicks, paw prints at her sides and top, a puppy's head (a kitten's for
+ * the cat) at her front and bottom; sunk just inside her belly at rest, so only a kick brings it out.
+ * @param {any} doc a belly geometry @param {'puppy' | 'kitten'} kind
+ */
+function withMarks(doc, kind) {
+  const g = doc['minecraft:geometry'][0];
+  const size = g.description.texture_width;
+  const spot = { uv: [round(size / 2 - 1), round(size * 0.6)], uv_size: [2, 2] };
+  const uv = { north: spot, south: spot, east: spot, west: spot, up: spot, down: spot };
+  const HEADS = new Set(['front', 'bottom']);
+  for (const where of ['front', 'left', 'right', 'top', 'bottom']) {
+    const kick = g.bones.find((/** @type {any} */ b) => b.name === `${where}_kick`);
+    const skin = g.bones.find((/** @type {any} */ b) => b.name === `${where}_kick_skin`);
+    if (!kick || !skin?.cubes?.length) continue;
+    // (the mark as big as the bulge was across)
+    const xs = skin.cubes.flatMap((/** @type {any} */ c) => [c.origin[0], c.origin[0] + c.size[0]]);
+    const k = Math.max(0.5, Math.min(1.3, (Math.max(...xs) - Math.min(...xs)) / 2.2));
+    skin.cubes = [];
+    const [px, py, pz] = kick.pivot;
+    const z = pz + 0.1;
+    /** @type {any[]} */
+    const cubes = [];
+    const box = (/** @type {number} */ x, /** @type {number} */ y, /** @type {number} */ w, /** @type {number} */ h, dz = 0, d = 0.9) =>
+      cubes.push({ origin: [round(px + x * k), round(py + y * k), round(z + dz)], size: [round(w * k), round(h * k), d], uv });
+    if (!HEADS.has(where)) {
+      // a paw print: its pad and four toes
+      box(-1, -1, 2, 1.5);
+      for (const [tx, ty] of [[-1.2, 0.65], [-0.45, 1.05], [0.45, 1.05], [1.2, 0.65]]) box(tx - 0.33, ty, 0.66, 0.66, 0.1, 0.8);
+    } else if (kind === 'kitten') {
+      // a kitten's head: pointed ears up, a little nose leading
+      box(-1.2, -0.95, 2.4, 1.9, 0.3, 0.6);
+      box(-1.25, 0.95, 0.75, 0.8, 0.35, 0.55);
+      box(0.5, 0.95, 0.75, 0.8, 0.35, 0.55);
+      box(-0.35, -0.6, 0.7, 0.5);
+    } else {
+      // a puppy's head: floppy ears at its sides, its snout leading
+      box(-1.3, -1, 2.6, 2.2, 0.3, 0.6);
+      box(-1.95, -0.35, 0.7, 1.4, 0.35, 0.55);
+      box(1.25, -0.35, 0.7, 1.4, 0.35, 0.55);
+      box(-0.6, -1.1, 1.2, 0.85);
+    }
+    g.bones.push({ name: `${where}_kick_mark`, parent: `${where}_kick`, pivot: [px, py, pz], cubes });
+  }
+}
+
+/**
  * Her navel: a little knot on the front of each belly, at its middle a little below, in the belly's
  * skin (the navel the belly texture draws), that pops out with every kick.
  */
@@ -360,7 +410,8 @@ for (const girl of GIRLS) {
     } : {}),
     // (her navel's animation reads these, clothes or not)
     ...(girl.clothes || girl.navel ? { properties: Object.fromEntries(['undressed', 'navel_scene', 'navel_burst', 'navel_birth'].map((p) => [`${MOD}:${p}`, { type: 'bool', default: false, client_sync: true }])) } : {}),
-    ...(girl.navel ? { bellyHook: withNavel, extra: navel } : {}),
+    ...(girl.navel || 'marks' in girl ? { bellyHook: (/** @type {any} */ doc) => { if (girl.navel) withNavel(doc); if ('marks' in girl) withMarks(doc, /** @type {any} */ (girl).marks); } } : {}),
+    ...(girl.navel ? { extra: navel } : {}),
     ...face,
     moves, jiggle: { chest: ['boobs'], belly: ['belly'] },
     birth: `${MOD}:${girl.key}`, kicks: girl.kicks, treats: girl.treats, biomes: girl.biomes,

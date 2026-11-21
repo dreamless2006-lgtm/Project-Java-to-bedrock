@@ -364,6 +364,18 @@
     },
     "minepreggo_baby_lycanroc": {
       "textures": "textures/port/children/baby_lycanroc"
+    },
+    "minepreggo_baby_wolf_girl": {
+      "textures": "textures/port/children/baby_wolf_girl"
+    },
+    "minepreggo_baby_fox_girl": {
+      "textures": "textures/port/children/baby_fox_girl"
+    },
+    "minepreggo_baby_cat_girl": {
+      "textures": "textures/port/children/baby_cat_girl"
+    },
+    "minepreggo_baby_husky_girl": {
+      "textures": "textures/port/children/baby_husky_girl"
     }
   }
 }

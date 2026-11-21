@@ -59,6 +59,11 @@ export const LINES = [
   { item: 'greninja', name: 'Greninja', skin: [60, 90, 160], hair: [30, 40, 80], shirt: [60, 90, 160], trim: [230, 120, 160], made: true },
   { item: 'pokemon', name: 'Pokémon', skin: [236, 214, 180], hair: [200, 60, 60], shirt: [230, 60, 60], trim: [250, 250, 250], made: true },
   { item: 'lycanroc', name: 'Lycanroc', skin: [244, 238, 230], hair: [204, 44, 56], shirt: [206, 168, 128], trim: [250, 250, 250], made: true },
+  // the furry girls' babies
+  { item: 'wolf_girl', name: 'Wolf Girl', skin: [232, 232, 238], hair: [204, 208, 220], shirt: [126, 128, 140], trim: [36, 36, 40], made: true },
+  { item: 'fox_girl', name: 'Fox Girl', skin: [248, 242, 234], hair: [214, 84, 40], shirt: [234, 120, 42], trim: [48, 38, 36], made: true },
+  { item: 'cat_girl', name: 'Cat Girl', skin: [250, 238, 222], hair: [214, 110, 50], shirt: [238, 152, 72], trim: [240, 112, 164], made: true },
+  { item: 'husky_girl', name: 'Husky Girl', skin: [240, 242, 246], hair: [222, 226, 236], shirt: [72, 76, 90], trim: [210, 50, 62], made: true },
 ];
 
 /** A baby's line: by its item exactly, else by the kind its id names, else a human's. */

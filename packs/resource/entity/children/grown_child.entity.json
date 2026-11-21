@@ -88,7 +88,15 @@
         "s78": "textures/port/children/skins/pokemon_son",
         "s79": "textures/port/children/skins/pokemon_daughter",
         "s80": "textures/port/children/skins/lycanroc_son",
-        "s81": "textures/port/children/skins/lycanroc_daughter"
+        "s81": "textures/port/children/skins/lycanroc_daughter",
+        "s82": "textures/port/children/skins/wolf_girl_son",
+        "s83": "textures/port/children/skins/wolf_girl_daughter",
+        "s84": "textures/port/children/skins/fox_girl_son",
+        "s85": "textures/port/children/skins/fox_girl_daughter",
+        "s86": "textures/port/children/skins/cat_girl_son",
+        "s87": "textures/port/children/skins/cat_girl_daughter",
+        "s88": "textures/port/children/skins/husky_girl_son",
+        "s89": "textures/port/children/skins/husky_girl_daughter"
       },
       "geometry": {
         "son": "geometry.minepreggo.grown_son",
