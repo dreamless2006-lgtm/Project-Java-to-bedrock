@@ -72,7 +72,13 @@
         "s62": "textures/port/children/skins/kobold_son",
         "s63": "textures/port/children/skins/kobold_daughter",
         "s64": "textures/port/children/skins/ellie_son",
-        "s65": "textures/port/children/skins/ellie_daughter"
+        "s65": "textures/port/children/skins/ellie_daughter",
+        "s66": "textures/port/children/skins/gardevoir_son",
+        "s67": "textures/port/children/skins/gardevoir_daughter",
+        "s68": "textures/port/children/skins/lucario_son",
+        "s69": "textures/port/children/skins/lucario_daughter",
+        "s70": "textures/port/children/skins/lopunny_son",
+        "s71": "textures/port/children/skins/lopunny_daughter"
       },
       "geometry": {
         "son": "geometry.minepreggo.grown_son",

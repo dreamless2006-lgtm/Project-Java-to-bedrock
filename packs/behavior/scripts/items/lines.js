@@ -49,6 +49,10 @@ export const LINES = [
   { item: 'bee', name: 'Bee', skin: [242, 210, 170], hair: [52, 40, 30], shirt: [246, 206, 64], trim: [52, 40, 30] },
   { item: 'kobold', name: 'Kobold', skin: [110, 190, 176], hair: [56, 128, 118], shirt: [90, 70, 50], trim: [56, 128, 118] },
   { item: 'ellie', name: 'Ellie', skin: [236, 206, 190], hair: [58, 52, 60], shirt: [58, 52, 60], trim: [190, 40, 52] },
+  // the Pokémon girls' babies
+  { item: 'gardevoir', name: 'Gardevoir', skin: [244, 244, 248], hair: [98, 214, 112], shirt: [244, 244, 248], trim: [226, 62, 76], made: true },
+  { item: 'lucario', name: 'Lucario', skin: [238, 224, 182], hair: [38, 38, 46], shirt: [62, 138, 214], trim: [38, 38, 46], made: true },
+  { item: 'lopunny', name: 'Lopunny', skin: [214, 170, 130], hair: [158, 104, 70], shirt: [158, 104, 70], trim: [246, 228, 172], made: true },
 ];
 
 /** A baby's line: by its item exactly, else by the kind its id names, else a human's. */

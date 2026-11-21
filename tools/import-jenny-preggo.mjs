@@ -15,6 +15,7 @@ import { decodePng, encodePng } from './lib/png.mjs';
 import { MOD } from './lib/belly-render.mjs';
 import { GIRL_BIRTHS } from './lib/girl-births.mjs';
 import { CROWN_DEPTH } from './lib/crowning.mjs';
+import { POKEMON } from './lib/pokemon.mjs';
 import { girlSources, portGirl } from './lib/girl-port.mjs';
 
 const ROOT = new URL('../', import.meta.url).pathname;
@@ -53,6 +54,8 @@ const GIRLS = [
     kicks: { name: 'jp_monster_slime', order: [4, 0, 3, 1, 2], rate: 1.2, emphasis: [1.3, 1.1, 0.9, 1.2, 1.4] },
     treats: ['minecraft:slime_ball', 'minecraft:magma_cream', 'minecraft:cake'], biomes: ['swamp', 'jungle'], egg: { base_color: '#62c95a', overlay_color: '#ff66aa' },
     curves: 'most', clothes: true, navel: true, jelly: true, face: 'textures/minepreggo/mobs/slime/monster/expressions/monster_slime_girl' },
+  // the Pokémon girls, modelled and painted by tools/lib/pokemon.mjs
+  ...POKEMON,
 ];
 /** How curvy: [bust growth, hips' slices across, hips' slices deep, waist, thighs' slices across, thighs' slices deep]. */
 const CURVES = {
@@ -288,15 +291,17 @@ const renderControllers = {};
 const lang = [LANG_HEADER];
 let poses = 0;
 for (const girl of GIRLS) {
-  const source = JSON.parse(readFileSync(join(MODELS, `${girl.source}.geo.json`), 'utf8'))['minecraft:geometry'][0];
-  const client = JSON.parse(readFileSync(join(RP, 'entity', `${girl.source}.entity.json`), 'utf8'))['minecraft:client_entity'].description;
-  const texturePath = Object.values(client.textures).find((t) => !/expression|_p\d|ill_|_all/.test(String(t))) ?? Object.values(client.textures)[0];
+  // (her model and texture: Minepreggo's, or made for her)
+  const made = 'made' in girl ? girl.made() : undefined;
+  const source = made ? made.geometry : JSON.parse(readFileSync(join(MODELS, `${girl.source}.geo.json`), 'utf8'))['minecraft:geometry'][0];
+  const client = made ? undefined : JSON.parse(readFileSync(join(RP, 'entity', `${girl.source}.entity.json`), 'utf8'))['minecraft:client_entity'].description;
+  const texturePath = client ? Object.values(client.textures).find((t) => !/expression|_p\d|ill_|_all/.test(String(t))) ?? Object.values(client.textures)[0] : '';
   const { g, byName, legTop } = onJennyRig(source, `geometry.${MOD}.${girl.key}`);
   curvy(g, byName, CURVES[girl.curves ?? 'curvy'], legTop, girl.jelly ? legTop + 2 : undefined);
   // (a slime's baby comes out of the front of her jelly, forward)
   GIRL_BIRTHS[`${MOD}:${girl.key}`] = { ...GIRL_BIRTHS[girl.birth], name: girl.key, ...(girl.jelly ? { exitWant: [0, -0.2, -0.98] } : {}) };
   const jelly = girl.jelly ? byName.get('leg_part_2')?.cubes?.[0] : undefined;
-  const skin = new Uint8Array(readFileSync(join(RP, `${texturePath}.png`)));
+  const skin = made ? made.png : new Uint8Array(readFileSync(join(RP, `${texturePath}.png`)));
   const prefix = `animation.${MOD}.${PORT.replace('_port', '')}_${girl.key}`;
   // her navel's pop and the ripples over her belly while her babies kick
   const navel = girl.navel ? {
@@ -336,8 +341,9 @@ for (const girl of GIRLS) {
       // dressed, or her own skin once undressed (the Wahoo menu, scripts: jenny/bed.js)
       extraTextures: { nude: skin, ...faceTextures },
       textureExpression: `q.property('${MOD}:undressed') ? Texture.nude : Texture.o0`,
-      properties: Object.fromEntries(['undressed', 'navel_scene', 'navel_burst', 'navel_birth'].map((p) => [`${MOD}:${p}`, { type: 'bool', default: false, client_sync: true }])),
     } : {}),
+    // (her navel's animation reads these, clothes or not)
+    ...(girl.clothes || girl.navel ? { properties: Object.fromEntries(['undressed', 'navel_scene', 'navel_burst', 'navel_birth'].map((p) => [`${MOD}:${p}`, { type: 'bool', default: false, client_sync: true }])) } : {}),
     ...(girl.navel ? { bellyHook: withNavel, extra: navel } : {}),
     ...face,
     moves, jiggle: { chest: ['boobs'], belly: ['belly'] },

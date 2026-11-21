@@ -214,7 +214,8 @@ export const COMPAT_WOMAN = /** @type {Family} */ ({ species: 'HUMAN', creature:
  * like the Jenny girls they have their scenes (the Wahoo menu, jenny/scenes.js), the Jenny Bed's too.
  */
 export const JENNY_PREGGO_FAMILIES = Object.fromEntries(
-  ['minepreggo:jenny_zombie_girl', 'minepreggo:jenny_creeper_girl', 'minepreggo:jenny_slime_girl', 'minepreggo:jenny_ender_woman'].map((id) => [
+  // (and the Pokémon girls, modelled by tools/lib/pokemon.mjs)
+  ['minepreggo:jenny_zombie_girl', 'minepreggo:jenny_creeper_girl', 'minepreggo:jenny_slime_girl', 'minepreggo:jenny_ender_woman', 'minepreggo:gardevoir', 'minepreggo:lucario', 'minepreggo:lopunny'].map((id) => [
     id,
     /** @type {Family} */ ({ species: 'HUMAN', creature: 'HUMANOID', tamingItems: [], external: true, scenes: true, ...HUMAN, babyItem: `minepreggo:baby_${id.split(':')[1]}` }),
   ])

@@ -340,6 +340,15 @@
     },
     "minepreggo_baby_jenny_monster_slime_girl": {
       "textures": "textures/port/children/baby_jenny_monster_slime_girl"
+    },
+    "minepreggo_baby_gardevoir": {
+      "textures": "textures/port/children/baby_gardevoir"
+    },
+    "minepreggo_baby_lucario": {
+      "textures": "textures/port/children/baby_lucario"
+    },
+    "minepreggo_baby_lopunny": {
+      "textures": "textures/port/children/baby_lopunny"
     }
   }
 }
