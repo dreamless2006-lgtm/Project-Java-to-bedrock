@@ -4,6 +4,7 @@
 import { system, world } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import { FAMILY_TAG, duplicateBabies, enterBirth, familyOf, getRecord, nameOf, particles, playSound, refreshClient, startLaying } from '../mobs/system.js';
+import { armorOf, takeOffArmor } from '../mobs/armor.js';
 import { openPregnancyMenu } from './belly_scenes.js';
 import { canStartScene, requestScene, sceneOf } from './scenes.js';
 
@@ -181,17 +182,20 @@ export async function openWahooMenu(player, record) {
   const family = familyOf(entity);
   // at term or in labor (the monster creeper girl): her navel scene becomes her navel birth
   const late = !!family?.navelBirth && ripe(record);
-  /** @type {{ label: string, pose?: string, special?: string, placement?: 'side', toggle?: boolean, menu?: boolean }[]} */
+  /** @type {{ label: string, pose?: string, special?: string, placement?: 'side', toggle?: boolean, menu?: boolean, armor?: boolean }[]} */
   const buttons = late ? [] : POSITIONS.map(([label, pose]) => ({ label, pose }));
   if (family?.special === 'navel') buttons.push({ label: late ? 'Navel Birth' : 'Navel', pose: 'scene_back', special: 'navel', placement: 'side' });
   if (late) buttons.push({ label: 'Pregnancy menu', menu: true });
   if (family?.clothes) buttons.push({ label: undressedNow(entity) ? 'Dress her' : 'Undress her', toggle: true });
+  // (her armour, if she wears any: use a chestplate on her to put it on)
+  if (armorOf(entity)) buttons.push({ label: 'Take off her armor', armor: true });
   const menu = new ActionFormData().title('Wahoo').body('Choose a position.');
   for (const { label } of buttons) menu.button(label);
   const answer = await menu.show(/** @type {any} */ (player));
   if (answer.canceled || answer.selection === undefined || !entity.isValid) return;
   const chosen = buttons[answer.selection];
   if (chosen.toggle) return dress(entity, !undressedNow(entity));
+  if (chosen.armor) return void takeOffArmor(entity);
   if (chosen.menu) return openPregnancyMenu(player, record);
   const busy = canStartScene(record, player, late);
   if (busy) {

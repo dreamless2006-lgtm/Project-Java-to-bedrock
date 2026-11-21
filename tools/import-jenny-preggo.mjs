@@ -218,7 +218,10 @@ function clothed(png, source) {
  * Her babies' kicks as marks (the furry girls'): each kick's bulge of skin gives way to a mark of the
  * same skin pressing out where it kicks, paw prints at her sides and top, a puppy's head (a kitten's for
  * the cat) at her front and bottom; sunk just inside her belly at rest, so only a kick brings it out.
- * @param {any} doc a belly geometry @param {'puppy' | 'kitten'} kind
+ * Her kind's marks: a puppy's (paw prints, puppy heads), a kitten's, a lamb's (cloven hoof prints, a lamb's
+ * head with its ears out to its sides), a dragon's (three-clawed prints, a horned head with a snout), a
+ * chick's (bird tracks, a chick's round head with a beak).
+ * @param {any} doc a belly geometry @param {'puppy' | 'kitten' | 'lamb' | 'dragon' | 'chick'} kind
  */
 function withMarks(doc, kind) {
   const g = doc['minecraft:geometry'][0];
@@ -240,10 +243,41 @@ function withMarks(doc, kind) {
     const cubes = [];
     const box = (/** @type {number} */ x, /** @type {number} */ y, /** @type {number} */ w, /** @type {number} */ h, dz = 0, d = 0.9) =>
       cubes.push({ origin: [round(px + x * k), round(py + y * k), round(z + dz)], size: [round(w * k), round(h * k), d], uv });
-    if (!HEADS.has(where)) {
+    if (!HEADS.has(where) && kind === 'lamb') {
+      // a cloven hoof print: two halves side by side
+      box(-1.05, -1.1, 0.95, 2.1);
+      box(0.1, -1.1, 0.95, 2.1);
+    } else if (!HEADS.has(where) && kind === 'dragon') {
+      // a dragon's print: a pad and three long claws fanned forward
+      box(-0.8, -1.1, 1.6, 1.1);
+      for (const tx of [-1.1, -0.25, 0.6]) box(tx, 0.1, 0.5, 1.5, 0.1, 0.8);
+    } else if (!HEADS.has(where) && kind === 'chick') {
+      // a bird's track: three thin toes forward from a heel, one back
+      box(-0.2, -1.3, 0.4, 0.9);
+      box(-0.2, -0.4, 0.4, 1.6, 0.1, 0.8);
+      box(-1.1, -0.1, 0.9, 0.4, 0.1, 0.8);
+      box(0.2, -0.1, 0.9, 0.4, 0.1, 0.8);
+    } else if (!HEADS.has(where)) {
       // a paw print: its pad and four toes
       box(-1, -1, 2, 1.5);
       for (const [tx, ty] of [[-1.2, 0.65], [-0.45, 1.05], [0.45, 1.05], [1.2, 0.65]]) box(tx - 0.33, ty, 0.66, 0.66, 0.1, 0.8);
+    } else if (kind === 'lamb') {
+      // a lamb's head: round, its ears straight out to its sides
+      box(-1.1, -1, 2.2, 2.1, 0.3, 0.6);
+      box(-2.3, 0.2, 1.2, 0.6, 0.35, 0.55);
+      box(1.1, 0.2, 1.2, 0.6, 0.35, 0.55);
+      box(-0.5, -1.15, 1, 0.8);
+    } else if (kind === 'dragon') {
+      // a little dragon's head: horns back, its snout leading
+      box(-1.1, -0.8, 2.2, 1.9, 0.3, 0.6);
+      box(-1, 1.1, 0.5, 0.9, 0.35, 0.55);
+      box(0.5, 1.1, 0.5, 0.9, 0.35, 0.55);
+      box(-0.65, -1.3, 1.3, 1);
+    } else if (kind === 'chick') {
+      // a chick's head: round, a beak leading
+      box(-1.05, -0.9, 2.1, 2, 0.3, 0.6);
+      box(-0.35, -0.5, 0.7, 0.55);
+      box(-0.15, 1.1, 0.3, 0.5, 0.35, 0.55);
     } else if (kind === 'kitten') {
       // a kitten's head: pointed ears up, a little nose leading
       box(-1.2, -0.95, 2.4, 1.9, 0.3, 0.6);
@@ -259,6 +293,39 @@ function withMarks(doc, kind) {
     }
     g.bones.push({ name: `${where}_kick_mark`, parent: `${where}_kick`, pivot: [px, py, pz], cubes });
   }
+}
+
+/** The armour she can wear (scripts: mobs/armor.js): by the minepreggo:armor property, 1 to 5. */
+const ARMORS = [[150, 96, 56], [204, 208, 214], [248, 208, 72], [96, 222, 222], [72, 66, 74]];
+/** An armour plate's texture: its colour, a darker rim, a light bevel, rivets at its corners. */
+function armorTexture(/** @type {number[]} */ c) {
+  const img = { width: 16, height: 16, data: new Uint8Array(16 * 16 * 4) };
+  for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+    const rim = x === 0 || y === 0 || x === 15 || y === 15, bevel = x === 1 || y === 1, rivet = (x === 2 || x === 13) && (y === 2 || y === 13);
+    const k = rim ? 0.62 : rivet ? 1.35 : bevel ? 1.18 : 0.95 + 0.1 * (((x * 7 + y * 13) % 5) / 5) - 0.04 * (y / 16);
+    img.data.set([...c.map((v) => Math.max(0, Math.min(255, Math.round(v * k)))), 255], (y * 16 + x) * 4);
+  }
+  return encodePng(img);
+}
+/**
+ * Her armour: a shell over her torso, bust, arms and legs and a helmet over her head, on her own bones
+ * (so it moves with her), each piece a little bigger than her, drawn with the plate texture.
+ */
+function armorLayer(/** @type {any} */ g, /** @type {string} */ id) {
+  const plate = { uv: [0, 0], uv_size: [16, 16] };
+  const uv = { north: plate, south: plate, east: plate, west: plate, up: plate, down: plate };
+  const wear = new Set(['torso', 'right_boob', 'left_boob', 'armR', 'armL', 'legR', 'legL']);
+  const bones = g.bones.map((/** @type {any} */ b) => {
+    const largest = [...(b.cubes ?? [])].sort((a, c) => c.size[0] * c.size[1] * c.size[2] - a.size[0] * a.size[1] * a.size[2])[0];
+    // (her helmet a cap over the top of her head, above her eyes: her face shows)
+    const cap = largest && b.name === 'head' ? { ...largest, origin: [largest.origin[0], round(largest.origin[1] + largest.size[1] * 0.74), largest.origin[2]], size: [largest.size[0], round(largest.size[1] * 0.26), largest.size[2]] } : undefined;
+    const cubes = wear.has(b.name) ? b.cubes ?? [] : cap ? [cap] : [];
+    return {
+      name: b.name, ...(b.parent ? { parent: b.parent } : {}), pivot: b.pivot, ...(b.rotation ? { rotation: b.rotation } : {}),
+      ...(cubes.length ? { cubes: cubes.map((/** @type {any} */ c) => ({ origin: c.origin, size: c.size, uv, inflate: round((c.inflate ?? 0) + (b.name === 'head' ? 0.45 : 0.3)), ...(c.rotation ? { rotation: c.rotation, pivot: c.pivot } : {}) })) } : {}),
+    };
+  });
+  return { format_version: '1.16.0', 'minecraft:geometry': [{ description: { identifier: id, texture_width: 16, texture_height: 16, visible_bounds_width: 3, visible_bounds_height: 4, visible_bounds_offset: [0, 1.5, 0] }, bones }] };
 }
 
 /**
@@ -372,11 +439,22 @@ for (const girl of GIRLS) {
       navel_crowning: { scale: `v.navel_crowning ? v.crown_scale : 0.0` },
       navel_crowning_slide: { position: [0, `-${CROWN_DEPTH}`, 0] },
       belly: { scale: [`q.property('${MOD}:navel_burst') ? 0.0 : (q.property('${MOD}:navel_scene') ? 1.0 + 0.03 * math.sin(q.life_time * 692.0) : 1.0 + 0.035 * v.kick_w * math.sin(q.life_time * 170.0))`, `q.property('${MOD}:navel_burst') ? 0.0 : (q.property('${MOD}:navel_scene') ? 1.0 - 0.03 * math.sin(q.life_time * 692.0) : 1.0 + 0.035 * v.kick_w * math.sin(q.life_time * 170.0 + 90.0))`, `q.property('${MOD}:navel_burst') ? 0.0 : 1.0`] },
-    } } },
-    ids: { mp_navel: `${prefix}.navel` },
-    animate: [{ mp_navel: 'v.bp >= 0' }],
+    } },
+    // (the girls made for us: her tail wagging, her ears flicking, her wings stirring, all livelier in her
+    // scenes, and her bust bouncing to a scene's beat)
+    ...(made ? { [`${prefix}.flair`]: { loop: true, bones: Object.fromEntries([
+      ['tail', { rotation: [0, 'math.sin(q.life_time * (v.mp_scene ? 420.0 : 150.0)) * (v.mp_scene ? 20.0 : 9.0)', 0] }],
+      ['ear_r', { rotation: ['math.pow(math.max(0.0, math.sin(q.life_time * 70.0)), 16.0) * -22.0 + (v.mp_scene ? -8.0 : 0.0)', 0, 0] }],
+      ['ear_l', { rotation: ['math.pow(math.max(0.0, math.sin(q.life_time * 70.0 + 50.0)), 16.0) * -22.0 + (v.mp_scene ? -8.0 : 0.0)', 0, 0] }],
+      ['wing_r', { rotation: [0, 'math.sin(q.life_time * (v.mp_scene ? 300.0 : 80.0)) * (v.mp_scene ? 16.0 : 5.0)', 0] }],
+      ['wing_l', { rotation: [0, '-math.sin(q.life_time * (v.mp_scene ? 300.0 : 80.0)) * (v.mp_scene ? 16.0 : 5.0)', 0] }],
+      ['boobs', { position: [0, 'v.mp_scene ? math.sin(q.life_time * 692.0) * 0.4 : 0.0', 'v.mp_scene ? -math.abs(math.sin(q.life_time * 692.0)) * 0.15 : 0.0'] }],
+    ].filter(([bone]) => g.bones.some((/** @type {any} */ b) => b.name === bone))) } } : {}),
+    },
+    ids: { mp_navel: `${prefix}.navel`, ...(made ? { mp_flair: `${prefix}.flair` } : {}) },
+    animate: [{ mp_navel: 'v.bp >= 0' }, ...(made ? ['mp_flair'] : [])],
     // (in her navel birth, her baby crowns at her navel, not between her legs)
-    pre: [`v.navel_crowning = v.crowning && q.property('${MOD}:navel_birth');`, `v.crowning = v.crowning && !q.property('${MOD}:navel_birth');`, ...(girl.face ? FACE_LINES : [])],
+    pre: [`v.navel_crowning = v.crowning && q.property('${MOD}:navel_birth');`, `v.crowning = v.crowning && !q.property('${MOD}:navel_birth');`, ...(made ? ["v.mp_scene = v.pose == 'scene' || v.pose == 'scene_sit' || v.pose == 'scene_back';"] : []), ...(girl.face ? FACE_LINES : [])],
     // (each her own moment to blink)
     initialize: girl.face ? ['v.mp_blink_at = math.random(0.0, 4.3);'] : [],
   } : undefined;
@@ -403,16 +481,28 @@ for (const girl of GIRLS) {
     ],
     ...(girl.clothes ? {
       // dressed, or her own skin once undressed (the Wahoo menu, scripts: jenny/bed.js), in the look she has
-      extraTextures: { nude: skin, ...Object.fromEntries((looks ?? []).slice(1).map((look, i) => [`nude_${i + 1}`, look.png])), ...faceTextures },
+      extraTextures: { nude: skin, ...Object.fromEntries((looks ?? []).slice(1).map((look, i) => [`nude_${i + 1}`, look.png])), ...faceTextures, ...(made ? Object.fromEntries(ARMORS.map((c, i) => [`armor_${i + 1}`, armorTexture(c)])) : {}) },
       textureExpression: (looks?.length ?? 0) > 1
         ? `q.property('${MOD}:undressed') ? (${(looks ?? []).slice(1).map((_, i) => `q.variant == ${i + 1} ? Texture.nude_${i + 1} : `).join('')}Texture.nude) : Array.skins[math.clamp(q.variant, 0, ${(looks ?? []).length - 1})]`
         : `q.property('${MOD}:undressed') ? Texture.nude : Texture.o0`,
     } : {}),
     // (her navel's animation reads these, clothes or not)
-    ...(girl.clothes || girl.navel ? { properties: Object.fromEntries(['undressed', 'navel_scene', 'navel_burst', 'navel_birth'].map((p) => [`${MOD}:${p}`, { type: 'bool', default: false, client_sync: true }])) } : {}),
+    ...(girl.clothes || girl.navel ? { properties: {
+      ...Object.fromEntries(['undressed', 'navel_scene', 'navel_burst', 'navel_birth'].map((p) => [`${MOD}:${p}`, { type: 'bool', default: false, client_sync: true }])),
+      // (the armour she wears: none, leather, iron, gold, diamond, netherite; scripts: mobs/armor.js)
+      ...(made ? { [`${MOD}:armor`]: { type: 'int', range: [0, ARMORS.length], default: 0, client_sync: true } } : {}),
+    } } : {}),
     ...(girl.navel || 'marks' in girl ? { bellyHook: (/** @type {any} */ doc) => { if (girl.navel) withNavel(doc); if ('marks' in girl) withMarks(doc, /** @type {any} */ (girl).marks); } } : {}),
     ...(girl.navel ? { extra: navel } : {}),
     ...face,
+    // (her armour, over her: her own bones, the plate of the armour she wears)
+    ...(made ? {
+      extraGeometries: { ...(face.extraGeometries ?? {}), armor: armorLayer(g, `geometry.${MOD}.${girl.key}_armor`) },
+      extraRenderControllers: [...(face.extraRenderControllers ?? []), { id: `controller.render.${MOD}.${girl.key}_armor`, when: `q.property('${MOD}:armor') > 0`, def: {
+        arrays: { textures: { 'Array.armors': ARMORS.map((_, i) => `Texture.armor_${i + 1}`) } },
+        geometry: 'Geometry.armor', materials: [{ '*': 'Material.default' }], textures: [`Array.armors[math.clamp(q.property('${MOD}:armor') - 1, 0, ${ARMORS.length - 1})]`],
+      } }],
+    } : {}),
     moves, jiggle: { chest: ['boobs'], belly: ['belly'] },
     birth: `${MOD}:${girl.key}`, kicks: girl.kicks, treats: girl.treats, biomes: girl.biomes,
     ...(jelly ? { opening: () => [0, round(jelly.origin[1] + jelly.size[1] * 0.7), round(jelly.origin[2])], stillBones: ['legL', 'legR'], material: 'entity_alphablend' } : {}),

@@ -64,6 +64,12 @@ export const LINES = [
   { item: 'fox_girl', name: 'Fox Girl', skin: [248, 242, 234], hair: [214, 84, 40], shirt: [234, 120, 42], trim: [48, 38, 36], made: true },
   { item: 'cat_girl', name: 'Cat Girl', skin: [250, 238, 222], hair: [214, 110, 50], shirt: [238, 152, 72], trim: [240, 112, 164], made: true },
   { item: 'husky_girl', name: 'Husky Girl', skin: [240, 242, 246], hair: [222, 226, 236], shirt: [72, 76, 90], trim: [210, 50, 62], made: true },
+  { item: 'sheep_girl', name: 'Sheep Girl', skin: [250, 232, 222], hair: [252, 248, 240], shirt: [196, 160, 230], trim: [70, 58, 58], made: true },
+  { item: 'raccoon_girl', name: 'Raccoon Girl', skin: [238, 236, 234], hair: [150, 94, 110], shirt: [132, 128, 136], trim: [40, 36, 42], made: true },
+  { item: 'skull_wolf_girl', name: 'Skull Wolf Girl', skin: [238, 230, 222], hair: [24, 20, 26], shirt: [214, 50, 48], trim: [36, 32, 38], made: true },
+  { item: 'dragon_girl', name: 'Dragon Girl', skin: [226, 220, 236], hair: [48, 44, 58], shirt: [140, 70, 200], trim: [204, 112, 244], made: true },
+  { item: 'harpy_girl', name: 'Harpy Girl', skin: [250, 236, 206], hair: [246, 214, 126], shirt: [26, 24, 30], trim: [240, 210, 140], made: true },
+  { item: 'bluebird_girl', name: 'Bluebird Girl', skin: [146, 204, 240], hair: [36, 66, 156], shirt: [58, 108, 204], trim: [242, 152, 52], made: true },
 ];
 
 /** A baby's line: by its item exactly, else by the kind its id names, else a human's. */

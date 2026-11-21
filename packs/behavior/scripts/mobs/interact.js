@@ -16,6 +16,7 @@ import { clampLevel } from '../pregnancy/state.js';
 import { FULLNESS } from './families.js';
 import { openPregnancyMenu } from '../jenny/belly_scenes.js';
 import { openWahooMenu, ripe } from '../jenny/bed.js';
+import { CHESTPLATES, canWearArmor, wearArmor } from './armor.js';
 import { accelerate, accelerateGradually, calmDown, delayPregnancy, duplicateBabies, familyOf, getRecord, harmPregnancy, healPregnancy, induceFetalMovement, isIncapacitated, isTamed, nameOf, onEatSpicyFood, particles, playSound } from './system.js';
 
 /** @typedef {import('@minecraft/server').Player} Player */
@@ -160,6 +161,12 @@ export function chooseAction(player, target, item) {
   // help with the birth): one of your own tamed females, or any of the Jenny port's girls.
   // Jenny's Preggo Mobs: crouching with an empty hand on one you tamed, not yet pregnant, opens her
   // Wahoo menu (her positions, jenny/bed.js)
+  // A chestplate on one you tamed who can wear armour (the Pokémon and furry girls): she puts it on
+  if (id && CHESTPLATES[id] && isTamed(target) && canWearArmor(target)) {
+    return () => {
+      if (target.isValid && wearArmor(target, id)) consumeHeld(player);
+    };
+  }
   if (!id && player.isSneaking && family.scenes && isTamed(target) && (!data.pregnancy || (!!family.navelBirth && ripe(record)))) {
     return () => void openWahooMenu(player, record).catch((error) => console.warn(`[minepreggo] wahoo menu: ${error}`));
   }

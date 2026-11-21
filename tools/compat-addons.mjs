@@ -872,6 +872,9 @@ if (addon.merge) {
       writeBytes(join(out, path), data);
     }
   }
+  // (its script's entry, for tools/build.mjs to run it beside ours)
+  const script = packs.behavior.manifest.modules?.find((/** @type {any} */ m) => m.type === 'script');
+  if (script?.entry) writeJson(join(OUT, 'script.json'), { entry: script.entry });
 }
 const engine = addon.merge ? packs.behavior.manifest.header.min_engine_version : ours.bp.min_engine_version;
 // her own mobs' finishing (separate): the vanilla mob's built-in behaviour, a spawn rule, a spawn egg,

@@ -376,6 +376,24 @@
     },
     "minepreggo_baby_husky_girl": {
       "textures": "textures/port/children/baby_husky_girl"
+    },
+    "minepreggo_baby_sheep_girl": {
+      "textures": "textures/port/children/baby_sheep_girl"
+    },
+    "minepreggo_baby_raccoon_girl": {
+      "textures": "textures/port/children/baby_raccoon_girl"
+    },
+    "minepreggo_baby_skull_wolf_girl": {
+      "textures": "textures/port/children/baby_skull_wolf_girl"
+    },
+    "minepreggo_baby_dragon_girl": {
+      "textures": "textures/port/children/baby_dragon_girl"
+    },
+    "minepreggo_baby_harpy_girl": {
+      "textures": "textures/port/children/baby_harpy_girl"
+    },
+    "minepreggo_baby_bluebird_girl": {
+      "textures": "textures/port/children/baby_bluebird_girl"
     }
   }
 }

@@ -96,7 +96,19 @@
         "s86": "textures/port/children/skins/cat_girl_son",
         "s87": "textures/port/children/skins/cat_girl_daughter",
         "s88": "textures/port/children/skins/husky_girl_son",
-        "s89": "textures/port/children/skins/husky_girl_daughter"
+        "s89": "textures/port/children/skins/husky_girl_daughter",
+        "s90": "textures/port/children/skins/sheep_girl_son",
+        "s91": "textures/port/children/skins/sheep_girl_daughter",
+        "s92": "textures/port/children/skins/raccoon_girl_son",
+        "s93": "textures/port/children/skins/raccoon_girl_daughter",
+        "s94": "textures/port/children/skins/skull_wolf_girl_son",
+        "s95": "textures/port/children/skins/skull_wolf_girl_daughter",
+        "s96": "textures/port/children/skins/dragon_girl_son",
+        "s97": "textures/port/children/skins/dragon_girl_daughter",
+        "s98": "textures/port/children/skins/harpy_girl_son",
+        "s99": "textures/port/children/skins/harpy_girl_daughter",
+        "s100": "textures/port/children/skins/bluebird_girl_son",
+        "s101": "textures/port/children/skins/bluebird_girl_daughter"
       },
       "geometry": {
         "son": "geometry.minepreggo.grown_son",

@@ -158,6 +158,9 @@ const COMBINE = {
   'materials/entity.material': (base, add) => { base.materials = { ...(add.materials ?? {}), ...base.materials }; },
   'blocks.json': (base, add) => { for (const [k, v] of Object.entries(add)) base[k] ??= v; },
   'texts/languages.json': (base, add) => { for (const l of add) if (!base.includes(l)) base.push(l); },
+  // (the HUD: the add-on's packs carry its additions and ours together, tools/compat-addons.mjs hud)
+  'ui/hud_screen.json': (base, add) => { Object.assign(base, add); },
+  'ui/_ui_defs.json': (base, add) => { base.ui_defs = [...new Set([...(base.ui_defs ?? []), ...(add.ui_defs ?? [])])]; },
 };
 for (const addon of MERGED) {
   for (const [dir, pack] of [['behavior', 'Minepreggo_BP'], ['resource', 'Minepreggo_RP']]) {
@@ -180,6 +183,20 @@ for (const addon of MERGED) {
         }
       }
     }
+  }
+  // its script, beside ours: one entry that runs ours, then its (a pack has one script entry)
+  const theirs = join(ROOT, 'compat', addon, 'script.json');
+  const entry = existsSync(theirs) ? JSON.parse(readFileSync(theirs, 'utf8')).entry : undefined;
+  if (entry && entries[`Minepreggo_BP/${entry}`]) {
+    const manifest = JSON.parse(strFromU8(entries['Minepreggo_BP/manifest.json']));
+    const script = manifest.modules.find((/** @type {any} */ m) => m.type === 'script');
+    const ours = script.entry.replace(/^scripts\//, '');
+    if (!ours.startsWith('merged_')) {
+      entries['Minepreggo_BP/scripts/merged_main.js'] = strToU8(`// Minepreggo's scripts, then the merged add-ons' (tools/build.mjs)\nimport './${ours}';\n`);
+      script.entry = 'scripts/merged_main.js';
+      entries['Minepreggo_BP/manifest.json'] = strToU8(JSON.stringify(manifest, null, 2) + '\n');
+    }
+    entries['Minepreggo_BP/scripts/merged_main.js'] = strToU8(strFromU8(entries['Minepreggo_BP/scripts/merged_main.js']) + `import './${entry.replace(/^scripts\//, '')}';\n`);
   }
 }
 

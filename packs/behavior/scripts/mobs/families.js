@@ -226,8 +226,10 @@ export const JENNY_PREGGO_FAMILIES = Object.fromEntries(
 JENNY_PREGGO_FAMILIES['minepreggo:jenny_monster_creeper_girl'] = /** @type {Family} */ ({ ...JENNY_PREGGO_FAMILIES['minepreggo:jenny_zombie_girl'], babyItem: 'minepreggo:baby_jenny_monster_creeper_girl', clothes: true, special: 'navel', navelBirth: true });
 // the Pokémon girls (tools/lib/pokemon.mjs): their bikinis (Gardevoir's top) come off
 // (and the furry girls, tools/lib/furry.mjs)
-for (const id of ['minepreggo:gardevoir', 'minepreggo:lucario', 'minepreggo:lopunny', 'minepreggo:lycanroc', 'minepreggo:wolf_girl', 'minepreggo:fox_girl', 'minepreggo:cat_girl', 'minepreggo:husky_girl']) {
-  JENNY_PREGGO_FAMILIES[id] = /** @type {Family} */ ({ ...JENNY_PREGGO_FAMILIES['minepreggo:jenny_zombie_girl'], babyItem: `minepreggo:baby_${id.split(':')[1]}`, clothes: true });
+for (const id of ['minepreggo:gardevoir', 'minepreggo:lucario', 'minepreggo:lopunny', 'minepreggo:lycanroc', 'minepreggo:wolf_girl', 'minepreggo:fox_girl', 'minepreggo:cat_girl', 'minepreggo:husky_girl',
+  'minepreggo:sheep_girl', 'minepreggo:raccoon_girl', 'minepreggo:skull_wolf_girl', 'minepreggo:dragon_girl', 'minepreggo:harpy_girl', 'minepreggo:bluebird_girl']) {
+  // (each with her Navel scene, which late in her pregnancy becomes her navel birth; armour: mobs/armor.js)
+  JENNY_PREGGO_FAMILIES[id] = /** @type {Family} */ ({ ...JENNY_PREGGO_FAMILIES['minepreggo:jenny_zombie_girl'], babyItem: `minepreggo:baby_${id.split(':')[1]}`, clothes: true, special: 'navel', navelBirth: true });
 }
 JENNY_PREGGO_FAMILIES['minepreggo:jenny_monster_slime_girl'] = /** @type {Family} */ ({ ...JENNY_PREGGO_FAMILIES['minepreggo:jenny_zombie_girl'], babyItem: 'minepreggo:baby_jenny_monster_slime_girl', clothes: true, special: 'navel' });
 export const GOBLIN_FAMILIES = Object.fromEntries(

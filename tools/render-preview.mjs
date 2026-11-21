@@ -96,6 +96,13 @@ if (phase >= 0) {
     parts.push({ geometry: belly, texture: bellyTexture });
   }
 }
+// (another layer of hers, as geometry-key:texture-key: her armour, armor:armor_4)
+const extra = flag('extra', '');
+if (extra) {
+  const [gk, tk] = extra.split(':');
+  const geo = geometries.get(d.geometry[gk]);
+  if (geo) parts.push({ geometry: geo, texture: decodePng(new Uint8Array(readFileSync(join(RP, `${d.textures[tk]}.png`)))) });
+}
 const animations = anims.length ? allAnimations() : {};
 const extraPose = flag('pose', '') ? JSON.parse(flag('pose', '')) : {};
 const pose = mergePoses([

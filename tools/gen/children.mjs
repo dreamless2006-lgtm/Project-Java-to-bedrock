@@ -18,7 +18,7 @@ const out = (/** @type {string} */ path, /** @type {string | Uint8Array} */ body
 };
 const json = (/** @type {string} */ path, /** @type {any} */ doc) => out(path, JSON.stringify(doc, null, 2) + '\n');
 const shade = (/** @type {number[]} */ c, /** @type {number} */ f) => c.map((v) => Math.max(0, Math.min(255, Math.round(v * f))));
-const TRAITS = /** @type {Record<string, import('../lib/baby-icon.mjs').Trait>} */ ({ imp_girl: 'horns', jenny_slime_girl: 'slime', jenny_monster_slime_girl: 'slime', lopunny: 'cat_ears', lucario: 'cat_ears', gardevoir: 'flower', lycanroc: 'cat_ears', wolf_girl: 'cat_ears', fox_girl: 'cat_ears', cat_girl: 'cat_ears', husky_girl: 'cat_ears', goblin_girl: 'cat_ears', daisy: 'flower', enny: 'streak' });
+const TRAITS = /** @type {Record<string, import('../lib/baby-icon.mjs').Trait>} */ ({ imp_girl: 'horns', jenny_slime_girl: 'slime', jenny_monster_slime_girl: 'slime', lopunny: 'cat_ears', lucario: 'cat_ears', gardevoir: 'flower', lycanroc: 'cat_ears', wolf_girl: 'cat_ears', fox_girl: 'cat_ears', cat_girl: 'cat_ears', husky_girl: 'cat_ears', sheep_girl: 'horns', raccoon_girl: 'cat_ears', skull_wolf_girl: 'cat_ears', dragon_girl: 'horns', harpy_girl: 'none', bluebird_girl: 'none', goblin_girl: 'cat_ears', daisy: 'flower', enny: 'streak' });
 
 // ---- the baby items ---------------------------------------------------------------------------------
 const textures = JSON.parse(readFileSync(join(RP, 'textures/item_texture.json'), 'utf8'));

@@ -34,9 +34,10 @@ const light = (/** @type {string} */ face, /** @type {number} */ x, /** @type {n
  * A model being built: bones, and box-UV cubes packed into one texture as they are painted (its bare
  * look and its dressed one), with room below for a Pokédrock texture its grafted parts use.
  */
-function builder(/** @type {string} */ id) {
+function builder(/** @type {string} */ id, res = 1) {
+  // (res: pixels to a unit, our own painting finer, for faces with detail; not with a grafted texture)
   const bones = /** @type {any[]} */ ([]);
-  const bare = blank(TEX, TEX), dressed = blank(TEX, TEX);
+  const bare = blank(TEX * res, TEX * res), dressed = blank(TEX * res, TEX * res);
   const shelf = { x: 0, y: 0, h: 0 };
   const byName = new Map();
   /** @type {{ width: number, height: number, data: Uint8Array } | undefined} */
@@ -44,7 +45,7 @@ function builder(/** @type {string} */ id) {
   /** its size as its model declares it (its image is that times its resolution) */
   let declared = { width: 0, height: 0 };
   const put = (/** @type {any} */ img, /** @type {number} */ x, /** @type {number} */ y, /** @type {Colour} */ c, /** @type {number} */ k) =>
-    img.data.set([...c.slice(0, 3).map((v) => Math.max(0, Math.min(255, Math.round(v * k)))), c[3] ?? 255], (y * TEX + x) * 4);
+    img.data.set([...c.slice(0, 3).map((v) => Math.max(0, Math.min(255, Math.round(v * k)))), c[3] ?? 255], (y * TEX * res + x) * 4);
   return {
     has: (/** @type {string} */ name) => byName.has(name),
     bone(/** @type {string} */ name, /** @type {string | undefined} */ parent, /** @type {number[]} */ pivot, /** @type {number[]} */ rotation = [0, 0, 0]) {
@@ -64,14 +65,17 @@ function builder(/** @type {string} */ id) {
       shelf.h = Math.max(shelf.h, rh);
       byName.get(bone).cubes.push(cube);
       for (const [face, f] of Object.entries(facesOf(cube))) {
-        const x0 = Math.floor(Math.min(f.uv[0], f.uv[0] + f.uv_size[0])), y0 = Math.floor(Math.min(f.uv[1], f.uv[1] + f.uv_size[1]));
-        const fw = Math.abs(f.uv_size[0]), fh = Math.abs(f.uv_size[1]);
-        for (let j = 0; j < Math.ceil(fh); j++) for (let i = 0; i < Math.ceil(fw); i++) {
-          const x = (i + 0.5) / fw, y = (j + 0.5) / fh;
+        // (in pixels: a face of a fractional size or place covers every pixel it touches)
+        const u0 = Math.min(f.uv[0], f.uv[0] + f.uv_size[0]) * res, v0 = Math.min(f.uv[1], f.uv[1] + f.uv_size[1]) * res;
+        const fw = Math.abs(f.uv_size[0]) * res, fh = Math.abs(f.uv_size[1]) * res;
+        const x0 = Math.floor(u0), y0 = Math.floor(v0);
+        for (let j = 0; j < Math.ceil(v0 + fh) - y0; j++) for (let i = 0; i < Math.ceil(u0 + fw) - x0; i++) {
+          const x = Math.min(0.999, Math.max(0, (x0 + i + 0.5 - u0) / fw)), y = Math.min(0.999, Math.max(0, (y0 + j + 0.5 - v0) / fh));
+          const pi = Math.floor(x * fw), pj = Math.floor(y * fh);
           const k = light(face, x, y) * (0.96 + 0.06 * hash(x0 + i, y0 + j));
-          const c = paint(face, x, y, i, j);
+          const c = paint(face, x, y, pi, pj);
           if (c) put(bare, x0 + i, y0 + j, c, k);
-          const cd = clothes?.(face, x, y, i, j) ?? c;
+          const cd = clothes?.(face, x, y, pi, pj) ?? c;
           if (cd) put(dressed, x0 + i, y0 + j, cd, k);
         }
       }
@@ -106,16 +110,20 @@ function builder(/** @type {string} */ id) {
     },
     done() {
       for (const b of bones) if (!b.cubes?.length) delete b.cubes;
+      if (res > 1) {
+        if (attached) throw new Error(`${id}: a finer painting cannot take a grafted texture`);
+        return { geometry: { description: { identifier: `geometry.minepreggo.${id}_source`, texture_width: TEX, texture_height: TEX }, bones }, png: encodePng(bare), dressed: encodePng(dressed) };
+      }
       // (ours drawn up to the grafted texture's resolution, which is finer than its model declares)
-      const res = attached ? Math.max(1, Math.round(attached.width / declared.width)) : 1;
+      const up = attached ? Math.max(1, Math.round(attached.width / declared.width)) : 1;
       const width = Math.max(TEX, declared.width), height = TEX + declared.height;
       const sheet = (/** @type {any} */ ours) => {
-        const img = blank(width * res, height * res);
-        for (let y = 0; y < TEX * res; y++) for (let x = 0; x < TEX * res; x++) {
-          const i = (Math.floor(y / res) * TEX + Math.floor(x / res)) * 4;
-          img.data.set(ours.data.subarray(i, i + 4), (y * width * res + x) * 4);
+        const img = blank(width * up, height * up);
+        for (let y = 0; y < TEX * up; y++) for (let x = 0; x < TEX * up; x++) {
+          const i = (Math.floor(y / up) * TEX + Math.floor(x / up)) * 4;
+          img.data.set(ours.data.subarray(i, i + 4), (y * width * up + x) * 4);
         }
-        if (attached) for (let y = 0; y < attached.height; y++) img.data.set(attached.data.subarray(y * attached.width * 4, (y + 1) * attached.width * 4), ((TEX * res + y) * width * res) * 4);
+        if (attached) for (let y = 0; y < attached.height; y++) img.data.set(attached.data.subarray(y * attached.width * 4, (y + 1) * attached.width * 4), ((TEX * up + y) * width * up) * 4);
         return encodePng(img);
       };
       return {
