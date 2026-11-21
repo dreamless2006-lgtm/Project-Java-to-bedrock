@@ -1,0 +1,33 @@
+{
+  "format_version": "1.26.30",
+  "minecraft:item": {
+    "description": {
+      "identifier": "minepreggo:ender_impregnation_potion_5",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "minepreggo_ender_impregnation_potion",
+      "minecraft:display_name": {
+        "value": "item.minepreggo.ender_impregnation_potion_5"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:food": {
+        "nutrition": 0,
+        "saturation_modifier": 0,
+        "can_always_eat": true,
+        "using_converts_to": "minecraft:glass_bottle"
+      },
+      "minecraft:use_modifiers": {
+        "use_duration": 1.6,
+        "movement_modifier": 0.35
+      },
+      "minecraft:use_animation": "drink",
+      "minepreggo:impregnation_potion": {
+        "amplifier": 5,
+        "species": "ENDER"
+      }
+    }
+  }
+}

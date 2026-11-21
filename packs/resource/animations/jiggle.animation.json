@@ -1,0 +1,72 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.minepreggo.jiggle": {
+      "loop": true,
+      "bones": {
+        "boobs": {
+          "position": [
+            0.0,
+            "v.jb_y",
+            0.0
+          ],
+          "rotation": [
+            "v.jb_rx",
+            "v.jb_ry",
+            0.0
+          ]
+        },
+        "left_boob": {
+          "position": [
+            0.0,
+            "v.jbl_y",
+            0.0
+          ],
+          "rotation": [
+            "v.jbl_rx",
+            "v.jbl_ry",
+            "v.jbl_rz"
+          ]
+        },
+        "right_boob": {
+          "position": [
+            0.0,
+            "v.jbr_y",
+            0.0
+          ],
+          "rotation": [
+            "v.jbr_rx",
+            "v.jbr_ry",
+            "v.jbr_rz"
+          ]
+        },
+        "belly": {
+          "position": [
+            0.0,
+            "v.jbelly_y",
+            0.0
+          ],
+          "rotation": [
+            0.0,
+            "v.jbelly_ry",
+            0.0
+          ]
+        },
+        "left_butt": {
+          "position": [
+            0.0,
+            "v.jbutt_y",
+            0.0
+          ]
+        },
+        "right_butt": {
+          "position": [
+            0.0,
+            "v.jbutt_y",
+            0.0
+          ]
+        }
+      }
+    }
+  }
+}

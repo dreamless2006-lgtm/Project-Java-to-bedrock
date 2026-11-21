@@ -1,0 +1,59 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.minepreggo.ender_woman.creepy_face": {
+      "loop": true,
+      "bones": {
+        "head": {
+          "position": [
+            "v.shake_x",
+            5.0,
+            "v.shake_z"
+          ]
+        },
+        "hat": {
+          "position": [
+            0.0,
+            -5.0,
+            0.0
+          ]
+        },
+        "body": {
+          "position": [
+            "v.shake_x",
+            0.0,
+            "v.shake_z"
+          ]
+        },
+        "right_arm": {
+          "position": [
+            "v.shake_x",
+            0.0,
+            "v.shake_z"
+          ]
+        },
+        "left_arm": {
+          "position": [
+            "v.shake_x",
+            0.0,
+            "v.shake_z"
+          ]
+        },
+        "right_leg": {
+          "position": [
+            "v.shake_x",
+            0.0,
+            "v.shake_z"
+          ]
+        },
+        "left_leg": {
+          "position": [
+            "v.shake_x",
+            0.0,
+            "v.shake_z"
+          ]
+        }
+      }
+    }
+  }
+}

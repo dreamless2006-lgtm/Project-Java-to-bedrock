@@ -1,18 +1,52 @@
-# Build and Release Folders
-bin-debug/
-bin-release/
-[Oo]bj/
-[Bb]in/
+# Dependencies and build output
+node_modules/
+dist/
 
-# Other files and folders
-.settings/
+# The original Forge jar lives here locally; it is All Rights Reserved, so it is never committed
+vendor/
 
-# Executables
-*.swf
-*.air
-*.ipa
-*.apk
-
-# Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
-# should NOT be excluded as they contain compiler settings and other important
-# information for Eclipse / Flash Builder.
+# Assets generated from the jar by `npm run import` (third-party art, sounds and text, see README)
+packs/resource/textures/minepreggo/
+packs/resource/sounds/minepreggo/
+packs/resource/models/entity/minepreggo/
+packs/resource/animations/minepreggo/
+packs/resource/texts/*.lang
+# The Jenny add-ons (vendor/jenny/, merged by tools/import-jenny.mjs): the Jenny Mod Java Port under
+# jenny_port/ sub-folders plus its UI, and the older pack's house structure
+packs/behavior/structures/
+packs/behavior/**/jenny_port/
+packs/resource/**/jenny_port/
+packs/resource/jenny_port/
+packs/resource/ui/
+packs/resource/pack_icon.png
+packs/behavior/pack_icon.png
+# Expandable Goblins (vendor/goblins/, merged by tools/import-goblins.mjs)
+packs/behavior/**/goblins_port/
+packs/resource/**/goblins_port/
+# Minecraft Comes Alive (vendor/mca/, merged by tools/import-mca.mjs)
+packs/behavior/**/mca_port/
+packs/resource/**/mca_port/
+# The Minepreggo x World Alliance compatibility add-on (built from vendor/worldalliance/ by
+# tools/compat-worldalliance.mjs), and World Alliance as earlier versions merged it into our packs
+# (that removes it): its files under worldalliance_port/ and worldbox/ folders or with worldbox names
+compat/
+packs/behavior/**/worldalliance_port/
+packs/resource/**/worldalliance_port/
+packs/behavior/worldalliance_port/
+packs/resource/worldalliance_port/
+packs/behavior/**/worldbox/
+packs/resource/**/worldbox/
+packs/behavior/loot_tables/blocks/worldbox_*
+packs/resource/textures/particle/
+packs/resource/textures/models/
+# The InsanityV women (vendor/insanity/, merged by tools/import-insanity.mjs)
+packs/behavior/**/insanity_port/
+packs/resource/**/insanity_port/
+# Skelly, her own mob (vendor/skelly/, converted by tools/import-skelly.mjs); the skeleton texture
+# an earlier import replaced
+packs/behavior/**/skelly_port/
+# Jenny's Preggo Mobs (made from the imported models by tools/import-jenny-preggo.mjs)
+packs/behavior/**/jennypreggo_port/
+packs/resource/**/jennypreggo_port/
+packs/resource/**/skelly_port/
+packs/resource/textures/entity/skeleton/

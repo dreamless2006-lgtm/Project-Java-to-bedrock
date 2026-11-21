@@ -1,0 +1,137 @@
+{
+  "format_version": "1.10.0",
+  "render_controllers": {
+    "controller.render.minepreggo.zombie_girl": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.minepreggo.zombie_girl_p0": {
+      "geometry": "Geometry.p0",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.p0"
+      ]
+    },
+    "controller.render.minepreggo.zombie_girl_p1": {
+      "geometry": "Geometry.p1",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.p1"
+      ]
+    },
+    "controller.render.minepreggo.zombie_girl_p2": {
+      "geometry": "Geometry.p2",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.p2"
+      ]
+    },
+    "controller.render.minepreggo.zombie_girl_p3": {
+      "geometry": "Geometry.p3",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.p3"
+      ]
+    },
+    "controller.render.minepreggo.zombie_girl_p4": {
+      "geometry": "Geometry.p4",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.p4"
+      ]
+    },
+    "controller.render.minepreggo.zombie_girl_p5": {
+      "geometry": "Geometry.p5",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.p5"
+      ]
+    },
+    "controller.render.minepreggo.zombie_girl_p6": {
+      "geometry": "Geometry.p6",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.p6"
+      ]
+    },
+    "controller.render.minepreggo.zombie_girl_p7": {
+      "geometry": "Geometry.p7",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.p7"
+      ]
+    },
+    "controller.render.minepreggo.zombie_girl_p8": {
+      "geometry": "Geometry.p8",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.p8"
+      ]
+    },
+    "controller.render.minepreggo.zombie_girl_p9": {
+      "geometry": "Geometry.p9",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.p9"
+      ]
+    },
+    "controller.render.minepreggo.zombie_girl_crowning": {
+      "geometry": "Geometry.crowning",
+      "materials": [
+        {
+          "*": "Material.crowning"
+        }
+      ],
+      "textures": [
+        "Texture.fetus"
+      ]
+    }
+  }
+}

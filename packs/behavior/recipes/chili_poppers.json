@@ -1,0 +1,28 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "minepreggo:chili_poppers"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "item": "minepreggo:chili_pepper",
+        "count": 3
+      },
+      {
+        "item": "minecraft:cooked_porkchop"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "minepreggo:chili_pepper"
+      }
+    ],
+    "result": {
+      "item": "minepreggo:chili_poppers"
+    }
+  }
+}

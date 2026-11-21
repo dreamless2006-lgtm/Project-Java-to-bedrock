@@ -1,0 +1,24 @@
+{
+  "format_version": "1.26.30",
+  "minecraft:item": {
+    "description": {
+      "identifier": "minepreggo:dead_humanoid_slime_fetus",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "minepreggo_dead_humanoid_slime_fetus",
+      "minecraft:display_name": {
+        "value": "item.minepreggo.dead_humanoid_slime_fetus"
+      },
+      "minecraft:max_stack_size": 64,
+      "minecraft:rarity": "uncommon",
+      "minecraft:tags": {
+        "tags": [
+          "minepreggo:dead_fetus"
+        ]
+      }
+    }
+  }
+}

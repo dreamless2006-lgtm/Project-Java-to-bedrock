@@ -1,0 +1,28 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "minepreggo:sour_rotten_flesh"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "item": "minecraft:rotten_flesh"
+      },
+      {
+        "item": "minepreggo:lemon",
+        "count": 2
+      }
+    ],
+    "unlock": [
+      {
+        "item": "minecraft:rotten_flesh"
+      }
+    ],
+    "result": {
+      "item": "minepreggo:sour_rotten_flesh"
+    }
+  }
+}

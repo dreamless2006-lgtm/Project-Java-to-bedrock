@@ -1,0 +1,101 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.minepreggo.walk_jiggle": {
+      "loop": true,
+      "bones": {
+        "boobs": {
+          "position": [
+            0,
+            "0.35 * math.min(1.0, q.modified_move_speed * 2.5) * math.sin(q.modified_distance_moved * 76.34 - 40.0)",
+            0
+          ],
+          "rotation": [
+            "-4.00 * math.min(1.0, q.modified_move_speed * 2.5) * math.sin(q.modified_distance_moved * 76.34 - 70.0)",
+            0,
+            0
+          ]
+        },
+        "left_boob": {
+          "rotation": [
+            "-2.50 * math.min(1.0, q.modified_move_speed * 2.5) * math.sin(q.modified_distance_moved * 76.34 - 90.0)",
+            0,
+            "3.00 * math.min(1.0, q.modified_move_speed * 2.5) * math.sin(q.modified_distance_moved * 38.17 - 60.0)"
+          ]
+        },
+        "right_boob": {
+          "rotation": [
+            "-2.50 * math.min(1.0, q.modified_move_speed * 2.5) * math.sin(q.modified_distance_moved * 76.34 - 90.0)",
+            0,
+            "-3.00 * math.min(1.0, q.modified_move_speed * 2.5) * math.sin(q.modified_distance_moved * 38.17 - 60.0)"
+          ]
+        },
+        "belly": {
+          "position": [
+            0,
+            "0.22 * math.min(1.0, q.modified_move_speed * 2.5) * math.sin(q.modified_distance_moved * 76.34 - 60.0)",
+            0
+          ],
+          "rotation": [
+            "1.80 * math.min(1.0, q.modified_move_speed * 2.5) * math.sin(q.modified_distance_moved * 76.34 - 90.0)",
+            0,
+            "1.50 * math.min(1.0, q.modified_move_speed * 2.5) * math.sin(q.modified_distance_moved * 38.17 - 50.0)"
+          ]
+        },
+        "left_butt": {
+          "rotation": [
+            "4.00 * math.min(1.0, q.modified_move_speed * 2.5) * math.sin(q.modified_distance_moved * 38.17 - 30.0)",
+            0,
+            0
+          ],
+          "position": [
+            0,
+            "0.15 * math.min(1.0, q.modified_move_speed * 2.5) * math.sin(q.modified_distance_moved * 76.34 - 50.0)",
+            0
+          ]
+        },
+        "right_butt": {
+          "rotation": [
+            "-4.00 * math.min(1.0, q.modified_move_speed * 2.5) * math.sin(q.modified_distance_moved * 38.17 - 30.0)",
+            0,
+            0
+          ],
+          "position": [
+            0,
+            "0.15 * math.min(1.0, q.modified_move_speed * 2.5) * math.sin(q.modified_distance_moved * 76.34 - 50.0)",
+            0
+          ]
+        }
+      }
+    },
+    "animation.minepreggo.player.first_person_view": {
+      "loop": true,
+      "bones": {
+        "boobs": {
+          "rotation": [
+            "-q.target_x_rotation",
+            0,
+            0
+          ],
+          "position": [
+            0,
+            "v.fp_boobs_y * (math.cos(q.target_x_rotation) - 1.0) - v.fp_boobs_z * math.sin(q.target_x_rotation)",
+            "v.fp_boobs_y * math.sin(q.target_x_rotation) + v.fp_boobs_z * (math.cos(q.target_x_rotation) - 1.0)"
+          ]
+        },
+        "belly": {
+          "rotation": [
+            "-q.target_x_rotation",
+            0,
+            0
+          ],
+          "position": [
+            0,
+            "v.fp_belly_y * (math.cos(q.target_x_rotation) - 1.0) - v.fp_belly_z * math.sin(q.target_x_rotation)",
+            "v.fp_belly_y * math.sin(q.target_x_rotation) + v.fp_belly_z * (math.cos(q.target_x_rotation) - 1.0)"
+          ]
+        }
+      }
+    }
+  }
+}
