@@ -75,6 +75,7 @@ export function poseController(/** @type {string[]} */ poses, /** @type {Record<
  * @property {'cube' | 'round'} [bellyStyle] her belly's style, instead of the one her chest suggests (tools/lib/belly-fit.mjs chestStyle)
  * @property {(image: any) => any} [bellySkin] changes her belly texture (given her skin-tone one)
  * @property {(body: import('./belly-fit.mjs').Body) => number[]} [opening] where her baby comes out instead of between her legs
+ * @property {number} [minWidth] her belly at least this wide (a slim body's)
  * @property {string[]} [stillBones] bones her poses and moves leave alone (a slime's jelly, which has no legs to bend)
  * @property {string} [material] her material, if not entity_alphatest (a slime's see-through jelly)
  * @property {{ animations?: Record<string, any>, ids?: Record<string, string>, pre?: string[], initialize?: string[], animate?: any[], controllers?: Record<string, any>, effects?: { sound_effects?: Record<string, any>, particle_effects?: Record<string, any> } }} [extra] more of her client entity
@@ -108,7 +109,11 @@ export function portGirl(sources, { BP, RP, port, ns }, girl) {
   const wide = Math.min(1.6, Math.max(grow, trunk ? (trunk.size[0] + 2 * (trunk.inflate ?? 0)) / 8 : 1));
   const [[x0, x1], [y0, y1], [z0, z1]] = measured.box;
   const sized = { ...measured, box: [[x0 * wide, x1 * wide], [y0, y0 + (y1 - y0) * grow], [z0, z0 + (z1 - z0) * wide]] };
-  const body = girl.opening ? { ...sized, opening: girl.opening(sized) } : sized;
+  // (a slim body, a Pokémon's, still carries a belly as wide as a girl's)
+  const across = sized.box[0][1] - sized.box[0][0];
+  const k = girl.minWidth && across < girl.minWidth ? girl.minWidth / across : 1;
+  const wider = k > 1 ? { ...sized, box: [[sized.box[0][0] * k, sized.box[0][1] * k], sized.box[1], [sized.box[2][0], sized.box[2][0] + (sized.box[2][1] - sized.box[2][0]) * k]] } : sized;
+  const body = girl.opening ? { ...wider, opening: girl.opening(wider) } : wider;
 
   // her belly of each size, in her skin tone, with the crowning mount
   const tone = girl.tone ?? skinTone(decodePng(outfits[0].texture), main);

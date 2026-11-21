@@ -53,6 +53,11 @@ export const LINES = [
   { item: 'gardevoir', name: 'Gardevoir', skin: [244, 244, 248], hair: [98, 214, 112], shirt: [244, 244, 248], trim: [226, 62, 76], made: true },
   { item: 'lucario', name: 'Lucario', skin: [238, 224, 182], hair: [38, 38, 46], shirt: [62, 138, 214], trim: [38, 38, 46], made: true },
   { item: 'lopunny', name: 'Lopunny', skin: [214, 170, 130], hair: [158, 104, 70], shirt: [158, 104, 70], trim: [246, 228, 172], made: true },
+  // Pokédrock's Pokémon's babies (Minepreggo × Pokédrock)
+  { item: 'blaziken', name: 'Blaziken', skin: [236, 120, 60], hair: [244, 226, 160], shirt: [210, 60, 40], trim: [244, 210, 90], made: true },
+  { item: 'nidoqueen', name: 'Nidoqueen', skin: [228, 214, 170], hair: [100, 150, 190], shirt: [100, 150, 190], trim: [228, 214, 170], made: true },
+  { item: 'greninja', name: 'Greninja', skin: [60, 90, 160], hair: [30, 40, 80], shirt: [60, 90, 160], trim: [230, 120, 160], made: true },
+  { item: 'pokemon', name: 'Pokémon', skin: [236, 214, 180], hair: [200, 60, 60], shirt: [230, 60, 60], trim: [250, 250, 250], made: true },
 ];
 
 /** A baby's line: by its item exactly, else by the kind its id names, else a human's. */

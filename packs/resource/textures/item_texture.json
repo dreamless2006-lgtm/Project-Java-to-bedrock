@@ -349,6 +349,18 @@
     },
     "minepreggo_baby_lopunny": {
       "textures": "textures/port/children/baby_lopunny"
+    },
+    "minepreggo_baby_blaziken": {
+      "textures": "textures/port/children/baby_blaziken"
+    },
+    "minepreggo_baby_nidoqueen": {
+      "textures": "textures/port/children/baby_nidoqueen"
+    },
+    "minepreggo_baby_greninja": {
+      "textures": "textures/port/children/baby_greninja"
+    },
+    "minepreggo_baby_pokemon": {
+      "textures": "textures/port/children/baby_pokemon"
     }
   }
 }

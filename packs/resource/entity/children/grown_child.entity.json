@@ -78,7 +78,15 @@
         "s68": "textures/port/children/skins/lucario_son",
         "s69": "textures/port/children/skins/lucario_daughter",
         "s70": "textures/port/children/skins/lopunny_son",
-        "s71": "textures/port/children/skins/lopunny_daughter"
+        "s71": "textures/port/children/skins/lopunny_daughter",
+        "s72": "textures/port/children/skins/blaziken_son",
+        "s73": "textures/port/children/skins/blaziken_daughter",
+        "s74": "textures/port/children/skins/nidoqueen_son",
+        "s75": "textures/port/children/skins/nidoqueen_daughter",
+        "s76": "textures/port/children/skins/greninja_son",
+        "s77": "textures/port/children/skins/greninja_daughter",
+        "s78": "textures/port/children/skins/pokemon_son",
+        "s79": "textures/port/children/skins/pokemon_daughter"
       },
       "geometry": {
         "son": "geometry.minepreggo.grown_son",

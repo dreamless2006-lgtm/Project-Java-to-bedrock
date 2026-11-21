@@ -25,9 +25,16 @@
 // For both: the Jenny-style pregnancy and scene poses and her birth, solved onto her rig
 // (tools/lib/scene-poses.mjs), with her baby crowning, kicks and a walk jiggle.
 //
-// Run: node tools/compat-addons.mjs <worldalliance | girlmob> (part of npm run import).
+// Pokédrock (vendor/pokedrock/pokedrock.zip: SERP's Pokédrock, its behavior pack and its resource packs,
+// the 3D one over the base one): its popular two-legged Pokémon of a grown-up size (scripts/mobs/
+// pokemon.js) are each female by her kind's share, on her own model with a bust and hips (arms as they
+// are: its Pokémon hold theirs out); the rest are left as they are. Its HUD and ours both add to the
+// HUD's root panel, where only the top pack's additions count: its packs carry both.
+//
+// Run: node tools/compat-addons.mjs <worldalliance | girlmob | pokedrock> (part of npm run import).
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { POKEMON_WOMEN } from '../packs/behavior/scripts/mobs/pokemon.js';
 import { strFromU8, unzipSync } from 'fflate';
 import { CUBE_BELLY, addNewborn, babyScale, fitBelly, measureBody, roundBelly, smoothBelly } from './lib/belly-fit.mjs';
 import { bellyTexture, skinTone } from './lib/belly-skin.mjs';
@@ -95,6 +102,10 @@ const GROWN = `q.property('${MOD}:female') == 2 && !q.is_baby`;
  * @property {string} [separate] its mobs replace vanilla ones: give them their own ids in this namespace instead (the vanilla mobs stay as they are)
  * @property {boolean} [merge] the add-on itself goes into our packs, under our files: one add-on to install instead of two
  * @property {boolean} [armless] its girls may have no arms (the creeper: her belly, kicks and burst, poses if they solve)
+ * @property {boolean} [keepArms] a woman's build leaves her arms as they are (arms held out, not hanging: slimming would shorten them)
+ * @property {number} [bust] her bust this much bigger than her torso's width makes it
+ * @property {number} [minWidth] her belly at least this wide (a slim body's)
+ * @property {boolean} [hud] its HUD adds to the root panel as ours does: its packs carry both additions
  * @property {(id: string) => boolean} skip mob types left as they are
  * @property {(rig: { key: string }, id: string) => { birth: string, type: 'normal' | 'navel' | 'burst' | 'breast', shape: keyof typeof SHAPES }} women how they carry and give birth
  */
@@ -119,6 +130,14 @@ const ADDONS = {
       const girl = GIRL_MOB[id.replace(/^(minecraft|girlmob):/, '')] ?? { type: 'normal', shape: 'round' };
       return { ...girl, birth: TYPE_BIRTHS[girl.type] };
     },
+  },
+  pokedrock: {
+    title: 'Pokédrock', name: 'Minepreggo × Pokédrock', description: "SERP's Pokédrock's Gardevoir, Lucario, Blaziken, Nidoqueen and Greninja: their females in Minepreggo's pregnancy system. Needs Minepreggo and Pokédrock (with its 3D pack); put it above both.",
+    vendor: 'vendor/pokedrock', dir: 'minepreggo_pokedrock', prefix: 'pokemon',
+    ids: { bp: '5b0c2d4e-7a61-4f3b-9c58-2e1d6a8f4b97', bpData: 'c3e9a1f2-6d4b-4e87-a215-9b7c3d0e5f18', rp: '8f4a6c1e-2b9d-4d73-b6e0-5a1c7f3e9d24', rpResources: 'e1d7b3a9-4c62-4f05-8e9b-36a2d5c7f810' },
+    female: `q.property('${MOD}:female') == 2`, male: `q.property('${MOD}:female') != 2`, femaleDefault: 0, build: true, keepArms: true, bust: 1.5, minWidth: 8, bellyStyle: 'round', hud: true,
+    skipRigs: new Set(), skip: (id) => !POKEMON_WOMEN[id],
+    women: (_, id) => ({ birth: POKEMON_WOMEN[id].birth, type: 'normal', shape: 'round' }),
   },
 };
 const addon = ADDONS[process.argv[2]];
@@ -318,7 +337,8 @@ function rigOf(/** @type {string} */ id) {
   if (g) {
     const find = (/** @type {RegExp} */ re) => g.bones.filter((/** @type {any} */ b) => re.test(b.name));
     const body = find(/^body$/i)[0];
-    const head = find(/^head$/i)[0];
+    // (Pokédrock's heads are head1)
+    const head = find(/^head1?$/i)[0];
     // sides by where they hang (right is -x), whatever the rig calls them
     const sides = (/** @type {any[]} */ pair) => (pair.length === 2 ? [...pair].sort((a, b) => a.pivot[0] - b.pivot[0]) : []);
     const arms = sides(find(/^(right|left)_?arm$|^arm_?(right|left|r|l)$/i));
@@ -372,7 +392,7 @@ function femaleGeometry(/** @type {Rig} */ rig, /** @type {Women['opts']} */ opt
   }
   // slimmer arms (on a woman's build)
   const under = (/** @type {string} */ n) => [n, ...g.bones.filter((/** @type {any} */ b) => b.parent === n).flatMap((/** @type {any} */ b) => under(b.name))];
-  for (const [arm, side] of addon.build ? [[rig.armR, -1], [rig.armL, 1]] : []) {
+  for (const [arm, side] of addon.build && !addon.keepArms ? [[rig.armR, -1], [rig.armL, 1]] : []) {
     for (const name of under(/** @type {string} */ (arm))) {
       const bone = byName.get(name);
       for (const cube of bone?.cubes ?? []) {
@@ -393,7 +413,7 @@ function femaleGeometry(/** @type {Rig} */ rig, /** @type {Women['opts']} */ opt
   const [x0, y0, z0] = rig.torso.origin;
   const [w, h, d] = rig.torso.size;
   // (an inflated torso, armour drawn over it, stands out as much further)
-  const k = w / 8, top = y0 + h, out = rig.torso.inflate ?? 0;
+  const k = (w / 8) * (addon.bust ?? 1), top = y0 + h, out = rig.torso.inflate ?? 0;
   const patch = (/** @type {number} */ xa, /** @type {number} */ xb, /** @type {number} */ ya, /** @type {number} */ yb) => {
     const p = part(front, (xa - x0) / w, (xb - x0) / w, (top - yb) / h, (top - ya) / h);
     return { north: p, south: p, east: p, west: p, up: p, down: p };
@@ -507,6 +527,12 @@ function womenOf(/** @type {Rig} */ rig, /** @type {Women['opts']} */ opts) {
     const bottom = legTop - 1;
     const bust = rig.torso.origin[1] + rig.torso.size[1] - 2.5;
     box = [box[0], [bottom, bottom + Math.min(13, Math.max(9, bust - bottom))], box[2]];
+  }
+  // (a slim body, a Pokémon's, still carries a belly as wide as a girl's)
+  const across = box[0][1] - box[0][0];
+  if (addon.minWidth && across < addon.minWidth) {
+    const k = addon.minWidth / across;
+    box = [[box[0][0] * k, box[0][1] * k], box[1], [box[2][0], box[2][0] + (box[2][1] - box[2][0]) * k]];
   }
   box = SHAPES[opts.shape](box);
   // a breast pregnancy leaves her belly small
@@ -666,7 +692,7 @@ for (const { path, doc } of theirs('resource', 'entity')) {
   const texturePath = /** @type {string | undefined} */ (d.textures?.default ?? Object.values(d.textures ?? {})[0]);
   const png = texturePath && packs.resource.files[`${texturePath}.png`];
   // (a girl whose face is no guide to her skin has hers given)
-  const tone = GIRL_MOB[d.identifier.replace(/^(minecraft|girlmob):/, '')]?.tone ?? (png ? skinTone(decodePng(png), rig.geometry) : [224, 188, 160]);
+  const tone = GIRL_MOB[d.identifier.replace(/^(minecraft|girlmob):/, '')]?.tone ?? POKEMON_WOMEN[d.identifier]?.tone ?? (png ? skinTone(decodePng(png), rig.geometry) : [224, 188, 160]);
   const ribs = GIRL_MOB[d.identifier.replace(/^(minecraft|girlmob):/, '')]?.ribs && !addon.build;
   const toneKey = tone.map((c) => c.toString(16).padStart(2, '0')).join('') + (ribs ? '_ribs' : '');
   if (!bellySkins.has(toneKey)) {
@@ -800,6 +826,19 @@ if (addon.separate) {
 writeJson(join(ORP, 'render_controllers', `${DIR}.render_controllers.json`), { format_version: '1.8.0', render_controllers: renderControllers });
 writeJson(join(ORP, 'animation_controllers', `${DIR}.animation_controllers.json`), { format_version: '1.10.0', animation_controllers: animationControllers });
 writeJson(join(ORP, 'animations', DIR, 'walk_jiggle.animation.json'), { format_version: '1.8.0', animations: { [JIGGLE]: walkJiggleAnimation({ chest: ['mp_bust'], belly: ['belly'], buttRoot: ['mp_hips'] }) } });
+
+// ---- its HUD and ours (hud): both add to the root panel, where the top pack's additions replace the
+// others', so its packs (on top) carry both
+if (addon.hud) {
+  const theirsHud = packs.resource.files['ui/hud_screen.json'];
+  const oursHud = join(RP, 'ui/hud_screen.json');
+  if (theirsHud && existsSync(oursHud)) {
+    const a = parse(readFileSync(oursHud, 'utf8'));
+    const b = parse(strFromU8(theirsHud));
+    const merged = { ...b, ...a, root_panel: { ...b.root_panel, ...a.root_panel, modifications: [...(b.root_panel?.modifications ?? []), ...(a.root_panel?.modifications ?? [])] } };
+    writeJson(join(ORP, 'ui/hud_screen.json'), merged);
+  }
+}
 
 // ---- the packs' manifests ----------------------------------------------------------------------------------
 const version = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version.split('.').map(Number);

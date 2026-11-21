@@ -7,6 +7,7 @@
 import { system, world } from '@minecraft/server';
 import { babiesFromPotion } from '../pregnancy/math.js';
 import { FAMILIES } from './families.js';
+import { POKEMON_WOMEN } from './pokemon.js';
 import { accelerateGradually, familyOf, forgetRecord, getRecord, onDeath, onHurt, startPregnancy } from './system.js';
 
 const PROPERTY = 'minepreggo:female';
@@ -16,9 +17,11 @@ function roll(/** @type {import('@minecraft/server').Entity} */ entity) {
   try {
     // a baby is never with child, whatever its spawn event rolled (its add-on's babies share its events)
     if (entity.getComponent('minecraft:is_baby') && /** @type {number} */ (entity.getProperty('minepreggo:phase') ?? -1) >= 0) entity.setProperty('minepreggo:phase', -1);
-    if (!entity.typeId.startsWith('worldbox:')) return;
+    // (a Pokémon by her kind's share of females: tools/compat-addons.mjs pokedrock)
+    const chance = entity.typeId.startsWith('worldbox:') ? 0.5 : POKEMON_WOMEN[entity.typeId]?.female;
+    if (chance === undefined) return;
     if (entity.getProperty(PROPERTY) !== 0) return;
-    entity.setProperty(PROPERTY, !entity.getComponent('minecraft:is_baby') && Math.random() < 0.5 ? 2 : 1);
+    entity.setProperty(PROPERTY, !entity.getComponent('minecraft:is_baby') && Math.random() < chance ? 2 : 1);
   } catch {
     // no such property, or the unit is gone
   }

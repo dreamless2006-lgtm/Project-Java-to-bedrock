@@ -1,11 +1,11 @@
 {
   "name": "minepreggo-bedrock",
-  "version": "0.22.0",
+  "version": "0.23.0",
   "private": true,
   "description": "Bedrock Edition (.mcaddon) port of the Minepreggo Forge mod",
   "type": "module",
   "scripts": {
-    "import": "node tools/import-jar.mjs && node tools/gen/compat-poses.mjs && node tools/gen-scene-poses.mjs && node tools/gen-birth-poses.mjs && node tools/import-jenny.mjs && node tools/import-goblins.mjs && node tools/import-mca.mjs && node tools/import-insanity.mjs && node tools/import-jenny-preggo.mjs && node tools/compat-addons.mjs worldalliance && node tools/compat-addons.mjs girlmob && node tools/import-skelly.mjs && node tools/gen/children.mjs",
+    "import": "node tools/import-jar.mjs && node tools/gen/compat-poses.mjs && node tools/gen-scene-poses.mjs && node tools/gen-birth-poses.mjs && node tools/import-jenny.mjs && node tools/import-goblins.mjs && node tools/import-mca.mjs && node tools/import-insanity.mjs && node tools/import-jenny-preggo.mjs && node tools/compat-addons.mjs worldalliance && node tools/compat-addons.mjs girlmob && node tools/compat-addons.mjs pokedrock && node tools/import-skelly.mjs && node tools/gen/children.mjs",
     "check": "node tools/gen-ids.mjs && tsc -p jsconfig.json && node tools/validate.mjs",
     "build": "node tools/build.mjs",
     "standin": "node tools/gen/standin-pack.mjs",

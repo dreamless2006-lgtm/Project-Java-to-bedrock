@@ -3,8 +3,10 @@
 // with its hips, waist and chest, boobs, arms and legs), so tools/import-jenny-preggo.mjs makes them
 // into curvy Jenny's Preggo Mobs like the others. Generated at import time into its git-ignored port
 // folder (they are fan likenesses of other people's characters).
+import { existsSync, readFileSync } from 'node:fs';
+import { strFromU8, unzipSync } from 'fflate';
 import { blank, encodePng } from './png.mjs';
-import { facesOf } from './box-uv.mjs';
+import { facesOf, part } from './box-uv.mjs';
 
 const TEX = 128;
 /** @typedef {number[]} Colour */
@@ -188,13 +190,80 @@ function lopunny() {
   return b.done();
 }
 
+// ---- from Pokédrock's models (vendor/pokedrock/pokedrock.zip: tools/compat-addons.mjs), where it is there --------
+const ZIP = new URL('../../vendor/pokedrock/pokedrock.zip', import.meta.url);
+/** @type {Record<string, Uint8Array> | null | undefined} its models and textures, once read */
+let pokedrock;
+const r3 = (/** @type {number} */ v) => Math.round(v * 1000) / 1000;
+/**
+ * A Pokédrock Pokémon's model in our girls' layout: its grouping bones gone (her head, arms and legs
+ * hang from her body or loose, as ours), head1 her head, her blinking and angry eyes left out (they
+ * would show over her open ones), her arms (held out, as its Pokémon stand) hanging at her sides, and
+ * a bust in her torso's texture for the import's curves to fill out.
+ * @param {string} id its geometry @param {string} texture its texture
+ */
+function fromPokedrock(id, texture) {
+  pokedrock ??= existsSync(ZIP) ? unzipSync(new Uint8Array(readFileSync(ZIP)), { filter: (f) => f.name.startsWith('R/models/') || f.name.startsWith('R/textures/entity/normal/') }) : null;
+  if (!pokedrock) return undefined;
+  const png = pokedrock[`R/${texture}.png`];
+  let source;
+  for (const [name, data] of Object.entries(pokedrock)) {
+    if (!name.endsWith('.json') || !name.startsWith('R/models/')) continue;
+    const text = strFromU8(data);
+    if (!text.includes(id.replace('geometry.', ''))) continue;
+    source = JSON.parse(text.replace(/^\uFEFF/, ''))['minecraft:geometry']?.find((/** @type {any} */ g) => g.description?.identifier === id);
+    if (source) break;
+  }
+  if (!source || !png) return undefined;
+  const g = structuredClone(source);
+  const byName = new Map(g.bones.map((/** @type {any} */ b) => [b.name, b]));
+  const under = (/** @type {string} */ n) => [n, ...g.bones.filter((/** @type {any} */ b) => b.parent === n).flatMap((/** @type {any} */ b) => under(b.name))];
+  const gone = new Set(['closed_eyes', 'angry_eyes'].filter((n) => byName.has(n)).flatMap(under));
+  // (bones that only group others: no cubes, no turn)
+  for (const b of g.bones) if (!b.cubes?.length && !b.rotation && ['body_root', 'arms', 'legs'].includes(b.name) || !b.parent && !b.cubes?.length && !b.rotation) gone.add(b.name);
+  const keptParent = (/** @type {string | undefined} */ n) => { while (n && gone.has(n)) n = byName.get(n)?.parent; return n; };
+  g.bones = g.bones.filter((/** @type {any} */ b) => !gone.has(b.name));
+  for (const b of g.bones) {
+    const parent = keptParent(b.parent);
+    if (parent) b.parent = parent; else delete b.parent;
+    if (b.name === 'head1') b.name = 'head';
+    if (b.parent === 'head1') b.parent = 'head';
+  }
+  // her arms down at her sides (held out level, they would swing level in her walk and poses)
+  for (const [name, side] of /** @type {const} */ ([['right_arm', -1], ['left_arm', 1]])) {
+    const arm = g.bones.find((/** @type {any} */ b) => b.name === name);
+    const cubes = arm ? under(name).flatMap((n) => g.bones.find((/** @type {any} */ b) => b.name === n)?.cubes ?? []) : [];
+    if (!arm || !cubes.length) continue;
+    const dx = cubes.reduce((s, c) => s + c.origin[0] + c.size[0] / 2 - arm.pivot[0], 0) / cubes.length;
+    const dy = cubes.reduce((s, c) => s + c.origin[1] + c.size[1] / 2 - arm.pivot[1], 0) / cubes.length;
+    if (Math.abs(dx) > Math.abs(dy)) arm.rotation = [0, 0, r3(side * 78 + (arm.rotation?.[2] ?? 0))];
+  }
+  // her bust: two breasts from the top of her torso's front, in its texture
+  const body = g.bones.find((/** @type {any} */ b) => b.name === 'body');
+  const torso = [...(body?.cubes ?? [])].sort((a, b) => b.size[0] * b.size[1] * b.size[2] - a.size[0] * a.size[1] * a.size[2])[0];
+  if (torso) {
+    const [x0, y0, z0] = torso.origin, [w, h] = torso.size;
+    const front = facesOf(torso).north;
+    const b = r3(Math.max(1.6, w * 0.46)), top = y0 + h - h * 0.12, yb = r3(top - b);
+    const patch = part(front, 0.1, 0.9, 0.1, 0.45);
+    const uv = { north: patch, south: patch, east: patch, west: patch, up: patch, down: patch };
+    g.bones.push({ name: 'boobs', parent: 'body', pivot: [0, r3(top - b / 2), z0] });
+    for (const [side, s] of /** @type {const} */ ([['right_boob', -1], ['left_boob', 1]])) {
+      g.bones.push({ name: side, parent: 'boobs', pivot: [r3(s * b / 2), r3(top - b / 2), z0], rotation: [12, s * -6, 0],
+        cubes: [{ origin: [r3(s < 0 ? -b - 0.05 : 0.05), yb, r3(z0 - b * 0.85)], size: [b, b, r3(b * 0.95)], uv }] });
+    }
+  }
+  return { geometry: g, png };
+}
+
 /** Each girl's model and texture, and how she is a Jenny's Preggo Mob (tools/import-jenny-preggo.mjs). */
 export const POKEMON = [
-  { made: gardevoir, key: 'gardevoir', name: 'Gardevoir', birth: 'kum:luna',
+  // (Gardevoir and Lucario on Pokédrock's models, where it is there; ours otherwise)
+  { made: () => fromPokedrock('geometry.serpgardevoir', 'textures/entity/normal/gardevoir') ?? gardevoir(), minWidth: 8, key: 'gardevoir', name: 'Gardevoir', birth: 'kum:luna',
     kicks: { name: 'jp_gardevoir', order: [2, 0, 4, 1, 3], rate: 0.9, emphasis: [1.0, 1.2, 0.9, 1.1, 1.3] },
     treats: ['minecraft:amethyst_shard', 'minecraft:sweet_berries', 'minecraft:cake'], biomes: ['meadow', 'forest', 'plains'], egg: { base_color: '#f4f4f8', overlay_color: '#5ad46a' },
     curves: 'most', navel: true, tone: [244, 244, 248] },
-  { made: lucario, key: 'lucario', name: 'Lucario', birth: 'fapcraft:jenny',
+  { made: () => fromPokedrock('geometry.serplucario', 'textures/entity/normal/lucario') ?? lucario(), minWidth: 8, key: 'lucario', name: 'Lucario', birth: 'fapcraft:jenny',
     kicks: { name: 'jp_lucario', order: [3, 1, 0, 4, 2], rate: 1.3, emphasis: [1.4, 1.2, 1.0, 1.3, 0.9] },
     treats: ['minecraft:cooked_beef', 'minecraft:bone', 'minecraft:cake'], biomes: ['taiga', 'extreme_hills', 'forest'], egg: { base_color: '#3e8ad6', overlay_color: '#26262e' },
     curves: 'most', navel: true, tone: [238, 224, 182] },

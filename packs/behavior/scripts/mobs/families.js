@@ -3,6 +3,7 @@
 // durations), the item classes (nutrition, craving gratification) and MinepreggoConfig (hunger).
 // Nothing here touches the game API.
 
+import { POKEMON_WOMEN } from './pokemon.js';
 import { CRAVING_ITEMS } from '../pregnancy/data.js';
 
 /** @typedef {import('../pregnancy/data.js').Craving} Craving */
@@ -241,7 +242,7 @@ export const MCA_FAMILIES = {
 /** What each birth of hers yields: her eggs if she lays them, else her baby. */
 /** What she gives birth to: her egg, else her baby (a compat woman's by her add-on: a Girl Mob or a World Alliance baby). */
 export const birthItemOf = (/** @type {Family} */ family, typeId = '') =>
-  family.eggItem ?? (family === COMPAT_WOMAN ? (typeId.startsWith('girlmob:') ? 'minepreggo:baby_girl_mob' : 'minepreggo:baby_world_alliance') : family.babyItem);
+  family.eggItem ?? (family === COMPAT_WOMAN ? (typeId.startsWith('girlmob:') ? 'minepreggo:baby_girl_mob' : typeId.startsWith('pokemon:') ? POKEMON_WOMEN[typeId]?.baby ?? 'minepreggo:baby_pokemon' : 'minepreggo:baby_world_alliance') : family.babyItem);
 export const COURTING_TICKS = 60;
 export const COURTING_RANGE = 2;
 
